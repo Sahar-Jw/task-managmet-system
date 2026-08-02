@@ -1,0 +1,41 @@
+# Compiled output
+dist/
+build/
+*.tsbuildinfo
+
+# Compiled JS/maps/declarations sitting next to source (stray build artifacts)
+src/**/*.js
+src/**/*.js.map
+src/**/*.d.ts
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Uploads (user-uploaded files shouldn't be committed)
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test coverage
+coverage/
+
+# Yarn/npm lock quirks (keep one, ignore the other if you switch tools)
+# package-lock.json
+# yarn.lock

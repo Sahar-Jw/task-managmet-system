@@ -1,0 +1,518 @@
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TaskEntity } from './entities/task.entity';
+import { ProjectEntity } from '../projects/entities/project.entity';
+import { DepartmentEntity } from '../departments/entities/department.entity';
+import { BranchEntity } from '../branches/entities/branch.entity';
+import { UserEntity } from '../users/entities/user.entity';
+import { TaskAssignmentEntity } from '../task-assignments/entities/task-assignment.entity';
+import { TaskCommentEntity } from '../task-comments/entities/task-comment.entity';
+import { TaskAttachmentEntity } from '../task-attachments/entities/task-attachment.entity';
+import { TaskRatingEntity } from '../task-ratings/entities/task-rating.entity';
+import {
+  CreateTaskDto,
+  DecideTaskApprovalDto,
+  QueryTasksDto,
+  UpdateTaskDto,
+  UpdateTaskStatusDto,
+} from './dto/task.dto';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { ProjectsService } from '../projects/projects.service';
+import { TaskStatus } from '../../shared/enums/task-status.enum';
+import { ProjectStatus } from '../../shared/enums/project-status.enum';
+import { AuditAction } from '../../shared/enums/audit-action.enum';
+import { RoleName } from '../../shared/enums/role.enum';
+import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
+
+/**
+ * Allowed forward transitions per the Task Lifecycle state diagram.
+ * Reopen from Completed and re-cancel handling are validated separately
+ * since they carry extra rules.
+ */
+const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
+  [TaskStatus.PENDING]: [TaskStatus.UNASSIGNED, TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED],
+  [TaskStatus.UNASSIGNED]: [TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED],
+  [TaskStatus.IN_PROGRESS]: [TaskStatus.PENDING_APPROVAL, TaskStatus.COMPLETED, TaskStatus.CANCELLED],
+  [TaskStatus.PENDING_APPROVAL]: [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED],
+  [TaskStatus.COMPLETED]: [TaskStatus.REOPENED, TaskStatus.ARCHIVED],
+  [TaskStatus.REOPENED]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.CANCELLED]: [TaskStatus.ARCHIVED],
+  [TaskStatus.ARCHIVED]: [],
+};
+
+const TASK_RELATIONS = [
+  'branch',
+  'department',
+  'project',
+  'assignedTo',
+  'createdBy',
+  'approver',
+  'parentTask',
+  'subTasks',
+  'assignments',
+  'assignments.assignee',
+  'comments',
+  'attachments',
+  'ratings',
+];
+
+@Injectable()
+export class TasksService {
+  constructor(
+    @InjectRepository(TaskEntity)
+    private readonly taskRepo: Repository<TaskEntity>,
+    @InjectRepository(ProjectEntity)
+    private readonly projectRepo: Repository<ProjectEntity>,
+    @InjectRepository(DepartmentEntity)
+    private readonly departmentRepo: Repository<DepartmentEntity>,
+    @InjectRepository(BranchEntity)
+    private readonly branchRepo: Repository<BranchEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(TaskAssignmentEntity)
+    private readonly assignmentRepo: Repository<TaskAssignmentEntity>,
+    @InjectRepository(TaskCommentEntity)
+    private readonly commentRepo: Repository<TaskCommentEntity>,
+    @InjectRepository(TaskAttachmentEntity)
+    private readonly attachmentRepo: Repository<TaskAttachmentEntity>,
+    @InjectRepository(TaskRatingEntity)
+    private readonly ratingRepo: Repository<TaskRatingEntity>,
+    private readonly auditLogsService: AuditLogsService,
+    private readonly projectsService: ProjectsService,
+  ) {}
+
+  async findAll(query: QueryTasksDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const qb = this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.branch', 'branch')
+      .leftJoinAndSelect('task.department', 'department')
+      .leftJoinAndSelect('task.project', 'project')
+      .leftJoinAndSelect('task.assignedTo', 'assignedTo')
+      .leftJoinAndSelect('task.createdBy', 'createdBy')
+      .orderBy('task.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.status) qb.andWhere('task.status = :status', { status: query.status });
+    if (query.taskType) qb.andWhere('task.taskType = :taskType', { taskType: query.taskType });
+    if (query.branchId) qb.andWhere('task.branchId = :branchId', { branchId: query.branchId });
+    if (query.projectId) qb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
+    if (query.departmentId) qb.andWhere('task.departmentId = :departmentId', { departmentId: query.departmentId });
+    if (query.assignedToId) qb.andWhere('task.assignedToId = :assignedToId', { assignedToId: query.assignedToId });
+    if (query.assigneeId) {
+      qb.innerJoin('task.assignments', 'assignment').andWhere('assignment.assigneeId = :assigneeId', {
+        assigneeId: query.assigneeId,
+      });
+    }
+    if (query.dueDateFrom && query.dueDateTo) {
+      qb.andWhere('task.deadlineDate BETWEEN :from AND :to', {
+        from: query.dueDateFrom,
+        to: query.dueDateTo,
+      });
+    }
+
+    const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, limit };
+  }
+
+  async findOne(id: string): Promise<TaskEntity> {
+    const task = await this.taskRepo.findOne({ where: { id }, relations: TASK_RELATIONS });
+    if (!task) throw new NotFoundException('Task not found');
+    return task;
+  }
+
+  async create(dto: CreateTaskDto, actor: UserEntity): Promise<TaskEntity> {
+    if (dto.branchId) {
+      const branch = await this.branchRepo.findOne({ where: { id: dto.branchId } });
+      if (!branch || !branch.isActive) {
+        throw new BadRequestException('Target Branch is invalid or inactive');
+      }
+    }
+
+    let project: ProjectEntity | null = null;
+    if (dto.projectId) {
+      project = await this.projectRepo.findOne({ where: { id: dto.projectId } });
+      if (!project) throw new NotFoundException('Project not found');
+      if (project.status === ProjectStatus.ARCHIVED) {
+        throw new BadRequestException('Cannot create a Task under an archived Project');
+      }
+    }
+
+    let parentTask: TaskEntity | null = null;
+    if (dto.parentTaskId) {
+      parentTask = await this.taskRepo.findOne({ where: { id: dto.parentTaskId } });
+      if (!parentTask) throw new NotFoundException('Parent Task not found');
+      if (parentTask.archivedAt) {
+        throw new BadRequestException('Cannot attach a Sub-task to an archived parent Task');
+      }
+      // Sub-task deadline cannot exceed Parent Task's deadline.
+      if (dto.deadlineDate && parentTask.deadlineDate && dto.deadlineDate > parentTask.deadlineDate) {
+        throw new BadRequestException("Sub-task deadline cannot exceed its Parent Task's deadline");
+      }
+    }
+
+    if (dto.assignedToId) {
+      const assignee = await this.userRepo.findOne({ where: { id: dto.assignedToId } });
+      if (!assignee) throw new NotFoundException('Assigned User (for whom the task is) not found');
+      if (!assignee.isActive) {
+        throw new BadRequestException('Cannot create a Task for a deactivated User');
+      }
+    }
+
+    const needsApproval = !!dto.needsApproval;
+    if (needsApproval && !dto.approverId) {
+      throw new BadRequestException('An approver is required when the Task needs approval');
+    }
+    if (dto.approverId) {
+      const approver = await this.userRepo.findOne({ where: { id: dto.approverId } });
+      if (!approver) throw new NotFoundException('Approver not found');
+    }
+
+    const needsBudget = !!dto.needsBudget;
+    if (needsBudget && dto.budgetMin && dto.budgetMax && Number(dto.budgetMin) > Number(dto.budgetMax)) {
+      throw new BadRequestException('Money range minimum cannot exceed the maximum');
+    }
+
+    const task = await this.taskRepo.save(
+      this.taskRepo.create({
+        titleAr: dto.titleAr,
+        titleEn: dto.titleEn,
+        descriptionAr: dto.descriptionAr,
+        descriptionEn: dto.descriptionEn,
+        taskType: dto.taskType,
+        priority: dto.priority,
+        color: dto.color,
+        branchId: dto.branchId,
+        departmentId: dto.departmentId,
+        projectId: dto.projectId,
+        parentTaskId: dto.parentTaskId,
+        assignedToId: dto.assignedToId,
+        createdById: actor.id,
+        needsApproval,
+        approverId: needsApproval ? dto.approverId : undefined,
+        approvalStatus: needsApproval ? ApprovalStatus.PENDING : ApprovalStatus.NOT_REQUIRED,
+        needsBudget,
+        budgetMin: needsBudget ? dto.budgetMin : undefined,
+        budgetMax: needsBudget ? dto.budgetMax : undefined,
+        budgetCurrency: needsBudget ? (dto.budgetCurrency ?? 'SAR') : undefined,
+        startDate: dto.startDate,
+        deadlineDate: dto.deadlineDate,
+        status: TaskStatus.PENDING,
+      }),
+    );
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: task.id,
+      action: AuditAction.CREATE,
+      newValue: task,
+    });
+
+    return this.findOne(task.id);
+  }
+
+  async update(id: string, dto: UpdateTaskDto, actor: UserEntity): Promise<TaskEntity> {
+    const task = await this.findOne(id);
+
+    if (task.archivedAt) {
+      throw new BadRequestException('Cannot edit an archived Task');
+    }
+    if (task.status === TaskStatus.PENDING_APPROVAL && actor.role.name !== RoleName.ADMIN) {
+      throw new ForbiddenException('Task is pending approval and cannot be edited until a decision is made');
+    }
+
+    if (dto.parentTaskId) {
+      await this.assertNoCircularReference(task.id, dto.parentTaskId);
+    }
+
+    const effectiveDeadline = dto.deadlineDate ?? task.deadlineDate;
+    if (dto.parentTaskId || task.parentTaskId) {
+      const parentId = dto.parentTaskId ?? task.parentTaskId!;
+      const parent = await this.taskRepo.findOne({ where: { id: parentId } });
+      if (parent?.deadlineDate && effectiveDeadline && effectiveDeadline > parent.deadlineDate) {
+        throw new BadRequestException("Sub-task deadline cannot exceed its Parent Task's deadline");
+      }
+    }
+
+    // Deadline, once set, cannot move earlier than today without Admin override.
+    if (dto.deadlineDate && task.deadlineDate && dto.deadlineDate < task.deadlineDate) {
+      const today = new Date().toISOString().slice(0, 10);
+      if (dto.deadlineDate < today && actor.role.name !== RoleName.ADMIN) {
+        throw new ForbiddenException('Moving the deadline earlier than today requires Admin override');
+      }
+    }
+
+    if (dto.needsBudget !== undefined ? dto.needsBudget : task.needsBudget) {
+      const min = dto.budgetMin ?? task.budgetMin;
+      const max = dto.budgetMax ?? task.budgetMax;
+      if (min && max && Number(min) > Number(max)) {
+        throw new BadRequestException('Money range minimum cannot exceed the maximum');
+      }
+    }
+
+    if ((dto.needsApproval ?? task.needsApproval) && !(dto.approverId ?? task.approverId)) {
+      throw new BadRequestException('An approver is required when the Task needs approval');
+    }
+
+    const oldValue = { ...task };
+    Object.assign(task, dto);
+
+    // Keep approvalStatus consistent if the approval requirement changed.
+    if (dto.needsApproval === false) {
+      task.approvalStatus = ApprovalStatus.NOT_REQUIRED;
+      task.approverId = undefined;
+      task.rejectionReason = undefined;
+    } else if (dto.needsApproval === true && oldValue.approvalStatus === ApprovalStatus.NOT_REQUIRED) {
+      task.approvalStatus = ApprovalStatus.PENDING;
+    }
+
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: AuditAction.UPDATE,
+      oldValue,
+      newValue: saved,
+    });
+
+    return this.findOne(saved.id);
+  }
+
+  // No self-reference, no circular ancestry.
+  private async assertNoCircularReference(taskId: string, newParentId: string): Promise<void> {
+    if (taskId === newParentId) {
+      throw new BadRequestException('A Task cannot reference itself as its own parent');
+    }
+    let currentId: string | undefined = newParentId;
+    const visited = new Set<string>();
+    while (currentId) {
+      if (currentId === taskId) {
+        throw new BadRequestException('This change would create a circular Task hierarchy');
+      }
+      if (visited.has(currentId)) break;
+      visited.add(currentId);
+      const ancestor: TaskEntity | null = await this.taskRepo.findOne({ where: { id: currentId } });
+      currentId = ancestor?.parentTaskId;
+    }
+  }
+
+  async changeStatus(id: string, dto: UpdateTaskStatusDto, actor: UserEntity): Promise<TaskEntity> {
+    const task = await this.findOne(id);
+
+    await this.assertCanChangeStatus(task, actor);
+
+    if (task.archivedAt) {
+      throw new BadRequestException('Cannot change the status of an archived Task');
+    }
+
+    if (dto.status === TaskStatus.REOPENED) {
+      return this.reopen(task, dto.reason!, actor);
+    }
+
+    if (task.status === TaskStatus.CANCELLED && dto.status !== TaskStatus.ARCHIVED) {
+      if (actor.role.name !== RoleName.ADMIN) {
+        throw new ForbiddenException('A Cancelled Task can only be reopened by Admin');
+      }
+    }
+
+    const allowedNext = ALLOWED_TRANSITIONS[task.status] ?? [];
+    if (!allowedNext.includes(dto.status)) {
+      if (task.status === TaskStatus.COMPLETED && dto.status === TaskStatus.PENDING) {
+        throw new ConflictException('A Completed Task cannot transition back to Pending');
+      }
+      throw new ConflictException(`Cannot transition Task from ${task.status} to ${dto.status}`);
+    }
+
+    // A Task that needs approval must go through PendingApproval + a
+    // decision before it can be marked Completed directly.
+    if (
+      dto.status === TaskStatus.COMPLETED &&
+      task.needsApproval &&
+      task.approvalStatus !== ApprovalStatus.APPROVED
+    ) {
+      throw new ConflictException(
+        'This Task requires approval; route it through PendingApproval and have the approver decide first',
+      );
+    }
+
+    if (dto.status === TaskStatus.COMPLETED) {
+      const subTasks = await this.taskRepo.find({ where: { parentTaskId: task.id } });
+      const hasIncomplete = subTasks.some(
+        (st) => st.status !== TaskStatus.COMPLETED && st.status !== TaskStatus.CANCELLED,
+      );
+      if (hasIncomplete) {
+        throw new ConflictException(
+          'Cannot mark a Task Completed while it has open (non-completed) Sub-tasks',
+        );
+      }
+    }
+
+    if (dto.status === TaskStatus.CANCELLED && !dto.reason) {
+      throw new BadRequestException('A reason is required to cancel a Task');
+    }
+
+    const oldValue = { status: task.status };
+    task.status = dto.status;
+    if (dto.status === TaskStatus.COMPLETED) task.actualEndDate = new Date();
+
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: AuditAction.STATUS_CHANGE,
+      oldValue,
+      newValue: { status: saved.status },
+      reason: dto.reason,
+    });
+
+    if (saved.projectId) {
+      await this.projectsService.recomputeStatus(saved.projectId);
+    }
+
+    return this.findOne(saved.id);
+  }
+
+  // The designated approver (or Admin) decides on a Task that needs approval.
+  async decideApproval(id: string, dto: DecideTaskApprovalDto, actor: UserEntity): Promise<TaskEntity> {
+    const task = await this.findOne(id);
+
+    if (!task.needsApproval) {
+      throw new BadRequestException('This Task does not require approval');
+    }
+    if (actor.role.name !== RoleName.ADMIN && task.approverId !== actor.id) {
+      throw new ForbiddenException('Only the designated approver or Admin may decide on this Task');
+    }
+    if (task.approvalStatus !== ApprovalStatus.PENDING) {
+      throw new ConflictException('This Task has already been decided on');
+    }
+
+    const oldValue = { approvalStatus: task.approvalStatus, status: task.status };
+
+    if (dto.approve) {
+      task.approvalStatus = ApprovalStatus.APPROVED;
+      task.rejectionReason = undefined;
+      task.status = TaskStatus.COMPLETED;
+      task.actualEndDate = new Date();
+    } else {
+      task.approvalStatus = ApprovalStatus.REJECTED;
+      task.rejectionReason = dto.rejectionReason;
+      task.status = TaskStatus.IN_PROGRESS;
+    }
+
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: dto.approve ? AuditAction.APPROVE : AuditAction.REJECT,
+      oldValue,
+      newValue: { approvalStatus: saved.approvalStatus, status: saved.status },
+      reason: dto.rejectionReason,
+    });
+
+    if (saved.projectId) {
+      await this.projectsService.recomputeStatus(saved.projectId);
+    }
+
+    return this.findOne(saved.id);
+  }
+
+  private async assertCanChangeStatus(task: TaskEntity, actor: UserEntity): Promise<void> {
+    if (actor.role.name === RoleName.ADMIN || task.createdById === actor.id) return;
+    if (task.assignedToId === actor.id) return;
+    const isAssignee = await this.assignmentRepo.exist({
+      where: { taskId: task.id, assigneeId: actor.id },
+    });
+    if (!isAssignee) {
+      throw new ForbiddenException('Only the assigned User(s), the Task creator, or Admin may change status');
+    }
+  }
+
+  private async reopen(task: TaskEntity, reason: string, actor: UserEntity): Promise<TaskEntity> {
+    if (actor.role.name !== RoleName.ADMIN) {
+      throw new ForbiddenException('Only Admin may reopen a Task');
+    }
+    if (task.status !== TaskStatus.COMPLETED && task.status !== TaskStatus.CANCELLED) {
+      throw new ConflictException('Only a Completed or Cancelled Task can be reopened');
+    }
+
+    const oldValue = { status: task.status };
+    task.status = TaskStatus.REOPENED;
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: AuditAction.STATUS_CHANGE,
+      oldValue,
+      newValue: { status: saved.status },
+      reason,
+    });
+
+    if (saved.projectId) {
+      await this.projectsService.recomputeStatus(saved.projectId);
+    }
+
+    return this.findOne(saved.id);
+  }
+
+  // Soft-delete (archive) by default; hard delete Admin-only and only
+  // permitted when the Task has no Assignments/Comments/Attachments/Ratings.
+  async remove(id: string, actor: UserEntity, hardDelete = false): Promise<void> {
+    const task = await this.findOne(id);
+
+    if (hardDelete) {
+      if (actor.role.name !== RoleName.ADMIN) {
+        throw new ForbiddenException('Only Admin may permanently delete a Task');
+      }
+      const [assignments, comments, attachments, ratings] = await Promise.all([
+        this.assignmentRepo.count({ where: { taskId: id } }),
+        this.commentRepo.count({ where: { taskId: id } }),
+        this.attachmentRepo.count({ where: { taskId: id } }),
+        this.ratingRepo.count({ where: { taskId: id } }),
+      ]);
+      if (assignments + comments + attachments + ratings > 0) {
+        throw new BadRequestException(
+          'Cannot permanently delete a Task that has Assignments, Comments, Attachments, or Ratings',
+        );
+      }
+      await this.taskRepo.remove(task);
+      await this.auditLogsService.record({
+        actorId: actor.id,
+        entityType: 'Task',
+        entityId: id,
+        action: AuditAction.DELETE,
+        reason: 'Hard delete',
+      });
+      return;
+    }
+
+    task.archivedAt = new Date();
+    task.status = TaskStatus.ARCHIVED;
+    await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: id,
+      action: AuditAction.ARCHIVE,
+    });
+  }
+}

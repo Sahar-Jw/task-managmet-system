@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { ApiError } from '@/lib/api';
 
 const LEDGER: { label: string; note: string }[] = [
   { label: 'Branch', note: 'Headquarters · HQ' },
@@ -32,9 +33,26 @@ const FEATURES = [
   },
 ];
 
+type AuthMode = 'login' | 'register' | null;
+
 export default function Home() {
-  const { user, loading } = useAuth();
+  const { user, loading, login, register } = useAuth();
   const router = useRouter();
+  const authRef = useRef<HTMLDivElement | null>(null);
+  const [mode, setMode] = useState<AuthMode>(null);
+  const [authError, setAuthError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [departments, setDepartments] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [loadingBranches, setLoadingBranches] = useState(true);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
 
   useEffect(() => {
     if (!loading && user) {
@@ -42,26 +60,287 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const auth = searchParams.get('auth');
+    const requestedMode = auth === 'register' ? 'register' : auth === 'login' ? 'login' : null;
+    setMode(requestedMode);
+  }, []);
+
+  useEffect(() => {
+    if (!mode) return;
+    if (authRef.current) {
+      authRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    async function loadPublicData() {
+      try {
+        const [branchesResponse, departmentsResponse] = await Promise.all([
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/public/branches`),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/public/departments`),
+        ]);
+
+        if (!branchesResponse.ok || !departmentsResponse.ok) {
+          throw new Error('Failed to load branch or department lists.');
+        }
+
+        const branchesJson = await branchesResponse.json();
+        const departmentsJson = await departmentsResponse.json();
+        setBranches(branchesJson.data ?? branchesJson);
+        setDepartments(departmentsJson.data ?? departmentsJson);
+      } catch {
+        setAuthError('Could not load branch or department data. Please refresh.');
+      } finally {
+        setLoadingBranches(false);
+        setLoadingDepartments(false);
+      }
+    }
+
+    loadPublicData();
+  }, []);
+
+  const openAuth = (selectedMode: AuthMode) => {
+    if (!selectedMode) return;
+    setMode(selectedMode);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('auth', selectedMode);
+      url.hash = 'auth';
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
+
+  const resetForm = () => {
+    setAuthError('');
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setPhone('');
+    setBranchId('');
+    setDepartmentId('');
+  };
+
+  const handleModeChange = (selectedMode: AuthMode) => {
+    resetForm();
+    openAuth(selectedMode);
+  };
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setAuthError('');
+    setSubmitting(true);
+
+    try {
+      if (mode === 'login') {
+        await login(email, password);
+      } else if (mode === 'register') {
+        await register({
+          fullName,
+          email,
+          password,
+          phone: phone || undefined,
+          branchId,
+          departmentId,
+        });
+      }
+      router.push('/dashboard');
+    } catch (err) {
+      setAuthError(err instanceof ApiError ? err.message : 'Unable to submit. Please try again.');
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Top bar */}
       <header className="border-b border-slate-200">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="font-serif text-lg font-semibold tracking-tight text-ink">
             Task &amp; Project Manager
           </span>
           <nav className="flex items-center gap-3">
-            <Link href="/login" className="btn-secondary">
+            <button type="button" onClick={() => handleModeChange('login')} className="btn-secondary">
               Sign in
-            </Link>
-            <Link href="/register" className="btn-primary">
+            </button>
+            <button type="button" onClick={() => handleModeChange('register')} className="btn-primary">
               Create account
-            </Link>
+            </button>
           </nav>
         </div>
       </header>
 
-      {/* Hero */}
+      {mode && (
+        <section id="auth" ref={authRef} className="bg-slate-50 py-12">
+          <div className="mx-auto max-w-4xl px-6">
+            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                    {mode === 'login' ? 'Sign in' : 'Register'}
+                  </p>
+                  <h2 className="mt-2 text-2xl font-semibold text-ink">
+                    {mode === 'login'
+                      ? 'Welcome back — sign in to your workspace.'
+                      : 'Create your account and join your team.'}
+                  </h2>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('login')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                      mode === 'login' ? 'bg-brand-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
+                    }`}
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleModeChange('register')}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                      mode === 'register' ? 'bg-brand-600 text-white' : 'border border-slate-200 bg-white text-slate-700'
+                    }`}
+                  >
+                    Create account
+                  </button>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-6 px-6 py-8">
+                {mode === 'register' && (
+                  <>
+                    <div>
+                      <label className="label" htmlFor="fullName">
+                        Full name
+                      </label>
+                      <input
+                        id="fullName"
+                        type="text"
+                        required
+                        maxLength={150}
+                        className="input"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="phone">
+                        Phone (optional)
+                      </label>
+                      <input
+                        id="phone"
+                        type="tel"
+                        className="input"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <label className="label" htmlFor="email">
+                    Email
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    className="input"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    autoFocus={mode === 'login'}
+                  />
+                </div>
+
+                <div>
+                  <label className="label" htmlFor="password">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    type="password"
+                    required
+                    minLength={8}
+                    className="input"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {mode === 'register' && (
+                    <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+                  )}
+                </div>
+
+                {mode === 'register' && (
+                  <>
+                    <div>
+                      <label className="label" htmlFor="branch">
+                        Branch
+                      </label>
+                      <select
+                        id="branch"
+                        required
+                        className="input"
+                        value={branchId}
+                        onChange={(e) => setBranchId(e.target.value)}
+                        disabled={loadingBranches}
+                      >
+                        <option value="" disabled>
+                          {loadingBranches ? 'Loading branches…' : 'Select a branch'}
+                        </option>
+                        {branches.map((branch) => (
+                          <option key={branch.id} value={branch.id}>
+                            {branch.name} ({branch.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="label" htmlFor="department">
+                        Department
+                      </label>
+                      <select
+                        id="department"
+                        required
+                        className="input"
+                        value={departmentId}
+                        onChange={(e) => setDepartmentId(e.target.value)}
+                        disabled={loadingDepartments}
+                      >
+                        <option value="" disabled>
+                          {loadingDepartments ? 'Loading departments…' : 'Select a department'}
+                        </option>
+                        {departments.map((department) => (
+                          <option key={department.id} value={department.id}>
+                            {department.name} ({department.code})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
+
+                {authError && <p className="text-sm text-red-600">{authError}</p>}
+
+                <button type="submit" className="btn-primary w-full" disabled={submitting}>
+                  {submitting
+                    ? mode === 'login'
+                      ? 'Signing in…'
+                      : 'Creating account…'
+                    : mode === 'login'
+                    ? 'Sign in'
+                    : 'Create account'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="bg-brand-50">
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-2 lg:items-center">
           <div>
@@ -77,16 +356,15 @@ export default function Home() {
               every step is written to a log nobody can quietly edit.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/register" className="btn-primary px-6 py-2.5 text-base">
+              <button type="button" onClick={() => handleModeChange('register')} className="btn-primary px-6 py-2.5 text-base">
                 Create your account
-              </Link>
-              <Link href="/login" className="btn-secondary px-6 py-2.5 text-base">
+              </button>
+              <button type="button" onClick={() => handleModeChange('login')} className="btn-secondary px-6 py-2.5 text-base">
                 Sign in
-              </Link>
+              </button>
             </div>
           </div>
 
-          {/* Signature element: the ledger — a literal trace of one task's chain of custody */}
           <div className="card p-6 sm:p-8">
             <p className="mb-5 text-xs font-medium uppercase tracking-widest text-slate-400">
               One task, start to finish
@@ -108,7 +386,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <h2 className="font-serif text-2xl font-semibold text-ink">
           Built for how organizations actually assign work

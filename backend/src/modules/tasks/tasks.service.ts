@@ -37,13 +37,13 @@ import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
  * since they carry extra rules.
  */
 const ALLOWED_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  [TaskStatus.PENDING]: [TaskStatus.UNASSIGNED, TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED],
-  [TaskStatus.UNASSIGNED]: [TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED],
-  [TaskStatus.IN_PROGRESS]: [TaskStatus.PENDING_APPROVAL, TaskStatus.COMPLETED, TaskStatus.CANCELLED],
+  [TaskStatus.PENDING]: [TaskStatus.UNASSIGNED, TaskStatus.IN_PROGRESS, TaskStatus.FINISHED],
+  [TaskStatus.UNASSIGNED]: [TaskStatus.IN_PROGRESS, TaskStatus.FINISHED],
+  [TaskStatus.IN_PROGRESS]: [TaskStatus.PENDING_APPROVAL, TaskStatus.COMPLETED, TaskStatus.FINISHED],
   [TaskStatus.PENDING_APPROVAL]: [TaskStatus.IN_PROGRESS, TaskStatus.COMPLETED],
   [TaskStatus.COMPLETED]: [TaskStatus.REOPENED, TaskStatus.ARCHIVED],
   [TaskStatus.REOPENED]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.CANCELLED]: [TaskStatus.ARCHIVED],
+  [TaskStatus.FINISHED]: [TaskStatus.ARCHIVED],
   [TaskStatus.ARCHIVED]: [],
 };
 
@@ -322,9 +322,9 @@ export class TasksService {
       return this.reopen(task, dto.reason!, actor);
     }
 
-    if (task.status === TaskStatus.CANCELLED && dto.status !== TaskStatus.ARCHIVED) {
+    if (task.status === TaskStatus.FINISHED && dto.status !== TaskStatus.ARCHIVED) {
       if (actor.role.name !== RoleName.ADMIN) {
-        throw new ForbiddenException('A Cancelled Task can only be reopened by Admin');
+        throw new ForbiddenException('A Finished Task can only be reopened by Admin');
       }
     }
 
@@ -351,7 +351,7 @@ export class TasksService {
     if (dto.status === TaskStatus.COMPLETED) {
       const subTasks = await this.taskRepo.find({ where: { parentTaskId: task.id } });
       const hasIncomplete = subTasks.some(
-        (st) => st.status !== TaskStatus.COMPLETED && st.status !== TaskStatus.CANCELLED,
+        (st) => st.status !== TaskStatus.COMPLETED && st.status !== TaskStatus.FINISHED,
       );
       if (hasIncomplete) {
         throw new ConflictException(
@@ -360,8 +360,8 @@ export class TasksService {
       }
     }
 
-    if (dto.status === TaskStatus.CANCELLED && !dto.reason) {
-      throw new BadRequestException('A reason is required to cancel a Task');
+    if (dto.status === TaskStatus.FINISHED && !dto.reason) {
+      throw new BadRequestException('A reason is required to finish a Task');
     }
 
     const oldValue = { status: task.status };
@@ -448,8 +448,8 @@ export class TasksService {
     if (actor.role.name !== RoleName.ADMIN) {
       throw new ForbiddenException('Only Admin may reopen a Task');
     }
-    if (task.status !== TaskStatus.COMPLETED && task.status !== TaskStatus.CANCELLED) {
-      throw new ConflictException('Only a Completed or Cancelled Task can be reopened');
+    if (task.status !== TaskStatus.COMPLETED && task.status !== TaskStatus.FINISHED) {
+      throw new ConflictException('Only a Completed or Finished Task can be reopened');
     }
 
     const oldValue = { status: task.status };

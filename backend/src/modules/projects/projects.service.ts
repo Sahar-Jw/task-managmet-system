@@ -115,7 +115,7 @@ export class ProjectsService {
 
   /**
    * A Project's status automatically becomes Completed only when ALL of its
-   * non-cancelled Tasks are Completed; system-derived, never directly
+   * non-finished Tasks are Completed; system-derived, never directly
    * editable via the API. Called by TasksService whenever a Task's status
    * changes.
    */
@@ -124,7 +124,7 @@ export class ProjectsService {
     if (!project || project.status === ProjectStatus.ARCHIVED) return;
 
     const tasks = await this.taskRepo.find({ where: { projectId } });
-    const relevantTasks = tasks.filter((t) => t.status !== TaskStatus.CANCELLED);
+    const relevantTasks = tasks.filter((t) => t.status !== TaskStatus.FINISHED);
 
     if (relevantTasks.length === 0) return;
 

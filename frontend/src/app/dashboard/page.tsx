@@ -15,7 +15,7 @@ const STATUS_ORDER: TaskStatus[] = [
   'InProgress',
   'PendingApproval',
   'Completed',
-  'Cancelled',
+  'Finished',
 ];
 
 function DashboardContent() {
@@ -37,7 +37,7 @@ function DashboardContent() {
   }));
 
   const upcoming = tasks
-    .filter((t) => t.deadlineDate && !['Completed', 'Cancelled', 'Archived'].includes(t.status))
+    .filter((t) => t.deadlineDate && !['Completed', 'Finished', 'Archived'].includes(t.status))
     .sort((a, b) => (a.deadlineDate! < b.deadlineDate! ? -1 : 1))
     .slice(0, 6);
 

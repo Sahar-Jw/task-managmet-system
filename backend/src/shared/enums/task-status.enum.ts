@@ -5,6 +5,6 @@ export enum TaskStatus {
   PENDING_APPROVAL = 'PendingApproval',
   COMPLETED = 'Completed',
   REOPENED = 'Reopened',
-  CANCELLED = 'Cancelled',
+  FINISHED = 'Finished',
   ARCHIVED = 'Archived',
 }

@@ -30,7 +30,7 @@ import { AuditAction } from '../../shared/enums/audit-action.enum';
  * Users (active/inactive/locked), Projects (every status), and Tasks
  * exercising every field and every corner of the lifecycle — pending,
  * in-progress, needing approval (pending/approved/rejected), completed with
- * an evaluation, a father task with sub-tasks, overdue, cancelled, and
+ * an evaluation, a father task with sub-tasks, overdue, finished, and
  * archived — plus comments, an attachment, a legacy multi-assignee
  * assignment, notifications, and a few audit log rows.
  *
@@ -431,14 +431,14 @@ async function run() {
     deadlineDate: daysAgo(4),
   }));
 
-  // 8. Cancelled task.
+  // 8. finished task.
   await upsert(taskRepo, { titleEn: 'Sponsor summer conference booth' }, () => ({
     titleAr: 'رعاية جناح المؤتمر الصيفي',
     titleEn: 'Sponsor summer conference booth',
     descriptionEn: 'Book and design a booth at the summer tech conference.',
     taskType: TaskType.OTHER,
     priority: TaskPriority.LOW,
-    status: TaskStatus.CANCELLED,
+    status: TaskStatus.FINISHED,
     color: '#94A3B8',
     branchId: hq.id,
     departmentId: engineering.id,

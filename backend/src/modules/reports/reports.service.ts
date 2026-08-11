@@ -81,7 +81,7 @@ export class ReportsService {
           .where('task.assignedToId = :userId', { userId: user.id })
           .andWhere('task.deadlineDate < :today', { today })
           .andWhere('task.status NOT IN (:...done)', {
-            done: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.ARCHIVED],
+            done: [TaskStatus.COMPLETED, TaskStatus.FINISHED, TaskStatus.ARCHIVED],
           })
           .getCount();
 
@@ -123,7 +123,7 @@ export class ReportsService {
         'completedTasks',
       )
       .addSelect(
-        `COUNT(*) FILTER (WHERE task.deadline_date < CURRENT_DATE AND task.status NOT IN ('${TaskStatus.COMPLETED}','${TaskStatus.CANCELLED}','${TaskStatus.ARCHIVED}'))`,
+        `COUNT(*) FILTER (WHERE task.deadline_date < CURRENT_DATE AND task.status NOT IN ('${TaskStatus.COMPLETED}','${TaskStatus.FINISHED}','${TaskStatus.ARCHIVED}'))`,
         'overdueTasks',
       )
       .groupBy('branch.id')

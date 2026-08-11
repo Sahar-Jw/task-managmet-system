@@ -8,7 +8,7 @@ export class InitSchema1721400000000 implements MigrationInterface {
 
     // ---------- ENUM TYPES ----------
     await queryRunner.query(`CREATE TYPE "project_status_enum" AS ENUM ('Planned','Active','Completed','Archived')`);
-    await queryRunner.query(`CREATE TYPE "task_status_enum" AS ENUM ('Pending','Unassigned','InProgress','PendingApproval','Completed','Reopened','Cancelled','Archived')`);
+    await queryRunner.query(`CREATE TYPE "task_status_enum" AS ENUM ('Pending','Unassigned','InProgress','PendingApproval','Completed','Reopened','Finished','Archived')`);
     await queryRunner.query(`CREATE TYPE "task_priority_enum" AS ENUM ('Low','Medium','High','Critical')`);
     await queryRunner.query(`CREATE TYPE "assignment_status_enum" AS ENUM ('PendingAcceptance','Accepted','Rejected','Reassigned','Completed')`);
     await queryRunner.query(`CREATE TYPE "approval_decision_enum" AS ENUM ('Approved','Rejected')`);

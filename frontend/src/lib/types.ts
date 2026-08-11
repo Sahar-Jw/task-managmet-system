@@ -58,7 +58,7 @@ export type TaskStatus =
   | 'PendingApproval'
   | 'Completed'
   | 'Reopened'
-  | 'Cancelled'
+  | 'Finished'
   | 'Archived';
 
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';

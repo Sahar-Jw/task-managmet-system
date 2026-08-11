@@ -48,14 +48,11 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        // Schema changes flow exclusively through versioned migrations
-        // (NFR-MAINT-05); synchronize is only ever true for local scratch use.
         synchronize: config.get<boolean>('DB_SYNCHRONIZE'),
         logging: config.get<boolean>('DB_LOGGING'),
       }),
     }),
 
-    // NFR-SEC-08: rate limiting on auth/public endpoints.
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -83,9 +80,6 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
-    // Order matters: the more specific HttpExceptionFilter first, then the
-    // catch-all. Nest applies @Catch() filters by specificity automatically,
-    // but we still register AllExceptionsFilter last for clarity.
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],

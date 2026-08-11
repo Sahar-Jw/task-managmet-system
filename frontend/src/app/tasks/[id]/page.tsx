@@ -17,13 +17,13 @@ import {
 import type { Task, TaskComment, User } from '@/lib/types';
 
 const NEXT_STATUS_OPTIONS: Record<string, string[]> = {
-  Pending: ['InProgress', 'Cancelled'],
-  Unassigned: ['InProgress', 'Cancelled'],
-  InProgress: ['PendingApproval', 'Completed', 'Cancelled'],
+  Pending: ['InProgress', 'Finished'],
+  Unassigned: ['InProgress', 'Finished'],
+  InProgress: ['PendingApproval', 'Completed', 'Finished'],
   PendingApproval: ['InProgress', 'Completed'],
   Completed: ['Archived'],
   Reopened: ['InProgress'],
-  Cancelled: ['Archived'],
+  Finished: ['Archived'],
   Archived: [],
 };
 
@@ -213,7 +213,7 @@ function TaskDetailContent() {
                   onClick={() =>
                     withFeedback(async () => {
                       const reason =
-                        next === 'Cancelled' ? prompt('Reason for cancelling?') || undefined : undefined;
+                        next === 'Finished' ? prompt('Reason for cancelling?') || undefined : undefined;
                       await TasksApi.changeStatus(task.id, next, reason);
                     })
                   }
@@ -221,7 +221,7 @@ function TaskDetailContent() {
                   Move to {next}
                 </button>
               ))}
-              {isAdmin && (task.status === 'Completed' || task.status === 'Cancelled') && (
+              {isAdmin && (task.status === 'Completed' || task.status === 'Finished') && (
                 <button
                   className="btn-secondary"
                   onClick={() =>

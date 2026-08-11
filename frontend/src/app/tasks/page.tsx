@@ -17,7 +17,7 @@ const STATUSES = [
   'PendingApproval',
   'Completed',
   'Reopened',
-  'Cancelled',
+  'Finished',
   'Archived',
 ];
 

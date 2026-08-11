@@ -87,11 +87,11 @@ export class UpdateTaskDto {
   @IsOptional() @IsDateString() deadlineDate?: string;
 }
 
-/** Reason required for Cancelled/Reopened transitions. */
+/** Reason required for FINISHED/Reopened transitions. */
 export class UpdateTaskStatusDto {
   @IsEnum(TaskStatus) status!: TaskStatus;
 
-  @ValidateIf((o) => [TaskStatus.CANCELLED, TaskStatus.REOPENED].includes(o.status))
+  @ValidateIf((o) => [TaskStatus.FINISHED, TaskStatus.REOPENED].includes(o.status))
   @IsString() @MinLength(10)
   reason?: string;
 }

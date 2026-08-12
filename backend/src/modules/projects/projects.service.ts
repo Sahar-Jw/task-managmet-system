@@ -113,6 +113,35 @@ export class ProjectsService {
     return saved;
   }
 
+  // Restores an Archived Project. Project doesn't track its pre-archive
+  // status (unlike Task), because it's derivable: recomputeStatus() sets
+  // Active/Completed from the Project's current Tasks. We land on Planned
+  // as a starting point (used as-is when the Project has no relevant
+  // Tasks yet), then let recomputeStatus() upgrade it if Tasks exist.
+  async unarchive(id: string, actor: UserEntity): Promise<ProjectEntity> {
+    const project = await this.findOne(id);
+    if (project.status !== ProjectStatus.ARCHIVED) {
+      throw new BadRequestException('Only an Archived Project can be unarchived');
+    }
+
+    const oldValue = { status: project.status, archivedAt: project.archivedAt };
+    project.status = ProjectStatus.PLANNED;
+    project.archivedAt = undefined;
+    const saved = await this.projectRepo.save(project);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Project',
+      entityId: saved.id,
+      action: AuditAction.RESTORE,
+      oldValue,
+      newValue: { status: saved.status },
+    });
+
+    await this.recomputeStatus(saved.id);
+    return this.findOne(saved.id);
+  }
+
   /**
    * A Project's status automatically becomes Completed only when ALL of its
    * non-finished Tasks are Completed; system-derived, never directly

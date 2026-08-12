@@ -14,6 +14,7 @@ import { TasksService } from './tasks.service';
 import {
   CreateTaskDto,
   DecideTaskApprovalDto,
+  QueryMyTasksDto,
   QueryTasksDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
@@ -35,6 +36,14 @@ export class TasksController {
   @Get()
   findAll(@Query() query: QueryTasksDto) {
     return this.tasksService.findAll(query);
+  }
+
+  // "My Tasks": everything assigned to the current user (single assignee
+  // or via task_assignments), filterable by importance/rating/deadline.
+  // NOTE: must stay declared before ':id' or Nest will treat "mine" as an id.
+  @Get('mine')
+  findMine(@Query() query: QueryMyTasksDto, @CurrentUser() user: UserEntity) {
+    return this.tasksService.findMyTasks(user.id, query);
   }
 
   @Get(':id')
@@ -69,6 +78,13 @@ export class TasksController {
   @Roles(RoleName.ADMIN)
   reopen(@Param('id') id: string, @Body() dto: UpdateTaskStatusDto, @CurrentUser() user: UserEntity) {
     return this.tasksService.changeStatus(id, { ...dto, status: dto.status }, user);
+  }
+
+  // Restores an Archived Task to its pre-archive status. Admin-only.
+  @Post(':id/unarchive')
+  @Roles(RoleName.ADMIN)
+  unarchive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.tasksService.unarchive(id, user);
   }
 
   // The designated approver (or Admin) approves/rejects a Task that needs approval.

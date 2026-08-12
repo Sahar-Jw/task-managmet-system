@@ -135,6 +135,7 @@ export const ProjectsApi = {
   update: (id: string, data: Partial<Project>) =>
     api<Project>(`/projects/${id}`, { method: 'PATCH', body: data }),
   archive: (id: string) => api<Project>(`/projects/${id}/archive`, { method: 'POST' }),
+  unarchive: (id: string) => api<Project>(`/projects/${id}/unarchive`, { method: 'POST' }),
 };
 
 // ---------- Tasks ----------
@@ -166,6 +167,10 @@ export interface CreateTaskPayload {
 export const TasksApi = {
   list: (params: Record<string, string> = {}) =>
     api<Paginated<Task>>(`/tasks?${new URLSearchParams(params)}`),
+  // "My Tasks": assigned to me (single assignee or multi-assignee),
+  // filterable by importance (priority), rating, and upcoming deadline.
+  mine: (params: Record<string, string> = {}) =>
+    api<Paginated<Task>>(`/tasks/mine?${new URLSearchParams(params)}`),
   get: (id: string) => api<Task>(`/tasks/${id}`),
   create: (data: CreateTaskPayload) => api<Task>('/tasks', { method: 'POST', body: data }),
   update: (id: string, data: Partial<CreateTaskPayload>) =>
@@ -176,6 +181,7 @@ export const TasksApi = {
     api<Task>(`/tasks/${id}/approval`, { method: 'PATCH', body: { approve, rejectionReason } }),
   reopen: (id: string, reason: string) =>
     api<Task>(`/tasks/${id}/reopen`, { method: 'POST', body: { status: 'Reopened', reason } }),
+  unarchive: (id: string) => api<Task>(`/tasks/${id}/unarchive`, { method: 'POST' }),
   remove: (id: string) => api(`/tasks/${id}`, { method: 'DELETE' }),
 };
 

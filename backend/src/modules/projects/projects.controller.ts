@@ -45,4 +45,10 @@ export class ProjectsController {
   archive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.projectsService.archive(id, user);
   }
+
+  @Post(':id/unarchive')
+  @Roles(RoleName.ADMIN)
+  unarchive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.projectsService.unarchive(id, user);
+  }
 }

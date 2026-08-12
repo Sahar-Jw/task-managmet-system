@@ -1,7 +1,9 @@
 import {
   IsBoolean,
+  IsBooleanString,
   IsDateString,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumberString,
   IsOptional,
@@ -116,4 +118,28 @@ export class QueryTasksDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
   @IsOptional() @IsDateString() dueDateFrom?: string;
   @IsOptional() @IsDateString() dueDateTo?: string;
+}
+
+/**
+ * "My Tasks" — everything assigned to the current user, either via the
+ * single `assignedTo` field or a `task_assignments` row, with filters for
+ * importance (priority), rating (average score left on the task) and
+ * upcoming deadline.
+ */
+export class QueryMyTasksDto extends PaginationQueryDto {
+  @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+
+  // Importance
+  @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
+
+  // Rating: only tasks whose average rating is >= this value (1-5)
+  @IsOptional() @IsNumberString() minRating?: string;
+
+  // Upcoming deadline
+  @IsOptional() @IsBooleanString() upcomingOnly?: string; // deadline >= today & not done
+  @IsOptional() @IsDateString() deadlineFrom?: string;
+  @IsOptional() @IsDateString() deadlineTo?: string;
+
+  @IsOptional() @IsIn(['deadline', 'priority', 'rating', 'createdAt']) sortBy?: string;
+  @IsOptional() @IsIn(['asc', 'desc']) sortDir?: string;
 }

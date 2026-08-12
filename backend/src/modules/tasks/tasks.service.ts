@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { TaskEntity } from './entities/task.entity';
 import { ProjectEntity } from '../projects/entities/project.entity';
 import { SettingEntity } from '../settings/entities/setting.entity';
@@ -18,6 +18,7 @@ import { TaskRatingEntity } from '../task-ratings/entities/task-rating.entity';
 import {
   CreateTaskDto,
   DecideTaskApprovalDto,
+  QueryMyTasksDto,
   QueryTasksDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
@@ -121,6 +122,96 @@ export class TasksService {
     }
 
     const [items, total] = await qb.getManyAndCount();
+    return { items, total, page, limit };
+  }
+
+  /**
+   * "My Tasks": tasks belonging to the current user, either as the single
+   * `assignedTo` or via a `task_assignments` row, filtered by importance
+   * (priority), average rating, and upcoming deadline.
+   *
+   * Uses a two-step ID-fetch-then-hydrate pattern (resolve+order the IDs
+   * with a lean GROUP BY/HAVING query, then load full relations separately)
+   * rather than combining `leftJoinAndSelect` + aggregate ordering +
+   * skip/take in one `getManyAndCount()` call — that combination previously
+   * hit a TypeORM 0.3.x pagination regression in this codebase.
+   */
+  async findMyTasks(userId: string, query: QueryMyTasksDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const idQb = this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoin('task.assignments', 'assignment')
+      .leftJoin('task.ratings', 'rating')
+      .select('task.id', 'id')
+      .addSelect('task.deadlineDate', 'deadlineDate')
+      .addSelect('task.priority', 'priority')
+      .addSelect('AVG(rating.score)', 'avgRating')
+      .where('(task.assignedToId = :userId OR assignment.assigneeId = :userId)', { userId })
+      .andWhere('task.archivedAt IS NULL')
+      .groupBy('task.id');
+
+    if (query.status) idQb.andWhere('task.status = :status', { status: query.status });
+    if (query.priority) idQb.andWhere('task.priority = :priority', { priority: query.priority });
+
+    if (query.upcomingOnly === 'true') {
+      idQb
+        .andWhere('task.deadlineDate IS NOT NULL')
+        .andWhere('task.deadlineDate >= CURRENT_DATE')
+        .andWhere('task.status NOT IN (:...doneStatuses)', {
+          doneStatuses: [TaskStatus.COMPLETED, TaskStatus.FINISHED, TaskStatus.ARCHIVED],
+        });
+    }
+    if (query.deadlineFrom) {
+      idQb.andWhere('task.deadlineDate >= :deadlineFrom', { deadlineFrom: query.deadlineFrom });
+    }
+    if (query.deadlineTo) {
+      idQb.andWhere('task.deadlineDate <= :deadlineTo', { deadlineTo: query.deadlineTo });
+    }
+
+    if (query.minRating) {
+      idQb.having('AVG(rating.score) >= :minRating', { minRating: Number(query.minRating) });
+    }
+
+    const dir = query.sortDir === 'asc' ? 'ASC' : 'DESC';
+    switch (query.sortBy) {
+      case 'priority':
+        idQb.orderBy(
+          `CASE task.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`,
+          query.sortDir === 'desc' ? 'DESC' : 'ASC',
+        );
+        break;
+      case 'rating':
+        idQb.orderBy('"avgRating"', dir);
+        break;
+      case 'createdAt':
+        idQb.orderBy('task.createdAt', dir);
+        break;
+      case 'deadline':
+      default:
+        // Nearest upcoming deadline first by default; tasks with no
+        // deadline sort last regardless of direction.
+        idQb.orderBy('task.deadlineDate', query.sortDir === 'desc' ? 'DESC' : 'ASC', 'NULLS LAST');
+        break;
+    }
+    idQb.addOrderBy('task.id', 'ASC'); // stable tiebreaker
+
+    const rawRows = await idQb.getRawMany<{ id: string }>();
+    const total = rawRows.length;
+    const pageIds = rawRows.slice((page - 1) * limit, (page - 1) * limit + limit).map((r) => r.id);
+
+    if (pageIds.length === 0) {
+      return { items: [], total, page, limit };
+    }
+
+    const hydrated = await this.taskRepo.find({
+      where: { id: In(pageIds) },
+      relations: ['branch', 'department', 'project', 'assignedTo', 'createdBy', 'ratings'],
+    });
+    const byId = new Map(hydrated.map((t) => [t.id, t]));
+    const items = pageIds.map((id) => byId.get(id)).filter((t): t is TaskEntity => !!t);
+
     return { items, total, page, limit };
   }
 
@@ -366,6 +457,10 @@ export class TasksService {
     }
 
     const oldValue = { status: task.status };
+    if (dto.status === TaskStatus.ARCHIVED) {
+      task.statusBeforeArchive = task.status;
+      task.archivedAt = new Date();
+    }
     task.status = dto.status;
     if (dto.status === TaskStatus.COMPLETED) task.actualEndDate = new Date();
 
@@ -505,6 +600,7 @@ export class TasksService {
       return;
     }
 
+    task.statusBeforeArchive = task.status;
     task.archivedAt = new Date();
     task.status = TaskStatus.ARCHIVED;
     await this.taskRepo.save(task);
@@ -515,5 +611,40 @@ export class TasksService {
       entityId: id,
       action: AuditAction.ARCHIVE,
     });
+  }
+
+  // Restores an archived Task to whatever status it held right before it
+  // was archived (falling back to Pending for older rows archived before
+  // this tracking existed). Admin-only, mirroring reopen()'s restriction.
+  async unarchive(id: string, actor: UserEntity): Promise<TaskEntity> {
+    if (actor.role.name !== RoleName.ADMIN) {
+      throw new ForbiddenException('Only Admin may unarchive a Task');
+    }
+
+    const task = await this.findOne(id);
+    if (task.status !== TaskStatus.ARCHIVED) {
+      throw new ConflictException('Only an Archived Task can be unarchived');
+    }
+
+    const oldValue = { status: task.status, archivedAt: task.archivedAt };
+    task.status = task.statusBeforeArchive ?? TaskStatus.PENDING;
+    task.archivedAt = undefined;
+    task.statusBeforeArchive = undefined;
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: AuditAction.RESTORE,
+      oldValue,
+      newValue: { status: saved.status },
+    });
+
+    if (saved.projectId) {
+      await this.projectsService.recomputeStatus(saved.projectId);
+    }
+
+    return this.findOne(saved.id);
   }
 }

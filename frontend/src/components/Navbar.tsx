@@ -69,15 +69,22 @@ export default function Navbar() {
   const links = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/tasks', label: 'Tasks' },
+    { href: '/tasks/mine', label: 'My Tasks' },
     { href: '/projects', label: 'Projects' },
     ...(isAdmin
       ? [
           { href: '/users', label: 'Users' },
           { href: '/settings', label: 'Settings' },
           { href: '/audit-logs', label: 'Audit Log' },
+          { href: '/archive', label: 'Archive' },
         ]
       : []),
   ];
+
+  // '/tasks/mine' is nested under '/tasks', so a plain startsWith() would
+  // light up both tabs at once — carve it out of the parent "Tasks" match.
+  const isLinkActive = (href: string) =>
+    href === '/tasks' ? pathname === '/tasks' || (pathname.startsWith('/tasks/') && !pathname.startsWith('/tasks/mine')) : pathname.startsWith(href);
 
   return (
     <header className="border-b border-slate-200 bg-white">
@@ -85,7 +92,7 @@ export default function Navbar() {
         <div className="flex items-center gap-1">
           <span className="mr-4 font-semibold text-brand-700">Task &amp; Project Manager</span>
           {links.map((link) => (
-            <Link key={link.href} href={link.href} className={linkClass(pathname.startsWith(link.href))}>
+            <Link key={link.href} href={link.href} className={linkClass(isLinkActive(link.href))}>
               {link.label}
             </Link>
           ))}

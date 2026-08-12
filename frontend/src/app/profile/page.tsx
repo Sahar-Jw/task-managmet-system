@@ -130,7 +130,7 @@ function ProfileContent() {
         </div>
         <div>
           <label className="label">Phone</label>
-          <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          <input className="input" value={phone} type='number' onChange={(e) => setPhone(e.target.value)} />
         </div>
         <div>
           <label className="label">Email</label>

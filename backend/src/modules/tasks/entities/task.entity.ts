@@ -179,6 +179,17 @@ export class TaskEntity extends VersionedEntity {
   @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
   archivedAt?: Date;
 
+  // The status this Task held right before it was archived, so it can be
+  // restored to something meaningful instead of a hardcoded default.
+  @Column({
+    name: 'status_before_archive',
+    type: 'enum',
+    enum: TaskStatus,
+    enumName: 'task_status_enum',
+    nullable: true,
+  })
+  statusBeforeArchive?: TaskStatus;
+
   // ---------- Children owned by the Task ----------
   @OneToMany(() => TaskAssignmentEntity, (a) => a.task)
   assignments!: TaskAssignmentEntity[];

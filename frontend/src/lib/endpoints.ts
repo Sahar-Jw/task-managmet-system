@@ -118,6 +118,7 @@ export const UsersApi = {
   },
   removeAvatar: () => api<User>('/users/me/avatar', { method: 'DELETE' }),
   deactivate: (id: string) => api(`/users/${id}`, { method: 'DELETE' }),
+  remove: (id: string) => api(`/users/${id}/permanent`, { method: 'DELETE' }),
   unlock: (id: string) => api<User>(`/users/${id}/unlock`, { method: 'PATCH' }),
   roles: () => api<{ id: string; name: string }[]>('/roles'),
 };
@@ -240,7 +241,25 @@ export const AuditLogsApi = {
 
 // ---------- Reports ----------
 export const ReportsApi = {
-  taskSummary: () => api('/reports/task-summary'),
+  taskSummary: (params: Record<string, string> = {}) =>
+    api(`/reports/task-summary?${new URLSearchParams(params)}`),
+  monthlySummary: (params: Record<string, string> = {}) =>
+    api<{ month: string; done: number; notDone: number }[]>(
+      `/reports/monthly-summary?${new URLSearchParams(params)}`,
+    ),
   userPerformance: () => api('/reports/user-performance'),
-  branchOverview: () => api('/reports/branch-overview'),
+  branchOverview: () =>
+    api<
+      { branchId: string; branchName: string; totalTasks: string; completedTasks: string; overdueTasks: string }[]
+    >('/reports/branch-overview'),
+  departmentOverview: () =>
+    api<
+      {
+        departmentId: string;
+        departmentName: string;
+        totalTasks: string;
+        completedTasks: string;
+        overdueTasks: string;
+      }[]
+    >('/reports/department-overview'),
 };

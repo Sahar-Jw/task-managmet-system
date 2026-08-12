@@ -36,4 +36,10 @@ body {
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
+  .icon-btn {
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .icon-btn-danger {
+    @apply icon-btn border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300;
+  }
 }

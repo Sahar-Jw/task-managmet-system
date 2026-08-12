@@ -15,6 +15,7 @@ import {
   UsersApi,
 } from '@/lib/endpoints';
 import type { Task, TaskComment, User } from '@/lib/types';
+import ReasonModal from '@/components/ReasonModal';
 
 const NEXT_STATUS_OPTIONS: Record<string, string[]> = {
   Pending: ['InProgress', 'Finished'],
@@ -43,6 +44,16 @@ function TaskDetailContent() {
   const [assigneeId, setAssigneeId] = useState('');
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState('');
+
+  // Which "reason" modal (if any) is currently open, and what to do with the reason once confirmed.
+  const [reasonModal, setReasonModal] = useState<{
+    title: string;
+    description?: string;
+    minLength: number;
+    confirmLabel?: string;
+    danger?: boolean;
+    onConfirm: (reason: string) => void;
+  } | null>(null);
 
   async function load() {
     setLoading(true);
@@ -186,10 +197,16 @@ function TaskDetailContent() {
                   <button
                     className="btn-danger"
                     onClick={() =>
-                      withFeedback(async () => {
-                        const reason = prompt('Rejection cause (min 5 characters)?');
-                        if (!reason) return;
-                        await TasksApi.decideApproval(task.id, false, reason);
+                      setReasonModal({
+                        title: 'Reject task approval',
+                        description: 'Please explain why this task is being rejected.',
+                        minLength: 5,
+                        confirmLabel: 'Reject',
+                        danger: true,
+                        onConfirm: (reason) => {
+                          setReasonModal(null);
+                          withFeedback(() => TasksApi.decideApproval(task.id, false, reason));
+                        },
                       })
                     }
                   >
@@ -210,13 +227,22 @@ function TaskDetailContent() {
                 <button
                   key={next}
                   className="btn-secondary"
-                  onClick={() =>
-                    withFeedback(async () => {
-                      const reason =
-                        next === 'Finished' ? prompt('Reason for cancelling?') || undefined : undefined;
-                      await TasksApi.changeStatus(task.id, next, reason);
-                    })
-                  }
+                  onClick={() => {
+                    if (next === 'Finished') {
+                      setReasonModal({
+                        title: 'Finish this task',
+                        description: 'Please provide a reason for marking this task as finished.',
+                        minLength: 10,
+                        confirmLabel: 'Move to Finished',
+                        onConfirm: (reason) => {
+                          setReasonModal(null);
+                          withFeedback(() => TasksApi.changeStatus(task.id, next, reason));
+                        },
+                      });
+                      return;
+                    }
+                    withFeedback(() => TasksApi.changeStatus(task.id, next));
+                  }}
                 >
                   Move to {next}
                 </button>
@@ -225,10 +251,15 @@ function TaskDetailContent() {
                 <button
                   className="btn-secondary"
                   onClick={() =>
-                    withFeedback(async () => {
-                      const reason = prompt('Reason for reopening?');
-                      if (!reason) return;
-                      await TasksApi.reopen(task.id, reason);
+                    setReasonModal({
+                      title: 'Reopen this task',
+                      description: 'Please provide a reason for reopening this task.',
+                      minLength: 10,
+                      confirmLabel: 'Reopen',
+                      onConfirm: (reason) => {
+                        setReasonModal(null);
+                        withFeedback(() => TasksApi.reopen(task.id, reason));
+                      },
                     })
                   }
                 >
@@ -361,10 +392,16 @@ function TaskDetailContent() {
               <button
                 className="btn-danger"
                 onClick={() =>
-                  withFeedback(async () => {
-                    const reason = prompt('Reason for rejecting (min 10 characters)?');
-                    if (!reason) return;
-                    await AssignmentsApi.reject(myAssignment.id, reason);
+                  setReasonModal({
+                    title: 'Reject this assignment',
+                    description: 'Please explain why you are rejecting this assignment.',
+                    minLength: 10,
+                    confirmLabel: 'Reject',
+                    danger: true,
+                    onConfirm: (reason) => {
+                      setReasonModal(null);
+                      withFeedback(() => AssignmentsApi.reject(myAssignment.id, reason));
+                    },
                   })
                 }
               >
@@ -452,6 +489,17 @@ function TaskDetailContent() {
           </div>
         )}
       </div>
+
+      <ReasonModal
+        open={reasonModal !== null}
+        title={reasonModal?.title || ''}
+        description={reasonModal?.description}
+        minLength={reasonModal?.minLength ?? 0}
+        confirmLabel={reasonModal?.confirmLabel}
+        danger={reasonModal?.danger}
+        onCancel={() => setReasonModal(null)}
+        onConfirm={(reason) => reasonModal?.onConfirm(reason)}
+      />
     </div>
   );
 }

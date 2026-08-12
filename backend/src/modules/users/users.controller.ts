@@ -111,4 +111,11 @@ export class UsersController {
   unlock(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.usersService.unlock(id, user);
   }
+
+  // DELETE /users/:id/permanent — hard delete, Admin only
+  @Delete(':id/permanent')
+  @Roles(RoleName.ADMIN)
+  hardDelete(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.usersService.hardDelete(id, user);
+  }
 }

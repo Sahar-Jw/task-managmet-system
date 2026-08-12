@@ -185,6 +185,40 @@ export class UsersService {
     });
   }
 
+  // Permanently removes the row from the database. Only Admin; last active
+  // Admin cannot be removed and an Admin cannot delete their own account.
+  // If the user still has related records (tasks, comments, audit history,
+  // etc.) the DB's foreign-key constraints will reject the delete — in that
+  // case we surface a friendly error suggesting deactivation instead.
+  async hardDelete(id: string, actor: UserEntity): Promise<void> {
+    const user = await this.findById(id);
+    await this.assertNotLastActiveAdmin(user);
+
+    if (actor.id === id) {
+      throw new BadRequestException('You cannot permanently delete your own account');
+    }
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'User',
+      entityId: user.id,
+      action: AuditAction.DELETE,
+      oldValue: { fullName: user.fullName, email: user.email, isActive: user.isActive },
+      reason: 'Permanent deletion by Admin',
+    });
+
+    try {
+      await this.userRepo.delete(id);
+    } catch (err: any) {
+      if (err?.code === '23503') {
+        throw new BadRequestException(
+          'This user has related records (tasks, comments, audit history, etc.) and cannot be permanently deleted. Deactivate the account instead.',
+        );
+      }
+      throw err;
+    }
+  }
+
   private async assertNotLastActiveAdmin(user: UserEntity) {
     if (user.role?.name !== RoleName.ADMIN || !user.isActive) return;
     const activeAdminCount = await this.userRepo

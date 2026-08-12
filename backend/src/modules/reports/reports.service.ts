@@ -46,12 +46,85 @@ export class ReportsService {
     const byDepartment = await base
       .clone()
       .leftJoin('task.department', 'department')
-      .select('department.name', 'department')
+      .select('department.valueEn', 'department')
       .addSelect('COUNT(*)', 'count')
-      .groupBy('department.name')
+      .groupBy('department.valueEn')
       .getRawMany();
 
     return { byStatus, byPriority, byDepartment };
+  }
+
+  // GET /reports/monthly-summary — done vs not-done task counts per month,
+  // for the last `months` calendar months (based on Task.createdAt).
+  // Non-admins are scoped to their own branch + department server-side.
+  async monthlySummary(filters: ReportFilters, months = 12) {
+    const base = this.taskRepo.createQueryBuilder('task');
+    this.applyTaskFilters(base, filters);
+
+    const doneStatuses = [TaskStatus.COMPLETED, TaskStatus.FINISHED];
+
+    const raw = await base
+      .clone()
+      .select("to_char(task.createdAt, 'YYYY-MM')", 'month')
+      .addSelect(
+        `COUNT(*) FILTER (WHERE task.status IN ('${doneStatuses.join("','")}'))`,
+        'done',
+      )
+      .addSelect(
+        `COUNT(*) FILTER (WHERE task.status NOT IN ('${doneStatuses.join("','")}'))`,
+        'notDone',
+      )
+      .groupBy('month')
+      .orderBy('month', 'ASC')
+      .getRawMany();
+
+    // Build a continuous list of the last `months` months so the chart
+    // doesn't skip months with zero tasks.
+    const byMonth = new Map(raw.map((r) => [r.month, r]));
+    const result: { month: string; done: number; notDone: number }[] = [];
+    const now = new Date();
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const found = byMonth.get(key);
+      result.push({
+        month: key,
+        done: found ? parseInt(found.done, 10) : 0,
+        notDone: found ? parseInt(found.notDone, 10) : 0,
+      });
+    }
+
+    return result;
+  }
+
+  // GET /reports/department-overview — aggregated metrics per Department,
+  // mirroring branchOverview below (Department is also a Setting row).
+  // Non-admins only ever see their own department's row.
+  async departmentOverview(scopeDepartmentId?: string) {
+    const raw = await this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoin('task.department', 'department')
+      .where('task.departmentId IS NOT NULL')
+      .andWhere(
+        scopeDepartmentId ? 'task.departmentId = :scopeDepartmentId' : '1=1',
+        scopeDepartmentId ? { scopeDepartmentId } : {},
+      )
+      .select('department.id', 'departmentId')
+      .addSelect('department.valueEn', 'departmentName')
+      .addSelect('COUNT(*)', 'totalTasks')
+      .addSelect(
+        `COUNT(*) FILTER (WHERE task.status = '${TaskStatus.COMPLETED}')`,
+        'completedTasks',
+      )
+      .addSelect(
+        `COUNT(*) FILTER (WHERE task.deadline_date < CURRENT_DATE AND task.status NOT IN ('${TaskStatus.COMPLETED}','${TaskStatus.FINISHED}','${TaskStatus.ARCHIVED}'))`,
+        'overdueTasks',
+      )
+      .groupBy('department.id')
+      .addGroupBy('department.valueEn')
+      .getRawMany();
+
+    return raw;
   }
 
   // GET /reports/user-performance — completion rate, avg rating, overdue count per User
@@ -110,13 +183,18 @@ export class ReportsService {
   // GET /reports/branch-overview — aggregated metrics per Branch.
   // Branch has no relation of its own; Task carries branchId directly, so
   // this joins straight from Task to Branch (no Department hop needed).
-  async branchOverview() {
+  // Non-admins only ever see their own branch's row.
+  async branchOverview(scopeBranchId?: string) {
     const raw = await this.taskRepo
       .createQueryBuilder('task')
       .leftJoin('task.branch', 'branch')
       .where('task.branchId IS NOT NULL')
+      .andWhere(
+        scopeBranchId ? 'task.branchId = :scopeBranchId' : '1=1',
+        scopeBranchId ? { scopeBranchId } : {},
+      )
       .select('branch.id', 'branchId')
-      .addSelect('branch.name', 'branchName')
+      .addSelect('branch.valueEn', 'branchName')
       .addSelect('COUNT(*)', 'totalTasks')
       .addSelect(
         `COUNT(*) FILTER (WHERE task.status = '${TaskStatus.COMPLETED}')`,
@@ -127,7 +205,7 @@ export class ReportsService {
         'overdueTasks',
       )
       .groupBy('branch.id')
-      .addGroupBy('branch.name')
+      .addGroupBy('branch.valueEn')
       .getRawMany();
 
     return raw;

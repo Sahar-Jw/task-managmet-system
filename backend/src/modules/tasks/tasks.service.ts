@@ -103,6 +103,7 @@ export class TasksService {
 
     if (query.status) qb.andWhere('task.status = :status', { status: query.status });
     if (query.taskType) qb.andWhere('task.taskType = :taskType', { taskType: query.taskType });
+    if (query.priority) qb.andWhere('task.priority = :priority', { priority: query.priority });
     if (query.branchId) qb.andWhere('task.branchId = :branchId', { branchId: query.branchId });
     if (query.projectId) qb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
     if (query.departmentId) qb.andWhere('task.departmentId = :departmentId', { departmentId: query.departmentId });

@@ -21,9 +21,12 @@ const STATUSES = [
   'Archived',
 ];
 
+const PRIORITIES = ['', 'Low', 'Medium', 'High', 'Critical'];
+
 function TasksContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [priority, setPriority] = useState(searchParams.get('priority') || '');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,11 +36,12 @@ function TasksContent() {
     setError('');
     const params: Record<string, string> = { limit: '50' };
     if (status) params.status = status;
+    if (priority) params.priority = priority;
     TasksApi.list(params)
       .then((res) => setTasks(res.items))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [status]);
+  }, [status, priority]);
 
   return (
     <div>
@@ -48,7 +52,7 @@ function TasksContent() {
         </Link>
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {STATUSES.map((s) => (
           <button
             key={s || 'all'}
@@ -56,6 +60,21 @@ function TasksContent() {
             className={`btn ${status === s ? 'btn-primary' : 'btn-secondary'}`}
           >
             {s || 'All'}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-slate-500">Priority:</span>
+        {PRIORITIES.map((p) => (
+          <button
+            key={p || 'all'}
+            onClick={() => setPriority(p)}
+            className={`btn px-3 py-1 text-xs ${
+              priority === p ? 'btn-primary' : 'btn-secondary'
+            }`}
+          >
+            {p || 'All'}
           </button>
         ))}
       </div>

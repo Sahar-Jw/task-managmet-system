@@ -35,11 +35,12 @@ export class UserEntity extends VersionedEntity {
   @JoinColumn({ name: 'role_id' })
   role!: RoleEntity;
 
-  // NOTE: Department and Branch are standalone lookup entities with no
-  // relations declared on their side (see DepartmentEntity/BranchEntity).
-  // These are kept here as plain reference IDs (not TypeORM relations) so a
-  // User can still record which Department/Branch it organizationally
-  // belongs to, without Department/Branch having to know about Users.
+  // NOTE: Department and Branch are just rows in the polymorphic Setting
+  // entity (see SettingType.DEPARTMENT / SettingType.BRANCH), which has no
+  // relations declared on its side. These are kept here as plain reference
+  // IDs (not TypeORM relations) so a User can still record which
+  // Department/Branch it organizationally belongs to, without Setting
+  // having to know about Users.
   @Column({ name: 'department_id', type: 'uuid' })
   departmentId!: string;
 

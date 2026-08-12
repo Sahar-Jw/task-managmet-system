@@ -7,8 +7,7 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { BranchEntity } from '../../branches/entities/branch.entity';
-import { DepartmentEntity } from '../../departments/entities/department.entity';
+import { SettingEntity } from '../../settings/entities/setting.entity';
 import { ProjectEntity } from '../../projects/entities/project.entity';
 import { UserEntity } from '../../users/entities/user.entity';
 import { TaskAssignmentEntity } from '../../task-assignments/entities/task-assignment.entity';
@@ -22,8 +21,9 @@ import { TaskType } from '../../../shared/enums/task-type.enum';
 import { ApprovalStatus } from '../../../shared/enums/approval-status.enum';
 
 /**
- * Task is the central/hub entity of the system. Branch, Department and
- * Project are simple standalone lookup tables (no relations of their own);
+ * Task is the central/hub entity of the system. Branch and Department are
+ * now just rows in the polymorphic `settings` table (SettingType.BRANCH /
+ * SettingType.DEPARTMENT); Project remains its own standalone lookup table.
  * Task is the ONLY entity that relates to all three, each independently
  * (a Task can have a Branch, a Department and a Project all set at once,
  * without any of the three needing to reference one another).
@@ -84,16 +84,16 @@ export class TaskEntity extends VersionedEntity {
   @Column({ name: 'branch_id', type: 'uuid', nullable: true })
   branchId?: string;
 
-  @ManyToOne(() => BranchEntity, { nullable: true })
+  @ManyToOne(() => SettingEntity, { nullable: true })
   @JoinColumn({ name: 'branch_id' })
-  branch?: BranchEntity;
+  branch?: SettingEntity;
 
   @Column({ name: 'department_id', type: 'uuid', nullable: true })
   departmentId?: string;
 
-  @ManyToOne(() => DepartmentEntity, { nullable: true })
+  @ManyToOne(() => SettingEntity, { nullable: true })
   @JoinColumn({ name: 'department_id' })
-  department?: DepartmentEntity;
+  department?: SettingEntity;
 
   @Column({ name: 'project_id', type: 'uuid', nullable: true })
   projectId?: string;

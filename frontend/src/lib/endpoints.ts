@@ -1,11 +1,12 @@
 import { api } from './api';
 import type {
   AuditLogEntry,
-  Branch,
-  Department,
   Notification,
   Paginated,
   Project,
+  Setting,
+  SettingType,
+  SettingValueType,
   Task,
   TaskComment,
   TaskRating,
@@ -36,35 +37,61 @@ export const AuthApi = {
 };
 
 // ---------- Public directory (unauthenticated; powers the sign-up form) ----------
-// Branch and Department are independent, standalone lists (neither
-// references the other), so there is no cascading branchId filter here.
+// Branch and Department are independent, filtered slices of the polymorphic
+// Setting list, so there is no cascading branchId filter here.
 export const PublicApi = {
-  branches: () => api<{ id: string; name: string; code: string }[]>('/public/branches'),
+  branches: () =>
+    api<{ id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]>(
+      '/public/branches',
+    ),
   departments: () =>
-    api<{ id: string; name: string; code: string }[]>('/public/departments'),
+    api<{ id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]>(
+      '/public/departments',
+    ),
 };
 
-// ---------- Branches ----------
-// Branch is a standalone lookup entity: no relation to any other entity.
+// ---------- Settings ----------
+// Setting is the single polymorphic table behind Departments, Branches and
+// Project Settings — pass `type` to work with just one "table" at a time.
+export interface CreateSettingPayload {
+  type: SettingType;
+  codeAr: string;
+  codeEn: string;
+  valueType: SettingValueType;
+  valueAr?: string;
+  valueEn?: string;
+  valueNumber?: number;
+  address?: string;
+  isAdminDepartment?: boolean;
+}
+
+export const SettingsApi = {
+  list: (type?: SettingType) =>
+    api<Setting[]>(`/settings${type ? `?type=${type}` : ''}`),
+  get: (id: string) => api<Setting>(`/settings/${id}`),
+  create: (data: CreateSettingPayload) =>
+    api<Setting>('/settings', { method: 'POST', body: data }),
+  update: (id: string, data: Partial<CreateSettingPayload> & { isActive?: boolean }) =>
+    api<Setting>(`/settings/${id}`, { method: 'PATCH', body: data }),
+  remove: (id: string) => api(`/settings/${id}`, { method: 'DELETE' }),
+};
+
+// Thin, type-pinned wrappers kept so existing Branch/Department call sites
+// (task forms, user forms, etc.) don't need to pass `type` everywhere.
 export const BranchesApi = {
-  list: () => api<Branch[]>('/branches'),
-  create: (data: { name: string; code: string; address?: string }) =>
-    api<Branch>('/branches', { method: 'POST', body: data }),
-  update: (id: string, data: Partial<Branch>) =>
-    api<Branch>(`/branches/${id}`, { method: 'PATCH', body: data }),
-  remove: (id: string) => api(`/branches/${id}`, { method: 'DELETE' }),
+  list: () => SettingsApi.list('branch'),
+  create: (data: Omit<CreateSettingPayload, 'type'>) =>
+    SettingsApi.create({ ...data, type: 'branch' }),
+  update: (id: string, data: Partial<CreateSettingPayload>) => SettingsApi.update(id, data),
+  remove: (id: string) => SettingsApi.remove(id),
 };
 
-// ---------- Departments ----------
-// Department is a standalone lookup entity: no relation to Branch or any
-// other entity — only Task references it.
 export const DepartmentsApi = {
-  list: () => api<Department[]>('/departments'),
-  create: (data: { name: string; code: string }) =>
-    api<Department>('/departments', { method: 'POST', body: data }),
-  update: (id: string, data: Partial<Department>) =>
-    api<Department>(`/departments/${id}`, { method: 'PATCH', body: data }),
-  remove: (id: string) => api(`/departments/${id}`, { method: 'DELETE' }),
+  list: () => SettingsApi.list('department'),
+  create: (data: Omit<CreateSettingPayload, 'type'>) =>
+    SettingsApi.create({ ...data, type: 'department' }),
+  update: (id: string, data: Partial<CreateSettingPayload>) => SettingsApi.update(id, data),
+  remove: (id: string) => SettingsApi.remove(id),
 };
 
 // ---------- Users ----------

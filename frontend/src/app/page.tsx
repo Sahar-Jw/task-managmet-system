@@ -49,8 +49,12 @@ export default function Home() {
   const [phone, setPhone] = useState('');
   const [branchId, setBranchId] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [branches, setBranches] = useState<{ id: string; name: string; code: string }[]>([]);
-  const [departments, setDepartments] = useState<{ id: string; name: string; code: string }[]>([]);
+  const [branches, setBranches] = useState<
+    { id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]
+  >([]);
+  const [departments, setDepartments] = useState<
+    { id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]
+  >([]);
   const [loadingBranches, setLoadingBranches] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
 
@@ -293,7 +297,7 @@ export default function Home() {
                         </option>
                         {branches.map((branch) => (
                           <option key={branch.id} value={branch.id}>
-                            {branch.name} ({branch.code})
+                            {branch.valueEn} ({branch.codeEn})
                           </option>
                         ))}
                       </select>
@@ -316,7 +320,7 @@ export default function Home() {
                         </option>
                         {departments.map((department) => (
                           <option key={department.id} value={department.id}>
-                            {department.name} ({department.code})
+                            {department.valueEn} ({department.codeEn})
                           </option>
                         ))}
                       </select>

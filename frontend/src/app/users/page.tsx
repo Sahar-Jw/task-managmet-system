@@ -147,7 +147,7 @@ function UsersContent() {
                 <option value="">Select…</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
-                    {b.name}
+                    {b.valueEn} ({b.codeEn})
                   </option>
                 ))}
               </select>
@@ -163,7 +163,7 @@ function UsersContent() {
                 <option value="">Select…</option>
                 {departments.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.name}
+                    {d.valueEn} ({d.codeEn})
                   </option>
                 ))}
               </select>

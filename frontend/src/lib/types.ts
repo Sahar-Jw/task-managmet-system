@@ -3,25 +3,31 @@ export interface Role {
   name: 'ADMIN' | 'USER';
 }
 
-// Branch is a standalone lookup entity: no relation to any other entity.
-export interface Branch {
+export type SettingType = 'department' | 'branch' | 'project_setting';
+export type SettingValueType = 'string' | 'number';
+
+// Setting is the single polymorphic lookup table that replaced the old
+// standalone Branch and Department tables (and also carries generic
+// Project Settings). Every row is exactly one `type`; only the value pair
+// matching `valueType` is populated (string pair OR number).
+export interface Setting {
   id: string;
-  name: string;
-  code: string;
-  address?: string;
+  type: SettingType;
+  codeAr: string;
+  codeEn: string;
+  valueType: SettingValueType;
+  valueAr?: string;
+  valueEn?: string;
+  valueNumber?: string;
+  address?: string; // branch-only
+  isAdminDepartment?: boolean; // department-only
   isActive: boolean;
 }
 
-// Department is a standalone lookup entity: no relation to Branch or any
-// other entity. Only Task references Department (and Branch, and Project),
-// each independently.
-export interface Department {
-  id: string;
-  name: string;
-  code: string;
-  isActive: boolean;
-  isAdminDepartment?: boolean;
-}
+// Thin aliases kept so Task.branch / Task.department (below) read naturally
+// — both are just Setting rows filtered by type.
+export type Branch = Setting;
+export type Department = Setting;
 
 export interface User {
   id: string;

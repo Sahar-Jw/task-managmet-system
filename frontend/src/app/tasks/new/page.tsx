@@ -260,7 +260,7 @@ function NewTaskContent() {
               <select className="input" value={form.branchId} onChange={(e) => set('branchId', e.target.value)}>
                 <option value="">None</option>
                 {branches.map((b) => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
+                  <option key={b.id} value={b.id}>{b.valueEn} ({b.codeEn})</option>
                 ))}
               </select>
             </div>
@@ -274,7 +274,7 @@ function NewTaskContent() {
               >
                 <option value="" disabled>Select…</option>
                 {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
+                  <option key={d.id} value={d.id}>{d.valueEn} ({d.codeEn})</option>
                 ))}
               </select>
             </div>

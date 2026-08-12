@@ -9,8 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaskEntity } from './entities/task.entity';
 import { ProjectEntity } from '../projects/entities/project.entity';
-import { DepartmentEntity } from '../departments/entities/department.entity';
-import { BranchEntity } from '../branches/entities/branch.entity';
+import { SettingEntity } from '../settings/entities/setting.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { TaskAssignmentEntity } from '../task-assignments/entities/task-assignment.entity';
 import { TaskCommentEntity } from '../task-comments/entities/task-comment.entity';
@@ -30,6 +29,7 @@ import { ProjectStatus } from '../../shared/enums/project-status.enum';
 import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { RoleName } from '../../shared/enums/role.enum';
 import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
+import { SettingType } from '../../shared/enums/setting-type.enum';
 
 /**
  * Allowed forward transitions per the Task Lifecycle state diagram.
@@ -70,10 +70,8 @@ export class TasksService {
     private readonly taskRepo: Repository<TaskEntity>,
     @InjectRepository(ProjectEntity)
     private readonly projectRepo: Repository<ProjectEntity>,
-    @InjectRepository(DepartmentEntity)
-    private readonly departmentRepo: Repository<DepartmentEntity>,
-    @InjectRepository(BranchEntity)
-    private readonly branchRepo: Repository<BranchEntity>,
+    @InjectRepository(SettingEntity)
+    private readonly settingRepo: Repository<SettingEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
     @InjectRepository(TaskAssignmentEntity)
@@ -133,7 +131,9 @@ export class TasksService {
 
   async create(dto: CreateTaskDto, actor: UserEntity): Promise<TaskEntity> {
     if (dto.branchId) {
-      const branch = await this.branchRepo.findOne({ where: { id: dto.branchId } });
+      const branch = await this.settingRepo.findOne({
+        where: { id: dto.branchId, type: SettingType.BRANCH },
+      });
       if (!branch || !branch.isActive) {
         throw new BadRequestException('Target Branch is invalid or inactive');
       }

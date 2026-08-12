@@ -4,8 +4,7 @@ import { writeFileSync, mkdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { AppDataSource } from '../data-source';
 import { RoleEntity } from '../../modules/roles/entities/role.entity';
-import { BranchEntity } from '../../modules/branches/entities/branch.entity';
-import { DepartmentEntity } from '../../modules/departments/entities/department.entity';
+import { SettingEntity } from '../../modules/settings/entities/setting.entity';
 import { ProjectEntity } from '../../modules/projects/entities/project.entity';
 import { TaskEntity } from '../../modules/tasks/entities/task.entity';
 import { TaskAssignmentEntity } from '../../modules/task-assignments/entities/task-assignment.entity';
@@ -24,6 +23,8 @@ import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
 import { AssignmentStatus } from '../../shared/enums/assignment-status.enum';
 import { NotificationType } from '../../shared/enums/notification-type.enum';
 import { AuditAction } from '../../shared/enums/audit-action.enum';
+import { SettingType } from '../../shared/enums/setting-type.enum';
+import { SettingValueType } from '../../shared/enums/setting-value-type.enum';
 
 /**
  * Bootstraps a fully populated test database: Roles, Branches, Departments,
@@ -45,8 +46,7 @@ async function run() {
   await AppDataSource.initialize();
 
   const roleRepo = AppDataSource.getRepository(RoleEntity);
-  const branchRepo = AppDataSource.getRepository(BranchEntity);
-  const deptRepo = AppDataSource.getRepository(DepartmentEntity);
+  const settingRepo = AppDataSource.getRepository(SettingEntity);
   const userRepo = AppDataSource.getRepository(UserEntity);
   const projectRepo = AppDataSource.getRepository(ProjectEntity);
   const taskRepo = AppDataSource.getRepository(TaskEntity);
@@ -70,39 +70,82 @@ async function run() {
   }));
 
   // -------------------------------------------------------------- Branches
-  const hq = await upsert(branchRepo, { code: 'HQ' }, () => ({
-    name: 'Headquarters',
-    code: 'HQ',
+  const hq = await upsert(settingRepo, { type: SettingType.BRANCH, codeEn: 'HQ' }, () => ({
+    type: SettingType.BRANCH,
+    codeAr: 'HQ',
+    codeEn: 'HQ',
+    valueType: SettingValueType.STRING,
+    valueAr: 'المقر الرئيسي',
+    valueEn: 'Headquarters',
     address: 'Riyadh, Saudi Arabia',
     isActive: true,
   }));
-  const jeddah = await upsert(branchRepo, { code: 'JED' }, () => ({
-    name: 'Jeddah Branch',
-    code: 'JED',
+  const jeddah = await upsert(settingRepo, { type: SettingType.BRANCH, codeEn: 'JED' }, () => ({
+    type: SettingType.BRANCH,
+    codeAr: 'JED',
+    codeEn: 'JED',
+    valueType: SettingValueType.STRING,
+    valueAr: 'فرع جدة',
+    valueEn: 'Jeddah Branch',
     address: 'Jeddah, Saudi Arabia',
     isActive: true,
   }));
 
   // ------------------------------------------------------------ Departments
-  const adminDept = await upsert(deptRepo, { code: 'ADMIN' }, () => ({
-    name: 'Administration',
-    code: 'ADMIN',
+  const adminDept = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ADMIN' }, () => ({
+    type: SettingType.DEPARTMENT,
+    codeAr: 'ADMIN',
+    codeEn: 'ADMIN',
+    valueType: SettingValueType.STRING,
+    valueAr: 'الإدارة',
+    valueEn: 'Administration',
     isActive: true,
     isAdminDepartment: true,
   }));
-  const engineering = await upsert(deptRepo, { code: 'ENG' }, () => ({
-    name: 'Engineering',
-    code: 'ENG',
+  const engineering = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ENG' }, () => ({
+    type: SettingType.DEPARTMENT,
+    codeAr: 'ENG',
+    codeEn: 'ENG',
+    valueType: SettingValueType.STRING,
+    valueAr: 'الهندسة',
+    valueEn: 'Engineering',
     isActive: true,
   }));
-  const finance = await upsert(deptRepo, { code: 'FIN' }, () => ({
-    name: 'Finance',
-    code: 'FIN',
+  const finance = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'FIN' }, () => ({
+    type: SettingType.DEPARTMENT,
+    codeAr: 'FIN',
+    codeEn: 'FIN',
+    valueType: SettingValueType.STRING,
+    valueAr: 'المالية',
+    valueEn: 'Finance',
     isActive: true,
   }));
-  const hr = await upsert(deptRepo, { code: 'HR' }, () => ({
-    name: 'Human Resources',
-    code: 'HR',
+  const hr = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'HR' }, () => ({
+    type: SettingType.DEPARTMENT,
+    codeAr: 'HR',
+    codeEn: 'HR',
+    valueType: SettingValueType.STRING,
+    valueAr: 'الموارد البشرية',
+    valueEn: 'Human Resources',
+    isActive: true,
+  }));
+
+  // ------------------------------------------------------- Project Settings
+  await upsert(settingRepo, { type: SettingType.PROJECT_SETTING, codeEn: 'MAX_UPLOAD_SIZE_MB' }, () => ({
+    type: SettingType.PROJECT_SETTING,
+    codeAr: 'MAX_UPLOAD_SIZE_MB',
+    codeEn: 'MAX_UPLOAD_SIZE_MB',
+    valueType: SettingValueType.NUMBER,
+    valueNumber: '25',
+    isActive: true,
+  }));
+  await upsert(settingRepo, { type: SettingType.PROJECT_SETTING, codeEn: 'DEFAULT_CURRENCY' }, () => ({
+    type: SettingType.PROJECT_SETTING,
+    codeAr: 'DEFAULT_CURRENCY',
+    codeEn: 'DEFAULT_CURRENCY',
+    valueType: SettingValueType.STRING,
+    valueAr: 'ريال سعودي',
+    valueEn: 'SAR',
     isActive: true,
   }));
 

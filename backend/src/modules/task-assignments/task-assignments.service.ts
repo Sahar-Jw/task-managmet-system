@@ -67,14 +67,9 @@ export class TaskAssignmentsService {
       throw new BadRequestException('Cannot assign a Task to a deactivated User');
     }
 
-    // BR-047: cannot assign outside the Task's Department unless cross-department is allowed.
-    // Cross-department override is not yet exposed via API, so this is enforced strictly.
-    if (assignee.departmentId !== task.departmentId) {
-      throw new ForbiddenException(
-        'Cannot assign a Task to a User outside the Task Department without an explicit cross-department override',
-      );
-    }
-
+    // NOTE: BR-047 (department-restricted assignment) has been removed per
+    // product decision — any active User can be assigned to any Task,
+    // regardless of department.
     // BR-048: Assignment due date cannot exceed the parent Task's due date.
     if (dto.dueDate && task.deadlineDate && dto.dueDate > task.deadlineDate) {
       throw new BadRequestException("Assignment due date cannot exceed the parent Task's due date");
@@ -213,9 +208,9 @@ export class TaskAssignmentsService {
     const task = await this.taskRepo.findOne({ where: { id: previous.taskId } });
     if (!task) throw new NotFoundException('Task not found');
 
-    if (newAssignee.departmentId !== task.departmentId) {
-      throw new ForbiddenException('Cannot assign a Task to a User outside the Task Department'); // BR-047
-    }
+    // NOTE: BR-047 (department-restricted assignment) has been removed per
+    // product decision — any active User can be assigned to any Task,
+    // regardless of department.
     if (dto.dueDate && task.deadlineDate && dto.dueDate > task.deadlineDate) {
       throw new BadRequestException("Assignment due date cannot exceed the parent Task's due date"); // BR-048
     }

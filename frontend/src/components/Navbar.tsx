@@ -25,7 +25,7 @@ export default function Navbar() {
     ...(isAdmin
       ? [
           { href: '/users', label: 'Users' },
-          { href: '/branches', label: 'Branches' },
+          { href: '/settings', label: 'Settings' },
           { href: '/audit-logs', label: 'Audit Log' },
         ]
       : []),

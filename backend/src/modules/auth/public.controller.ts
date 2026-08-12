@@ -1,38 +1,35 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { BranchesService } from '../branches/branches.service';
-import { DepartmentsService } from '../departments/departments.service';
+import { SettingsService } from '../settings/settings.service';
 import { Public } from '../../common/decorators/public.decorator';
+import { SettingType } from '../../shared/enums/setting-type.enum';
 
 /**
  * Unauthenticated directory data needed by the public sign-up form
  * (POST /auth/register): a new visitor picks a Branch and a Department
- * (two independent flat lists — Branch and Department have no relation to
- * one another) before they have a token. Only minimal, non-sensitive
- * fields are returned.
+ * (two independent flat lists, each just a filtered slice of the
+ * polymorphic `settings` table) before they have a token. Only minimal,
+ * non-sensitive fields are returned.
  */
 @ApiTags('public')
 @Public()
 @Controller('public')
 export class PublicController {
-  constructor(
-    private readonly branchesService: BranchesService,
-    private readonly departmentsService: DepartmentsService,
-  ) {}
+  constructor(private readonly settingsService: SettingsService) {}
 
   @Get('branches')
   async branches() {
-    const branches = await this.branchesService.findAll();
+    const branches = await this.settingsService.findAll(SettingType.BRANCH);
     return branches
       .filter((b) => b.isActive)
-      .map((b) => ({ id: b.id, name: b.name, code: b.code }));
+      .map((b) => ({ id: b.id, codeAr: b.codeAr, codeEn: b.codeEn, valueAr: b.valueAr, valueEn: b.valueEn }));
   }
 
   @Get('departments')
   async departments() {
-    const departments = await this.departmentsService.findAll();
+    const departments = await this.settingsService.findAll(SettingType.DEPARTMENT);
     return departments
       .filter((d) => d.isActive)
-      .map((d) => ({ id: d.id, name: d.name, code: d.code }));
+      .map((d) => ({ id: d.id, codeAr: d.codeAr, codeEn: d.codeEn, valueAr: d.valueAr, valueEn: d.valueEn }));
   }
 }

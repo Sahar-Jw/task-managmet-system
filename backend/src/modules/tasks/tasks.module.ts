@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TaskEntity } from './entities/task.entity';
 import { ProjectEntity } from '../projects/entities/project.entity';
-import { DepartmentEntity } from '../departments/entities/department.entity';
-import { BranchEntity } from '../branches/entities/branch.entity';
+import { SettingEntity } from '../settings/entities/setting.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { TaskAssignmentEntity } from '../task-assignments/entities/task-assignment.entity';
 import { TaskCommentEntity } from '../task-comments/entities/task-comment.entity';
@@ -19,8 +18,7 @@ import { ProjectsModule } from '../projects/projects.module';
     TypeOrmModule.forFeature([
       TaskEntity,
       ProjectEntity,
-      DepartmentEntity,
-      BranchEntity,
+      SettingEntity,
       UserEntity,
       TaskAssignmentEntity,
       TaskCommentEntity,

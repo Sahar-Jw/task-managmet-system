@@ -118,11 +118,11 @@ function TaskDetailContent() {
           <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-slate-400">Branch</dt>
-              <dd className="text-slate-700">{task.branch?.name || '—'}</dd>
+              <dd className="text-slate-700">{task.branch?.valueEn || '—'}</dd>
             </div>
             <div>
               <dt className="text-slate-400">Department</dt>
-              <dd className="text-slate-700">{task.department?.name || '—'}</dd>
+              <dd className="text-slate-700">{task.department?.valueEn || '—'}</dd>
             </div>
             <div>
               <dt className="text-slate-400">Project</dt>

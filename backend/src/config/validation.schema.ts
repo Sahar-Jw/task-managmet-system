@@ -20,7 +20,7 @@ export class EnvironmentVariables {
   DB_USERNAME!: string;
 
   @IsString()
-  DB_NAME!: string;
+  DB_NAME!: string;a
 
   @IsString()
   JWT_ACCESS_SECRET!: string;

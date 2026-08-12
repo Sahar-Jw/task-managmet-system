@@ -10,8 +10,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { UserSessionEntity } from './entities/user-session.entity';
 import { UsersModule } from '../users/users.module';
-import { BranchesModule } from '../branches/branches.module';
-import { DepartmentsModule } from '../departments/departments.module';
+import { SettingsModule } from '../settings/settings.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
 
 @Module({
@@ -27,8 +26,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
       }),
     }),
     UsersModule,
-    BranchesModule,
-    DepartmentsModule,
+    SettingsModule,
     AuditLogsModule,
   ],
   providers: [AuthService, JwtStrategy],

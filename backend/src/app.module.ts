@@ -9,8 +9,7 @@ import { validate } from './config/validation.schema';
 
 
 import { RolesModule } from './modules/roles/roles.module';
-import { BranchesModule } from './modules/branches/branches.module';
-import { DepartmentsModule } from './modules/departments/departments.module';
+import { SettingsModule } from './modules/settings/settings.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProjectsModule } from './modules/projects/projects.module';
@@ -61,8 +60,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
     ]),
 
     RolesModule,
-    BranchesModule,
-    DepartmentsModule,
+    SettingsModule,
     UsersModule,
     AuthModule,
     ProjectsModule,

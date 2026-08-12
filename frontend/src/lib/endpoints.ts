@@ -111,6 +111,12 @@ export const UsersApi = {
     api<User>(`/users/${id}`, { method: 'PATCH', body: data }),
   updateOwnProfile: (data: { fullName?: string; phone?: string }) =>
     api<User>('/users/me', { method: 'PATCH', body: data }),
+  uploadAvatar: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api<User>('/users/me/avatar', { method: 'POST', body: form, isForm: true });
+  },
+  removeAvatar: () => api<User>('/users/me/avatar', { method: 'DELETE' }),
   deactivate: (id: string) => api(`/users/${id}`, { method: 'DELETE' }),
   unlock: (id: string) => api<User>(`/users/${id}/unlock`, { method: 'PATCH' }),
   roles: () => api<{ id: string; name: string }[]>('/roles'),

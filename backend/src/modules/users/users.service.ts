@@ -9,6 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
+import { unlink } from 'fs/promises';
+import { join } from 'path';
 import { UserEntity } from './entities/user.entity';
 import {
   AdminUpdateUserDto,
@@ -276,5 +278,56 @@ export class UsersService {
   /** Internal helper used by AuthService for login-attempt tracking */
   async saveEntity(user: UserEntity): Promise<UserEntity> {
     return this.userRepo.save(user);
+  }
+
+  async uploadAvatar(id: string, file: Express.Multer.File): Promise<UserEntity> {
+    if (!file) throw new BadRequestException('No file uploaded');
+
+    const user = await this.findById(id);
+    const previousUrl = user.avatarUrl;
+
+    user.avatarUrl = `/avatars/${file.filename}`;
+    const saved = await this.userRepo.save(user);
+
+    // Best-effort cleanup of the old file — don't fail the request over it.
+    if (previousUrl && previousUrl.startsWith('/avatars/')) {
+      await unlink(join('.', 'uploads', 'avatars', previousUrl.replace('/avatars/', ''))).catch(
+        () => undefined,
+      );
+    }
+
+    await this.auditLogsService.record({
+      actorId: id,
+      entityType: 'User',
+      entityId: id,
+      action: AuditAction.UPDATE,
+      reason: 'Avatar updated',
+    });
+
+    return this.findById(saved.id);
+  }
+
+  async removeAvatar(id: string): Promise<UserEntity> {
+    const user = await this.findById(id);
+    const previousUrl = user.avatarUrl;
+
+    user.avatarUrl = undefined;
+    const saved = await this.userRepo.save(user);
+
+    if (previousUrl && previousUrl.startsWith('/avatars/')) {
+      await unlink(join('.', 'uploads', 'avatars', previousUrl.replace('/avatars/', ''))).catch(
+        () => undefined,
+      );
+    }
+
+    await this.auditLogsService.record({
+      actorId: id,
+      entityType: 'User',
+      entityId: id,
+      action: AuditAction.UPDATE,
+      reason: 'Avatar removed',
+    });
+
+    return this.findById(saved.id);
   }
 }

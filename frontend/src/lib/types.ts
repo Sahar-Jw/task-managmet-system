@@ -34,6 +34,7 @@ export interface User {
   fullName: string;
   email: string;
   phone?: string;
+  avatarUrl?: string;
   role: Role;
   roleId?: string;
   // Kept as plain reference ids (not relations) for org membership.

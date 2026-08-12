@@ -7,9 +7,12 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import {
   AdminUpdateUserDto,
@@ -46,6 +49,23 @@ export class UsersController {
   @Patch('me/password')
   changeOwnPassword(@CurrentUser() user: UserEntity, @Body() dto: ChangeOwnPasswordDto) {
     return this.usersService.changeOwnPassword(user.id, dto);
+  }
+
+  // POST /users/me/avatar
+  @Post('me/avatar')
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadOwnAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.usersService.uploadAvatar(user.id, file);
+  }
+
+  // DELETE /users/me/avatar
+  @Delete('me/avatar')
+  removeOwnAvatar(@CurrentUser() user: UserEntity) {
+    return this.usersService.removeAvatar(user.id);
   }
 
   // GET /users — Admin only 

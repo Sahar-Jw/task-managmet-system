@@ -1,14 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { mkdirSync } from 'fs';
+import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+
+  // multer won't create its destination folder on its own — make sure it
+  // exists before any avatar upload comes in on a fresh deploy.
+  mkdirSync(join(process.cwd(), 'uploads', 'avatars'), { recursive: true });
+
+  // Avatars are served as plain static files (the field was already a
+  // publicly-settable URL before uploads existed, and other users need to
+  // see teammates' avatars in lists/assignments without extra auth plumbing).
+  app.useStaticAssets(join(process.cwd(), 'uploads', 'avatars'), { prefix: '/avatars' });
 
   // NFR-SEC-12: security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS)
   app.use(helmet());

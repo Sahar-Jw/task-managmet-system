@@ -1,4 +1,17 @@
+import { Paginated } from "./types";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+// Avatars are served as static files off the API's root (e.g. /avatars/xyz.png),
+// not under the /api/v1 prefix used by JSON endpoints — strip it back off here.
+const API_ORIGIN = API_URL.replace(/\/api\/v\d+\/?$/, '');
+
+/** Resolves an avatarUrl (e.g. "/avatars/xyz.png") to a full, loadable URL. */
+export function resolveAvatarUrl(avatarUrl?: string | null): string | null {
+  if (!avatarUrl) return null;
+  if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
+  return `${API_ORIGIN}${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+}
 
 export class ApiError extends Error {
   status: number;
@@ -141,3 +154,14 @@ export async function downloadFile(path: string, fileName: string) {
   link.click();
   URL.revokeObjectURL(url);
 }
+
+// ---------- Notifications ----------
+export const NotificationsApi = {
+  list: (params: Record<string, string> = {}) =>
+    api<Paginated<Notification>>(`/notifications?${new URLSearchParams(params)}`),
+  unreadCount: () =>
+    NotificationsApi.list({ unreadOnly: 'true', limit: '1' }).then((res) => res.total),
+  markRead: (id: string) => api(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllRead: () => api('/notifications/read-all', { method: 'PATCH' }),
+  remove: (id: string) => api(`/notifications/${id}`, { method: 'DELETE' }),
+};

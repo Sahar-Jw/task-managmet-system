@@ -223,7 +223,10 @@ export const AttachmentsApi = {
 
 // ---------- Notifications ----------
 export const NotificationsApi = {
-  list: () => api<Paginated<Notification>>('/notifications'),
+  list: (params: Record<string, string> = {}) =>
+    api<Paginated<Notification>>(`/notifications?${new URLSearchParams(params)}`),
+  unreadCount: () =>
+    NotificationsApi.list({ unreadOnly: 'true', limit: '1' }).then((res) => res.total),
   markRead: (id: string) => api(`/notifications/${id}/read`, { method: 'PATCH' }),
   markAllRead: () => api('/notifications/read-all', { method: 'PATCH' }),
   remove: (id: string) => api(`/notifications/${id}`, { method: 'DELETE' }),

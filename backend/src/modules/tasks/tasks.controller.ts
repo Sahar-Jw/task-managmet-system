@@ -33,7 +33,10 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
+  // Admin-only: full task list across the organization. A regular User
+  // uses GET /tasks/mine instead — they never see the org-wide list.
   @Get()
+  @Roles(RoleName.ADMIN)
   findAll(@Query() query: QueryTasksDto) {
     return this.tasksService.findAll(query);
   }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useAuth } from '@/lib/auth-context';
 import {
   AttachmentsApi,
   BranchesApi,
@@ -36,6 +37,8 @@ const COLORS = [
 
 function NewTaskContent() {
   const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.role.name === 'ADMIN';
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -84,8 +87,12 @@ function NewTaskContent() {
     DepartmentsApi.list().then(setDepartments).catch(() => {});
     ProjectsApi.list({ limit: '100' }).then((res) => setProjects(res.items)).catch(() => {});
     UsersApi.list({ limit: '200', isActive: 'true' }).then((res) => setUsers(res.items)).catch(() => {});
-    TasksApi.list({ limit: '100' }).then((res) => setTasks(res.items)).catch(() => {});
-  }, []);
+    // Admin can pick any task as the parent; a regular User can only pick
+    // from their own tasks (GET /tasks is Admin-only).
+    const fetchTasks = isAdmin ? TasksApi.list({ limit: '100' }) : TasksApi.mine({ limit: '100' });
+    fetchTasks.then((res) => setTasks(res.items)).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin]);
 
   function set<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
     setForm((f) => ({ ...f, [key]: value }));

@@ -128,6 +128,7 @@ export const ProjectsApi = {
     api<Project>(`/projects/${id}`, { method: 'PATCH', body: data }),
   archive: (id: string) => api<Project>(`/projects/${id}/archive`, { method: 'POST' }),
   unarchive: (id: string) => api<Project>(`/projects/${id}/unarchive`, { method: 'POST' }),
+  remove: (id: string) => api(`/projects/${id}`, { method: 'DELETE' }),
 };
 
 // ---------- Tasks ----------

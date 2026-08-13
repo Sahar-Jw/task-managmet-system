@@ -56,6 +56,8 @@ export interface Project {
   status: ProjectStatus;
   startDate?: string;
   endDate?: string;
+  createdById?: string;
+  archivedAt?: string;
 }
 
 export type TaskStatus =

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { ProjectsService } from './projects.service';
@@ -17,14 +17,15 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class ProjectsController {
   constructor(private readonly projectsService: ProjectsService) {}
 
+  // A User only sees Projects they created themselves; Admin sees all.
   @Get()
-  findAll(@Query() query: QueryProjectsDto) {
-    return this.projectsService.findAll(query);
+  findAll(@Query() query: QueryProjectsDto, @CurrentUser() user: UserEntity) {
+    return this.projectsService.findAll(query, user);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.projectsService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.projectsService.findOne(id, user);
   }
 
   @Post()
@@ -33,13 +34,22 @@ export class ProjectsController {
     return this.projectsService.create(dto, user);
   }
 
+  // Admin can edit any Project; a User can edit only their own
+  // (ownership enforced in the service).
   @Patch(':id')
-  @Roles(RoleName.ADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateProjectDto, @CurrentUser() user: UserEntity) {
     return this.projectsService.update(id, dto, user);
   }
 
-  // BR-024: archive instead of delete
+  // Hard delete. Admin can delete any Project, a User only their own, and
+  // only while it has no Tasks attached (service enforces both).
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.projectsService.remove(id, user);
+  }
+
+  // BR-024: archive instead of delete once a Project has real work on it.
+  // Admin-only.
   @Post(':id/archive')
   @Roles(RoleName.ADMIN)
   archive(@Param('id') id: string, @CurrentUser() user: UserEntity) {

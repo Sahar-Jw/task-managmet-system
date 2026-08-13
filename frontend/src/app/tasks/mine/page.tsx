@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
@@ -34,6 +35,8 @@ function isOverdue(task: Task): boolean {
 }
 
 function MyTasksContent() {
+  const searchParams = useSearchParams();
+  const [status] = useState(searchParams.get('status') || '');
   const [priority, setPriority] = useState('');
   const [minRating, setMinRating] = useState('');
   const [upcomingOnly, setUpcomingOnly] = useState(false);
@@ -50,6 +53,7 @@ function MyTasksContent() {
       sortBy: 'deadline',
       sortDir: 'asc',
     };
+    if (status) params.status = status;
     if (priority) params.priority = priority;
     if (minRating) params.minRating = minRating;
     if (upcomingOnly) params.upcomingOnly = 'true';
@@ -61,7 +65,7 @@ function MyTasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
       .finally(() => setLoading(false));
-  }, [priority, minRating, upcomingOnly]);
+  }, [status, priority, minRating, upcomingOnly]);
 
   return (
     <div>

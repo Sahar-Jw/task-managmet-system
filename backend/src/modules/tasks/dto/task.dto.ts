@@ -132,6 +132,9 @@ export class QueryMyTasksDto extends PaginationQueryDto {
   // Importance
   @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
 
+  // Optional project scope (e.g. viewing "my tasks" within one Project)
+  @IsOptional() @IsUUID() projectId?: string;
+
   // Rating: only tasks whose average rating is >= this value (1-5)
   @IsOptional() @IsNumberString() minRating?: string;
 

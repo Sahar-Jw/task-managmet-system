@@ -114,7 +114,7 @@ function TasksContent() {
 
 export default function TasksPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute adminOnly>
       <TasksContent />
     </ProtectedRoute>
   );

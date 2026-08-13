@@ -64,11 +64,14 @@ function DashboardContent() {
   const [statsError, setStatsError] = useState('');
 
   useEffect(() => {
-    TasksApi.list({ limit: '100' })
+    // Admin sees org-wide task stats; a regular User only ever sees their
+    // own tasks (My Tasks), so the dashboard mirrors that here too.
+    const fetchTasks = isAdmin ? TasksApi.list({ limit: '100' }) : TasksApi.mine({ limit: '100' });
+    fetchTasks
       .then((res) => setTasks(res.items))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     setStatsLoading(true);
@@ -135,7 +138,7 @@ function DashboardContent() {
             {counts.map((c) => (
               <Link
                 key={c.status}
-                href={`/tasks?status=${c.status}`}
+                href={isAdmin ? `/tasks?status=${c.status}` : `/tasks/mine?status=${c.status}`}
                 className="card p-4 text-center hover:border-brand-500"
               >
                 <div className="text-2xl font-semibold text-slate-800">{c.count}</div>

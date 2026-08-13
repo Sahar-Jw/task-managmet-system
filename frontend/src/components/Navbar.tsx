@@ -42,11 +42,11 @@ export default function Navbar() {
 
   const links = [
     { href: '/dashboard', label: 'Dashboard' },
-    { href: '/tasks', label: 'Tasks' },
     { href: '/tasks/mine', label: 'My Tasks' },
     { href: '/projects', label: 'Projects' },
     ...(isAdmin
       ? [
+          { href: '/tasks', label: 'Tasks' },
           { href: '/users', label: 'Users' },
           { href: '/settings', label: 'Settings' },
           { href: '/audit-logs', label: 'Audit Log' },

@@ -64,7 +64,12 @@ export default function Navbar() {
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-1">
-          <span className="mr-4 font-semibold text-brand-700">Task &amp; Project Manager</span>
+          <Link
+            href="/"
+            className="mr-4 font-semibold text-brand-700 hover:text-brand-600"
+          >
+            Task &amp; Project Manager
+          </Link>
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(isLinkActive(link.href))}>
               {link.label}

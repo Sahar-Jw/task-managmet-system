@@ -38,7 +38,8 @@ export interface User {
   role: Role;
   roleId?: string;
   // Kept as plain reference ids (not relations) for org membership.
-  departmentId?: string;
+  // null/undefined for Admins — they don't belong to a Department.
+  departmentId?: string | null;
   branchId?: string;
   isActive: boolean;
   locale?: string;

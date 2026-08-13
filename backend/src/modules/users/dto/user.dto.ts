@@ -41,7 +41,12 @@ export class UpdateOwnProfileDto {
 export class AdminUpdateUserDto extends UpdateOwnProfileDto {
   @IsOptional() @IsEmail() email?: string;
   @IsOptional() @IsUUID() roleId?: string;
-  @IsOptional() @IsUUID() departmentId?: string;
+  // Nullable on purpose: this is how an Admin clears a User's department
+  // when promoting them to the ADMIN role (Admins don't belong to a
+  // Department — see UsersService.applyDepartmentRule). @IsOptional()
+  // already treats `null` as "skip validation", same as `undefined`, so
+  // a plain @IsUUID() alongside it is enough — no extra handling needed.
+  @IsOptional() @IsUUID() departmentId?: string | null;
   @IsOptional() @IsUUID() branchId?: string;
   @IsOptional() @IsBoolean() isActive?: boolean;
 }

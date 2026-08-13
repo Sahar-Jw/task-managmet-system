@@ -92,7 +92,10 @@ async function run() {
   }));
 
   // ------------------------------------------------------------ Departments
-  const adminDept = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ADMIN' }, () => ({
+  // "Administration" stays as a Setting row (Tasks can still be classified
+  // under it), but Admin Users no longer belong to any Department — see
+  // the Users section below, where adminDept is intentionally not used.
+  await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ADMIN' }, () => ({
     type: SettingType.DEPARTMENT,
     codeAr: 'ADMIN',
     codeEn: 'ADMIN',
@@ -157,7 +160,7 @@ async function run() {
     email: 'admin@example.com',
     passwordHash,
     roleId: adminRole.id,
-    departmentId: adminDept.id,
+    departmentId: null,
     branchId: hq.id,
     isActive: true,
   }));
@@ -167,7 +170,7 @@ async function run() {
     email: 'ahmed.admin@example.com',
     passwordHash,
     roleId: adminRole.id,
-    departmentId: adminDept.id,
+    departmentId: null,
     branchId: hq.id,
     isActive: true,
   }));

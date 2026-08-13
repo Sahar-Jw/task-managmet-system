@@ -151,13 +151,13 @@ function ProfileContent() {
             type="tel"
             inputMode="numeric"
             maxLength={10}
-            placeholder="5551234567"
+            placeholder="0912345678"
             onChange={handlePhoneChange}
           />
           {phoneError ? (
             <p className="mt-1 text-xs text-red-600">{phoneError}</p>
           ) : (
-            <p className="mt-1 text-xs text-slate-400">10 digits, numbers only.</p>
+            <p className="mt-1 text-xs text-slate-400">10 digits, starting with 09.</p>
           )}
         </div>
         <div>

@@ -116,6 +116,8 @@ export class UsersService {
       await this.assertNotLastActiveAdmin(user); 
     }
 
+    await this.applyDepartmentRule(user, dto);
+
     Object.assign(user, dto);
     const saved = await this.userRepo.save(user);
 
@@ -132,6 +134,32 @@ export class UsersService {
     });
 
     return this.findById(saved.id);
+  }
+
+  // Admins don't belong to a Department; every other role requires one.
+  // Resolves the User's *final* role (dto.roleId if it's changing, else
+  // whatever they already have) and either clears departmentId (promoting
+  // to Admin) or makes sure a department is actually present (demoting
+  // away from Admin, or just editing a non-Admin's other fields).
+  // Mutates `dto` in place so the caller's Object.assign(user, dto) below
+  // picks up the resolved value.
+  private async applyDepartmentRule(user: UserEntity, dto: AdminUpdateUserDto): Promise<void> {
+    let finalRoleName = user.role?.name;
+    if (dto.roleId && dto.roleId !== user.roleId) {
+      const newRole = await this.rolesService.findById(dto.roleId);
+      if (!newRole) throw new BadRequestException('Selected role does not exist');
+      finalRoleName = newRole.name;
+    }
+
+    if (finalRoleName === RoleName.ADMIN) {
+      dto.departmentId = null;
+      return;
+    }
+
+    const finalDepartmentId = dto.departmentId !== undefined ? dto.departmentId : user.departmentId;
+    if (!finalDepartmentId) {
+      throw new BadRequestException('Department is required for non-Admin Users');
+    }
   }
 
   // only Admin deactivates; last active Admin cannot be removed.

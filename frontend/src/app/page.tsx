@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { isValidPhone, PHONE_VALIDATION_MESSAGE } from '@/lib/validation';
-import PasswordInput from '@/components/PasswordInput';
 
 const LEDGER: { label: string; note: string }[] = [
   { label: 'Branch', note: 'Headquarters · HQ' },
@@ -180,9 +179,12 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-slate-200">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-serif text-lg font-semibold tracking-tight text-ink">
+          <Link
+            href="/"
+            className="font-serif text-lg font-semibold tracking-tight text-ink hover:text-brand-700"
+          >
             Task &amp; Project Manager
-          </span>
+          </Link>
           <nav className="flex items-center gap-3">
             <button type="button" onClick={() => handleModeChange('login')} className="btn-secondary">
               Sign in
@@ -258,7 +260,7 @@ export default function Home() {
                         type="tel"
                         inputMode="numeric"
                         maxLength={10}
-                        placeholder="5551234567"
+                        placeholder="0912345678"
                         className="input"
                         value={phone}
                         onChange={handlePhoneChange}
@@ -266,7 +268,7 @@ export default function Home() {
                       {phoneError ? (
                         <p className="mt-1 text-xs text-red-600">{phoneError}</p>
                       ) : (
-                        <p className="mt-1 text-xs text-slate-400">10 digits, numbers only.</p>
+                        <p className="mt-1 text-xs text-slate-400">10 digits, starting with 09.</p>
                       )}
                     </div>
                   </>
@@ -291,24 +293,17 @@ export default function Home() {
                   <label className="label" htmlFor="password">
                     Password
                   </label>
-                  <PasswordInput
+                  <input
                     id="password"
+                    type="password"
                     required
                     minLength={8}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     className="input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   {mode === 'register' && (
                     <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
-                  )}
-                  {mode === 'login' && (
-                    <p className="mt-1 text-right text-xs">
-                      <Link href="/forgot-password" className="font-medium text-brand-600 hover:underline">
-                        Forgot password?
-                      </Link>
-                    </p>
                   )}
                 </div>
 

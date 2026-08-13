@@ -41,8 +41,13 @@ export class UserEntity extends VersionedEntity {
   // IDs (not TypeORM relations) so a User can still record which
   // Department/Branch it organizationally belongs to, without Setting
   // having to know about Users.
-  @Column({ name: 'department_id', type: 'uuid' })
-  departmentId!: string;
+  //
+  // department_id is nullable: Admins don't belong to a Department at all
+  // (enforced/cleared in UsersService, see assertDepartmentRule). Every
+  // non-Admin User is still required to have one — that rule lives in the
+  // service layer rather than a DB constraint, since it depends on role.
+  @Column({ name: 'department_id', type: 'uuid', nullable: true })
+  departmentId?: string | null;
 
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId!: string;

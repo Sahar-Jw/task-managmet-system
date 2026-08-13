@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Pagination from '@/components/Pagination';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { ApiError } from '@/lib/api';
 import { BranchesApi, DepartmentsApi, UsersApi } from '@/lib/endpoints';
 import type { Branch, Department, User } from '@/lib/types';
-import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 10;
 
@@ -87,6 +87,7 @@ function UsersContent() {
   }, []);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
+  const editRoleIsAdmin = roles.find((r) => r.id === editForm.roleId)?.name === 'ADMIN';
 
   async function toggleActive(u: User) {
     setError('');
@@ -116,12 +117,26 @@ function UsersContent() {
     setEditError('');
   }
 
+  function handleEditRoleChange(roleId: string) {
+    const isAdmin = roles.find((r) => r.id === roleId)?.name === 'ADMIN';
+    setEditForm((f) => ({ ...f, roleId, departmentId: isAdmin ? '' : f.departmentId }));
+  }
+
   async function handleEditSave(e: React.FormEvent) {
     e.preventDefault();
     if (!editingUser) return;
     setEditError('');
+
+    if (!editRoleIsAdmin && !editForm.departmentId) {
+      setEditError('Department is required for non-Admin users.');
+      return;
+    }
+
     try {
-      await UsersApi.adminUpdate(editingUser.id, editForm);
+      await UsersApi.adminUpdate(editingUser.id, {
+        ...editForm,
+        departmentId: editRoleIsAdmin ? null : editForm.departmentId,
+      });
       closeEdit();
       load();
     } catch (err) {
@@ -189,7 +204,7 @@ function UsersContent() {
                 className="input"
                 required
                 value={editForm.roleId}
-                onChange={(e) => setEditForm({ ...editForm, roleId: e.target.value })}
+                onChange={(e) => handleEditRoleChange(e.target.value)}
               >
                 <option value="">Select…</option>
                 {roles.map((r) => (
@@ -217,19 +232,25 @@ function UsersContent() {
             </div>
             <div>
               <label className="label">Department</label>
-              <select
-                className="input"
-                required
-                value={editForm.departmentId}
-                onChange={(e) => setEditForm({ ...editForm, departmentId: e.target.value })}
-              >
-                <option value="">Select…</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.valueEn} ({d.codeEn})
-                  </option>
-                ))}
-              </select>
+              {editRoleIsAdmin ? (
+                <p className="input flex items-center bg-slate-50 text-slate-400">
+                  Not applicable — Admins don&apos;t belong to a department
+                </p>
+              ) : (
+                <select
+                  className="input"
+                  required
+                  value={editForm.departmentId}
+                  onChange={(e) => setEditForm({ ...editForm, departmentId: e.target.value })}
+                >
+                  <option value="">Select…</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.valueEn} ({d.codeEn})
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
           {editError && <p className="text-sm text-red-600">{editError}</p>}

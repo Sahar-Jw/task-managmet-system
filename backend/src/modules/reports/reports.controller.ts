@@ -31,7 +31,7 @@ export class ReportsController {
     const scoped =
       user.role.name === RoleName.ADMIN
         ? filters
-        : { ...filters, branchId: user.branchId, departmentId: user.departmentId };
+        : { ...filters, branchId: user.branchId, departmentId: user.departmentId ?? undefined };
     return this.reportsService.monthlySummary(scoped, filters.months ?? 12);
   }
 
@@ -52,7 +52,8 @@ export class ReportsController {
   // Any authenticated user. Non-admins only ever get their own department's row.
   @Get('department-overview')
   departmentOverview(@CurrentUser() user: UserEntity) {
-    const scopeDepartmentId = user.role.name === RoleName.ADMIN ? undefined : user.departmentId;
+    const scopeDepartmentId =
+      user.role.name === RoleName.ADMIN ? undefined : user.departmentId ?? undefined;
     return this.reportsService.departmentOverview(scopeDepartmentId);
   }
 }

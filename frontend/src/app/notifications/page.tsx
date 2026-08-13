@@ -9,20 +9,47 @@ import type { Notification } from '@/lib/types';
 
 function NotificationsContent() {
   const router = useRouter();
-  const { refreshUnreadCount } = useNotifications();
+  const { refreshUnreadCount, lastNotificationAt } = useNotifications();
   const [items, setItems] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  async function load() {
-    setLoading(true);
-    const res = await NotificationsApi.list();
-    setItems(res.items);
-    setLoading(false);
+  // silent=true skips the loading spinner so a background refresh (SSE
+  // push, tab refocus) doesn't flash the list — only the initial load
+  // shows it.
+  async function load(silent = false) {
+    if (!silent) setLoading(true);
+    try {
+      const res = await NotificationsApi.list();
+      setItems(res.items);
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }
 
   useEffect(() => {
     load();
+
+    function handleFocusOrVisible() {
+      if (document.visibilityState === 'hidden') return;
+      load(true);
+    }
+    window.addEventListener('focus', handleFocusOrVisible);
+    document.addEventListener('visibilitychange', handleFocusOrVisible);
+
+    return () => {
+      window.removeEventListener('focus', handleFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleFocusOrVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The NotificationsProvider's SSE connection is what actually delivers
+  // new notifications instantly; this just reloads the list the moment it
+  // says one arrived, instead of this page needing its own SSE connection.
+  useEffect(() => {
+    if (lastNotificationAt === 0) return; // skip on initial mount
+    load(true);
+  }, [lastNotificationAt]);
 
   // Marks the notification read (if needed) and takes the User straight to
   // the Task it's about, e.g. so a newly-assigned Task can be accepted or

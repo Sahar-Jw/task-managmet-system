@@ -1,7 +1,8 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from './auth-context';
+import { API_URL, getToken, refreshAccessToken } from './api';
 import { NotificationsApi } from './endpoints';
 
 interface NotificationsContextValue {
@@ -11,19 +12,33 @@ interface NotificationsContextValue {
    * unread notification) so the Navbar badge updates immediately instead
    * of waiting for the next poll or a route change. */
   refreshUnreadCount: () => Promise<void>;
+  /** Bumped every time a `notification` SSE event arrives. Other
+   * components (e.g. the /notifications list) can watch this to know the
+   * instant something new has landed, without each maintaining its own
+   * SSE connection. */
+  lastNotificationAt: number;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
 
-// Polling is a stand-in for a real push channel (websocket/SSE). Kept short
-// so a freshly-assigned Task shows up in the badge quickly; also refetches
-// whenever the tab regains focus/visibility, which covers the common case
-// of a User switching back to an already-open tab after being assigned.
-const POLL_INTERVAL_MS = 8000;
+// The SSE connection delivers new notifications instantly. This slow poll
+// is just a safety net for the (rare) case SSE is unavailable — blocked by
+// a corporate proxy, an ad-blocker, etc. — so the badge still eventually
+// catches up instead of going stale forever.
+const FALLBACK_POLL_INTERVAL_MS = 60000;
+
+// Backoff for SSE reconnect attempts (e.g. after the access token expires
+// and the stream drops, or a transient network blip) so a persistently
+// failing connection doesn't hammer the server every few seconds.
+const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [lastNotificationAt, setLastNotificationAt] = useState(0);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const refreshUnreadCount = useCallback(async () => {
     if (!user) return;
@@ -42,36 +57,92 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
 
     let cancelled = false;
-    async function poll() {
-      if (!user) return;
-      try {
-        const count = await NotificationsApi.unreadCount();
-        if (!cancelled) setUnreadCount(count);
-      } catch {
-        // ignore — badge just won't update this cycle
+
+    function clearReconnectTimer() {
+      if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
       }
     }
 
-    poll();
-    const interval = setInterval(poll, POLL_INTERVAL_MS);
+    function scheduleReconnect() {
+      if (cancelled) return;
+      const attempt = reconnectAttemptRef.current;
+      const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+      reconnectAttemptRef.current = attempt + 1;
+      clearReconnectTimer();
+      reconnectTimerRef.current = setTimeout(connect, delay);
+    }
+
+    async function connect() {
+      if (cancelled) return;
+
+      // The access token is short-lived (15m); make sure we hand the
+      // stream a live one rather than one that's already expired, since a
+      // dropped SSE connection doesn't get the same silent-refresh-and-
+      // retry treatment as a normal fetch() through api().
+      let token = getToken();
+      if (!token) {
+        token = await refreshAccessToken();
+        if (!token || cancelled) return;
+      }
+
+      eventSourceRef.current?.close();
+      const es = new EventSource(`${API_URL}/notifications/stream?token=${token}`);
+      eventSourceRef.current = es;
+
+      es.addEventListener('notification', () => {
+        reconnectAttemptRef.current = 0;
+        setLastNotificationAt(Date.now());
+        refreshUnreadCount();
+      });
+
+      // 'ping' heartbeats need no handling — just proof the connection is alive.
+      es.addEventListener('open', () => {
+        reconnectAttemptRef.current = 0;
+      });
+
+      es.onerror = async () => {
+        es.close();
+        if (cancelled) return;
+        // Could be an expired access token (most common cause) or a
+        // transient network issue — either way, get a fresh token before
+        // the retry so an expired-token loop doesn't just spin forever.
+        await refreshAccessToken();
+        scheduleReconnect();
+      };
+    }
+
+    connect();
+    refreshUnreadCount();
+    const fallbackPoll = setInterval(refreshUnreadCount, FALLBACK_POLL_INTERVAL_MS);
 
     function handleFocusOrVisible() {
       if (document.visibilityState === 'hidden') return;
-      poll();
+      refreshUnreadCount();
+      // A backgrounded tab can have its SSE connection throttled/killed by
+      // the browser; re-establish it when the User comes back.
+      if (!eventSourceRef.current || eventSourceRef.current.readyState === EventSource.CLOSED) {
+        reconnectAttemptRef.current = 0;
+        connect();
+      }
     }
     window.addEventListener('focus', handleFocusOrVisible);
     document.addEventListener('visibilitychange', handleFocusOrVisible);
 
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearReconnectTimer();
+      clearInterval(fallbackPoll);
+      eventSourceRef.current?.close();
+      eventSourceRef.current = null;
       window.removeEventListener('focus', handleFocusOrVisible);
       document.removeEventListener('visibilitychange', handleFocusOrVisible);
     };
-  }, [user]);
+  }, [user, refreshUnreadCount]);
 
   return (
-    <NotificationsContext.Provider value={{ unreadCount, refreshUnreadCount }}>
+    <NotificationsContext.Provider value={{ unreadCount, refreshUnreadCount, lastNotificationAt }}>
       {children}
     </NotificationsContext.Provider>
   );

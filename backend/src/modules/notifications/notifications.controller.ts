@@ -1,7 +1,8 @@
-import { Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, MessageEvent, Param, Patch, Query, Sse, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsOptional } from 'class-validator';
+import { Observable } from 'rxjs';
 import { NotificationsService } from './notifications.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -31,6 +32,18 @@ export class NotificationsController {
   @Get()
   findAll(@CurrentUser() user: UserEntity, @Query() query: FindNotificationsQueryDto) {
     return this.notificationsService.findForUser(user.id, query);
+  }
+
+  // GET /notifications/stream — Server-Sent Events. Push, not poll: fires a
+  // `notification` event the instant one is dispatched to this User. Native
+  // browser EventSource can't set an Authorization header, so the token is
+  // additionally accepted as a `?token=` query param for this route (see
+  // JwtStrategy) — the frontend passes the same access token it already
+  // holds. Kept open with a `ping` heartbeat; the client reconnects (with a
+  // fresh token) if the access token expires and the connection drops.
+  @Sse('stream')
+  stream(@CurrentUser() user: UserEntity): Observable<MessageEvent> {
+    return this.notificationsService.stream(user.id);
   }
 
   @Patch(':id/read')

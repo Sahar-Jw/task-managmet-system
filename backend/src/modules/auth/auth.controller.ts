@@ -18,11 +18,21 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
+// Without maxAge this becomes a session cookie that the browser deletes as
+// soon as the tab/browser is closed — that was silently forcing everyone
+// back to the login page on every fresh visit, even though the refresh
+// token was still valid for 7 days server-side. Keep this in sync with
+// jwt.refreshExpiresIn (see auth.service#issueTokens).
+const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+// `secure: true` unconditionally also blocks the cookie from ever being set
+// over plain http (e.g. local dev on http://localhost), which produces the
+// exact same "logged out on refresh" symptom. Only require it outside dev.
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: true,
+  secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
   path: '/api/v1/auth',
+  maxAge: REFRESH_COOKIE_MAX_AGE_MS,
 };
 
 @ApiTags('auth')

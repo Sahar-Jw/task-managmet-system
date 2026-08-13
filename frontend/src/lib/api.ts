@@ -1,6 +1,6 @@
 import { Paginated } from "./types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
 // Avatars are served as static files off the API's root (e.g. /avatars/xyz.png),
 // not under the /api/v1 prefix used by JSON endpoints — strip it back off here.
@@ -41,7 +41,10 @@ export function setToken(token: string | null) {
 // pending request wait on that same promise instead of racing each other.
 let refreshInFlight: Promise<string | null> | null = null;
 
-async function refreshAccessToken(): Promise<string | null> {
+// Exported so other things that hold their own connection to the API —
+// currently the notifications SSE client — can get a fresh access token the
+// same way `api()` does below, instead of duplicating the refresh dance.
+export async function refreshAccessToken(): Promise<string | null> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {

@@ -11,10 +11,12 @@ import * as bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'crypto';
 import { UsersService } from '../users/users.service';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { LoginDto, ResetPasswordDto } from './dto/auth.dto';
 import { RegisterUserDto } from '../users/dto/user.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { MailService } from '../mail/mail.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { AuditAction } from '../../shared/enums/audit-action.enum';
 
@@ -30,9 +32,12 @@ export class AuthService {
     private readonly usersService: UsersService,
     @InjectRepository(RefreshTokenEntity)
     private readonly refreshTokenRepo: Repository<RefreshTokenEntity>,
+    @InjectRepository(PasswordResetTokenEntity)
+    private readonly passwordResetTokenRepo: Repository<PasswordResetTokenEntity>,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditLogsService: AuditLogsService,
+    private readonly mailService: MailService,
   ) {}
 
   // BR-019, BR-020: password policy enforced at signup; account locks after
@@ -189,26 +194,76 @@ export class AuthService {
     });
   }
 
+  // Same 30-minute window used to build the copy in the reset email.
+  private static readonly RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
+
   /**
    * Generic confirmation regardless of whether the email exists, to avoid
-   * leaking account existence (Section 8.1.4).
-   * A full email-delivery integration is out of scope for this backend
-   * scaffold; this issues a reset token record that a mail worker would
-   * consume in a production deployment.
+   * leaking account existence (Section 8.1.4). If the account exists, a
+   * single-use, 30-minute reset token is generated, hashed, stored, and
+   * emailed as a link to the frontend's reset-password page.
    */
   async forgotPassword(email: string): Promise<{ message: string }> {
     const user = await this.usersService.findByEmail(email);
+
     if (user) {
-      // In production this would enqueue a transactional email containing
-      // a signed, time-limited reset token. Left as an integration point.
+      const rawToken = randomBytes(32).toString('hex');
+      const tokenHash = this.hashToken(rawToken);
+
+      await this.passwordResetTokenRepo.save(
+        this.passwordResetTokenRepo.create({
+          userId: user.id,
+          tokenHash,
+          expiresAt: new Date(Date.now() + AuthService.RESET_TOKEN_TTL_MS),
+        }),
+      );
+
+      const frontendUrl = this.configService.get<string>('frontendUrl');
+      const resetUrl = `${frontendUrl}/reset-password?token=${rawToken}`;
+      await this.mailService.sendPasswordResetEmail(user.email, resetUrl);
     }
+
     return { message: 'If an account with that email exists, a reset link has been sent.' };
   }
 
   async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
-    // Placeholder: token verification would be implemented against a
-    // dedicated password_reset_tokens table in a full implementation.
-    throw new UnauthorizedException('Invalid or expired reset token');
+    const tokenHash = this.hashToken(dto.token);
+    const resetToken = await this.passwordResetTokenRepo.findOne({
+      where: { tokenHash, usedAt: IsNull(), expiresAt: MoreThan(new Date()) },
+    });
+
+    if (!resetToken) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const user = await this.usersService.findById(resetToken.userId);
+
+    const saltRounds = this.configService.get<number>('security.bcryptSaltRounds') ?? 12;
+    user.passwordHash = await bcrypt.hash(dto.newPassword, saltRounds);
+    user.failedLoginAttempts = 0;
+    user.lockedUntil = undefined;
+    await this.usersService.saveEntity(user);
+
+    resetToken.usedAt = new Date();
+    await this.passwordResetTokenRepo.save(resetToken);
+
+    // A password reset invalidates any refresh tokens issued before it, so
+    // a device that had the old password can't stay signed in past a reset
+    // the account owner didn't perform themselves.
+    await this.refreshTokenRepo.update(
+      { userId: user.id, revokedAt: IsNull() },
+      { revokedAt: new Date() },
+    );
+
+    await this.auditLogsService.record({
+      actorId: user.id,
+      entityType: 'User',
+      entityId: user.id,
+      action: AuditAction.UPDATE,
+      reason: 'Password reset via forgot-password flow',
+    });
+
+    return { message: 'Password has been reset. You can now sign in.' };
   }
 
   private hashToken(token: string): string {

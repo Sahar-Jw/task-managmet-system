@@ -9,13 +9,15 @@ import { PublicController } from './public.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { RefreshTokenEntity } from './entities/refresh-token.entity';
 import { UserSessionEntity } from './entities/user-session.entity';
+import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { UsersModule } from '../users/users.module';
 import { SettingsModule } from '../settings/settings.module';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RefreshTokenEntity, UserSessionEntity]),
+    TypeOrmModule.forFeature([RefreshTokenEntity, UserSessionEntity, PasswordResetTokenEntity]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -28,6 +30,7 @@ import { AuditLogsModule } from '../audit-logs/audit-logs.module';
     UsersModule,
     SettingsModule,
     AuditLogsModule,
+    MailModule,
   ],
   providers: [AuthService, JwtStrategy],
   controllers: [AuthController, PublicController],

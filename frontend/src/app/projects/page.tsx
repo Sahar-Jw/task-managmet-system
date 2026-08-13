@@ -8,12 +8,17 @@ import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { ProjectsApi } from '@/lib/endpoints';
 import type { Project } from '@/lib/types';
+import Pagination from '@/components/Pagination';
+
+const PAGE_SIZE = 10;
 
 function ProjectsContent() {
   const { user } = useAuth();
   const isAdmin = user?.role.name === 'ADMIN';
 
   const [projects, setProjects] = useState<Project[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
@@ -35,18 +40,21 @@ function ProjectsContent() {
     try {
       // Backend already scopes this: a regular User only gets back their
       // own Projects, Admin gets everything.
-      const res = await ProjectsApi.list({ limit: '100' });
+      const res = await ProjectsApi.list({ limit: String(PAGE_SIZE), page: String(page) });
       setProjects(res.items);
+      setTotal(res.total);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load projects.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -90,8 +98,8 @@ function ProjectsContent() {
     setRowError(null);
     try {
       await ProjectsApi.remove(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
       setConfirmDeleteId(null);
+      load();
     } catch (err) {
       setRowError({
         id,
@@ -275,6 +283,16 @@ function ProjectsContent() {
           ))
         )}
       </div>
+
+      {!loading && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          itemLabel="projects"
+        />
+      )}
     </div>
   );
 }

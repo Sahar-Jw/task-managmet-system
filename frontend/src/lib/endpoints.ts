@@ -34,6 +34,16 @@ export const AuthApi = {
     }),
   logout: () => api('/auth/logout', { method: 'POST' }),
   me: () => api<User>('/users/me'),
+  forgotPassword: (email: string) =>
+    api<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: { email },
+    }),
+  resetPassword: (token: string, newPassword: string) =>
+    api<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: { token, newPassword },
+    }),
 };
 
 // ---------- Public directory (unauthenticated; powers the sign-up form) ----------

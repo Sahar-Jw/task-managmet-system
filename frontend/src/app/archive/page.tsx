@@ -7,14 +7,21 @@ import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
 import { ProjectsApi, TasksApi } from '@/lib/endpoints';
 import type { Project, Task } from '@/lib/types';
+import Pagination from '@/components/Pagination';
 
 type Tab = 'tasks' | 'projects';
+
+const PAGE_SIZE = 10;
 
 function ArchiveContent() {
   const [tab, setTab] = useState<Tab>('tasks');
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [tasksTotal, setTasksTotal] = useState(0);
+  const [projectsTotal, setProjectsTotal] = useState(0);
+  const [tasksPage, setTasksPage] = useState(1);
+  const [projectsPage, setProjectsPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -24,27 +31,36 @@ function ArchiveContent() {
     setError('');
     try {
       const [taskRes, projectRes] = await Promise.all([
-        TasksApi.list({ status: 'Archived', limit: '100' }),
-        ProjectsApi.list({ status: 'Archived', limit: '100' }),
+        TasksApi.list({ status: 'Archived', limit: String(PAGE_SIZE), page: String(tasksPage) }),
+        ProjectsApi.list({
+          status: 'Archived',
+          limit: String(PAGE_SIZE),
+          page: String(projectsPage),
+        }),
       ]);
       setTasks(taskRes.items);
+      setTasksTotal(taskRes.total);
       setProjects(projectRes.items);
+      setProjectsTotal(projectRes.total);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load the archive.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tasksPage, projectsPage]);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const tasksTotalPages = Math.max(Math.ceil(tasksTotal / PAGE_SIZE), 1);
+  const projectsTotalPages = Math.max(Math.ceil(projectsTotal / PAGE_SIZE), 1);
+
   async function unarchiveTask(id: string) {
     setBusyId(id);
     try {
       await TasksApi.unarchive(id);
-      setTasks((prev) => prev.filter((t) => t.id !== id));
+      load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not unarchive this task.');
     } finally {
@@ -56,7 +72,7 @@ function ArchiveContent() {
     setBusyId(id);
     try {
       await ProjectsApi.unarchive(id);
-      setProjects((prev) => prev.filter((p) => p.id !== id));
+      load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not unarchive this project.');
     } finally {
@@ -77,13 +93,13 @@ function ArchiveContent() {
           onClick={() => setTab('tasks')}
           className={`btn ${tab === 'tasks' ? 'btn-primary' : 'btn-secondary'}`}
         >
-          Tasks {loading ? '' : `(${tasks.length})`}
+          Tasks {loading ? '' : `(${tasksTotal})`}
         </button>
         <button
           onClick={() => setTab('projects')}
           className={`btn ${tab === 'projects' ? 'btn-primary' : 'btn-secondary'}`}
         >
-          Projects {loading ? '' : `(${projects.length})`}
+          Projects {loading ? '' : `(${projectsTotal})`}
         </button>
       </div>
 
@@ -142,6 +158,25 @@ function ArchiveContent() {
           ))
         )}
       </div>
+
+      {!loading && !error && tab === 'tasks' && (
+        <Pagination
+          page={tasksPage}
+          totalPages={tasksTotalPages}
+          total={tasksTotal}
+          onPageChange={setTasksPage}
+          itemLabel="tasks"
+        />
+      )}
+      {!loading && !error && tab === 'projects' && (
+        <Pagination
+          page={projectsPage}
+          totalPages={projectsTotalPages}
+          total={projectsTotal}
+          onPageChange={setProjectsPage}
+          itemLabel="projects"
+        />
+      )}
     </div>
   );
 }

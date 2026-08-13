@@ -8,6 +8,9 @@ import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
 import { TasksApi } from '@/lib/endpoints';
 import type { Task } from '@/lib/types';
+import Pagination from '@/components/Pagination';
+
+const PAGE_SIZE = 10;
 
 const STATUSES = [
   '',
@@ -30,18 +33,30 @@ function TasksContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Reset to page 1 whenever the filters change
+  useEffect(() => {
+    setPage(1);
+  }, [status, priority]);
 
   useEffect(() => {
     setLoading(true);
     setError('');
-    const params: Record<string, string> = { limit: '50' };
+    const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
     if (status) params.status = status;
     if (priority) params.priority = priority;
     TasksApi.list(params)
-      .then((res) => setTasks(res.items))
+      .then((res) => {
+        setTasks(res.items);
+        setTotal(res.total);
+      })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority]);
+  }, [status, priority, page]);
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   return (
     <div>
@@ -108,6 +123,16 @@ function TasksContent() {
           ))
         )}
       </div>
+
+      {!loading && !error && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          itemLabel="tasks"
+        />
+      )}
     </div>
   );
 }

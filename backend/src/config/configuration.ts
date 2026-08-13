@@ -36,4 +36,17 @@ synchronize: process.env.DB_SYNCHRONIZE === 'true',
   uploads: {
     maxFileSizeMb: parseInt(process.env.MAX_UPLOAD_FILE_SIZE_MB || '25', 10),
   },
+
+  mail: {
+    host: process.env.MAIL_HOST,
+    port: parseInt(process.env.MAIL_PORT || '587', 10),
+    secure: process.env.MAIL_SECURE === 'true',
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+    from: process.env.MAIL_FROM || 'no-reply@example.com',
+  },
+
+  // Base URL of the Next.js app — used to build the link inside the
+  // password-reset email (e.g. `${frontendUrl}/reset-password?token=...`).
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
 });

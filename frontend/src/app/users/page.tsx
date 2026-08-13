@@ -5,6 +5,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { ApiError } from '@/lib/api';
 import { BranchesApi, DepartmentsApi, UsersApi } from '@/lib/endpoints';
 import type { Branch, Department, User } from '@/lib/types';
+import Pagination from '@/components/Pagination';
+
+const PAGE_SIZE = 10;
 
 function PencilIcon() {
   return (
@@ -36,6 +39,8 @@ function TrashIcon() {
 
 function UsersContent() {
   const [users, setUsers] = useState<User[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -60,8 +65,9 @@ function UsersContent() {
   async function load() {
     setLoading(true);
     try {
-      const res = await UsersApi.list({ limit: '100' });
+      const res = await UsersApi.list({ limit: String(PAGE_SIZE), page: String(page) });
       setUsers(res.items);
+      setTotal(res.total);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load users.');
     } finally {
@@ -71,10 +77,16 @@ function UsersContent() {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  useEffect(() => {
     UsersApi.roles().then(setRoles).catch(() => {});
     BranchesApi.list().then(setBranches).catch(() => {});
     DepartmentsApi.list().then(setDepartments).catch(() => {});
   }, []);
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   async function toggleActive(u: User) {
     setError('');
@@ -275,6 +287,16 @@ function UsersContent() {
           ))
         )}
       </div>
+
+      {!loading && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          itemLabel="users"
+        />
+      )}
 
       {pendingDelete && (
         <div className="fixed bottom-6 right-6 z-50 w-80 rounded-lg border border-slate-200 bg-white p-4 shadow-lg">

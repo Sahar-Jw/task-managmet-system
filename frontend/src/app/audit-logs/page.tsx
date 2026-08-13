@@ -4,16 +4,20 @@ import { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { AuditLogsApi } from '@/lib/endpoints';
 import type { AuditLogEntry } from '@/lib/types';
+import Pagination from '@/components/Pagination';
+
+const PAGE_SIZE = 15;
 
 function AuditLogsContent() {
   const [items, setItems] = useState<AuditLogEntry[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [entityType, setEntityType] = useState('');
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
-    const params: Record<string, string> = { limit: '50' };
+    const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
     if (entityType) params.entityType = entityType;
     const res = await AuditLogsApi.search(params);
     setItems(res.items);
@@ -21,10 +25,17 @@ function AuditLogsContent() {
     setLoading(false);
   }
 
+  // Reset to page 1 whenever the filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [entityType]);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityType]);
+  }, [entityType, page]);
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   return (
     <div>
@@ -40,9 +51,7 @@ function AuditLogsContent() {
         </select>
       </div>
 
-      <p className="mt-2 text-xs text-slate-500">{total} entries</p>
-
-      <div className="mt-2 card divide-y divide-slate-100">
+      <div className="mt-4 card divide-y divide-slate-100">
         {loading ? (
           <p className="p-6 text-center text-slate-500">Loading…</p>
         ) : items.length === 0 ? (
@@ -65,6 +74,16 @@ function AuditLogsContent() {
           ))
         )}
       </div>
+
+      {!loading && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          itemLabel="entries"
+        />
+      )}
     </div>
   );
 }

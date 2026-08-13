@@ -5,6 +5,9 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { ApiError } from '@/lib/api';
 import { SettingsApi, type CreateSettingPayload } from '@/lib/endpoints';
 import type { Setting, SettingType, SettingValueType } from '@/lib/types';
+import Pagination from '@/components/Pagination';
+
+const PAGE_SIZE = 10;
 
 const TYPE_OPTIONS: { value: SettingType; label: string }[] = [
   { value: 'department', label: 'Department' },
@@ -29,6 +32,7 @@ function SettingsContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [form, setForm] = useState(EMPTY_FORM);
+  const [page, setPage] = useState(1);
 
   async function load(forType: SettingType) {
     setLoading(true);
@@ -46,7 +50,16 @@ function SettingsContent() {
   useEffect(() => {
     load(type);
     setForm(EMPTY_FORM);
+    setPage(1);
   }, [type]);
+
+  const totalPages = Math.max(Math.ceil(rows.length / PAGE_SIZE), 1);
+  const pagedRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Keep the current page in range if rows shrink (e.g. after a delete)
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   async function createRow(e: React.FormEvent) {
     e.preventDefault();
@@ -230,7 +243,7 @@ function SettingsContent() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((row) => (
+              {pagedRows.map((row) => (
                 <tr key={row.id}>
                   <td className="px-4 py-2" dir="rtl">
                     {row.codeAr}
@@ -263,6 +276,16 @@ function SettingsContent() {
           </table>
         )}
       </div>
+
+      {!loading && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={rows.length}
+          onPageChange={setPage}
+          itemLabel="rows"
+        />
+      )}
     </div>
   );
 }

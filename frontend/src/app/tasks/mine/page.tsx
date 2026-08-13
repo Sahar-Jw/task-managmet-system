@@ -8,7 +8,9 @@ import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
 import { TasksApi } from '@/lib/endpoints';
 import type { Task, TaskPriority } from '@/lib/types';
+import Pagination from '@/components/Pagination';
 
+const PAGE_SIZE = 10;
 const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 const RATINGS = [5, 4, 3, 2, 1];
 
@@ -44,12 +46,19 @@ function MyTasksContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 whenever a filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [status, priority, minRating, upcomingOnly]);
 
   useEffect(() => {
     setLoading(true);
     setError('');
     const params: Record<string, string> = {
-      limit: '100',
+      limit: String(PAGE_SIZE),
+      page: String(page),
       sortBy: 'deadline',
       sortDir: 'asc',
     };
@@ -65,7 +74,9 @@ function MyTasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority, minRating, upcomingOnly]);
+  }, [status, priority, minRating, upcomingOnly, page]);
+
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   return (
     <div>
@@ -162,6 +173,16 @@ function MyTasksContent() {
           ))
         )}
       </div>
+
+      {!loading && !error && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          onPageChange={setPage}
+          itemLabel="tasks"
+        />
+      )}
     </div>
   );
 }

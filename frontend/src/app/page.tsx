@@ -302,6 +302,13 @@ export default function Home() {
                   {mode === 'register' && (
                     <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
                   )}
+                  {mode === 'login' && (
+                    <p className="mt-1 text-right text-xs">
+                      <Link href="/forgot-password" className="font-medium text-brand-600 hover:underline">
+                        Forgot password?
+                      </Link>
+                    </p>
+                  )}
                 </div>
 
                 {mode === 'register' && (

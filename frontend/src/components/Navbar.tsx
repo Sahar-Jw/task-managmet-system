@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
-import { NotificationsApi } from '@/lib/endpoints';
+import { useNotifications } from '@/lib/notifications-context';
 import Avatar from './Avatar';
 
 const linkClass = (active: boolean) =>
@@ -12,13 +12,11 @@ const linkClass = (active: boolean) =>
     active ? 'bg-brand-500 text-white' : 'text-slate-600 hover:bg-slate-100'
   }`;
 
-const POLL_INTERVAL_MS = 20000;
-
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,30 +35,6 @@ export default function Navbar() {
       document.removeEventListener('keydown', handleEscape);
     };
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-
-    let cancelled = false;
-    async function loadUnreadCount() {
-      try {
-        const count = await NotificationsApi.unreadCount();
-        if (!cancelled) setUnreadCount(count);
-      } catch {
-        // ignore — badge just won't update this cycle
-      }
-    }
-
-    loadUnreadCount();
-    const interval = setInterval(loadUnreadCount, POLL_INTERVAL_MS);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-    // Re-poll immediately whenever the user navigates (e.g. leaving
-    // /notifications after marking things read updates the badge sooner).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, pathname]);
 
   if (!user) return null;
 

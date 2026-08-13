@@ -204,6 +204,12 @@ export interface Notification {
   message: string;
   isRead: boolean;
   createdAt: string;
+  metadata?: {
+    taskId?: string;
+    assignmentId?: string;
+    commentId?: string;
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface AuditLogEntry {

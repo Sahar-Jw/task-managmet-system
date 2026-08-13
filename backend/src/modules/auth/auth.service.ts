@@ -145,6 +145,8 @@ export class AuthService {
         id: user.id,
         fullName: user.fullName,
         email: user.email,
+        phone: user.phone,
+        avatarUrl: user.avatarUrl,
         role: user.role,
         departmentId: user.departmentId,
         branchId: user.branchId,

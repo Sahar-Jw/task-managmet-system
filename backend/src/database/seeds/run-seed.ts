@@ -92,19 +92,8 @@ async function run() {
   }));
 
   // ------------------------------------------------------------ Departments
-  // "Administration" stays as a Setting row (Tasks can still be classified
-  // under it), but Admin Users no longer belong to any Department — see
-  // the Users section below, where adminDept is intentionally not used.
-  await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ADMIN' }, () => ({
-    type: SettingType.DEPARTMENT,
-    codeAr: 'ADMIN',
-    codeEn: 'ADMIN',
-    valueType: SettingValueType.STRING,
-    valueAr: 'الإدارة',
-    valueEn: 'Administration',
-    isActive: true,
-    isAdminDepartment: true,
-  }));
+  // The "Administration" department has been removed entirely — Admin Users
+  // don't belong to any Department (see the Users section below).
   const engineering = await upsert(settingRepo, { type: SettingType.DEPARTMENT, codeEn: 'ENG' }, () => ({
     type: SettingType.DEPARTMENT,
     codeAr: 'ENG',

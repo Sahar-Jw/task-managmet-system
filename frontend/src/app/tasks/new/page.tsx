@@ -98,6 +98,10 @@ function NewTaskContent() {
     setForm((f) => ({ ...f, [key]: value }));
   }
 
+  // Admins are never a valid assignee — a Task is always assigned to a
+  // regular User, never to another Admin.
+  const assignableUsers = users.filter((u) => u.role.name !== 'ADMIN');
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -308,7 +312,7 @@ function NewTaskContent() {
               onChange={(e) => set('assignedToId', e.target.value)}
             >
               <option value="">Unassigned for now</option>
-              {users.map((u) => (
+              {assignableUsers.map((u) => (
                 <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
               ))}
             </select>

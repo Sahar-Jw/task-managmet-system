@@ -262,10 +262,13 @@ export class TasksService {
     }
 
     if (dto.assignedToId) {
-      const assignee = await this.userRepo.findOne({ where: { id: dto.assignedToId } });
+      const assignee = await this.userRepo.findOne({ where: { id: dto.assignedToId }, relations: ['role'] });
       if (!assignee) throw new NotFoundException('Assigned User (for whom the task is) not found');
       if (!assignee.isActive) {
         throw new BadRequestException('Cannot create a Task for a deactivated User');
+      }
+      if (assignee.role.name === RoleName.ADMIN) {
+        throw new BadRequestException('Cannot assign a Task to an Admin');
       }
     }
 
@@ -363,6 +366,17 @@ export class TasksService {
 
     if ((dto.needsApproval ?? task.needsApproval) && !(dto.approverId ?? task.approverId)) {
       throw new BadRequestException('An approver is required when the Task needs approval');
+    }
+
+    if (dto.assignedToId) {
+      const assignee = await this.userRepo.findOne({ where: { id: dto.assignedToId }, relations: ['role'] });
+      if (!assignee) throw new NotFoundException('Assigned User (for whom the task is) not found');
+      if (!assignee.isActive) {
+        throw new BadRequestException('Cannot assign a Task to a deactivated User');
+      }
+      if (assignee.role.name === RoleName.ADMIN) {
+        throw new BadRequestException('Cannot assign a Task to an Admin');
+      }
     }
 
     const oldValue = { ...task };

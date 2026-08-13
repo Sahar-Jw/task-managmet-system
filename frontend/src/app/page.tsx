@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { isValidPhone, PHONE_VALIDATION_MESSAGE } from '@/lib/validation';
+import PasswordInput from '@/components/PasswordInput';
 
 const LEDGER: { label: string; note: string }[] = [
   { label: 'Branch', note: 'Headquarters · HQ' },
@@ -293,17 +294,24 @@ export default function Home() {
                   <label className="label" htmlFor="password">
                     Password
                   </label>
-                  <input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     required
                     minLength={8}
+                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                     className="input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                   {mode === 'register' && (
                     <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+                  )}
+                  {mode === 'login' && (
+                    <p className="mt-1 text-right text-xs">
+                      <Link href="/forgot-password" className="font-medium text-brand-600 hover:underline">
+                        Forgot password?
+                      </Link>
+                    </p>
                   )}
                 </div>
 

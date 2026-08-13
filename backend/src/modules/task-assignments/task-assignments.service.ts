@@ -59,12 +59,17 @@ export class TaskAssignmentsService {
     if (!task) throw new NotFoundException('Task not found');
     if (task.archivedAt) throw new BadRequestException('Cannot assign an archived Task');
 
-    const assignee = await this.userRepo.findOne({ where: { id: dto.assigneeId } });
+    const assignee = await this.userRepo.findOne({ where: { id: dto.assigneeId }, relations: ['role'] });
     if (!assignee) throw new NotFoundException('Assignee not found');
 
     // BR-046: cannot assign to a deactivated User.
     if (!assignee.isActive) {
       throw new BadRequestException('Cannot assign a Task to a deactivated User');
+    }
+
+    // Admins are never a valid assignee.
+    if (assignee.role.name === RoleName.ADMIN) {
+      throw new BadRequestException('Cannot assign a Task to an Admin');
     }
 
     // NOTE: BR-047 (department-restricted assignment) has been removed per
@@ -209,9 +214,12 @@ export class TaskAssignmentsService {
       throw new ForbiddenException('Only an Admin or the Task creator may reassign this Assignment');
     }
 
-    const newAssignee = await this.userRepo.findOne({ where: { id: dto.newAssigneeId } });
+    const newAssignee = await this.userRepo.findOne({ where: { id: dto.newAssigneeId }, relations: ['role'] });
     if (!newAssignee) throw new NotFoundException('New assignee not found');
     if (!newAssignee.isActive) throw new BadRequestException('Cannot assign a Task to a deactivated User'); // BR-046
+    if (newAssignee.role.name === RoleName.ADMIN) {
+      throw new BadRequestException('Cannot assign a Task to an Admin');
+    }
 
     // NOTE: BR-047 (department-restricted assignment) has been removed per
     // product decision — any active User can be assigned to any Task,

@@ -93,6 +93,9 @@ function TaskDetailContent() {
 
   const isAdmin = user?.role.name === 'ADMIN';
   const isCreator = task.createdById === user?.id;
+  // Admins are never a valid assignee — a Task is always assigned to a
+  // regular User, never to another Admin.
+  const assignableUsers = users.filter((u) => u.role.name !== 'ADMIN');
   const isAssignee = task.assignedToId === user?.id;
   const isApprover = task.approverId === user?.id;
   const myAssignment = task.assignments?.find((a) => a.assigneeId === user?.id);
@@ -395,7 +398,7 @@ function TaskDetailContent() {
                         }
                       >
                         <option value="">Reassign to…</option>
-                        {users
+                        {assignableUsers
                           .filter((u) => u.id !== a.assigneeId)
                           .map((u) => (
                             <option key={u.id} value={u.id}>
@@ -461,7 +464,7 @@ function TaskDetailContent() {
             <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
               <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
                 <option value="">Assign to…</option>
-                {users.map((u) => (
+                {assignableUsers.map((u) => (
                   <option key={u.id} value={u.id}>
                     {u.fullName}
                   </option>

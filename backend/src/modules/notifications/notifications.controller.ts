@@ -8,6 +8,7 @@ import { UserEntity } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { PaginationQueryDto } from '../../common/utils/pagination.dto';
+import { SkipTransform } from '../../common/decorators/skip-transform.decorator';
 
 // Extends the shared pagination DTO with a real, decorated `unreadOnly`
 // property. The global ValidationPipe runs with `forbidNonWhitelisted:
@@ -34,14 +35,9 @@ export class NotificationsController {
     return this.notificationsService.findForUser(user.id, query);
   }
 
-  // GET /notifications/stream — Server-Sent Events. Push, not poll: fires a
-  // `notification` event the instant one is dispatched to this User. Native
-  // browser EventSource can't set an Authorization header, so the token is
-  // additionally accepted as a `?token=` query param for this route (see
-  // JwtStrategy) — the frontend passes the same access token it already
-  // holds. Kept open with a `ping` heartbeat; the client reconnects (with a
-  // fresh token) if the access token expires and the connection drops.
+ 
   @Sse('stream')
+  @SkipTransform()
   stream(@CurrentUser() user: UserEntity): Observable<MessageEvent> {
     return this.notificationsService.stream(user.id);
   }

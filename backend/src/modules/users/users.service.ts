@@ -79,41 +79,8 @@ export class UsersService {
       .getOne();
   }
 
-  // Only Admin creates; email must be unique across all Users
-  // async create(dto: CreateUserDto, actor: UserEntity): Promise<UserEntity> {
-  //   const existing = await this.userRepo.findOne({ where: { email: dto.email } });
-  //   if (existing) throw new ConflictException('A User with this email already exists');
-
-  //   const role = await this.rolesService.findById(dto.roleId);
-  //   if (!role) throw new BadRequestException('Invalid roleId');
-
-  //   const saltRounds = this.configService.get<number>('security.bcryptSaltRounds') ?? 12;
-  //   const passwordHash = await bcrypt.hash(dto.password, saltRounds);
-
-  //   const user = await this.userRepo.save(
-  //     this.userRepo.create({
-  //       fullName: dto.fullName,
-  //       email: dto.email,
-  //       passwordHash,
-  //       phone: dto.phone,
-  //       roleId: dto.roleId,
-  //       departmentId: dto.departmentId,
-  //       branchId: dto.branchId,
-  //       createdById: actor.id,
-  //       isActive: true,
-  //     }),
-  //   );
-
-  //   await this.auditLogsService.record({
-  //     actorId: actor.id,
-  //     entityType: 'User',
-  //     entityId: user.id,
-  //     action: AuditAction.CREATE,
-  //     newValue: { ...user, passwordHash: undefined },
-  //   });
-
-  //   return this.findById(user.id);
-  // }
+  // Account creation is self-service only (POST /auth/register) — there is
+  // intentionally no admin "create user" endpoint. See UsersController.
 
   // Self edit — only non-sensitive fields (enforced by DTO shape itself)
   async updateOwnProfile(id: string, dto: UpdateOwnProfileDto): Promise<UserEntity> {

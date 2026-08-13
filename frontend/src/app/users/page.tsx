@@ -40,17 +40,7 @@ function UsersContent() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
-
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    roleId: '',
-    branchId: '',
-    departmentId: '',
-  });
 
   // ---- Edit ----
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -85,19 +75,6 @@ function UsersContent() {
     BranchesApi.list().then(setBranches).catch(() => {});
     DepartmentsApi.list().then(setDepartments).catch(() => {});
   }, []);
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    try {
-      await UsersApi.create(form);
-      setForm({ fullName: '', email: '', password: '', roleId: '', branchId: '', departmentId: '' });
-      setShowForm(false);
-      load();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not create the user.');
-    }
-  }
 
   async function toggleActive(u: User) {
     setError('');
@@ -161,102 +138,13 @@ function UsersContent() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-800">Users</h1>
-        <button className="btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Cancel' : '+ New user'}
-        </button>
       </div>
+      <p className="mt-1 text-sm text-slate-500">
+        Accounts are created via self-registration. Admins can edit, deactivate, or remove
+        existing accounts below.
+      </p>
 
-      {showForm && (
-        <form onSubmit={handleCreate} className="card mt-4 space-y-3 p-6">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="label">Full name</label>
-              <input
-                className="input"
-                required
-                value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="label">Email</label>
-              <input
-                type="email"
-                className="input"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="label">Temporary password</label>
-            <input
-              type="password"
-              className="input"
-              required
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="label">Role</label>
-              <select
-                className="input"
-                required
-                value={form.roleId}
-                onChange={(e) => setForm({ ...form, roleId: e.target.value })}
-              >
-                <option value="">Select…</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.id}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Branch</label>
-              <select
-                className="input"
-                required
-                value={form.branchId}
-                onChange={(e) => setForm({ ...form, branchId: e.target.value })}
-              >
-                <option value="">Select…</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.valueEn} ({b.codeEn})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="label">Department</label>
-              <select
-                className="input"
-                required
-                value={form.departmentId}
-                onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
-              >
-                <option value="">Select…</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.valueEn} ({d.codeEn})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <button type="submit" className="btn-primary">
-            Create user
-          </button>
-        </form>
-      )}
-
-      {!showForm && error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
       {editingUser && (
         <form onSubmit={handleEditSave} className="card mt-4 space-y-3 p-6">

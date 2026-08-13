@@ -17,7 +17,6 @@ import { UsersService } from './users.service';
 import {
   AdminUpdateUserDto,
   ChangeOwnPasswordDto,
-  CreateUserDto,
   UpdateOwnProfileDto,
 } from './dto/user.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
@@ -83,13 +82,6 @@ export class UsersController {
     }
     return this.usersService.findById(id);
   }
-
-  // POST /users 
-  // @Post()
-  // @Roles(RoleName.ADMIN)
-  // create(@Body() dto: CreateUserDto, @CurrentUser() user: UserEntity) {
-  //   return this.usersService.create(dto, user);
-  // }
 
   // PATCH /users/:id 
   @Patch(':id')

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
+import { isValidPhone, PHONE_VALIDATION_MESSAGE } from '@/lib/validation';
 
 const LEDGER: { label: string; note: string }[] = [
   { label: 'Branch', note: 'Headquarters · HQ' },
@@ -47,6 +48,7 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [branchId, setBranchId] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [branches, setBranches] = useState<
@@ -123,6 +125,7 @@ export default function Home() {
     setPassword('');
     setFullName('');
     setPhone('');
+    setPhoneError('');
     setBranchId('');
     setDepartmentId('');
   };
@@ -132,10 +135,25 @@ export default function Home() {
     openAuth(selectedMode);
   };
 
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Digits only, capped at 10 as they type — catches most mistakes before
+    // they ever hit "Create account", instead of only after a round trip
+    // to the server.
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digitsOnly);
+    if (phoneError) setPhoneError('');
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setAuthError('');
     setSubmitting(true);
+
+    if (mode === 'register' && phone && !isValidPhone(phone)) {
+      setPhoneError(PHONE_VALIDATION_MESSAGE);
+      setSubmitting(false);
+      return;
+    }
 
     try {
       if (mode === 'login') {
@@ -237,10 +255,18 @@ export default function Home() {
                       <input
                         id="phone"
                         type="tel"
+                        inputMode="numeric"
+                        maxLength={10}
+                        placeholder="5551234567"
                         className="input"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={handlePhoneChange}
                       />
+                      {phoneError ? (
+                        <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+                      ) : (
+                        <p className="mt-1 text-xs text-slate-400">10 digits, numbers only.</p>
+                      )}
                     </div>
                   </>
                 )}

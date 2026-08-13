@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { DepartmentsApi, UsersApi } from '@/lib/endpoints';
 import type { Department } from '@/lib/types';
+import { isValidPhone, PHONE_VALIDATION_MESSAGE } from '@/lib/validation';
 
 const MAX_AVATAR_MB = 5;
 
@@ -14,6 +15,7 @@ function ProfileContent() {
   const { user, refreshUser } = useAuth();
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
+  const [phoneError, setPhoneError] = useState('');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [avatarError, setAvatarError] = useState('');
@@ -32,10 +34,23 @@ function ProfileContent() {
 
   if (!user) return null;
 
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Digits only, capped at 10 as they type.
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(digitsOnly);
+    if (phoneError) setPhoneError('');
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSaved(false);
+
+    if (phone && !isValidPhone(phone)) {
+      setPhoneError(PHONE_VALIDATION_MESSAGE);
+      return;
+    }
+
     try {
       await UsersApi.updateOwnProfile({ fullName, phone });
       await refreshUser();
@@ -130,7 +145,20 @@ function ProfileContent() {
         </div>
         <div>
           <label className="label">Phone</label>
-          <input className="input" value={phone} type='number' onChange={(e) => setPhone(e.target.value)} />
+          <input
+            className="input"
+            value={phone}
+            type="tel"
+            inputMode="numeric"
+            maxLength={10}
+            placeholder="5551234567"
+            onChange={handlePhoneChange}
+          />
+          {phoneError ? (
+            <p className="mt-1 text-xs text-red-600">{phoneError}</p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">10 digits, numbers only.</p>
+          )}
         </div>
         <div>
           <label className="label">Email</label>

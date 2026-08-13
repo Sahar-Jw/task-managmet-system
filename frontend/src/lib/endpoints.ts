@@ -99,14 +99,6 @@ export const UsersApi = {
   list: (params: Record<string, string> = {}) =>
     api<Paginated<User>>(`/users?${new URLSearchParams(params)}`),
   get: (id: string) => api<User>(`/users/${id}`),
-  create: (data: {
-    fullName: string;
-    email: string;
-    password: string;
-    roleId: string;
-    departmentId: string;
-    branchId: string;
-  }) => api<User>('/users', { method: 'POST', body: data }),
   adminUpdate: (id: string, data: Partial<User> & { password?: string }) =>
     api<User>(`/users/${id}`, { method: 'PATCH', body: data }),
   updateOwnProfile: (data: { fullName?: string; phone?: string }) =>

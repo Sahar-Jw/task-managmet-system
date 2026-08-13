@@ -201,12 +201,17 @@ export class TaskAssignmentsService {
   async reassign(id: string, dto: ReassignAssignmentDto, actor: UserEntity): Promise<TaskAssignmentEntity> {
     const previous = await this.findOneOrThrow(id);
 
+    const task = await this.taskRepo.findOne({ where: { id: previous.taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+
+    // BR-045: only an Admin or the User who created the Task may reassign it.
+    if (actor.role.name !== RoleName.ADMIN && task.createdById !== actor.id) {
+      throw new ForbiddenException('Only an Admin or the Task creator may reassign this Assignment');
+    }
+
     const newAssignee = await this.userRepo.findOne({ where: { id: dto.newAssigneeId } });
     if (!newAssignee) throw new NotFoundException('New assignee not found');
     if (!newAssignee.isActive) throw new BadRequestException('Cannot assign a Task to a deactivated User'); // BR-046
-
-    const task = await this.taskRepo.findOne({ where: { id: previous.taskId } });
-    if (!task) throw new NotFoundException('Task not found');
 
     // NOTE: BR-047 (department-restricted assignment) has been removed per
     // product decision — any active User can be assigned to any Task,

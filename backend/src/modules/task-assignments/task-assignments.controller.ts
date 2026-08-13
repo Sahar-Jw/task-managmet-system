@@ -46,8 +46,8 @@ export class TaskAssignmentsController {
     return this.assignmentsService.reject(id, dto, user);
   }
 
+  // BR-045: allowed for Admins, or the User who created the parent Task.
   @Post('assignments/:id/reassign')
-  @Roles(RoleName.ADMIN)
   reassign(
     @Param('id') id: string,
     @Body() dto: ReassignAssignmentDto,

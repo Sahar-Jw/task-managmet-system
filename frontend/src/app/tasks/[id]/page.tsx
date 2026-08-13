@@ -42,6 +42,7 @@ function TaskDetailContent() {
 
   const [newComment, setNewComment] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
+  const [reassignSelections, setReassignSelections] = useState<Record<string, string>>({});
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState('');
 
@@ -371,9 +372,49 @@ function TaskDetailContent() {
           {task.assignments && task.assignments.length > 0 ? (
             <div className="mt-3 space-y-2">
               {task.assignments.map((a) => (
-                <div key={a.id} className="flex items-center justify-between text-sm">
-                  <span className="text-slate-700">{a.assignee?.fullName || 'Unknown'}</span>
-                  <StatusBadge value={a.status} />
+                <div key={a.id}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-700">{a.assignee?.fullName || 'Unknown'}</span>
+                    <StatusBadge value={a.status} />
+                  </div>
+                  {a.rejectionReason && a.status === 'Rejected' && (
+                    <p className="mt-1 text-xs text-red-600">Reason: {a.rejectionReason}</p>
+                  )}
+
+                  {/* Reassign: only the Task creator (or an Admin) can pick someone new after a rejection. */}
+                  {a.status === 'Rejected' && (isCreator || isAdmin) && (
+                    <div className="mt-2 flex gap-2">
+                      <select
+                        className="input"
+                        value={reassignSelections[a.id] || ''}
+                        onChange={(e) =>
+                          setReassignSelections((prev) => ({ ...prev, [a.id]: e.target.value }))
+                        }
+                      >
+                        <option value="">Reassign to…</option>
+                        {users
+                          .filter((u) => u.id !== a.assigneeId)
+                          .map((u) => (
+                            <option key={u.id} value={u.id}>
+                              {u.fullName}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        className="btn-secondary shrink-0"
+                        onClick={() => {
+                          const newAssigneeId = reassignSelections[a.id];
+                          if (!newAssigneeId) return;
+                          withFeedback(async () => {
+                            await AssignmentsApi.reassign(a.id, newAssigneeId);
+                            setReassignSelections((prev) => ({ ...prev, [a.id]: '' }));
+                          });
+                        }}
+                      >
+                        Reassign
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -381,6 +422,7 @@ function TaskDetailContent() {
             <p className="mt-3 text-sm text-slate-500">No additional assignments.</p>
           )}
 
+          {/* Accept/Reject: only visible to the User the Assignment was given to. */}
           {myAssignment?.status === 'PendingAcceptance' && (
             <div className="mt-4 flex gap-2">
               <button
@@ -410,6 +452,8 @@ function TaskDetailContent() {
             </div>
           )}
 
+          {/* Assign: only the Task creator (or an Admin) can hand this Task to someone. */}
+          {(isCreator || isAdmin) && (
             <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
               <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
                 <option value="">Assign to…</option>
@@ -432,7 +476,7 @@ function TaskDetailContent() {
                 Assign
               </button>
             </div>
-  
+          )}
         </div>
 
         {/* Evaluation: the creator rates the finished task; the doer sees it */}

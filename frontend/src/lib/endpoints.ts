@@ -189,8 +189,8 @@ export const AssignmentsApi = {
   accept: (id: string) => api(`/assignments/${id}/accept`, { method: 'PATCH' }),
   reject: (id: string, reason: string) =>
     api(`/assignments/${id}/reject`, { method: 'PATCH', body: { reason } }),
-  reassign: (id: string, assigneeId: string) =>
-    api(`/assignments/${id}/reassign`, { method: 'POST', body: { assigneeId } }),
+  reassign: (id: string, newAssigneeId: string, dueDate?: string) =>
+    api(`/assignments/${id}/reassign`, { method: 'POST', body: { newAssigneeId, dueDate } }),
 };
 
 // ---------- Ratings ----------

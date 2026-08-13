@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthApi } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
+import PasswordInput from '@/components/PasswordInput';
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -69,12 +70,12 @@ function ResetPasswordForm() {
         <label className="label" htmlFor="newPassword">
           New password
         </label>
-        <input
+        <PasswordInput
           id="newPassword"
-          type="password"
           required
           minLength={8}
           autoFocus
+          autoComplete="new-password"
           className="input"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -86,11 +87,11 @@ function ResetPasswordForm() {
         <label className="label" htmlFor="confirmPassword">
           Confirm new password
         </label>
-        <input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           required
           minLength={8}
+          autoComplete="new-password"
           className="input"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

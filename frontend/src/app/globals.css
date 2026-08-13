@@ -6,6 +6,19 @@ html, body {
   height: 100%;
 }
 
+/* Chrome/Edge/Safari fill autofilled inputs (e.g. saved email/password)
+   with a yellow or light-blue background by default. Force it back to
+   white so autofilled fields match every other input. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 body {
   @apply bg-slate-50 text-slate-900;
 }

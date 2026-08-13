@@ -31,6 +31,7 @@ import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { RoleName } from '../../shared/enums/role.enum';
 import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
 import { SettingType } from '../../shared/enums/setting-type.enum';
+import { AssignmentStatus } from '../../shared/enums/assignment-status.enum';
 
 /**
  * Allowed forward transitions per the Task Lifecycle state diagram.
@@ -148,7 +149,13 @@ export class TasksService {
       .addSelect('task.deadlineDate', 'deadlineDate')
       .addSelect('task.priority', 'priority')
       .addSelect('AVG(rating.score)', 'avgRating')
-      .where('(task.assignedToId = :userId OR assignment.assigneeId = :userId)', { userId })
+      // A rejected Assignment shouldn't keep the Task on the User's "My
+      // Tasks" list — only their direct assignment or a still-live
+      // (non-Rejected) task_assignments row counts.
+      .where(
+        '(task.assignedToId = :userId OR (assignment.assigneeId = :userId AND assignment.status != :rejectedStatus))',
+        { userId, rejectedStatus: AssignmentStatus.REJECTED },
+      )
       .andWhere('task.archivedAt IS NULL')
       .groupBy('task.id');
 

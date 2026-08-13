@@ -97,6 +97,9 @@ function TaskDetailContent() {
   const isApprover = task.approverId === user?.id;
   const myAssignment = task.assignments?.find((a) => a.assigneeId === user?.id);
   const canRate = task.status === 'Completed' && (isAdmin || isCreator) && !isAssignee;
+  // If any Assignment is Rejected, the creator/Admin reassigns it instead of
+  // making a brand-new Assignment, so the plain "Assign" control is hidden.
+  const hasRejectedAssignment = task.assignments?.some((a) => a.status === 'Rejected') ?? false;
   const canDecideApproval =
     task.needsApproval && task.approvalStatus === 'Pending' && (isAdmin || isApprover);
 
@@ -453,7 +456,8 @@ function TaskDetailContent() {
           )}
 
           {/* Assign: only the Task creator (or an Admin) can hand this Task to someone. */}
-          {(isCreator || isAdmin) && (
+          {/* Hidden whenever a rejected Assignment is showing its Reassign control instead. */}
+          {(isCreator || isAdmin) && !hasRejectedAssignment && (
             <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
               <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
                 <option value="">Assign to…</option>

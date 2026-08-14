@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "myTasks": "مهامي",
+    "projects": "المشاريع",
+    "tasks": "المهام",
+    "users": "المستخدمون",
+    "settings": "الإعدادات",
+    "auditLog": "سجل التدقيق",
+    "archive": "الأرشيف",
+    "profile": "إعدادات الملف الشخصي",
+    "logout": "تسجيل الخروج",
+    "notifications": "الإشعارات"
+  },
+  "home": {
+    "signIn": "تسجيل الدخول",
+    "createAccount": "إنشاء حساب",
+    "orgAccess": "صلاحيات مناسبة للمنظمة",
+    "assignApprove": "تعيين، قبول، اعتماد",
+    "auditLogLabel": "سجل تدقيق لا يمكن تعديله",
+    "reporting": "تقارير تتوافق مع الواقع"
+  },
+  "task": {
+    "assignment": "المهمة",
+    "assignTo": "تعيين إلى…",
+    "assign": "تعيين",
+    "accepted": "مقبول",
+    "rejected": "مرفوض",
+    "reassign": "إعادة تعيين",
+    "preview": "معاينة",
+    "download": "تحميل",
+    "delete": "حذف"
+  }
+}

@@ -14,13 +14,23 @@ const BADGE_COLORS: Record<string, string> = {
   other: 'bg-slate-100 text-slate-600',
 };
 
-// Generic document icon shown for non-image files (PDF/Word/Excel/other).
-function FileIcon() {
+const FILE_PREVIEW_STYLES: Record<string, { shell: string; text: string; short: string }> = {
+  pdf: { shell: 'bg-red-100 text-red-700', text: 'PDF', short: 'PDF' },
+  docx: { shell: 'bg-blue-100 text-blue-700', text: 'DOC', short: 'DOC' },
+  excel: { shell: 'bg-emerald-100 text-emerald-700', text: 'XLS', short: 'XLS' },
+  other: { shell: 'bg-slate-200 text-slate-700', text: 'FILE', short: 'FILE' },
+};
+
+function FilePreviewArtwork({ kind }: { kind: string }) {
+  const style = FILE_PREVIEW_STYLES[kind] || FILE_PREVIEW_STYLES.other;
+
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-10 w-10 text-slate-400">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 3.75h7.5L19.5 9.75v10.5a.75.75 0 0 1-.75.75h-12a.75.75 0 0 1-.75-.75V4.5a.75.75 0 0 1 .75-.75Z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 3.75V9h5.25" />
-    </svg>
+    <div className={`flex h-full w-full items-center justify-center rounded-md border border-slate-200 ${style.shell}`}>
+      <div className="flex h-20 w-16 flex-col items-center justify-center rounded-md border border-white/60 bg-white/25 shadow-inner">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wide">{style.text}</div>
+        <div className="h-8 w-10 rounded-sm border border-white/60 bg-white/40" />
+      </div>
+    </div>
   );
 }
 
@@ -86,7 +96,7 @@ export default function AttachmentCard({
         {kind === 'image' && thumbUrl ? (
           <img src={thumbUrl} alt={attachment.fileName} className="h-full w-full object-cover" />
         ) : (
-          <FileIcon />
+          <FilePreviewArtwork kind={kind} />
         )}
       </button>
 

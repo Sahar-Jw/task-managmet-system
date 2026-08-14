@@ -1,5 +1,6 @@
 'use client';
 
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
@@ -16,6 +17,8 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
   const pathname = usePathname();
+  const locale = useLocale();
+  const t = useTranslations('nav');
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -41,16 +44,16 @@ export default function Navbar() {
   const isAdmin = user.role.name === 'ADMIN';
 
   const links = [
-    { href: '/dashboard', label: 'Dashboard' },
-    { href: '/tasks/mine', label: 'My Tasks' },
-    { href: '/projects', label: 'Projects' },
+    { href: '/dashboard', label: t('dashboard') },
+    { href: '/tasks/mine', label: t('myTasks') },
+    { href: '/projects', label: t('projects') },
     ...(isAdmin
       ? [
-          { href: '/tasks', label: 'Tasks' },
-          { href: '/users', label: 'Users' },
-          { href: '/settings', label: 'Settings' },
-          { href: '/audit-logs', label: 'Audit Log' },
-          { href: '/archive', label: 'Archive' },
+          { href: '/tasks', label: t('tasks') },
+          { href: '/users', label: t('users') },
+          { href: '/settings', label: t('settings') },
+          { href: '/audit-logs', label: t('auditLog') },
+          { href: '/archive', label: t('archive') },
         ]
       : []),
   ];
@@ -77,9 +80,22 @@ export default function Navbar() {
           ))}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const nextLocale = locale === 'en' ? 'ar' : 'en';
+              document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+              window.location.reload();
+            }}
+            className="rounded-full border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100"
+            aria-label="Toggle language"
+          >
+            {locale === 'en' ? 'AR' : 'EN'}
+          </button>
+
           <Link
             href="/notifications"
-            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+            aria-label={unreadCount > 0 ? `${t('notifications')} (${unreadCount} unread)` : t('notifications')}
             className={`relative rounded-full p-2 hover:bg-slate-100 ${
               pathname.startsWith('/notifications') ? 'bg-slate-100' : ''
             }`}
@@ -138,7 +154,7 @@ export default function Navbar() {
                   onClick={() => setMenuOpen(false)}
                   className="block px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                 >
-                  Profile settings
+                  {t('profile')}
                 </Link>
                 <button
                   role="menuitem"
@@ -148,7 +164,7 @@ export default function Navbar() {
                   }}
                   className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-slate-50"
                 >
-                  Log out
+                  {t('logout')}
                 </button>
               </div>
             )}

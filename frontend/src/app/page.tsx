@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -16,21 +17,21 @@ const LEDGER: { label: string; note: string }[] = [
   { label: 'Approved', note: 'signed off · logged' },
 ];
 
-const FEATURES = [
+const getFeatures = (t: (key: string) => string) => [
   {
-    title: 'Org-shaped access',
+    title: t('orgAccess'),
     body: 'Every account sits under a Branch and a Department, so people only ever see the work that is actually theirs.',
   },
   {
-    title: 'Assign, accept, approve',
+    title: t('assignApprove'),
     body: 'Work moves through a real chain: assigned, accepted or rejected, completed, then signed off — never a status field with no history behind it.',
   },
   {
-    title: 'An audit log that cannot be edited',
+    title: t('auditLogLabel'),
     body: 'Every create, change, and approval is written once to an append-only log. Nothing about who-did-what is ever quietly rewritten.',
   },
   {
-    title: 'Reporting that matches reality',
+    title: t('reporting'),
     body: 'Task summaries, per-user performance, and branch overviews are read straight from the same records your team works in daily.',
   },
 ];
@@ -40,6 +41,8 @@ type AuthMode = 'login' | 'register' | null;
 export default function Home() {
   const { user, loading, login, register } = useAuth();
   const router = useRouter();
+  const t = useTranslations('home');
+  const features = getFeatures(t);
   const authRef = useRef<HTMLDivElement | null>(null);
   const [mode, setMode] = useState<AuthMode>(null);
   const [authError, setAuthError] = useState('');
@@ -188,10 +191,10 @@ export default function Home() {
           </Link>
           <nav className="flex items-center gap-3">
             <button type="button" onClick={() => handleModeChange('login')} className="btn-secondary">
-              Sign in
+              {t('signIn')}
             </button>
             <button type="button" onClick={() => handleModeChange('register')} className="btn-primary">
-              Create account
+              {t('createAccount')}
             </button>
           </nav>
         </div>

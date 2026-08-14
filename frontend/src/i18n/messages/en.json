@@ -1,0 +1,34 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "myTasks": "My Tasks",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "users": "Users",
+    "settings": "Settings",
+    "auditLog": "Audit Log",
+    "archive": "Archive",
+    "profile": "Profile settings",
+    "logout": "Log out",
+    "notifications": "Notifications"
+  },
+  "home": {
+    "signIn": "Sign in",
+    "createAccount": "Create account",
+    "orgAccess": "Org-shaped access",
+    "assignApprove": "Assign, accept, approve",
+    "auditLogLabel": "An audit log that cannot be edited",
+    "reporting": "Reporting that matches reality"
+  },
+  "task": {
+    "assignment": "Assignment",
+    "assignTo": "Assign to…",
+    "assign": "Assign",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "reassign": "Reassign",
+    "preview": "Preview",
+    "download": "Download",
+    "delete": "Delete"
+  }
+}

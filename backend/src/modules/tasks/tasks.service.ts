@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { TaskEntity } from './entities/task.entity';
 import { ProjectEntity } from '../projects/entities/project.entity';
 import { SettingEntity } from '../settings/entities/setting.entity';
@@ -227,6 +227,9 @@ export class TasksService {
   async findOne(id: string): Promise<TaskEntity> {
     const task = await this.taskRepo.findOne({ where: { id }, relations: TASK_RELATIONS });
     if (!task) throw new NotFoundException('Task not found');
+
+    task.attachments = (task.attachments || []).filter((attachment) => !attachment.deletedAt);
+    task.comments = (task.comments || []).filter((comment) => !comment.deletedAt);
     return task;
   }
 
@@ -423,8 +426,11 @@ export class TasksService {
     }
 
     const oldValue = { assigneeCanDownloadAttachments: task.assigneeCanDownloadAttachments };
-    task.assigneeCanDownloadAttachments = dto.assigneeCanDownloadAttachments;
-    const saved = await this.taskRepo.save(task);
+    await this.taskRepo.update(id, {
+      assigneeCanDownloadAttachments: dto.assigneeCanDownloadAttachments,
+    });
+
+    const saved = await this.findOne(id);
 
     await this.auditLogsService.record({
       actorId: actor.id,
@@ -435,7 +441,7 @@ export class TasksService {
       newValue: { assigneeCanDownloadAttachments: saved.assigneeCanDownloadAttachments },
     });
 
-    return this.findOne(saved.id);
+    return saved;
   }
 
   // No self-reference, no circular ancestry.

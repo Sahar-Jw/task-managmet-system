@@ -14,7 +14,7 @@ export function getFileKind(mimeType?: string, fileName?: string): FileKind {
 
   if (mime.startsWith('image/')) return 'image';
   if (mime === 'application/pdf' || ext === 'pdf') return 'pdf';
-  if (mime === DOCX_MIME || ext === 'docx') return 'docx';
+  if (mime === DOCX_MIME || ['doc', 'docx'].includes(ext)) return 'docx';
   if (mime === XLSX_MIME || mime === XLS_MIME || mime === CSV_MIME || ['xlsx', 'xls', 'csv'].includes(ext)) {
     return 'excel';
   }

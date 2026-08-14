@@ -500,31 +500,34 @@ function TaskDetailContent() {
           )}
 
           {/* Assign: only the Task creator (or an Admin) can hand this Task to someone. */}
-          {/* Hidden whenever a rejected Assignment is showing its Reassign control instead. */}
-          {(isCreator || isAdmin) && !hasRejectedAssignment && (
-            <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
-              <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
-                <option value="">Assign to…</option>
-                {assignableUsers.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.fullName}
-                  </option>
-                ))}
-              </select>
-              <button
-                className="btn-secondary shrink-0"
-                onClick={() => {
-                  if (!assigneeId) return;
-                  withFeedback(async () => {
-                    await AssignmentsApi.assign(task.id, assigneeId);
-                    setAssigneeId('');
-                  });
-                }}
-              >
-                Assign
-              </button>
-            </div>
-          )}
+          {/* Hidden when the Task already has a direct assignee or when a rejected assignment is showing its reassign control. */}
+          {(isCreator || isAdmin) &&
+            !hasRejectedAssignment &&
+            !task.assignedToId &&
+            !(task.assignments && task.assignments.length > 0) && (
+              <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
+                <select className="input" value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)}>
+                  <option value="">Assign to…</option>
+                  {assignableUsers.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.fullName}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="btn-secondary shrink-0"
+                  onClick={() => {
+                    if (!assigneeId) return;
+                    withFeedback(async () => {
+                      await AssignmentsApi.assign(task.id, assigneeId);
+                      setAssigneeId('');
+                    });
+                  }}
+                >
+                  Assign
+                </button>
+              </div>
+            )}
         </div>
 
         {/* Evaluation: the creator rates the finished task; the doer sees it */}

@@ -141,6 +141,9 @@ export class QueryMyTasksDto extends PaginationQueryDto {
   // Optional project scope (e.g. viewing "my tasks" within one Project)
   @IsOptional() @IsUUID() projectId?: string;
 
+  // Free-text match against title/description (both languages)
+  @IsOptional() @IsString() @MaxLength(200) search?: string;
+
   // Rating: only tasks whose average rating is >= this value (1-5)
   @IsOptional() @IsNumberString() minRating?: string;
 

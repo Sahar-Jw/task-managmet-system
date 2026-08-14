@@ -386,20 +386,7 @@ function NewTaskContent() {
         {/* People */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-600">People &amp; hierarchy</h2>
-          <div>
-            <label className="label">For whom is this task (assignee, optional)</label>
-            <select
-              className="input"
-              value={form.assignedToId}
-              onChange={(e) => set('assignedToId', e.target.value)}
-            >
-              <option value="">Unassigned for now</option>
-              {assignableUsers.map((u) => (
-                <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-slate-400">The task creator is recorded automatically as you.</p>
-          </div>
+          
           <div>
             <label className="label">Father task (optional — makes this a sub-task/step)</label>
             <select

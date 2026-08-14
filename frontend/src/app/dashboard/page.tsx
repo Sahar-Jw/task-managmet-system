@@ -25,7 +25,9 @@ const STATUS_ORDER: TaskStatus[] = [
   'InProgress',
   'PendingApproval',
   'Completed',
+  'Reopened',
   'Finished',
+  'Archived',
 ];
 
 const MONTH_LABEL = new Intl.DateTimeFormat('en', { month: 'short', year: '2-digit' });
@@ -134,12 +136,12 @@ function DashboardContent() {
         <p className="mt-6 text-slate-500">Loading…</p>
       ) : (
         <>
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-6 grid grid-cols-4 gap-3 sm:grid-cols-8">
             {counts.map((c) => (
               <Link
                 key={c.status}
                 href={isAdmin ? `/tasks?status=${c.status}` : `/tasks/mine?status=${c.status}`}
-                className="card p-4 text-center hover:border-brand-500"
+                className="card p-3 text-center hover:border-brand-500"
               >
                 <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
                 <div className="mt-1">

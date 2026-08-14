@@ -163,6 +163,12 @@ export class TasksService {
     if (query.status) idQb.andWhere('task.status = :status', { status: query.status });
     if (query.priority) idQb.andWhere('task.priority = :priority', { priority: query.priority });
     if (query.projectId) idQb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
+    if (query.search) {
+      idQb.andWhere(
+        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
 
     if (query.upcomingOnly === 'true') {
       idQb

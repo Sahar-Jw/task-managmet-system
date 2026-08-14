@@ -42,16 +42,27 @@ function MyTasksContent() {
   const [priority, setPriority] = useState('');
   const [minRating, setMinRating] = useState('');
   const [upcomingOnly, setUpcomingOnly] = useState(false);
+  const [search, setSearch] = useState('');
+  const [deadlineFrom, setDeadlineFrom] = useState('');
+  const [deadlineTo, setDeadlineTo] = useState('');
   const [tasks, setTasks] = useState<Task[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
 
+  // Debounce the free-text search so we're not firing a request on every
+  // keystroke — wait for a short pause in typing instead.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // Reset to page 1 whenever a filter changes
   useEffect(() => {
     setPage(1);
-  }, [status, priority, minRating, upcomingOnly]);
+  }, [status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo]);
 
   useEffect(() => {
     setLoading(true);
@@ -66,6 +77,9 @@ function MyTasksContent() {
     if (priority) params.priority = priority;
     if (minRating) params.minRating = minRating;
     if (upcomingOnly) params.upcomingOnly = 'true';
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (deadlineFrom) params.deadlineFrom = deadlineFrom;
+    if (deadlineTo) params.deadlineTo = deadlineTo;
 
     TasksApi.mine(params)
       .then((res) => {
@@ -74,7 +88,7 @@ function MyTasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority, minRating, upcomingOnly, page]);
+  }, [status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo, page]);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -82,11 +96,59 @@ function MyTasksContent() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-800">My Tasks</h1>
-        <span className="text-sm text-slate-500">{loading ? '…' : `${total} task${total === 1 ? '' : 's'}`}</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-slate-500">{loading ? '…' : `${total} task${total === 1 ? '' : 's'}`}</span>
+          <Link href="/tasks/new" className="btn-primary">
+            + New task
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[200px] flex-1">
+          <label className="label">Search</label>
+          <input
+            className="input"
+            placeholder="Title or description…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Due from</label>
+          <input
+            type="date"
+            className="input"
+            value={deadlineFrom}
+            onChange={(e) => setDeadlineFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Due to</label>
+          <input
+            type="date"
+            className="input"
+            value={deadlineTo}
+            onChange={(e) => setDeadlineTo(e.target.value)}
+          />
+        </div>
+        {(search || deadlineFrom || deadlineTo) && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setSearch('');
+              setDeadlineFrom('');
+              setDeadlineTo('');
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-slate-500">Importance:</span>
         <button
           onClick={() => setPriority('')}

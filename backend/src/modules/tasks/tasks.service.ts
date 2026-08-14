@@ -116,11 +116,17 @@ export class TasksService {
         assigneeId: query.assigneeId,
       });
     }
-    if (query.dueDateFrom && query.dueDateTo) {
-      qb.andWhere('task.deadlineDate BETWEEN :from AND :to', {
-        from: query.dueDateFrom,
-        to: query.dueDateTo,
-      });
+    if (query.dueDateFrom) {
+      qb.andWhere('task.deadlineDate >= :dueDateFrom', { dueDateFrom: query.dueDateFrom });
+    }
+    if (query.dueDateTo) {
+      qb.andWhere('task.deadlineDate <= :dueDateTo', { dueDateTo: query.dueDateTo });
+    }
+    if (query.search) {
+      qb.andWhere(
+        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
     }
 
     const [items, total] = await qb.getManyAndCount();

@@ -47,6 +47,23 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // ---- Filters ----
+  const [search, setSearch] = useState(''); // matches name or email
+  const [roleId, setRoleId] = useState('');
+  const [isActive, setIsActive] = useState(''); // '', 'true', 'false'
+  const [departmentId, setDepartmentId] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [joinDateFrom, setJoinDateFrom] = useState('');
+  const [joinDateTo, setJoinDateTo] = useState('');
+
+  // Debounce the free-text search so we're not firing a request on every
+  // keystroke — wait for a short pause in typing instead.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   // ---- Edit ----
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editForm, setEditForm] = useState({
@@ -62,10 +79,21 @@ function UsersContent() {
   const [pendingDelete, setPendingDelete] = useState<User | null>(null);
   const [deleteError, setDeleteError] = useState('');
 
-  async function load() {
+  async function load(pageOverride?: number) {
     setLoading(true);
     try {
-      const res = await UsersApi.list({ limit: String(PAGE_SIZE), page: String(page) });
+      const params: Record<string, string> = {
+        limit: String(PAGE_SIZE),
+        page: String(pageOverride ?? page),
+      };
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (roleId) params.roleId = roleId;
+      if (isActive) params.isActive = isActive;
+      if (departmentId) params.departmentId = departmentId;
+      if (branchId) params.branchId = branchId;
+      if (joinDateFrom) params.joinDateFrom = joinDateFrom;
+      if (joinDateTo) params.joinDateTo = joinDateTo;
+      const res = await UsersApi.list(params);
       setUsers(res.items);
       setTotal(res.total);
     } catch (err) {
@@ -75,10 +103,15 @@ function UsersContent() {
     }
   }
 
+  // Reset to page 1 whenever a filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch, roleId, isActive, departmentId, branchId, joinDateFrom, joinDateTo]);
+
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch, roleId, isActive, departmentId, branchId, joinDateFrom, joinDateTo]);
 
   useEffect(() => {
     UsersApi.roles().then(setRoles).catch(() => {});
@@ -87,6 +120,18 @@ function UsersContent() {
   }, []);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
+  const hasActiveFilters =
+    !!(search || roleId || isActive || departmentId || branchId || joinDateFrom || joinDateTo);
+
+  function clearFilters() {
+    setSearch('');
+    setRoleId('');
+    setIsActive('');
+    setDepartmentId('');
+    setBranchId('');
+    setJoinDateFrom('');
+    setJoinDateTo('');
+  }
   const editRoleIsAdmin = roles.find((r) => r.id === editForm.roleId)?.name === 'ADMIN';
 
   async function toggleActive(u: User) {
@@ -172,6 +217,83 @@ function UsersContent() {
       </p>
 
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
+      {/* Filters */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[200px] flex-1">
+          <label className="label">Search</label>
+          <input
+            className="input"
+            placeholder="Name or email…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Role</label>
+          <select className="input" value={roleId} onChange={(e) => setRoleId(e.target.value)}>
+            <option value="">All</option>
+            {roles.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Status</label>
+          <select className="input" value={isActive} onChange={(e) => setIsActive(e.target.value)}>
+            <option value="">All</option>
+            <option value="true">Active</option>
+            <option value="false">Deactivated</option>
+          </select>
+        </div>
+        <div>
+          <label className="label">Department</label>
+          <select className="input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+            <option value="">All</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.valueEn} ({d.codeEn})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Branch</label>
+          <select className="input" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <option value="">All</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.valueEn} ({b.codeEn})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Joined from</label>
+          <input
+            type="date"
+            className="input"
+            value={joinDateFrom}
+            onChange={(e) => setJoinDateFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Joined to</label>
+          <input
+            type="date"
+            className="input"
+            value={joinDateTo}
+            onChange={(e) => setJoinDateTo(e.target.value)}
+          />
+        </div>
+        {hasActiveFilters && (
+          <button type="button" className="btn-secondary" onClick={clearFilters}>
+            Clear
+          </button>
+        )}
+      </div>
 
       {editingUser && (
         <form onSubmit={handleEditSave} className="card mt-4 space-y-3 p-6">
@@ -268,6 +390,8 @@ function UsersContent() {
       <div className="mt-4 card divide-y divide-slate-100">
         {loading ? (
           <p className="p-6 text-center text-slate-500">Loading…</p>
+        ) : users.length === 0 ? (
+          <p className="p-6 text-center text-slate-500">No users match this filter.</p>
         ) : (
           users.map((u) => (
             <div key={u.id} className="flex items-center justify-between px-4 py-3">

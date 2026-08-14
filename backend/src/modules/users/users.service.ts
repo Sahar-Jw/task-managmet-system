@@ -54,6 +54,12 @@ export class UsersService {
         search: `%${query.search}%`,
       });
     }
+    if (query.joinDateFrom) {
+      qb.andWhere('user.createdAt::date >= :joinDateFrom', { joinDateFrom: query.joinDateFrom });
+    }
+    if (query.joinDateTo) {
+      qb.andWhere('user.createdAt::date <= :joinDateTo', { joinDateTo: query.joinDateTo });
+    }
 
     const [items, total] = await qb.getManyAndCount();
     return { items, total, page, limit };

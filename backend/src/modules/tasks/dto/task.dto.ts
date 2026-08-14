@@ -124,6 +124,10 @@ export class QueryTasksDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
   @IsOptional() @IsDateString() dueDateFrom?: string;
   @IsOptional() @IsDateString() dueDateTo?: string;
+
+  // Free-text match against title/description (both languages) — same
+  // behavior as the "My Tasks" search filter.
+  @IsOptional() @IsString() @MaxLength(200) search?: string;
 }
 
 /**

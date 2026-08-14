@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
-import { TasksApi } from '@/lib/endpoints';
-import type { Task } from '@/lib/types';
+import { BranchesApi, DepartmentsApi, TasksApi } from '@/lib/endpoints';
+import type { Branch, Department, Task } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 10;
@@ -30,16 +30,36 @@ function TasksContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState(searchParams.get('status') || '');
   const [priority, setPriority] = useState(searchParams.get('priority') || '');
+  const [search, setSearch] = useState('');
+  const [dueDateFrom, setDueDateFrom] = useState('');
+  const [dueDateTo, setDueDateTo] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
 
-  // Reset to page 1 whenever the filters change
+  // Debounce the free-text search so we're not firing a request on every
+  // keystroke — wait for a short pause in typing instead.
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    DepartmentsApi.list().then(setDepartments).catch(() => {});
+    BranchesApi.list().then(setBranches).catch(() => {});
+  }, []);
+
+  // Reset to page 1 whenever a filter changes
   useEffect(() => {
     setPage(1);
-  }, [status, priority]);
+  }, [status, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId]);
 
   useEffect(() => {
     setLoading(true);
@@ -47,6 +67,11 @@ function TasksContent() {
     const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
     if (status) params.status = status;
     if (priority) params.priority = priority;
+    if (debouncedSearch) params.search = debouncedSearch;
+    if (dueDateFrom) params.dueDateFrom = dueDateFrom;
+    if (dueDateTo) params.dueDateTo = dueDateTo;
+    if (departmentId) params.departmentId = departmentId;
+    if (branchId) params.branchId = branchId;
     TasksApi.list(params)
       .then((res) => {
         setTasks(res.items);
@@ -54,7 +79,7 @@ function TasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority, page]);
+  }, [status, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, page]);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -67,7 +92,75 @@ function TasksContent() {
         </Link>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      {/* Filters */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[200px] flex-1">
+          <label className="label">Search</label>
+          <input
+            className="input"
+            placeholder="Title or description…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Due from</label>
+          <input
+            type="date"
+            className="input"
+            value={dueDateFrom}
+            onChange={(e) => setDueDateFrom(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Due to</label>
+          <input
+            type="date"
+            className="input"
+            value={dueDateTo}
+            onChange={(e) => setDueDateTo(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="label">Department</label>
+          <select className="input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+            <option value="">All</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.valueEn} ({d.codeEn})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">Branch</label>
+          <select className="input" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+            <option value="">All</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.valueEn} ({b.codeEn})
+              </option>
+            ))}
+          </select>
+        </div>
+        {(search || dueDateFrom || dueDateTo || departmentId || branchId) && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setSearch('');
+              setDueDateFrom('');
+              setDueDateTo('');
+              setDepartmentId('');
+              setBranchId('');
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
         {STATUSES.map((s) => (
           <button
             key={s || 'all'}

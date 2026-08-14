@@ -16,6 +16,7 @@ import {
   DecideTaskApprovalDto,
   QueryMyTasksDto,
   QueryTasksDto,
+  UpdateAttachmentPermissionsDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto';
@@ -64,6 +65,17 @@ export class TasksController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateTaskDto, @CurrentUser() user: UserEntity) {
     return this.tasksService.update(id, dto, user);
+  }
+
+  // BR-070: Task creator (or Admin) toggles whether the assigned User(s)
+  // may download this Task's attachments. Preview is unaffected.
+  @Patch(':id/attachment-permissions')
+  updateAttachmentPermissions(
+    @Param('id') id: string,
+    @Body() dto: UpdateAttachmentPermissionsDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.tasksService.updateAttachmentPermissions(id, dto, user);
   }
 
   // BR-032 to BR-036: status-transition rules enforced in service

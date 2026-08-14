@@ -144,6 +144,10 @@ export interface Task {
 
   createdAt: string;
 
+  // Set by the Task creator (or Admin) — whether the assigned User(s) may
+  // download attachments. They can always preview them regardless.
+  assigneeCanDownloadAttachments: boolean;
+
   // Children
   assignments?: TaskAssignment[];
   comments?: TaskComment[];

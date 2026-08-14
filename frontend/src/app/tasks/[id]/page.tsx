@@ -111,6 +111,14 @@ function TaskDetailContent() {
   const canDecideApproval =
     task.needsApproval && task.approvalStatus === 'Pending' && (isAdmin || isApprover);
 
+  // Attachments: only the Task creator (owner) or Admin may add/delete.
+  // The assigned User(s) can always preview; download depends on the
+  // creator's/Admin's toggle (assigneeCanDownloadAttachments).
+  const isAssigneeOfTask = isAssignee || !!myAssignment;
+  const canManageAttachments = isCreator || isAdmin;
+  const canDownloadAttachments =
+    canManageAttachments || (isAssigneeOfTask && task.assigneeCanDownloadAttachments);
+
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-6">
@@ -346,7 +354,7 @@ function TaskDetailContent() {
         <div className="card p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Attachments</h2>
-            {task.status !== 'Archived' && (
+            {task.status !== 'Archived' && canManageAttachments && (
               <label className="btn-secondary cursor-pointer text-xs">
                 {uploadingAttachments ? 'Uploading…' : 'Add files'}
                 <input
@@ -368,6 +376,23 @@ function TaskDetailContent() {
             )}
           </div>
 
+          {/* Creator/Admin-only: whether the assigned User(s) may download
+              attachments. They can always preview regardless of this. */}
+          {canManageAttachments && (
+            <label className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+              <input
+                type="checkbox"
+                checked={task.assigneeCanDownloadAttachments}
+                onChange={(e) =>
+                  withFeedback(() =>
+                    TasksApi.updateAttachmentPermissions(task.id, e.target.checked),
+                  )
+                }
+              />
+              Allow assigned User(s) to download attachments
+            </label>
+          )}
+
           {(task.attachments || []).length === 0 ? (
             <p className="mt-3 text-sm text-slate-500">No files attached.</p>
           ) : (
@@ -376,7 +401,8 @@ function TaskDetailContent() {
                 <AttachmentCard
                   key={a.id}
                   attachment={a}
-                  canDelete={task.status !== 'Archived' && (isAdmin || a.uploadedById === user?.id)}
+                  canDelete={task.status !== 'Archived' && canManageAttachments}
+                  canDownload={canDownloadAttachments}
                   onPreview={() => setPreviewAttachment(a)}
                   onDelete={() => withFeedback(() => AttachmentsApi.remove(a.id))}
                 />
@@ -570,6 +596,7 @@ function TaskDetailContent() {
       {previewAttachment && (
         <AttachmentPreviewModal
           attachment={previewAttachment}
+          canDownload={canDownloadAttachments}
           onClose={() => setPreviewAttachment(null)}
         />
       )}

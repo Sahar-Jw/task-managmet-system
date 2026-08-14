@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { downloadFile, fetchFileAsObjectUrl } from '@/lib/api';
+import { AttachmentsApi } from '@/lib/endpoints';
 import { formatFileSize, getFileKind, getFileTypeLabel } from '@/lib/file-kind';
 import type { TaskAttachment } from '@/lib/types';
 
@@ -26,11 +27,13 @@ function FileIcon() {
 export default function AttachmentCard({
   attachment,
   canDelete,
+  canDownload,
   onPreview,
   onDelete,
 }: {
   attachment: TaskAttachment;
   canDelete: boolean;
+  canDownload: boolean;
   onPreview: () => void;
   onDelete: () => void;
 }) {
@@ -39,12 +42,14 @@ export default function AttachmentCard({
 
   // Only images get a real thumbnail; other kinds show a generic file icon
   // to avoid parsing every PDF/docx/xlsx just to render the card grid.
+  // Uses the preview path (not download) — thumbnailing is a form of
+  // preview and must work even when download is disabled for this user.
   useEffect(() => {
     if (kind !== 'image') return;
     let cancelled = false;
     let createdUrl: string | null = null;
 
-    fetchFileAsObjectUrl(`/attachments/${attachment.id}`)
+    fetchFileAsObjectUrl(AttachmentsApi.previewPath(attachment.id))
       .then((url) => {
         if (cancelled) {
           URL.revokeObjectURL(url);
@@ -93,12 +98,14 @@ export default function AttachmentCard({
         <button className="btn-secondary flex-1 text-xs" onClick={onPreview}>
           Preview
         </button>
-        <button
-          className="btn-secondary flex-1 text-xs"
-          onClick={() => downloadFile(`/attachments/${attachment.id}`, attachment.fileName)}
-        >
-          Download
-        </button>
+        {canDownload && (
+          <button
+            className="btn-secondary flex-1 text-xs"
+            onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
+          >
+            Download
+          </button>
+        )}
         {canDelete && (
           <button className="btn-danger flex-1 text-xs" onClick={onDelete}>
             Delete

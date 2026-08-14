@@ -89,6 +89,12 @@ export class UpdateTaskDto {
   @IsOptional() @IsDateString() deadlineDate?: string;
 }
 
+/** Creator/Admin toggles whether the assigned User(s) may download attachments. */
+export class UpdateAttachmentPermissionsDto {
+  @IsBoolean()
+  assigneeCanDownloadAttachments!: boolean;
+}
+
 /** Reason required for FINISHED/Reopened transitions. */
 export class UpdateTaskStatusDto {
   @IsEnum(TaskStatus) status!: TaskStatus;

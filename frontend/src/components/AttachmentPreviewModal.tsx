@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { downloadFile, fetchFileAsArrayBuffer, fetchFileAsBlob } from '@/lib/api';
+import { AttachmentsApi } from '@/lib/endpoints';
 import { getFileKind } from '@/lib/file-kind';
 import type { TaskAttachment } from '@/lib/types';
 
@@ -13,9 +14,11 @@ type LoadState = 'loading' | 'ready' | 'empty' | 'unsupported' | 'error';
 
 export default function AttachmentPreviewModal({
   attachment,
+  canDownload,
   onClose,
 }: {
   attachment: TaskAttachment;
+  canDownload: boolean;
   onClose: () => void;
 }) {
   const kind = getFileKind(attachment.mimeType, attachment.fileName);
@@ -30,7 +33,8 @@ export default function AttachmentPreviewModal({
   useEffect(() => {
     let cancelled = false;
     let createdUrl: string | null = null;
-    const path = `/attachments/${attachment.id}`;
+    // Preview path — never gated by the download-permission toggle.
+    const path = AttachmentsApi.previewPath(attachment.id);
 
     async function load() {
       setState('loading');
@@ -160,12 +164,14 @@ export default function AttachmentPreviewModal({
           {state === 'error' && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-red-200 bg-red-50 py-12 text-center">
               <p className="text-sm font-medium text-red-600">{error || 'Could not load preview'}</p>
-              <button
-                className="btn-primary"
-                onClick={() => downloadFile(`/attachments/${attachment.id}`, attachment.fileName)}
-              >
-                Download {attachment.fileName}
-              </button>
+              {canDownload && (
+                <button
+                  className="btn-primary"
+                  onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
+                >
+                  Download {attachment.fileName}
+                </button>
+              )}
             </div>
           )}
 
@@ -182,13 +188,17 @@ export default function AttachmentPreviewModal({
           {state === 'unsupported' && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-slate-200 bg-slate-50 py-12 text-center">
               <p className="text-sm font-medium text-slate-700">No inline preview available</p>
-              <p className="text-sm text-slate-500">Download the file to view it.</p>
-              <button
-                className="btn-primary"
-                onClick={() => downloadFile(`/attachments/${attachment.id}`, attachment.fileName)}
-              >
-                Download {attachment.fileName}
-              </button>
+              <p className="text-sm text-slate-500">
+                {canDownload ? 'Download the file to view it.' : 'Downloading is disabled for this Task.'}
+              </p>
+              {canDownload && (
+                <button
+                  className="btn-primary"
+                  onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
+                >
+                  Download {attachment.fileName}
+                </button>
+              )}
             </div>
           )}
 
@@ -250,12 +260,14 @@ export default function AttachmentPreviewModal({
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-200 px-5 py-3">
-          <button
-            className="btn-secondary"
-            onClick={() => downloadFile(`/attachments/${attachment.id}`, attachment.fileName)}
-          >
-            Download
-          </button>
+          {canDownload && (
+            <button
+              className="btn-secondary"
+              onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
+            >
+              Download
+            </button>
+          )}
           <button className="btn-secondary" onClick={onClose}>
             Close
           </button>

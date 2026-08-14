@@ -20,6 +20,7 @@ import {
   DecideTaskApprovalDto,
   QueryMyTasksDto,
   QueryTasksDto,
+  UpdateAttachmentPermissionsDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
 } from './dto/task.dto';
@@ -400,6 +401,38 @@ export class TasksService {
       action: AuditAction.UPDATE,
       oldValue,
       newValue: saved,
+    });
+
+    return this.findOne(saved.id);
+  }
+
+  // BR-070: only the Task creator or Admin may decide whether the assigned
+  // User(s) can download this Task's attachments. Kept as its own endpoint
+  // (rather than folded into the general update()) since it's the one Task
+  // field with an explicit creator-only rule.
+  async updateAttachmentPermissions(
+    id: string,
+    dto: UpdateAttachmentPermissionsDto,
+    actor: UserEntity,
+  ): Promise<TaskEntity> {
+    const task = await this.findOne(id);
+
+    const isAdmin = actor.role.name === RoleName.ADMIN;
+    if (!isAdmin && task.createdById !== actor.id) {
+      throw new ForbiddenException('Only the Task creator or Admin may change attachment download permissions');
+    }
+
+    const oldValue = { assigneeCanDownloadAttachments: task.assigneeCanDownloadAttachments };
+    task.assigneeCanDownloadAttachments = dto.assigneeCanDownloadAttachments;
+    const saved = await this.taskRepo.save(task);
+
+    await this.auditLogsService.record({
+      actorId: actor.id,
+      entityType: 'Task',
+      entityId: saved.id,
+      action: AuditAction.UPDATE,
+      oldValue,
+      newValue: { assigneeCanDownloadAttachments: saved.assigneeCanDownloadAttachments },
     });
 
     return this.findOne(saved.id);

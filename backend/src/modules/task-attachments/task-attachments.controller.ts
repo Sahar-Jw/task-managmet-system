@@ -6,6 +6,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Res,
   UploadedFiles,
   UseGuards,
@@ -84,10 +85,22 @@ export class TaskAttachmentsController {
     return this.attachmentsService.uploadManyToAssignment(assignmentId, files, user);
   }
 
-  // GET /attachments/:id — download
+  // GET /attachments/:id — file bytes, used for both inline preview and
+  // download. `?intent=download` marks an actual download so BR-070's
+  // per-Task toggle is enforced; anything else (the default) is treated as
+  // preview, which the Task creator, Admin, and assigned User(s) can
+  // always do regardless of that toggle (BR-072).
   @Get('attachments/:id')
-  async download(@Param('id') id: string, @Res() res: Response) {
+  async download(
+    @Param('id') id: string,
+    @Query('intent') intent: string,
+    @CurrentUser() user: UserEntity,
+    @Res() res: Response,
+  ) {
     const attachment = await this.attachmentsService.findOne(id);
+    const isDownload = intent === 'download';
+    await this.attachmentsService.assertCanAccess(attachment, user, isDownload);
+
     const path = `.${attachment.fileUrl}`;
     if (attachment.deletedAt || !existsSync(path)) {
       throw new NotFoundException('Attachment not found');

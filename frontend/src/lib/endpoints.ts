@@ -187,6 +187,12 @@ export const TasksApi = {
     api<Task>(`/tasks/${id}/reopen`, { method: 'POST', body: { status: 'Reopened', reason } }),
   unarchive: (id: string) => api<Task>(`/tasks/${id}/unarchive`, { method: 'POST' }),
   remove: (id: string) => api(`/tasks/${id}`, { method: 'DELETE' }),
+  // Creator/Admin-only: whether assignee(s) may download this Task's attachments.
+  updateAttachmentPermissions: (id: string, assigneeCanDownloadAttachments: boolean) =>
+    api<Task>(`/tasks/${id}/attachment-permissions`, {
+      method: 'PATCH',
+      body: { assigneeCanDownloadAttachments },
+    }),
 };
 
 // ---------- Task Assignments ----------
@@ -235,6 +241,11 @@ export const AttachmentsApi = {
     });
   },
   remove: (id: string) => api(`/attachments/${id}`, { method: 'DELETE' }),
+  // Same file-bytes endpoint powers both preview and download; the backend
+  // only enforces the per-Task download toggle when `intent=download` is
+  // present, so preview stays unaffected by that setting.
+  previewPath: (id: string) => `/attachments/${id}`,
+  downloadPath: (id: string) => `/attachments/${id}?intent=download`,
 };
 
 // ---------- Notifications ----------

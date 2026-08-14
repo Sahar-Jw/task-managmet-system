@@ -179,6 +179,12 @@ export class TaskEntity extends VersionedEntity {
   @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
   archivedAt?: Date;
 
+  // BR-070: only the Task creator (or Admin) decides whether the assigned
+  // User(s) may download attachments. Preview is always allowed for them
+  // regardless of this flag — this only gates the download action.
+  @Column({ name: 'assignee_can_download_attachments', type: 'boolean', default: true })
+  assigneeCanDownloadAttachments!: boolean;
+
   // The status this Task held right before it was archived, so it can be
   // restored to something meaningful instead of a hardcoded default.
   @Column({

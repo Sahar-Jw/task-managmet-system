@@ -2,15 +2,25 @@ import { Paginated } from "./types";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
-// Avatars are served as static files off the API's root (e.g. /avatars/xyz.png),
-// not under the /api/v1 prefix used by JSON endpoints — strip it back off here.
+// Avatars/branding assets are served as static files off the API's root
+// (e.g. /avatars/xyz.png, /branding-assets/xyz.png), not under the
+// /api/v1 prefix used by JSON endpoints — strip it back off here.
 const API_ORIGIN = API_URL.replace(/\/api\/v\d+\/?$/, '');
+
+function resolveStaticAssetUrl(path?: string | null): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`;
+}
 
 /** Resolves an avatarUrl (e.g. "/avatars/xyz.png") to a full, loadable URL. */
 export function resolveAvatarUrl(avatarUrl?: string | null): string | null {
-  if (!avatarUrl) return null;
-  if (/^https?:\/\//i.test(avatarUrl)) return avatarUrl;
-  return `${API_ORIGIN}${avatarUrl.startsWith('/') ? '' : '/'}${avatarUrl}`;
+  return resolveStaticAssetUrl(avatarUrl);
+}
+
+/** Resolves a logoUrl/faviconUrl (e.g. "/branding-assets/xyz.png") to a full, loadable URL. */
+export function resolveBrandingAssetUrl(path?: string | null): string | null {
+  return resolveStaticAssetUrl(path);
 }
 
 export class ApiError extends Error {

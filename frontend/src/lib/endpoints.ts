@@ -1,6 +1,7 @@
 import { api } from './api';
 import type {
   AuditLogEntry,
+  BrandingSettings,
   Notification,
   Paginated,
   Project,
@@ -103,6 +104,36 @@ export const DepartmentsApi = {
     SettingsApi.create({ ...data, type: 'department' }),
   update: (id: string, data: Partial<CreateSettingPayload>) => SettingsApi.update(id, data),
   remove: (id: string) => SettingsApi.remove(id),
+};
+
+// ---------- Branding ----------
+export interface UpdateBrandingPayload {
+  siteName?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+}
+
+export const BrandingApi = {
+  get: () => api<BrandingSettings>('/branding'),
+  update: (data: UpdateBrandingPayload) =>
+    api<BrandingSettings>('/branding', { method: 'PATCH', body: data }),
+  uploadLogo: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api<BrandingSettings>('/branding/logo', { method: 'POST', body: form, isForm: true });
+  },
+  removeLogo: () => api<BrandingSettings>('/branding/logo', { method: 'DELETE' }),
+  uploadFavicon: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api<BrandingSettings>('/branding/favicon', {
+      method: 'POST',
+      body: form,
+      isForm: true,
+    });
+  },
+  removeFavicon: () => api<BrandingSettings>('/branding/favicon', { method: 'DELETE' }),
 };
 
 // ---------- Users ----------

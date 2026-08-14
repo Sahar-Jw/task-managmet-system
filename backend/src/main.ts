@@ -14,13 +14,19 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // multer won't create its destination folder on its own — make sure it
-  // exists before any avatar upload comes in on a fresh deploy.
+  // exists before any avatar/logo/favicon upload comes in on a fresh deploy.
   mkdirSync(join(process.cwd(), 'uploads', 'avatars'), { recursive: true });
+  mkdirSync(join(process.cwd(), 'uploads', 'branding'), { recursive: true });
 
   // Avatars are served as plain static files (the field was already a
   // publicly-settable URL before uploads existed, and other users need to
   // see teammates' avatars in lists/assignments without extra auth plumbing).
   app.useStaticAssets(join(process.cwd(), 'uploads', 'avatars'), { prefix: '/avatars' });
+
+  // Logo/favicon are served the same way, and need to be reachable with no
+  // auth at all — the sign-in page and the browser tab icon load them
+  // before anyone has a token.
+  app.useStaticAssets(join(process.cwd(), 'uploads', 'branding'), { prefix: '/branding-assets' });
 
   // NFR-SEC-12: security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS)
   app.use(helmet());

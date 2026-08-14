@@ -29,6 +29,20 @@ export interface Setting {
 export type Branch = Setting;
 export type Department = Setting;
 
+// Singleton row (GET /branding always returns the one row, creating it
+// with defaults on first access). logoUrl/faviconUrl are relative paths
+// like "/branding-assets/xyz.png" — resolve with resolveBrandingAssetUrl
+// from lib/api.ts before rendering as an <img src>.
+export interface BrandingSettings {
+  id: string;
+  siteName: string;
+  logoUrl?: string;
+  faviconUrl?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+}
+
 export interface User {
   id: string;
   fullName: string;

@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api';
 import { SettingsApi, type CreateSettingPayload } from '@/lib/endpoints';
 import type { Setting, SettingType, SettingValueType } from '@/lib/types';
 import Pagination from '@/components/Pagination';
+import BrandingTab from '@/components/BrandingTab';
 
 const PAGE_SIZE = 10;
 
@@ -109,7 +110,6 @@ function SettingsContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-800">Settings</h1>
         <div className="flex items-center gap-2">
           <label className="label mb-0">Table</label>
           <select
@@ -290,10 +290,45 @@ function SettingsContent() {
   );
 }
 
+const PAGE_TABS = [
+  { value: 'data', label: 'Data' },
+  { value: 'branding', label: 'Branding' },
+] as const;
+type PageTab = (typeof PAGE_TABS)[number]['value'];
+
+function SettingsPageContent() {
+  const [tab, setTab] = useState<PageTab>('data');
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold text-slate-800">Settings</h1>
+
+      <div className="flex gap-1 border-b border-slate-200">
+        {PAGE_TABS.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTab(t.value)}
+            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
+              tab === t.value
+                ? 'border-brand-600 text-brand-700'
+                : 'border-transparent text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'data' ? <SettingsContent /> : <BrandingTab />}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   return (
     <ProtectedRoute adminOnly>
-      <SettingsContent />
+      <SettingsPageContent />
     </ProtectedRoute>
   );
 }

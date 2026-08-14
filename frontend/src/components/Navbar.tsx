@@ -6,7 +6,9 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useNotifications } from '@/lib/notifications-context';
+import { resolveBrandingAssetUrl } from '@/lib/api';
 import Avatar from './Avatar';
+import { useBranding } from '@/lib/branding-context';
 
 const linkClass = (active: boolean) =>
   `px-3 py-2 rounded-md text-sm font-medium ${
@@ -16,6 +18,7 @@ const linkClass = (active: boolean) =>
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { unreadCount } = useNotifications();
+  const { branding } = useBranding();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useTranslations('nav');
@@ -69,9 +72,17 @@ export default function Navbar() {
         <div className="flex items-center gap-1">
           <Link
             href="/"
-            className="mr-4 font-semibold text-brand-700 hover:text-brand-600"
+            className="mr-4 flex items-center gap-2 font-semibold text-brand-700 hover:text-brand-600"
           >
-            Task &amp; Project Manager
+            {branding?.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolveBrandingAssetUrl(branding.logoUrl) ?? undefined}
+                alt=""
+                className="h-6 w-6 rounded object-contain"
+              />
+            )}
+            {branding?.siteName || 'Task & Project Manager'}
           </Link>
           {links.map((link) => (
             <Link key={link.href} href={link.href} className={linkClass(isLinkActive(link.href))}>

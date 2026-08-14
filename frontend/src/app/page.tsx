@@ -434,14 +434,14 @@ export default function Home() {
         <h2 className="font-serif text-2xl font-semibold text-ink">
           Built for how organizations actually assign work
         </h2>
-        <div className="mt-10 grid gap-6 sm:grid-cols-2">
+        {/* <div className="mt-10 grid gap-6 sm:grid-cols-2">
           {FEATURES.map((f) => (
             <div key={f.title} className="card p-6">
               <h3 className="text-base font-semibold text-brand-700">{f.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.body}</p>
             </div>
           ))}
-        </div>
+        </div> */}
       </section>
 
       <footer className="border-t border-slate-200">

@@ -29,13 +29,28 @@ export class TaskAttachmentsService {
 
   // BR-065: attachment belongs to exactly one of Task/Assignment.
   async uploadToTask(taskId: string, file: Express.Multer.File, actor: UserEntity): Promise<TaskAttachmentEntity> {
+    const [attachment] = await this.uploadManyToTask(taskId, [file], actor);
+    return attachment;
+  }
+
+  // Validates the parent Task once, then saves every file. Kept as a single
+  // DB round-trip for the parent lookup instead of re-checking per file.
+  async uploadManyToTask(
+    taskId: string,
+    files: Express.Multer.File[],
+    actor: UserEntity,
+  ): Promise<TaskAttachmentEntity[]> {
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Task not found');
     if (task.archivedAt) {
       throw new BadRequestException('Cannot add attachments to an archived Task'); // BR-068
     }
 
-    return this.save({ taskId, file, actor });
+    const attachments: TaskAttachmentEntity[] = [];
+    for (const file of files) {
+      attachments.push(await this.save({ taskId, file, actor }));
+    }
+    return attachments;
   }
 
   async uploadToAssignment(
@@ -43,10 +58,23 @@ export class TaskAttachmentsService {
     file: Express.Multer.File,
     actor: UserEntity,
   ): Promise<TaskAttachmentEntity> {
+    const [attachment] = await this.uploadManyToAssignment(assignmentId, [file], actor);
+    return attachment;
+  }
+
+  async uploadManyToAssignment(
+    assignmentId: string,
+    files: Express.Multer.File[],
+    actor: UserEntity,
+  ): Promise<TaskAttachmentEntity[]> {
     const assignment = await this.assignmentRepo.findOne({ where: { id: assignmentId } });
     if (!assignment) throw new NotFoundException('Assignment not found');
 
-    return this.save({ assignmentId, file, actor });
+    const attachments: TaskAttachmentEntity[] = [];
+    for (const file of files) {
+      attachments.push(await this.save({ assignmentId, file, actor }));
+    }
+    return attachments;
   }
 
   private async save(params: {

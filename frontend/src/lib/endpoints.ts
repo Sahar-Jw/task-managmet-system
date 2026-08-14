@@ -8,6 +8,7 @@ import type {
   SettingType,
   SettingValueType,
   Task,
+  TaskAttachment,
   TaskComment,
   TaskRating,
   User,
@@ -223,10 +224,15 @@ export const CommentsApi = {
 
 // ---------- Attachments ----------
 export const AttachmentsApi = {
-  uploadToTask: (taskId: string, file: File) => {
+  // Accepts one or more files at once; the backend saves each as its own attachment.
+  uploadToTask: (taskId: string, files: File[]) => {
     const form = new FormData();
-    form.append('file', file);
-    return api(`/tasks/${taskId}/attachments`, { method: 'POST', body: form, isForm: true });
+    files.forEach((f) => form.append('files', f));
+    return api<TaskAttachment[]>(`/tasks/${taskId}/attachments`, {
+      method: 'POST',
+      body: form,
+      isForm: true,
+    });
   },
   remove: (id: string) => api(`/attachments/${id}`, { method: 'DELETE' }),
 };

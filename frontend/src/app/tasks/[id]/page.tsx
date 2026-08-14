@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import AttachmentCard from '@/components/AttachmentCard';
+import AttachmentPreviewModal from '@/components/AttachmentPreviewModal';
 import { useAuth } from '@/lib/auth-context';
-import { ApiError, downloadFile } from '@/lib/api';
+import { ApiError } from '@/lib/api';
+import { ATTACHMENT_ACCEPT } from '@/lib/file-kind';
 import {
   AssignmentsApi,
   AttachmentsApi,
@@ -14,7 +17,7 @@ import {
   TasksApi,
   UsersApi,
 } from '@/lib/endpoints';
-import type { Task, TaskComment, User } from '@/lib/types';
+import type { Task, TaskAttachment, TaskComment, User } from '@/lib/types';
 import ReasonModal from '@/components/ReasonModal';
 
 const NEXT_STATUS_OPTIONS: Record<string, string[]> = {
@@ -45,6 +48,8 @@ function TaskDetailContent() {
   const [reassignSelections, setReassignSelections] = useState<Record<string, string>>({});
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState('');
+  const [uploadingAttachments, setUploadingAttachments] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<TaskAttachment | null>(null);
 
   // Which "reason" modal (if any) is currently open, and what to do with the reason once confirmed.
   const [reasonModal, setReasonModal] = useState<{
@@ -337,36 +342,46 @@ function TaskDetailContent() {
           )}
         </div>
 
-        {/* Attachments (file, any kind) */}
+        {/* Attachments (images, PDF, Word, Excel — any kind, any number at once) */}
         <div className="card p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Attachments</h2>
-          <div className="mt-3 space-y-2">
-            {(task.attachments || []).length === 0 && (
-              <p className="text-sm text-slate-500">No files attached.</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">Attachments</h2>
+            {task.status !== 'Archived' && (
+              <label className="btn-secondary cursor-pointer text-xs">
+                {uploadingAttachments ? 'Uploading…' : 'Add files'}
+                <input
+                  type="file"
+                  multiple
+                  accept={ATTACHMENT_ACCEPT}
+                  className="hidden"
+                  disabled={uploadingAttachments}
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || []);
+                    e.target.value = '';
+                    if (files.length === 0) return;
+                    setUploadingAttachments(true);
+                    await withFeedback(() => AttachmentsApi.uploadToTask(task.id, files));
+                    setUploadingAttachments(false);
+                  }}
+                />
+              </label>
             )}
-            {(task.attachments || []).map((a) => (
-              <div key={a.id} className="flex items-center justify-between text-sm">
-                <span className="text-slate-700">{a.fileName}</span>
-                <button
-                  className="text-brand-600 hover:underline"
-                  onClick={() => downloadFile(`/attachments/${a.id}`, a.fileName)}
-                >
-                  Download
-                </button>
-              </div>
-            ))}
           </div>
-          {task.status !== 'Archived' && (
-            <input
-              type="file"
-              className="mt-3 text-sm"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                withFeedback(() => AttachmentsApi.uploadToTask(task.id, file));
-                e.target.value = '';
-              }}
-            />
+
+          {(task.attachments || []).length === 0 ? (
+            <p className="mt-3 text-sm text-slate-500">No files attached.</p>
+          ) : (
+            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {(task.attachments || []).map((a) => (
+                <AttachmentCard
+                  key={a.id}
+                  attachment={a}
+                  canDelete={task.status !== 'Archived' && (isAdmin || a.uploadedById === user?.id)}
+                  onPreview={() => setPreviewAttachment(a)}
+                  onDelete={() => withFeedback(() => AttachmentsApi.remove(a.id))}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>
@@ -551,6 +566,13 @@ function TaskDetailContent() {
         onCancel={() => setReasonModal(null)}
         onConfirm={(reason) => reasonModal?.onConfirm(reason)}
       />
+
+      {previewAttachment && (
+        <AttachmentPreviewModal
+          attachment={previewAttachment}
+          onClose={() => setPreviewAttachment(null)}
+        />
+      )}
     </div>
   );
 }

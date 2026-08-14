@@ -13,6 +13,7 @@ import {
   UsersApi,
 } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
+import { ATTACHMENT_ACCEPT, formatFileSize, getFileTypeLabel } from '@/lib/file-kind';
 import type { Branch, Department, Project, Task, TaskType, User } from '@/lib/types';
 
 const TASK_TYPES: TaskType[] = [
@@ -48,7 +49,23 @@ function NewTaskContent() {
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
+
+  // Appends newly picked/dropped files, skipping ones already selected
+  // (same name + size) so re-browsing the same folder doesn't duplicate rows.
+  function addFiles(incoming: FileList | File[]) {
+    const incomingArr = Array.from(incoming);
+    setFiles((prev) => {
+      const isDuplicate = (f: File) =>
+        prev.some((p) => p.name === f.name && p.size === f.size);
+      return [...prev, ...incomingArr.filter((f) => !isDuplicate(f))];
+    });
+  }
+
+  function removeFile(index: number) {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }
 
   const [form, setForm] = useState({
     // Bilingual title & description
@@ -140,12 +157,12 @@ function NewTaskContent() {
         deadlineDate: form.deadlineDate || undefined,
       });
 
-      if (file) {
+      if (files.length > 0) {
         try {
-          await AttachmentsApi.uploadToTask(task.id, file);
+          await AttachmentsApi.uploadToTask(task.id, files);
         } catch {
           // Task was created; surface the attachment failure but don't block navigation.
-          setError('Task created, but the file could not be uploaded. You can attach it from the task page.');
+          setError('Task created, but the file(s) could not be uploaded. You can attach them from the task page.');
         }
       }
 
@@ -219,12 +236,77 @@ function NewTaskContent() {
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-600">Attachment</h2>
           <div>
-            <label className="label">File (any kind, optional)</label>
-            <input
-              type="file"
-              className="input"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            />
+            <label className="label">Files (any kind, optional — you can select more than one)</label>
+
+            <label
+              className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-6 py-8 text-center transition-colors ${
+                dragOver
+                  ? 'border-brand-500 bg-brand-50'
+                  : 'border-slate-300 bg-slate-50 hover:border-brand-400 hover:bg-slate-100'
+              }`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files);
+              }}
+            >
+              <svg
+                className="h-8 w-8 text-slate-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 8.25 12 3.75m0 0L7.5 8.25M12 3.75v13.5"
+                />
+              </svg>
+              <span className="text-sm font-medium text-slate-600">
+                <span className="text-brand-600">Click to browse</span> or drag files here
+              </span>
+              <span className="text-xs text-slate-400">Images, PDF, Word, Excel, PowerPoint, txt, csv, zip</span>
+              <input
+                type="file"
+                multiple
+                accept={ATTACHMENT_ACCEPT}
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.length) addFiles(e.target.files);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+
+            {files.length > 0 && (
+              <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-200">
+                {files.map((f, i) => (
+                  <div key={`${f.name}-${f.size}-${i}`} className="flex items-center gap-3 px-3 py-2">
+                    <span className="badge shrink-0 bg-slate-100 text-slate-600">
+                      {getFileTypeLabel(f.type, f.name)}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm text-slate-700" title={f.name}>
+                      {f.name}
+                    </span>
+                    <span className="shrink-0 text-xs text-slate-400">{formatFileSize(f.size)}</span>
+                    <button
+                      type="button"
+                      className="icon-btn-danger shrink-0"
+                      onClick={() => removeFile(i)}
+                      aria-label={`Remove ${f.name}`}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

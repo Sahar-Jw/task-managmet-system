@@ -132,8 +132,8 @@ export async function api<T = any>(
   return (json?.data ?? json) as T;
 }
 
-/** Downloads a file that requires the Authorization header (e.g. attachments). */
-export async function downloadFile(path: string, fileName: string) {
+/** Fetches a file that requires the Authorization header, retrying once on 401. */
+async function fetchAuthed(path: string): Promise<Blob> {
   let token = getToken();
   let res = await fetch(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -148,12 +148,41 @@ export async function downloadFile(path: string, fileName: string) {
     }
   }
 
-  if (!res.ok) throw new ApiError('Could not download file', res.status);
-  const blob = await res.blob();
+  if (!res.ok) throw new ApiError('Could not load file', res.status);
+  return res.blob();
+}
+
+/** Downloads a file that requires the Authorization header (e.g. attachments). */
+export async function downloadFile(path: string, fileName: string) {
+  const blob = await fetchAuthed(path);
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = fileName;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Fetches a file that requires auth and returns the raw Blob (so callers can
+ * check e.g. blob.size before deciding how to render it).
+ */
+export async function fetchFileAsBlob(path: string): Promise<Blob> {
+  return fetchAuthed(path);
+}
+
+/**
+ * Fetches a file that requires auth and returns an object URL for it
+ * (image thumbnails, PDF/docx/excel previews). Caller must revoke the URL
+ * (URL.revokeObjectURL) when done with it, e.g. on component unmount.
+ */
+export async function fetchFileAsObjectUrl(path: string): Promise<string> {
+  const blob = await fetchAuthed(path);
+  return URL.createObjectURL(blob);
+}
+
+/** Fetches a file that requires auth and returns its raw ArrayBuffer (docx/excel parsing). */
+export async function fetchFileAsArrayBuffer(path: string): Promise<ArrayBuffer> {
+  const blob = await fetchAuthed(path);
+  return blob.arrayBuffer();
 }

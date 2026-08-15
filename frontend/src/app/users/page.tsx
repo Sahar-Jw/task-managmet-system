@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import Pagination from '@/components/Pagination';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { ApiError } from '@/lib/api';
@@ -405,8 +406,24 @@ function UsersContent() {
                 {!u.isActive && (
                   <span className="badge bg-slate-100 text-slate-500">Inactive</span>
                 )}
+                
+                {/* FIXED: View Projects Button with ?ownerId= parameter */}
+                <Link 
+                  href={`/projects?ownerId=${u.id}`} 
+                  className="btn-secondary px-3 py-1 text-xs"
+                >
+                  View Projects
+                </Link>
+
+                <Link 
+                  href={`/tasks?assignedToId=${u.id}`} 
+                  className="btn-secondary px-3 py-1 text-xs"
+                >
+                  View Tasks
+                </Link>
+
                 <button
-                  className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'}`}
+                  className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'} px-3 py-1 text-xs`}
                   onClick={() => toggleActive(u)}
                 >
                   {u.isActive ? 'Deactivate' : 'Activate'}

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation'; // NEW: Imported useSearchParams
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
@@ -17,6 +18,9 @@ function ProjectsContent() {
   const { user } = useAuth();
   const isAdmin = user?.role.name === 'ADMIN';
 
+  // NEW: Initialize searchParams to catch the ?ownerId=123 from the URL
+  const searchParams = useSearchParams();
+
   // Admin-only tab: "All projects" (everyone's) vs "My projects" (just the
   // ones this Admin created). A regular User only ever sees their own
   // Projects regardless, so the tab is hidden for them.
@@ -31,7 +35,10 @@ function ProjectsContent() {
   const [form, setForm] = useState({ name: '', description: '' });
   const [nameFilter, setNameFilter] = useState('');
   const [descriptionFilter, setDescriptionFilter] = useState('');
-  const [ownerId, setOwnerId] = useState('');
+  
+  // NEW: Read the ownerId from the URL on first load
+  const [ownerId, setOwnerId] = useState(searchParams.get('ownerId') || '');
+  
   const [statusFilter, setStatusFilter] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [branchId, setBranchId] = useState('');
@@ -60,14 +67,21 @@ function ProjectsContent() {
       // all Projects and just the ones the Admin created.
       const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
       if (isAdmin && scope === 'mine') params.mine = 'true';
-      if (scope === 'archived') params.status = 'Archived';
-      else params.excludeArchived = 'true';
+      if (scope === 'archived') {
+        // Forced regardless of statusFilter — an archived Project is always
+        // status=Archived, and statusFilter's own options exclude Archived
+        // anyway (see PROJECT_STATUSES.filter above), so there's nothing
+        // useful it could contribute here.
+        params.status = 'Archived';
+      } else {
+        params.excludeArchived = 'true';
+        if (statusFilter) params.status = statusFilter;
+      }
       if (nameFilter) params.name = nameFilter;
       if (descriptionFilter) params.description = descriptionFilter;
-      if (statusFilter) params.status = statusFilter;
-      if (isAdmin && scope === 'all' && ownerId) params.ownerId = ownerId;
-      if (isAdmin && scope === 'all' && departmentId) params.departmentId = departmentId;
-      if (isAdmin && scope === 'all' && branchId) params.branchId = branchId;
+      if (isAdmin && scope !== 'mine' && ownerId) params.ownerId = ownerId;
+      if (isAdmin && scope !== 'mine' && departmentId) params.departmentId = departmentId;
+      if (isAdmin && scope !== 'mine' && branchId) params.branchId = branchId;
       if (createdDateFrom) params.createdDateFrom = createdDateFrom;
       if (createdDateTo) params.createdDateTo = createdDateTo;
       const res = await ProjectsApi.list(params);
@@ -164,8 +178,13 @@ function ProjectsContent() {
     setBusyId(id);
     setRowError(null);
     try {
-      const updated = await ProjectsApi.archive(id);
-      setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...updated } : p)));
+      await ProjectsApi.archive(id);
+      // Remove it from the current list right away instead of merging the
+      // update in place — the "All"/"Mine" tabs both exclude Archived
+      // Projects, so leaving the row there with a stale badge until the
+      // next refresh was misleading. Mirrors handleUnarchive below.
+      setProjects((current) => current.filter((project) => project.id !== id));
+      setTotal((current) => Math.max(0, current - 1));
     } catch (err) {
       setRowError({
         id,
@@ -283,16 +302,23 @@ function ProjectsContent() {
         <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</p>
       )}
 
-      {scope !== 'archived' && (
-        <div className="mt-4 flex flex-wrap items-end gap-3">
-          <div className="min-w-[180px] flex-1">
-            <label className="label">Project name</label>
-            <input className="input" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
-          </div>
-          <div className="min-w-[180px] flex-1">
-            <label className="label">Description</label>
-            <input className="input" value={descriptionFilter} onChange={(e) => setDescriptionFilter(e.target.value)} />
-          </div>
+      {/* Filters — shown in every tab, including Archived (previously hidden
+          there entirely). The Status filter is Archived-only excluded since
+          every archived Project already has that status; showing it there
+          would also fight with the scope-forced status={'Archived'} query
+          param below. Owner/Department/Branch are relevant whenever the tab
+          can contain other people's Projects — that's "All projects" and
+          "Archived" (which also lists everyone's), but not "My projects". */}
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <div className="min-w-[180px] flex-1">
+          <label className="label">Project name</label>
+          <input className="input" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
+        </div>
+        <div className="min-w-[180px] flex-1">
+          <label className="label">Description</label>
+          <input className="input" value={descriptionFilter} onChange={(e) => setDescriptionFilter(e.target.value)} />
+        </div>
+        {scope !== 'archived' && (
           <div>
             <label className="label">Status</label>
             <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
@@ -302,39 +328,57 @@ function ProjectsContent() {
               ))}
             </select>
           </div>
-          {isAdmin && scope === 'all' && <>
-            <div>
-              <label className="label">Owner</label>
-              <select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
-                <option value="">All</option>
-                {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Department</label>
-              <select className="input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
-                <option value="">All</option>
-                {departments.map((department) => <option key={department.id} value={department.id}>{department.valueEn || department.codeEn}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Branch</label>
-              <select className="input" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-                <option value="">All</option>
-                {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.valueEn || branch.codeEn}</option>)}
-              </select>
-            </div>
-          </>}
+        )}
+        {isAdmin && scope !== 'mine' && <>
           <div>
-            <label className="label">Created from</label>
-            <input type="date" className="input" value={createdDateFrom} onChange={(e) => setCreatedDateFrom(e.target.value)} />
+            <label className="label">Owner</label>
+            <select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+              <option value="">All</option>
+              {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
+            </select>
           </div>
           <div>
-            <label className="label">Created to</label>
-            <input type="date" className="input" value={createdDateTo} onChange={(e) => setCreatedDateTo(e.target.value)} />
+            <label className="label">Department</label>
+            <select className="input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+              <option value="">All</option>
+              {departments.map((department) => <option key={department.id} value={department.id}>{department.valueEn || department.codeEn}</option>)}
+            </select>
           </div>
+          <div>
+            <label className="label">Branch</label>
+            <select className="input" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+              <option value="">All</option>
+              {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.valueEn || branch.codeEn}</option>)}
+            </select>
+          </div>
+        </>}
+        <div>
+          <label className="label">Created from</label>
+          <input type="date" className="input" value={createdDateFrom} onChange={(e) => setCreatedDateFrom(e.target.value)} />
         </div>
-      )}
+        <div>
+          <label className="label">Created to</label>
+          <input type="date" className="input" value={createdDateTo} onChange={(e) => setCreatedDateTo(e.target.value)} />
+        </div>
+        {(nameFilter || descriptionFilter || (scope !== 'archived' && statusFilter) || ownerId || departmentId || branchId || createdDateFrom || createdDateTo) && (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={() => {
+              setNameFilter('');
+              setDescriptionFilter('');
+              setStatusFilter('');
+              setOwnerId('');
+              setDepartmentId('');
+              setBranchId('');
+              setCreatedDateFrom('');
+              setCreatedDateTo('');
+            }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
 
       <div className="mt-4 card divide-y divide-slate-100">
         {loading ? (
@@ -385,7 +429,7 @@ function ProjectsContent() {
                     {p.description && (
                       <div className="truncate text-xs text-slate-500">{p.description}</div>
                     )}
-                    {isAdmin && scope === 'all' && (
+                    {isAdmin && (
                       <div className="truncate text-xs text-slate-400">
                         Owner: {p.ownerName || '—'}
                       </div>
@@ -393,7 +437,7 @@ function ProjectsContent() {
                     <div className="text-xs text-slate-400">
                       Created: {new Date(p.createdAt).toLocaleDateString()}
                     </div>
-                    {isAdmin && scope === 'all' && (
+                    {isAdmin && (
                       <div className="text-xs text-slate-400">
                         Department: {p.ownerDepartmentName || 'Not set'} / Branch: {p.ownerBranchName || 'Not set'}
                       </div>

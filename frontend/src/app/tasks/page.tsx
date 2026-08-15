@@ -63,6 +63,10 @@ function TasksContent() {
   const [branchId, setBranchId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [ownerId, setOwnerId] = useState('');
+  
+  // NEW: Read the assignedToId from the URL parameter when the page loads
+  const [assignedToId, setAssignedToId] = useState(searchParams.get('assignedToId') || '');
+  
   const [departments, setDepartments] = useState<Department[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -74,8 +78,7 @@ function TasksContent() {
   const [total, setTotal] = useState(0);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  // Debounce the free-text search so we're not firing a request on every
-  // keystroke — wait for a short pause in typing instead.
+  // Debounce the free-text search
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search.trim()), 350);
@@ -89,10 +92,10 @@ function TasksContent() {
     UsersApi.list({ limit: '100' }).then((res) => setOwners(res.items)).catch(() => {});
   }, []);
 
-  // Reset to page 1 whenever a filter changes
+  // Reset to page 1 whenever a filter changes (Added assignedToId here)
   useEffect(() => {
     setPage(1);
-  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId, assignedToId]);
 
   useEffect(() => {
     setLoading(true);
@@ -112,6 +115,10 @@ function TasksContent() {
     if (branchId) params.branchId = branchId;
     if (projectId) params.projectId = projectId;
     if (ownerId) params.createdById = ownerId;
+    
+    // NEW: Apply the assignedToId to the API request
+    if (assignedToId) params.assignedToId = assignedToId;
+
     TasksApi.list(params)
       .then((res) => {
         setTasks(res.items);
@@ -119,7 +126,7 @@ function TasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId, page]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId, assignedToId, page]);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -132,6 +139,20 @@ function TasksContent() {
       setTotal((current) => Math.max(0, current - 1));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not unarchive this task.');
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function archiveTask(id: string) {
+    setBusyId(id);
+    setError('');
+    try {
+      await TasksApi.remove(id);
+      setTasks((current) => current.filter((task) => task.id !== id));
+      setTotal((current) => Math.max(0, current - 1));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not archive this task.');
     } finally {
       setBusyId(null);
     }
@@ -161,8 +182,6 @@ function TasksContent() {
         </button>
       </div>
 
-      {view === 'tasks' && <>
-      {/* Filters */}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
           <label className="label">Search</label>
@@ -227,7 +246,17 @@ function TasksContent() {
             {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
           </select>
         </div>
-        {(search || dueDateFrom || dueDateTo || departmentId || branchId || projectId || ownerId) && (
+        
+        {/* NEW: Assigned To Dropdown Filter */}
+        <div>
+          <label className="label">Assigned To</label>
+          <select className="input" value={assignedToId} onChange={(e) => setAssignedToId(e.target.value)}>
+            <option value="">All</option>
+            {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
+          </select>
+        </div>
+
+        {(search || dueDateFrom || dueDateTo || departmentId || branchId || projectId || ownerId || assignedToId) && (
           <button
             type="button"
             className="btn-secondary"
@@ -239,6 +268,7 @@ function TasksContent() {
               setBranchId('');
               setProjectId('');
               setOwnerId('');
+              setAssignedToId(''); // Clear Assigned To filter
             }}
           >
             Clear
@@ -246,6 +276,7 @@ function TasksContent() {
         )}
       </div>
 
+      {view === 'tasks' && (
       <div className="mt-3 flex flex-wrap gap-2">
         {STATUSES.map((s) => (
           <button
@@ -257,6 +288,7 @@ function TasksContent() {
           </button>
         ))}
       </div>
+      )}
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-slate-500">Type:</span>
@@ -290,7 +322,6 @@ function TasksContent() {
           </button>
         ))}
       </div>
-      </>}
 
       <div className="mt-4">
         {error ? (
@@ -354,7 +385,7 @@ function TasksContent() {
                     </span>
                     {rating !== null && <Stars value={rating} />}
                   </div>
-                  {view === 'archived' && (
+                  {view === 'archived' ? (
                     <button
                       type="button"
                       onClick={() => unarchiveTask(task.id)}
@@ -362,6 +393,15 @@ function TasksContent() {
                       className="btn-secondary self-end px-3 py-1 text-xs disabled:opacity-50"
                     >
                       {busyId === task.id ? 'Unarchiving...' : 'Unarchive'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => archiveTask(task.id)}
+                      disabled={busyId === task.id}
+                      className="btn-secondary self-end px-3 py-1 text-xs disabled:opacity-50"
+                    >
+                      {busyId === task.id ? 'Archiving...' : 'Archive'}
                     </button>
                   )}
                 </div>

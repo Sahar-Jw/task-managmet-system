@@ -66,7 +66,7 @@ export default function Navbar() {
     href === '/tasks' ? pathname === '/tasks' || (pathname.startsWith('/tasks/') && !pathname.startsWith('/tasks/mine')) : pathname.startsWith(href);
 
   return (
-    <header className="border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
         <div className="flex items-center gap-1">
           <Link

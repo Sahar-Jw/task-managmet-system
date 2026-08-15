@@ -6,16 +6,22 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ProjectEntity } from './entities/project.entity';
 import { TaskEntity } from '../tasks/entities/task.entity';
+import { UserEntity } from '../users/entities/user.entity';
 import { CreateProjectDto, QueryProjectsDto, UpdateProjectDto } from './dto/project.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { UserEntity } from '../users/entities/user.entity';
 import { ProjectStatus } from '../../shared/enums/project-status.enum';
 import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { TaskStatus } from '../../shared/enums/task-status.enum';
 import { RoleName } from '../../shared/enums/role.enum';
+
+// A Project row plus the owner's display name. Project intentionally has
+// no TypeORM relation to User (see the entity's comment), so the owner's
+// name is resolved with a separate batched lookup and merged in here
+// rather than via a join/relation.
+export type ProjectWithOwner = ProjectEntity & { ownerName?: string };
 
 @Injectable()
 export class ProjectsService {
@@ -24,27 +30,31 @@ export class ProjectsService {
     private readonly projectRepo: Repository<ProjectEntity>,
     @InjectRepository(TaskEntity)
     private readonly taskRepo: Repository<TaskEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepo: Repository<UserEntity>,
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  // Admin sees every Project; a regular User only sees Projects they
-  // created themselves.
+  // Admin sees every Project by default, or only their own when `mine` is
+  // passed (the "My projects" tab). A regular User only ever sees Projects
+  // they created themselves, regardless of `mine`.
   async findAll(query: QueryProjectsDto, actor: UserEntity) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 20;
     const isAdmin = actor.role?.name === RoleName.ADMIN;
+    const scopeToSelf = !isAdmin || query.mine === 'true';
 
     const [items, total] = await this.projectRepo.findAndCount({
       where: {
         ...(query.status ? { status: query.status } : {}),
-        ...(isAdmin ? {} : { createdById: actor.id }),
+        ...(scopeToSelf ? { createdById: actor.id } : {}),
       },
       order: { name: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
-    return { items, total, page, limit };
+    return { items: await this.attachOwners(items), total, page, limit };
   }
 
   /**
@@ -53,7 +63,7 @@ export class ProjectsService {
    * actor is passed in, a non-Admin who doesn't own the Project is
    * forbidden from seeing it — mirrors the findAll() scoping above.
    */
-  async findOne(id: string, actor?: UserEntity): Promise<ProjectEntity> {
+  async findOne(id: string, actor?: UserEntity): Promise<ProjectWithOwner> {
     const project = await this.projectRepo.findOne({ where: { id } });
     if (!project) throw new NotFoundException('Project not found');
 
@@ -61,7 +71,24 @@ export class ProjectsService {
       throw new ForbiddenException('You do not have access to this project');
     }
 
-    return project;
+    const [withOwner] = await this.attachOwners([project]);
+    return withOwner;
+  }
+
+  // Batches a single lookup for every distinct createdById in the list and
+  // merges the owner's fullName in as `ownerName`, instead of a per-row
+  // relation/join (Project deliberately has none — see entity comment).
+  private async attachOwners(projects: ProjectEntity[]): Promise<ProjectWithOwner[]> {
+    const ownerIds = [...new Set(projects.map((p) => p.createdById).filter((v): v is string => !!v))];
+    if (ownerIds.length === 0) return projects;
+
+    const owners = await this.userRepo.find({ where: { id: In(ownerIds) } });
+    const ownerNameById = new Map(owners.map((u) => [u.id, u.fullName]));
+
+    return projects.map((p) => ({
+      ...p,
+      ownerName: p.createdById ? ownerNameById.get(p.createdById) : undefined,
+    }));
   }
 
   // Project is a standalone lookup entity (no relation to Branch); name

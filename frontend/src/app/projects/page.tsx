@@ -16,6 +16,11 @@ function ProjectsContent() {
   const { user } = useAuth();
   const isAdmin = user?.role.name === 'ADMIN';
 
+  // Admin-only tab: "All projects" (everyone's) vs "My projects" (just the
+  // ones this Admin created). A regular User only ever sees their own
+  // Projects regardless, so the tab is hidden for them.
+  const [scope, setScope] = useState<'all' | 'mine'>('all');
+
   const [projects, setProjects] = useState<Project[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -38,9 +43,12 @@ function ProjectsContent() {
     setLoading(true);
     setError('');
     try {
-      // Backend already scopes this: a regular User only gets back their
-      // own Projects, Admin gets everything.
-      const res = await ProjectsApi.list({ limit: String(PAGE_SIZE), page: String(page) });
+      // Backend already scopes this: a regular User only ever gets back
+      // their own Projects. For Admin, the "mine" flag switches between
+      // all Projects and just the ones the Admin created.
+      const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
+      if (isAdmin && scope === 'mine') params.mine = 'true';
+      const res = await ProjectsApi.list(params);
       setProjects(res.items);
       setTotal(res.total);
     } catch (err) {
@@ -48,11 +56,19 @@ function ProjectsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, isAdmin, scope]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Reset back to page 1 whenever the tab changes, so switching scope
+  // doesn't leave the user on a page number that no longer has results.
+  function switchScope(next: 'all' | 'mine') {
+    if (next === scope) return;
+    setScope(next);
+    setPage(1);
+  }
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -137,13 +153,42 @@ function ProjectsContent() {
         <div>
           <h1 className="text-xl font-semibold text-slate-800">Projects</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {isAdmin ? 'All projects across the organization.' : 'Projects you created.'}
+            {isAdmin
+              ? scope === 'all'
+                ? 'All projects across the organization.'
+                : 'Projects you created.'
+              : 'Projects you created.'}
           </p>
         </div>
         <button className="btn-primary" onClick={() => setShowForm((v) => !v)}>
           {showForm ? 'Cancel' : '+ New project'}
         </button>
       </div>
+
+      {isAdmin && (
+        <div className="mt-4 flex gap-1 border-b border-slate-200">
+          <button
+            className={`px-3 py-2 text-sm font-medium ${
+              scope === 'all'
+                ? 'border-b-2 border-brand-600 text-brand-600'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => switchScope('all')}
+          >
+            All projects
+          </button>
+          <button
+            className={`px-3 py-2 text-sm font-medium ${
+              scope === 'mine'
+                ? 'border-b-2 border-brand-600 text-brand-600'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => switchScope('mine')}
+          >
+            My projects
+          </button>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={handleCreate} className="card mt-4 space-y-3 p-6">
@@ -224,6 +269,11 @@ function ProjectsContent() {
                     <div className="truncate font-medium text-slate-800">{p.name}</div>
                     {p.description && (
                       <div className="truncate text-xs text-slate-500">{p.description}</div>
+                    )}
+                    {isAdmin && scope === 'all' && (
+                      <div className="truncate text-xs text-slate-400">
+                        Owner: {p.ownerName || '—'}
+                      </div>
                     )}
                   </Link>
                   <div className="flex shrink-0 items-center gap-2">

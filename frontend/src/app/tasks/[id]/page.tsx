@@ -22,6 +22,7 @@ import {
 } from '@/lib/endpoints';
 import type { Branch, Department, Project, Task, TaskAttachment, TaskComment, User } from '@/lib/types';
 import ReasonModal from '@/components/ReasonModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 const NEXT_STATUS_OPTIONS: Record<string, string[]> = {
   Pending: ['InProgress', 'Finished'],
@@ -120,6 +121,8 @@ function TaskDetailContent() {
   const [ratingFeedback, setRatingFeedback] = useState('');
   const [uploadingAttachments, setUploadingAttachments] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<TaskAttachment | null>(null);
+  const [attachmentToDelete, setAttachmentToDelete] = useState<TaskAttachment | null>(null);
+  const [deletingAttachment, setDeletingAttachment] = useState(false);
 
   // Which "reason" modal (if any) is currently open, and what to do with the reason once confirmed.
   const [reasonModal, setReasonModal] = useState<{
@@ -163,6 +166,17 @@ function TaskDetailContent() {
       await load();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Something went wrong.');
+    }
+  }
+
+  async function confirmDeleteAttachment() {
+    if (!attachmentToDelete) return;
+    setDeletingAttachment(true);
+    try {
+      await withFeedback(() => AttachmentsApi.remove(attachmentToDelete.id));
+    } finally {
+      setDeletingAttachment(false);
+      setAttachmentToDelete(null);
     }
   }
 
@@ -644,7 +658,7 @@ function TaskDetailContent() {
                   canDelete={task.status !== 'Archived' && canManageAttachments}
                   canDownload={canDownloadAttachments}
                   onPreview={() => setPreviewAttachment(a)}
-                  onDelete={() => withFeedback(() => AttachmentsApi.remove(a.id))}
+                  onDelete={() => setAttachmentToDelete(a)}
                 />
               ))}
             </div>
@@ -843,6 +857,23 @@ function TaskDetailContent() {
           onClose={() => setPreviewAttachment(null)}
         />
       )}
+
+      <ConfirmModal
+        open={attachmentToDelete !== null}
+        title="Delete attachment?"
+        description={
+          attachmentToDelete
+            ? `"${attachmentToDelete.fileName}" will be permanently deleted. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel={deletingAttachment ? 'Deleting…' : 'Delete'}
+        danger
+        confirmDisabled={deletingAttachment}
+        onCancel={() => {
+          if (!deletingAttachment) setAttachmentToDelete(null);
+        }}
+        onConfirm={confirmDeleteAttachment}
+      />
     </div>
   );
 }

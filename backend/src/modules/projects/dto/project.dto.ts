@@ -1,4 +1,4 @@
-import { IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBooleanString, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/utils/pagination.dto';
 import { ProjectStatus } from '../../../shared/enums/project-status.enum';
 
@@ -20,4 +20,10 @@ export class UpdateProjectDto {
 
 export class QueryProjectsDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(ProjectStatus) status?: ProjectStatus;
+
+  // Admin-only convenience filter for the "My projects" tab: when 'true',
+  // scope the list down to Projects the requesting Admin created
+  // themselves. Ignored for a non-Admin, since they're already scoped to
+  // their own Projects regardless of this flag.
+  @IsOptional() @IsBooleanString() mine?: string;
 }

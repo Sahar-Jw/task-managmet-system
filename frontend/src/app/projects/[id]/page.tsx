@@ -166,6 +166,12 @@ function ProjectDetailContent() {
                 <dt className="text-slate-400">Tasks</dt>
                 <dd className="text-slate-700">{tasks.length}</dd>
               </div>
+              {isAdmin && (
+                <div>
+                  <dt className="text-slate-400">Owner</dt>
+                  <dd className="text-slate-700">{project.ownerName || '—'}</dd>
+                </div>
+              )}
             </dl>
 
             {(canManage || isAdmin) && project.status !== 'Archived' && (

@@ -130,6 +130,27 @@ export class TasksService {
     }
 
     const [items, total] = await qb.getManyAndCount();
+
+    // Ratings are a one-to-many relation — join+select-ing them here would
+    // multiply rows and break `getManyAndCount()`'s pagination (see the
+    // note on `findMyTasks` below), so they're loaded separately and
+    // attached to the already-paginated page of tasks instead.
+    if (items.length > 0) {
+      const ratings = await this.taskRepo.manager
+        .createQueryBuilder(TaskRatingEntity, 'rating')
+        .where('rating.taskId IN (:...taskIds)', { taskIds: items.map((t) => t.id) })
+        .getMany();
+      const ratingsByTaskId = new Map<string, TaskRatingEntity[]>();
+      for (const r of ratings) {
+        const list = ratingsByTaskId.get(r.taskId) ?? [];
+        list.push(r);
+        ratingsByTaskId.set(r.taskId, list);
+      }
+      for (const task of items) {
+        task.ratings = ratingsByTaskId.get(task.id) ?? [];
+      }
+    }
+
     return { items, total, page, limit };
   }
 

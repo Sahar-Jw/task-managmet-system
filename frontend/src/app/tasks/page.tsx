@@ -10,7 +10,7 @@ import { BranchesApi, DepartmentsApi, TasksApi } from '@/lib/endpoints';
 import type { Branch, Department, Task } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 
 const STATUSES = [
   '',
@@ -25,6 +25,26 @@ const STATUSES = [
 ];
 
 const PRIORITIES = ['', 'Low', 'Medium', 'High', 'Critical'];
+
+function avgRating(task: Task): number | null {
+  if (!task.ratings || task.ratings.length === 0) return null;
+  const sum = task.ratings.reduce((acc, r) => acc + r.score, 0);
+  return sum / task.ratings.length;
+}
+
+function Stars({ value }: { value: number | null }) {
+  if (value === null) return null;
+  return (
+    <span className="text-amber-500" title={`${value.toFixed(1)} / 5`}>
+      {'★'.repeat(Math.round(value))}
+      <span className="text-slate-300">{'★'.repeat(5 - Math.round(value))}</span>
+    </span>
+  );
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
 
 function TasksContent() {
   const searchParams = useSearchParams();
@@ -187,33 +207,68 @@ function TasksContent() {
         ))}
       </div>
 
-      <div className="mt-4 card divide-y divide-slate-100">
+      <div className="mt-4">
         {error ? (
-          <p className="p-6 text-center text-red-600">{error}</p>
+          <div className="card p-6 text-center text-red-600">{error}</div>
         ) : loading ? (
-          <p className="p-6 text-center text-slate-500">Loading…</p>
+          <div className="card p-6 text-center text-slate-500">Loading…</div>
         ) : tasks.length === 0 ? (
-          <p className="p-6 text-center text-slate-500">No tasks match this filter.</p>
+          <div className="card p-6 text-center text-slate-500">No tasks match this filter.</div>
         ) : (
-          tasks.map((task) => (
-            <Link
-              key={task.id}
-              href={`/tasks/${task.id}`}
-              className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"
-            >
-              <div className="min-w-0">
-                <div className="truncate font-medium text-slate-800">{task.titleEn}</div>
-                <div className="text-xs text-slate-500">
-                  {task.project?.name ? `${task.project.name} · ` : ''}
-                  {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <StatusBadge value={task.priority} />
-                <StatusBadge value={task.status} />
-              </div>
-            </Link>
-          ))
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {tasks.map((task) => {
+              const rating = avgRating(task);
+              return (
+                <Link
+                  key={task.id}
+                  href={`/tasks/${task.id}`}
+                  className="card flex flex-col gap-2 p-4 hover:bg-slate-50"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <StatusBadge value={task.priority} />
+                      <StatusBadge value={task.status} />
+                    </div>
+                  </div>
+
+                  {task.descriptionEn && (
+                    <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
+                  )}
+
+                  <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600">
+                    <div>
+                      <dt className="text-slate-400">Owner</dt>
+                      <dd className="truncate">{task.createdBy?.fullName || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-400">Created</dt>
+                      <dd>{formatDate(task.createdAt)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-400">Department</dt>
+                      <dd className="truncate">{task.department?.valueEn || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-slate-400">Branch</dt>
+                      <dd className="truncate">{task.branch?.valueEn || '—'}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-slate-400">Project</dt>
+                      <dd className="truncate">{task.project?.name || '—'}</dd>
+                    </div>
+                  </dl>
+
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className={task.deadlineDate ? 'text-slate-500' : 'text-slate-400'}>
+                      {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
+                    </span>
+                    {rating !== null && <Stars value={rating} />}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         )}
       </div>
 

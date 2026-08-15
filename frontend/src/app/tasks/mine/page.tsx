@@ -199,40 +199,49 @@ function MyTasksContent() {
       </div>
 
       {/* Results, sorted by nearest deadline */}
-      <div className="mt-4 card divide-y divide-slate-100">
+      <div className="mt-4">
         {error ? (
-          <p className="p-6 text-center text-red-600">{error}</p>
+          <div className="card p-6 text-center text-red-600">{error}</div>
         ) : loading ? (
-          <p className="p-6 text-center text-slate-500">Loading…</p>
+          <div className="card p-6 text-center text-slate-500">Loading…</div>
         ) : tasks.length === 0 ? (
-          <p className="p-6 text-center text-slate-500">No tasks match this filter.</p>
+          <div className="card p-6 text-center text-slate-500">No tasks match this filter.</div>
         ) : (
-          tasks.map((task) => (
-            <Link
-              key={task.id}
-              href={`/tasks/${task.id}`}
-              className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50"
-            >
-              <div className="min-w-0">
-                <div className="truncate font-medium text-slate-800">{task.titleEn}</div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {tasks.map((task) => (
+              <Link
+                key={task.id}
+                href={`/tasks/${task.id}`}
+                className="card flex flex-col gap-2 p-4 hover:bg-slate-50"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <StatusBadge value={task.priority} />
+                    <StatusBadge value={task.status} />
+                  </div>
+                </div>
+
                 {task.descriptionEn && (
-                  <div className="mt-0.5 truncate text-xs text-slate-500">{task.descriptionEn}</div>
+                  <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
                 )}
-                <div className={`mt-1 text-xs ${isOverdue(task) ? 'font-medium text-red-600' : 'text-slate-500'}`}>
-                  {task.project?.name ? `${task.project.name} · ` : ''}
-                  {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
-                  {isOverdue(task) ? ' · Overdue' : ''}
+
+                {task.project?.name && (
+                  <div className="text-xs text-slate-600">
+                    Project: <span className="font-medium">{task.project.name}</span>
+                  </div>
+                )}
+
+                <div className="mt-1 flex items-center justify-between text-xs">
+                  <span className={isOverdue(task) ? 'font-medium text-red-600' : 'text-slate-500'}>
+                    {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
+                    {isOverdue(task) ? ' · Overdue' : ''}
+                  </span>
+                  <Stars value={avgRating(task)} />
                 </div>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <div className="flex items-center gap-2">
-                  <StatusBadge value={task.priority} />
-                  <StatusBadge value={task.status} />
-                </div>
-                <Stars value={avgRating(task)} />
-              </div>
-            </Link>
-          ))
+              </Link>
+            ))}
+          </div>
         )}
       </div>
 

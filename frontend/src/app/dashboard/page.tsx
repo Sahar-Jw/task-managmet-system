@@ -17,7 +17,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { ReportsApi, TasksApi } from '@/lib/endpoints';
-import type { Task, TaskStatus } from '@/lib/types';
+import type { Task, TaskStatus, TaskType } from '@/lib/types';
 
 const STATUS_ORDER: TaskStatus[] = [
   'Pending',
@@ -28,6 +28,11 @@ const STATUS_ORDER: TaskStatus[] = [
   'Reopened',
   'Finished',
   'Archived',
+];
+
+const TYPE_ORDER: TaskType[] = [
+  'General', 'Administrative', 'Financial', 'Technical',
+  'Maintenance', 'HR', 'Procurement', 'Other',
 ];
 
 const MONTH_LABEL = new Intl.DateTimeFormat('en', { month: 'short', year: '2-digit' });
@@ -96,9 +101,18 @@ function DashboardContent() {
     count: tasks.filter((t) => t.status === status).length,
   }));
 
+  const typeCounts = TYPE_ORDER.map((taskType) => ({
+    taskType,
+    count: tasks.filter((t) => t.taskType === taskType).length,
+  }));
+
+  const latestTasks = [...tasks]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
   const upcoming = tasks
-    .filter((t) => t.deadlineDate && !['Completed', 'Finished', 'Archived'].includes(t.status))
-    .sort((a, b) => (a.deadlineDate! < b.deadlineDate! ? -1 : 1))
+    .filter((task) => task.deadlineDate && !['Completed', 'Finished', 'Archived'].includes(task.status))
+    .sort((a, b) => a.deadlineDate!.localeCompare(b.deadlineDate!))
     .slice(0, 6);
 
   const monthlyChartData = monthly.map((m) => ({
@@ -151,12 +165,50 @@ function DashboardContent() {
             ))}
           </div>
 
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+            {typeCounts.map((c) => (
+              <Link
+                key={c.taskType}
+                href={isAdmin ? `/tasks?taskType=${c.taskType}` : `/tasks/mine?taskType=${c.taskType}`}
+                className="card p-3 text-center hover:border-brand-500"
+              >
+                <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
+                <div className="mt-1 text-xs font-medium text-slate-600">{c.taskType}</div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-8">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              Latest tasks
+            </h2>
+            {latestTasks.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-500">No tasks have been added yet.</p>
+            ) : (
+              <div className="mt-3 card divide-y divide-slate-100">
+                {latestTasks.map((task) => (
+                  <Link
+                    key={task.id}
+                    href={`/tasks/${task.id}`}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-slate-50"
+                  >
+                    <div>
+                      <div className="font-medium text-slate-800">{task.titleEn}</div>
+                      <div className="text-xs text-slate-500">Added {new Date(task.createdAt).toLocaleDateString()}</div>
+                    </div>
+                    <StatusBadge value={task.status} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="mt-8">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
               Upcoming due dates
             </h2>
             {upcoming.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-500">Nothing due soon — you're all caught up.</p>
+              <p className="mt-3 text-sm text-slate-500">Nothing due soon.</p>
             ) : (
               <div className="mt-3 card divide-y divide-slate-100">
                 {upcoming.map((task) => (

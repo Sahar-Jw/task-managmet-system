@@ -56,7 +56,6 @@ export default function Navbar() {
           { href: '/users', label: t('users') },
           { href: '/settings', label: t('settings') },
           { href: '/audit-logs', label: t('auditLog') },
-          { href: '/archive', label: t('archive') },
         ]
       : []),
   ];

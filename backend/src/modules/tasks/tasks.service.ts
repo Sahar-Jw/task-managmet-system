@@ -105,6 +105,9 @@ export class TasksService {
       .take(limit);
 
     if (query.status) qb.andWhere('task.status = :status', { status: query.status });
+    if (query.excludeArchived === 'true') {
+      qb.andWhere('task.status != :archivedStatus', { archivedStatus: TaskStatus.ARCHIVED });
+    }
     if (query.taskType) qb.andWhere('task.taskType = :taskType', { taskType: query.taskType });
     if (query.priority) qb.andWhere('task.priority = :priority', { priority: query.priority });
     if (query.branchId) qb.andWhere('task.branchId = :branchId', { branchId: query.branchId });
@@ -188,6 +191,7 @@ export class TasksService {
       .groupBy('task.id');
 
     if (query.status) idQb.andWhere('task.status = :status', { status: query.status });
+    if (query.taskType) idQb.andWhere('task.taskType = :taskType', { taskType: query.taskType });
     if (query.priority) idQb.andWhere('task.priority = :priority', { priority: query.priority });
     if (query.projectId) idQb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
     if (query.search) {
@@ -281,6 +285,7 @@ export class TasksService {
       .groupBy('task.id');
 
     if (query.status) idQb.andWhere('task.status = :status', { status: query.status });
+    if (query.taskType) idQb.andWhere('task.taskType = :taskType', { taskType: query.taskType });
     if (query.priority) idQb.andWhere('task.priority = :priority', { priority: query.priority });
     if (query.projectId) idQb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
     if (query.search) {

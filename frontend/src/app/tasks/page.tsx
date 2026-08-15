@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
 import { BranchesApi, DepartmentsApi, TasksApi } from '@/lib/endpoints';
-import type { Branch, Department, Task } from '@/lib/types';
+import type { Branch, Department, Task, TaskType } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 9;
@@ -21,10 +21,13 @@ const STATUSES = [
   'Completed',
   'Reopened',
   'Finished',
-  'Archived',
 ];
 
 const PRIORITIES = ['', 'Low', 'Medium', 'High', 'Critical'];
+const TASK_TYPES: TaskType[] = [
+  'General', 'Administrative', 'Financial', 'Technical',
+  'Maintenance', 'HR', 'Procurement', 'Other',
+];
 
 function avgRating(task: Task): number | null {
   if (!task.ratings || task.ratings.length === 0) return null;
@@ -48,7 +51,10 @@ function formatDate(iso: string): string {
 
 function TasksContent() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const startsInArchive = searchParams.get('status') === 'Archived';
+  const [view, setView] = useState<'tasks' | 'archived'>(startsInArchive ? 'archived' : 'tasks');
+  const [status, setStatus] = useState(startsInArchive ? '' : searchParams.get('status') || '');
+  const [taskType, setTaskType] = useState(searchParams.get('taskType') || '');
   const [priority, setPriority] = useState(searchParams.get('priority') || '');
   const [search, setSearch] = useState('');
   const [dueDateFrom, setDueDateFrom] = useState('');
@@ -62,6 +68,7 @@ function TasksContent() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   // Debounce the free-text search so we're not firing a request on every
   // keystroke — wait for a short pause in typing instead.
@@ -79,13 +86,18 @@ function TasksContent() {
   // Reset to page 1 whenever a filter changes
   useEffect(() => {
     setPage(1);
-  }, [status, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId]);
 
   useEffect(() => {
     setLoading(true);
     setError('');
     const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
-    if (status) params.status = status;
+    if (view === 'archived') params.status = 'Archived';
+    else {
+      params.excludeArchived = 'true';
+      if (status) params.status = status;
+    }
+    if (taskType) params.taskType = taskType;
     if (priority) params.priority = priority;
     if (debouncedSearch) params.search = debouncedSearch;
     if (dueDateFrom) params.dueDateFrom = dueDateFrom;
@@ -99,9 +111,23 @@ function TasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, page]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, page]);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
+
+  async function unarchiveTask(id: string) {
+    setBusyId(id);
+    setError('');
+    try {
+      await TasksApi.unarchive(id);
+      setTasks((current) => current.filter((task) => task.id !== id));
+      setTotal((current) => Math.max(0, current - 1));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not unarchive this task.');
+    } finally {
+      setBusyId(null);
+    }
+  }
 
   return (
     <div>
@@ -112,6 +138,22 @@ function TasksContent() {
         </Link>
       </div>
 
+      <div className="mt-4 flex gap-1 border-b border-slate-200">
+        <button
+          className={`px-3 py-2 text-sm font-medium ${view === 'tasks' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+          onClick={() => setView('tasks')}
+        >
+          Tasks
+        </button>
+        <button
+          className={`px-3 py-2 text-sm font-medium ${view === 'archived' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-slate-500 hover:text-slate-700'}`}
+          onClick={() => setView('archived')}
+        >
+          Archived
+        </button>
+      </div>
+
+      {view === 'tasks' && <>
       {/* Filters */}
       <div className="mt-4 flex flex-wrap items-end gap-3">
         <div className="min-w-[200px] flex-1">
@@ -193,6 +235,24 @@ function TasksContent() {
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-slate-500">Type:</span>
+        <button
+          onClick={() => setTaskType('')}
+          className={`btn px-3 py-1 text-xs ${taskType === '' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          All
+        </button>
+        {TASK_TYPES.map((type) => (
+          <button
+            key={type}
+            onClick={() => setTaskType(type)}
+            className={`btn px-3 py-1 text-xs ${taskType === type ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-slate-500">Priority:</span>
         {PRIORITIES.map((p) => (
           <button
@@ -206,6 +266,7 @@ function TasksContent() {
           </button>
         ))}
       </div>
+      </>}
 
       <div className="mt-4">
         {error ? (
@@ -219,18 +280,17 @@ function TasksContent() {
             {tasks.map((task) => {
               const rating = avgRating(task);
               return (
-                <Link
+                <div
                   key={task.id}
-                  href={`/tasks/${task.id}`}
-                  className="card flex flex-col gap-2 p-4 hover:bg-slate-50"
+                  className="card flex flex-col gap-2 p-4"
                 >
-                  <div className="flex items-start justify-between gap-2">
+                  <Link href={`/tasks/${task.id}`} className="flex items-start justify-between gap-2 hover:opacity-80">
                     <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
                     <div className="flex shrink-0 items-center gap-1">
                       <StatusBadge value={task.priority} />
                       <StatusBadge value={task.status} />
                     </div>
-                  </div>
+                  </Link>
 
                   {task.descriptionEn && (
                     <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
@@ -265,7 +325,17 @@ function TasksContent() {
                     </span>
                     {rating !== null && <Stars value={rating} />}
                   </div>
-                </Link>
+                  {view === 'archived' && (
+                    <button
+                      type="button"
+                      onClick={() => unarchiveTask(task.id)}
+                      disabled={busyId === task.id}
+                      className="btn-secondary self-end px-3 py-1 text-xs disabled:opacity-50"
+                    >
+                      {busyId === task.id ? 'Unarchiving...' : 'Unarchive'}
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>

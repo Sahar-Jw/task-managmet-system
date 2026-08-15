@@ -8,12 +8,26 @@ import StatusBadge from '@/components/StatusBadge';
 import ReasonModal from '@/components/ReasonModal';
 import { ApiError } from '@/lib/api';
 import { TasksApi } from '@/lib/endpoints';
-import type { Task, TaskPriority } from '@/lib/types';
+import type { Task, TaskPriority, TaskType } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 9;
 const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 const RATINGS = [5, 4, 3, 2, 1];
+const STATUSES = [
+  'Pending',
+  'Unassigned',
+  'InProgress',
+  'PendingApproval',
+  'Completed',
+  'Reopened',
+  'Finished',
+  'Archived',
+];
+const TASK_TYPES: TaskType[] = [
+  'General', 'Administrative', 'Financial', 'Technical',
+  'Maintenance', 'HR', 'Procurement', 'Other',
+];
 
 type Tab = 'assignedToMe' | 'assignedByMe';
 
@@ -42,7 +56,8 @@ function isOverdue(task: Task): boolean {
 function MyTasksContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>('assignedToMe');
-  const [status] = useState(searchParams.get('status') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || '');
+  const [taskType, setTaskType] = useState(searchParams.get('taskType') || '');
   const [priority, setPriority] = useState('');
   const [minRating, setMinRating] = useState('');
   const [upcomingOnly, setUpcomingOnly] = useState(false);
@@ -71,7 +86,7 @@ function MyTasksContent() {
   // Reset to page 1 whenever a filter or tab changes
   useEffect(() => {
     setPage(1);
-  }, [tab, status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo]);
+  }, [tab, status, taskType, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo]);
 
   function reload() {
     setLoading(true);
@@ -83,6 +98,7 @@ function MyTasksContent() {
       sortDir: 'asc',
     };
     if (status) params.status = status;
+    if (taskType) params.taskType = taskType;
     if (priority) params.priority = priority;
     if (minRating) params.minRating = minRating;
     if (upcomingOnly) params.upcomingOnly = 'true';
@@ -103,7 +119,7 @@ function MyTasksContent() {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo, page]);
+  }, [tab, status, taskType, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo, page]);
 
   async function archiveTask(task: Task) {
     setActingOnId(task.id);
@@ -215,6 +231,25 @@ function MyTasksContent() {
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-slate-500">Status:</span>
+        <button
+          onClick={() => setStatus('')}
+          className={`btn px-3 py-1 text-xs ${status === '' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          All
+        </button>
+        {STATUSES.map((value) => (
+          <button
+            key={value}
+            onClick={() => setStatus(value)}
+            className={`btn px-3 py-1 text-xs ${status === value ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            {value}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
         <span className="text-xs font-medium text-slate-500">Importance:</span>
         <button
           onClick={() => setPriority('')}
@@ -229,6 +264,25 @@ function MyTasksContent() {
             className={`btn px-3 py-1 text-xs ${priority === p ? 'btn-primary' : 'btn-secondary'}`}
           >
             {p}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-xs font-medium text-slate-500">Type:</span>
+        <button
+          onClick={() => setTaskType('')}
+          className={`btn px-3 py-1 text-xs ${taskType === '' ? 'btn-primary' : 'btn-secondary'}`}
+        >
+          All
+        </button>
+        {TASK_TYPES.map((type) => (
+          <button
+            key={type}
+            onClick={() => setTaskType(type)}
+            className={`btn px-3 py-1 text-xs ${taskType === type ? 'btn-primary' : 'btn-secondary'}`}
+          >
+            {type}
           </button>
         ))}
       </div>

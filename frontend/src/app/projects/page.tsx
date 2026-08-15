@@ -19,7 +19,7 @@ function ProjectsContent() {
   // Admin-only tab: "All projects" (everyone's) vs "My projects" (just the
   // ones this Admin created). A regular User only ever sees their own
   // Projects regardless, so the tab is hidden for them.
-  const [scope, setScope] = useState<'all' | 'mine'>('all');
+  const [scope, setScope] = useState<'all' | 'mine' | 'archived'>('all');
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [total, setTotal] = useState(0);
@@ -48,6 +48,8 @@ function ProjectsContent() {
       // all Projects and just the ones the Admin created.
       const params: Record<string, string> = { limit: String(PAGE_SIZE), page: String(page) };
       if (isAdmin && scope === 'mine') params.mine = 'true';
+      if (scope === 'archived') params.status = 'Archived';
+      else params.excludeArchived = 'true';
       const res = await ProjectsApi.list(params);
       setProjects(res.items);
       setTotal(res.total);
@@ -64,7 +66,7 @@ function ProjectsContent() {
 
   // Reset back to page 1 whenever the tab changes, so switching scope
   // doesn't leave the user on a page number that no longer has results.
-  function switchScope(next: 'all' | 'mine') {
+  function switchScope(next: 'all' | 'mine' | 'archived') {
     if (next === scope) return;
     setScope(next);
     setPage(1);
@@ -143,6 +145,23 @@ function ProjectsContent() {
     }
   }
 
+  async function handleUnarchive(id: string) {
+    setBusyId(id);
+    setRowError(null);
+    try {
+      await ProjectsApi.unarchive(id);
+      setProjects((current) => current.filter((project) => project.id !== id));
+      setTotal((current) => Math.max(0, current - 1));
+    } catch (err) {
+      setRowError({
+        id,
+        message: err instanceof ApiError ? err.message : 'Could not unarchive this project.',
+      });
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   function canManage(project: Project) {
     return isAdmin || project.createdById === user?.id;
   }
@@ -160,9 +179,11 @@ function ProjectsContent() {
               : 'Projects you created.'}
           </p>
         </div>
-        <button className="btn-primary" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? 'Cancel' : '+ New project'}
-        </button>
+        {scope !== 'archived' && (
+          <button className="btn-primary" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? 'Cancel' : '+ New project'}
+          </button>
+        )}
       </div>
 
       {isAdmin && (
@@ -187,10 +208,20 @@ function ProjectsContent() {
           >
             My projects
           </button>
+          <button
+            className={`px-3 py-2 text-sm font-medium ${
+              scope === 'archived'
+                ? 'border-b-2 border-brand-600 text-brand-600'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            onClick={() => switchScope('archived')}
+          >
+            Archived
+          </button>
         </div>
       )}
 
-      {showForm && (
+      {showForm && scope !== 'archived' && (
         <form onSubmit={handleCreate} className="card mt-4 space-y-3 p-6">
           <div>
             <label className="label">Name</label>
@@ -293,6 +324,15 @@ function ProjectsContent() {
                         onClick={() => handleArchive(p.id)}
                       >
                         {busyId === p.id ? 'Archiving…' : 'Archive'}
+                      </button>
+                    )}
+                    {isAdmin && p.status === 'Archived' && (
+                      <button
+                        className="btn-secondary px-3 py-1 text-xs disabled:opacity-50"
+                        disabled={busyId === p.id}
+                        onClick={() => handleUnarchive(p.id)}
+                      >
+                        {busyId === p.id ? 'Unarchiving...' : 'Unarchive'}
                       </button>
                     )}
                     {canManage(p) &&

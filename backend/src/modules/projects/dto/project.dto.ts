@@ -20,6 +20,7 @@ export class UpdateProjectDto {
 
 export class QueryProjectsDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(ProjectStatus) status?: ProjectStatus;
+  @IsOptional() @IsBooleanString() excludeArchived?: string;
 
   // Admin-only convenience filter for the "My projects" tab: when 'true',
   // scope the list down to Projects the requesting Admin created

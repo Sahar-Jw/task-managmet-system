@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { Not } from 'typeorm';
 import { ProjectEntity } from './entities/project.entity';
 import { TaskEntity } from '../tasks/entities/task.entity';
 import { UserEntity } from '../users/entities/user.entity';
@@ -46,7 +47,7 @@ export class ProjectsService {
 
     const [items, total] = await this.projectRepo.findAndCount({
       where: {
-        ...(query.status ? { status: query.status } : {}),
+        ...(query.status ? { status: query.status } : query.excludeArchived === 'true' ? { status: Not(ProjectStatus.ARCHIVED) } : {}),
         ...(scopeToSelf ? { createdById: actor.id } : {}),
       },
       order: { name: 'ASC' },

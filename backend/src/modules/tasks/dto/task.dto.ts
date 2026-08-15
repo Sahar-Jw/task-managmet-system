@@ -115,6 +115,7 @@ export class DecideTaskApprovalDto {
 
 export class QueryTasksDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+  @IsOptional() @IsBooleanString() excludeArchived?: string;
   @IsOptional() @IsUUID() branchId?: string;
   @IsOptional() @IsUUID() projectId?: string;
   @IsOptional() @IsUUID() departmentId?: string;
@@ -138,6 +139,8 @@ export class QueryTasksDto extends PaginationQueryDto {
  */
 export class QueryMyTasksDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+
+  @IsOptional() @IsEnum(TaskType) taskType?: TaskType;
 
   // Importance
   @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;

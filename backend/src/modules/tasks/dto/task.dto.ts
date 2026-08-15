@@ -119,6 +119,7 @@ export class QueryTasksDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() branchId?: string;
   @IsOptional() @IsUUID() projectId?: string;
   @IsOptional() @IsUUID() departmentId?: string;
+  @IsOptional() @IsUUID() createdById?: string;
   @IsOptional() @IsUUID() assignedToId?: string;
   @IsOptional() @IsUUID() assigneeId?: string; // legacy multi-assignee filter (task-assignments)
   @IsOptional() @IsEnum(TaskType) taskType?: TaskType;

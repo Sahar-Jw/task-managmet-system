@@ -75,6 +75,9 @@ export interface Project {
   // Owner's display name, resolved server-side (Project has no relation to
   // User — see backend entity comment). Present on list/detail responses.
   ownerName?: string;
+  ownerDepartmentName?: string;
+  ownerBranchName?: string;
+  createdAt: string;
   archivedAt?: string;
 }
 

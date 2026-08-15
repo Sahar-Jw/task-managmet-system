@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { ApiError } from '@/lib/api';
-import { BranchesApi, DepartmentsApi, TasksApi } from '@/lib/endpoints';
-import type { Branch, Department, Task, TaskType } from '@/lib/types';
+import { BranchesApi, DepartmentsApi, ProjectsApi, TasksApi, UsersApi } from '@/lib/endpoints';
+import type { Branch, Department, Project, Task, TaskType, User } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 9;
@@ -61,8 +61,12 @@ function TasksContent() {
   const [dueDateTo, setDueDateTo] = useState('');
   const [departmentId, setDepartmentId] = useState('');
   const [branchId, setBranchId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [ownerId, setOwnerId] = useState('');
   const [departments, setDepartments] = useState<Department[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [owners, setOwners] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -81,12 +85,14 @@ function TasksContent() {
   useEffect(() => {
     DepartmentsApi.list().then(setDepartments).catch(() => {});
     BranchesApi.list().then(setBranches).catch(() => {});
+    ProjectsApi.list({ limit: '100', excludeArchived: 'true' }).then((res) => setProjects(res.items)).catch(() => {});
+    UsersApi.list({ limit: '100' }).then((res) => setOwners(res.items)).catch(() => {});
   }, []);
 
   // Reset to page 1 whenever a filter changes
   useEffect(() => {
     setPage(1);
-  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId]);
 
   useEffect(() => {
     setLoading(true);
@@ -104,6 +110,8 @@ function TasksContent() {
     if (dueDateTo) params.dueDateTo = dueDateTo;
     if (departmentId) params.departmentId = departmentId;
     if (branchId) params.branchId = branchId;
+    if (projectId) params.projectId = projectId;
+    if (ownerId) params.createdById = ownerId;
     TasksApi.list(params)
       .then((res) => {
         setTasks(res.items);
@@ -111,7 +119,7 @@ function TasksContent() {
       })
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, page]);
+  }, [view, status, taskType, priority, debouncedSearch, dueDateFrom, dueDateTo, departmentId, branchId, projectId, ownerId, page]);
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -205,7 +213,21 @@ function TasksContent() {
             ))}
           </select>
         </div>
-        {(search || dueDateFrom || dueDateTo || departmentId || branchId) && (
+        <div>
+          <label className="label">Project</label>
+          <select className="input" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+            <option value="">All</option>
+            {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="label">Owner</label>
+          <select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+            <option value="">All</option>
+            {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
+          </select>
+        </div>
+        {(search || dueDateFrom || dueDateTo || departmentId || branchId || projectId || ownerId) && (
           <button
             type="button"
             className="btn-secondary"
@@ -215,6 +237,8 @@ function TasksContent() {
               setDueDateTo('');
               setDepartmentId('');
               setBranchId('');
+              setProjectId('');
+              setOwnerId('');
             }}
           >
             Clear
@@ -295,6 +319,11 @@ function TasksContent() {
                   {task.descriptionEn && (
                     <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
                   )}
+
+                  <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Type:</span>
+                    <StatusBadge value={task.taskType} />
+                  </div>
 
                   <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-slate-600">
                     <div>

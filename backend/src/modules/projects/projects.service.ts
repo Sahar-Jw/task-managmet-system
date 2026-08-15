@@ -7,10 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { Not } from 'typeorm';
 import { ProjectEntity } from './entities/project.entity';
 import { TaskEntity } from '../tasks/entities/task.entity';
 import { UserEntity } from '../users/entities/user.entity';
+import { SettingEntity } from '../settings/entities/setting.entity';
 import { CreateProjectDto, QueryProjectsDto, UpdateProjectDto } from './dto/project.dto';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ProjectStatus } from '../../shared/enums/project-status.enum';
@@ -33,6 +33,8 @@ export class ProjectsService {
     private readonly taskRepo: Repository<TaskEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(SettingEntity)
+    private readonly settingRepo: Repository<SettingEntity>,
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
@@ -45,15 +47,25 @@ export class ProjectsService {
     const isAdmin = actor.role?.name === RoleName.ADMIN;
     const scopeToSelf = !isAdmin || query.mine === 'true';
 
-    const [items, total] = await this.projectRepo.findAndCount({
-      where: {
-        ...(query.status ? { status: query.status } : query.excludeArchived === 'true' ? { status: Not(ProjectStatus.ARCHIVED) } : {}),
-        ...(scopeToSelf ? { createdById: actor.id } : {}),
-      },
-      order: { name: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const qb = this.projectRepo
+      .createQueryBuilder('project')
+      .leftJoin(UserEntity, 'owner', 'owner.id = project.createdById')
+      .orderBy('project.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    if (query.status) qb.andWhere('project.status = :status', { status: query.status });
+    else if (query.excludeArchived === 'true') qb.andWhere('project.status != :archived', { archived: ProjectStatus.ARCHIVED });
+    if (scopeToSelf) qb.andWhere('project.createdById = :actorId', { actorId: actor.id });
+    if (query.name) qb.andWhere('project.name ILIKE :name', { name: `%${query.name}%` });
+    if (query.description) qb.andWhere('project.description ILIKE :description', { description: `%${query.description}%` });
+    if (query.ownerId) qb.andWhere('project.createdById = :ownerId', { ownerId: query.ownerId });
+    if (query.departmentId) qb.andWhere('owner.departmentId = :departmentId', { departmentId: query.departmentId });
+    if (query.branchId) qb.andWhere('owner.branchId = :branchId', { branchId: query.branchId });
+    if (query.createdDateFrom) qb.andWhere('project.createdAt >= :createdDateFrom', { createdDateFrom: query.createdDateFrom });
+    if (query.createdDateTo) qb.andWhere('project.createdAt < (:createdDateTo::date + INTERVAL \'1 day\')', { createdDateTo: query.createdDateTo });
+
+    const [items, total] = await qb.getManyAndCount();
 
     return { items: await this.attachOwners(items), total, page, limit };
   }
@@ -86,10 +98,20 @@ export class ProjectsService {
     const owners = await this.userRepo.find({ where: { id: In(ownerIds) } });
     const ownerNameById = new Map(owners.map((u) => [u.id, u.fullName]));
 
-    return projects.map((p) => ({
+    const settings = await this.settingRepo.find({
+      where: { id: In([...new Set(owners.flatMap((owner) => [owner.departmentId, owner.branchId]).filter(Boolean) as string[])]) },
+    });
+    const settingNameById = new Map(settings.map((setting) => [setting.id, setting.valueEn || setting.codeEn]));
+
+    return projects.map((p) => {
+      const owner = p.createdById ? owners.find((user) => user.id === p.createdById) : undefined;
+      return {
       ...p,
       ownerName: p.createdById ? ownerNameById.get(p.createdById) : undefined,
-    }));
+      ownerDepartmentName: owner?.departmentId ? settingNameById.get(owner.departmentId) : undefined,
+      ownerBranchName: owner?.branchId ? settingNameById.get(owner.branchId) : undefined,
+    };
+    });
   }
 
   // Project is a standalone lookup entity (no relation to Branch); name

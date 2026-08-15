@@ -6,11 +6,12 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
-import { ProjectsApi } from '@/lib/endpoints';
-import type { Project } from '@/lib/types';
+import { BranchesApi, DepartmentsApi, ProjectsApi, UsersApi } from '@/lib/endpoints';
+import type { Branch, Department, Project, ProjectStatus, User } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 10;
+const PROJECT_STATUSES: ProjectStatus[] = ['Planned', 'Active', 'Completed', 'Archived'];
 
 function ProjectsContent() {
   const { user } = useAuth();
@@ -28,6 +29,17 @@ function ProjectsContent() {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState({ name: '', description: '' });
+  const [nameFilter, setNameFilter] = useState('');
+  const [descriptionFilter, setDescriptionFilter] = useState('');
+  const [ownerId, setOwnerId] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [departmentId, setDepartmentId] = useState('');
+  const [branchId, setBranchId] = useState('');
+  const [createdDateFrom, setCreatedDateFrom] = useState('');
+  const [createdDateTo, setCreatedDateTo] = useState('');
+  const [owners, setOwners] = useState<User[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
 
   // Editing an existing project (id === project being edited, or null)
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -50,6 +62,14 @@ function ProjectsContent() {
       if (isAdmin && scope === 'mine') params.mine = 'true';
       if (scope === 'archived') params.status = 'Archived';
       else params.excludeArchived = 'true';
+      if (nameFilter) params.name = nameFilter;
+      if (descriptionFilter) params.description = descriptionFilter;
+      if (statusFilter) params.status = statusFilter;
+      if (isAdmin && scope === 'all' && ownerId) params.ownerId = ownerId;
+      if (isAdmin && scope === 'all' && departmentId) params.departmentId = departmentId;
+      if (isAdmin && scope === 'all' && branchId) params.branchId = branchId;
+      if (createdDateFrom) params.createdDateFrom = createdDateFrom;
+      if (createdDateTo) params.createdDateTo = createdDateTo;
       const res = await ProjectsApi.list(params);
       setProjects(res.items);
       setTotal(res.total);
@@ -58,11 +78,22 @@ function ProjectsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, isAdmin, scope]);
+  }, [page, isAdmin, scope, nameFilter, descriptionFilter, ownerId, statusFilter, departmentId, branchId, createdDateFrom, createdDateTo]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    UsersApi.list({ limit: '100' }).then((res) => setOwners(res.items)).catch(() => {});
+    DepartmentsApi.list().then(setDepartments).catch(() => {});
+    BranchesApi.list().then(setBranches).catch(() => {});
+  }, [isAdmin]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [nameFilter, descriptionFilter, ownerId, statusFilter, departmentId, branchId, createdDateFrom, createdDateTo]);
 
   // Reset back to page 1 whenever the tab changes, so switching scope
   // doesn't leave the user on a page number that no longer has results.
@@ -252,6 +283,59 @@ function ProjectsContent() {
         <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</p>
       )}
 
+      {scope !== 'archived' && (
+        <div className="mt-4 flex flex-wrap items-end gap-3">
+          <div className="min-w-[180px] flex-1">
+            <label className="label">Project name</label>
+            <input className="input" value={nameFilter} onChange={(e) => setNameFilter(e.target.value)} />
+          </div>
+          <div className="min-w-[180px] flex-1">
+            <label className="label">Description</label>
+            <input className="input" value={descriptionFilter} onChange={(e) => setDescriptionFilter(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Status</label>
+            <select className="input" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="">All</option>
+              {PROJECT_STATUSES.filter((status) => status !== 'Archived').map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+          {isAdmin && scope === 'all' && <>
+            <div>
+              <label className="label">Owner</label>
+              <select className="input" value={ownerId} onChange={(e) => setOwnerId(e.target.value)}>
+                <option value="">All</option>
+                {owners.map((owner) => <option key={owner.id} value={owner.id}>{owner.fullName}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Department</label>
+              <select className="input" value={departmentId} onChange={(e) => setDepartmentId(e.target.value)}>
+                <option value="">All</option>
+                {departments.map((department) => <option key={department.id} value={department.id}>{department.valueEn || department.codeEn}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Branch</label>
+              <select className="input" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
+                <option value="">All</option>
+                {branches.map((branch) => <option key={branch.id} value={branch.id}>{branch.valueEn || branch.codeEn}</option>)}
+              </select>
+            </div>
+          </>}
+          <div>
+            <label className="label">Created from</label>
+            <input type="date" className="input" value={createdDateFrom} onChange={(e) => setCreatedDateFrom(e.target.value)} />
+          </div>
+          <div>
+            <label className="label">Created to</label>
+            <input type="date" className="input" value={createdDateTo} onChange={(e) => setCreatedDateTo(e.target.value)} />
+          </div>
+        </div>
+      )}
+
       <div className="mt-4 card divide-y divide-slate-100">
         {loading ? (
           <p className="p-6 text-center text-slate-500">Loading…</p>
@@ -304,6 +388,14 @@ function ProjectsContent() {
                     {isAdmin && scope === 'all' && (
                       <div className="truncate text-xs text-slate-400">
                         Owner: {p.ownerName || '—'}
+                      </div>
+                    )}
+                    <div className="text-xs text-slate-400">
+                      Created: {new Date(p.createdAt).toLocaleDateString()}
+                    </div>
+                    {isAdmin && scope === 'all' && (
+                      <div className="text-xs text-slate-400">
+                        Department: {p.ownerDepartmentName || 'Not set'} / Branch: {p.ownerBranchName || 'Not set'}
                       </div>
                     )}
                   </Link>

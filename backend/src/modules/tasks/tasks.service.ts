@@ -113,6 +113,7 @@ export class TasksService {
     if (query.branchId) qb.andWhere('task.branchId = :branchId', { branchId: query.branchId });
     if (query.projectId) qb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
     if (query.departmentId) qb.andWhere('task.departmentId = :departmentId', { departmentId: query.departmentId });
+    if (query.createdById) qb.andWhere('task.createdById = :createdById', { createdById: query.createdById });
     if (query.assignedToId) qb.andWhere('task.assignedToId = :assignedToId', { assignedToId: query.assignedToId });
     if (query.assigneeId) {
       qb.innerJoin('task.assignments', 'assignment').andWhere('assignment.assigneeId = :assigneeId', {

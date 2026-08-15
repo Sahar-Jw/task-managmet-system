@@ -1,4 +1,4 @@
-import { IsBooleanString, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBooleanString, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/utils/pagination.dto';
 import { ProjectStatus } from '../../../shared/enums/project-status.enum';
 
@@ -21,6 +21,13 @@ export class UpdateProjectDto {
 export class QueryProjectsDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(ProjectStatus) status?: ProjectStatus;
   @IsOptional() @IsBooleanString() excludeArchived?: string;
+  @IsOptional() @IsString() @MaxLength(200) name?: string;
+  @IsOptional() @IsString() @MaxLength(500) description?: string;
+  @IsOptional() @IsUUID() ownerId?: string;
+  @IsOptional() @IsUUID() departmentId?: string;
+  @IsOptional() @IsUUID() branchId?: string;
+  @IsOptional() @IsDateString() createdDateFrom?: string;
+  @IsOptional() @IsDateString() createdDateTo?: string;
 
   // Admin-only convenience filter for the "My projects" tab: when 'true',
   // scope the list down to Projects the requesting Admin created

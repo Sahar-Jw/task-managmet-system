@@ -68,11 +68,8 @@ function NewTaskContent() {
   }
 
   const [form, setForm] = useState({
-    // Bilingual title & description
-    titleAr: '',
-    titleEn: '',
-    descriptionAr: '',
-    descriptionEn: '',
+    title: '',
+    description: '',
     // Classification
     taskType: 'General',
     priority: 'Medium',
@@ -118,6 +115,7 @@ function NewTaskContent() {
   // Admins are never a valid assignee — a Task is always assigned to a
   // regular User, never to another Admin.
   const assignableUsers = users.filter((u) => u.role.name !== 'ADMIN');
+  const approvers = users.length > 0 ? users : user ? [user] : [];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -131,14 +129,20 @@ function NewTaskContent() {
       setError('The money range minimum cannot exceed the maximum.');
       return;
     }
+    if (form.needsBudget && (!form.budgetMin || !form.budgetMax)) {
+      setError('Enter both minimum and maximum amounts when this task needs a budget.');
+      return;
+    }
 
     setSubmitting(true);
     try {
       const task = await TasksApi.create({
-        titleAr: form.titleAr,
-        titleEn: form.titleEn,
-        descriptionAr: form.descriptionAr || undefined,
-        descriptionEn: form.descriptionEn || undefined,
+        // The database retains bilingual columns, so this single form value
+        // is stored in both until localized content is introduced again.
+        titleAr: form.title,
+        titleEn: form.title,
+        descriptionAr: form.description || undefined,
+        descriptionEn: form.description || undefined,
         taskType: form.taskType,
         priority: form.priority,
         color: form.color,
@@ -181,54 +185,33 @@ function NewTaskContent() {
         {/* Title */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-600">Title</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="w-full">
             <div>
-              <label className="label">Title (English)</label>
               <input
                 className="input"
                 required
                 maxLength={255}
-                value={form.titleEn}
-                onChange={(e) => set('titleEn', e.target.value)}
+                value={form.title}
+                onChange={(e) => set('title', e.target.value)}
               />
             </div>
-            <div>
-              <label className="label">العنوان (Arabic)</label>
-              <input
-                dir="rtl"
-                className="input"
-                required
-                maxLength={255}
-                value={form.titleAr}
-                onChange={(e) => set('titleAr', e.target.value)}
-              />
-            </div>
+           
           </div>
         </section>
 
         {/* Description */}
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-slate-600">Description</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="w-full">
             <div>
-              <label className="label">Description (English)</label>
               <textarea
                 className="input"
                 rows={3}
-                value={form.descriptionEn}
-                onChange={(e) => set('descriptionEn', e.target.value)}
+                value={form.description}
+                onChange={(e) => set('description', e.target.value)}
               />
             </div>
-            <div>
-              <label className="label">الوصف (Arabic)</label>
-              <textarea
-                dir="rtl"
-                className="input"
-                rows={3}
-                value={form.descriptionAr}
-                onChange={(e) => set('descriptionAr', e.target.value)}
-              />
-            </div>
+           
           </div>
         </section>
 
@@ -422,7 +405,7 @@ function NewTaskContent() {
                 onChange={(e) => set('approverId', e.target.value)}
               >
                 <option value="" disabled>Select an approver…</option>
-                {users.map((u) => (
+                {approvers.map((u) => (
                   <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
                 ))}
               </select>
@@ -446,6 +429,7 @@ function NewTaskContent() {
                 <label className="label">Minimum</label>
                 <input
                   type="number"
+                  required
                   min="0"
                   step="0.01"
                   className="input"
@@ -457,6 +441,7 @@ function NewTaskContent() {
                 <label className="label">Maximum</label>
                 <input
                   type="number"
+                  required
                   min="0"
                   step="0.01"
                   className="input"

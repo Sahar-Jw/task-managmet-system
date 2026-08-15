@@ -50,9 +50,9 @@ export class CreateTaskDto {
 
   // ---- Money range ----
   @IsOptional() @IsBoolean() needsBudget?: boolean;
-  @ValidateIf((o) => o.needsBudget === true)
+  @ValidateIf((o) => o.needsBudget === true && o.budgetMin !== undefined)
   @IsNumberString() budgetMin?: string;
-  @ValidateIf((o) => o.needsBudget === true)
+  @ValidateIf((o) => o.needsBudget === true && o.budgetMax !== undefined)
   @IsNumberString() budgetMax?: string;
   @IsOptional() @IsString() @MaxLength(10) budgetCurrency?: string;
 

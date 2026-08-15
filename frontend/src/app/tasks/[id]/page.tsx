@@ -12,12 +12,15 @@ import { ATTACHMENT_ACCEPT } from '@/lib/file-kind';
 import {
   AssignmentsApi,
   AttachmentsApi,
+  BranchesApi,
   CommentsApi,
+  DepartmentsApi,
+  ProjectsApi,
   RatingsApi,
   TasksApi,
   UsersApi,
 } from '@/lib/endpoints';
-import type { Task, TaskAttachment, TaskComment, User } from '@/lib/types';
+import type { Branch, Department, Project, Task, TaskAttachment, TaskComment, User } from '@/lib/types';
 import ReasonModal from '@/components/ReasonModal';
 
 const NEXT_STATUS_OPTIONS: Record<string, string[]> = {
@@ -39,9 +42,76 @@ function TaskDetailContent() {
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+
+  // ---- Editing (Task creator / Admin only) ----
+  const [isEditing, setIsEditing] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editForm, setEditForm] = useState({
+    titleAr: '',
+    titleEn: '',
+    descriptionAr: '',
+    descriptionEn: '',
+    priority: 'Medium',
+    branchId: '',
+    departmentId: '',
+    projectId: '',
+    assignedToId: '',
+    startDate: '',
+    deadlineDate: '',
+  });
+
+  function startEditing() {
+    if (!task) return;
+    setEditForm({
+      titleAr: task.titleAr || '',
+      titleEn: task.titleEn || '',
+      descriptionAr: task.descriptionAr || '',
+      descriptionEn: task.descriptionEn || '',
+      priority: task.priority || 'Medium',
+      branchId: task.branchId || '',
+      departmentId: task.departmentId || '',
+      projectId: task.projectId || '',
+      assignedToId: task.assignedToId || '',
+      startDate: task.startDate || '',
+      deadlineDate: task.deadlineDate || '',
+    });
+    setError('');
+    setIsEditing(true);
+  }
+
+  async function saveEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!task) return;
+    setSavingEdit(true);
+    setError('');
+    try {
+      await TasksApi.update(task.id, {
+        titleAr: editForm.titleAr,
+        titleEn: editForm.titleEn,
+        descriptionAr: editForm.descriptionAr || undefined,
+        descriptionEn: editForm.descriptionEn || undefined,
+        priority: editForm.priority,
+        branchId: editForm.branchId || undefined,
+        departmentId: editForm.departmentId || undefined,
+        projectId: editForm.projectId || undefined,
+        assignedToId: editForm.assignedToId || undefined,
+        startDate: editForm.startDate || undefined,
+        deadlineDate: editForm.deadlineDate || undefined,
+      });
+      setIsEditing(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not save changes.');
+    } finally {
+      setSavingEdit(false);
+    }
+  }
 
   const [newComment, setNewComment] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
@@ -78,6 +148,9 @@ function TaskDetailContent() {
     load();
     
       UsersApi.list({ limit: '100' }).then((res) => setUsers(res.items));
+      BranchesApi.list().then(setBranches).catch(() => {});
+      DepartmentsApi.list().then(setDepartments).catch(() => {});
+      ProjectsApi.list({ limit: '100' }).then((res) => setProjects(res.items)).catch(() => {});
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -118,6 +191,10 @@ function TaskDetailContent() {
   const canManageAttachments = isCreator || isAdmin;
   const canDownloadAttachments =
     canManageAttachments || (isAssigneeOfTask && task.assigneeCanDownloadAttachments);
+  // Only the Task creator or Admin may edit the Task's fields, and only
+  // while it isn't archived or awaiting an approval decision.
+  const canEditTask =
+    (isCreator || isAdmin) && task.status !== 'Archived' && task.status !== 'PendingApproval';
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -136,56 +213,219 @@ function TaskDetailContent() {
               <StatusBadge value={task.taskType} />
               <StatusBadge value={task.priority} />
               <StatusBadge value={task.status} />
+              {canEditTask && !isEditing && (
+                <button className="btn-secondary" onClick={startEditing}>
+                  Edit
+                </button>
+              )}
             </div>
           </div>
 
-          {(task.descriptionEn || task.descriptionAr) && (
-            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {task.descriptionEn && <p className="text-sm text-slate-600">{task.descriptionEn}</p>}
-              {task.descriptionAr && <p dir="rtl" className="text-sm text-slate-600">{task.descriptionAr}</p>}
-            </div>
-          )}
+          {isEditing ? (
+            <form onSubmit={saveEdit} className="mt-4 space-y-4 rounded-md border border-slate-200 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label">Title (English)</label>
+                  <input
+                    className="input"
+                    required
+                    maxLength={255}
+                    value={editForm.titleEn}
+                    onChange={(e) => setEditForm((f) => ({ ...f, titleEn: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="label">العنوان (Arabic)</label>
+                  <input
+                    dir="rtl"
+                    className="input"
+                    required
+                    maxLength={255}
+                    value={editForm.titleAr}
+                    onChange={(e) => setEditForm((f) => ({ ...f, titleAr: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="label">Description (English)</label>
+                  <textarea
+                    className="input"
+                    rows={3}
+                    value={editForm.descriptionEn}
+                    onChange={(e) => setEditForm((f) => ({ ...f, descriptionEn: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="label">الوصف (Arabic)</label>
+                  <textarea
+                    dir="rtl"
+                    className="input"
+                    rows={3}
+                    value={editForm.descriptionAr}
+                    onChange={(e) => setEditForm((f) => ({ ...f, descriptionAr: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-          <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="text-slate-400">Branch</dt>
-              <dd className="text-slate-700">{task.branch?.valueEn || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Department</dt>
-              <dd className="text-slate-700">{task.department?.valueEn || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Project</dt>
-              <dd className="text-slate-700">{task.project?.name || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">For whom</dt>
-              <dd className="text-slate-700">{task.assignedTo?.fullName || 'Unassigned'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Created by</dt>
-              <dd className="text-slate-700">{task.createdBy?.fullName || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Father task</dt>
-              <dd className="text-slate-700">{task.parentTask?.titleEn || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Start date</dt>
-              <dd className="text-slate-700">{task.startDate || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Deadline</dt>
-              <dd className="text-slate-700">{task.deadlineDate || '—'}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-400">Actually ended</dt>
-              <dd className="text-slate-700">
-                {task.actualEndDate ? new Date(task.actualEndDate).toLocaleDateString() : '—'}
-              </dd>
-            </div>
-          </dl>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="label">Level of importance</label>
+                  <select
+                    className="input"
+                    value={editForm.priority}
+                    onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value }))}
+                  >
+                    {['Low', 'Medium', 'High', 'Critical'].map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Branch</label>
+                  <select
+                    className="input"
+                    value={editForm.branchId}
+                    onChange={(e) => setEditForm((f) => ({ ...f, branchId: e.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {branches.map((b) => (
+                      <option key={b.id} value={b.id}>{b.valueEn} ({b.codeEn})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Department</label>
+                  <select
+                    className="input"
+                    value={editForm.departmentId}
+                    onChange={(e) => setEditForm((f) => ({ ...f, departmentId: e.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>{d.valueEn} ({d.codeEn})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div>
+                  <label className="label">Project</label>
+                  <select
+                    className="input"
+                    value={editForm.projectId}
+                    onChange={(e) => setEditForm((f) => ({ ...f, projectId: e.target.value }))}
+                  >
+                    <option value="">None</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="label">For whom</label>
+                  <select
+                    className="input"
+                    value={editForm.assignedToId}
+                    onChange={(e) => setEditForm((f) => ({ ...f, assignedToId: e.target.value }))}
+                  >
+                    <option value="">Unassigned</option>
+                    {assignableUsers.map((u) => (
+                      <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="label">Start date</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={editForm.startDate}
+                    onChange={(e) => setEditForm((f) => ({ ...f, startDate: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="label">Deadline</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={editForm.deadlineDate}
+                    onChange={(e) => setEditForm((f) => ({ ...f, deadlineDate: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-red-600">{error}</p>}
+
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setError('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary" disabled={savingEdit}>
+                  {savingEdit ? 'Saving…' : 'Save changes'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <>
+              {(task.descriptionEn || task.descriptionAr) && (
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {task.descriptionEn && <p className="text-sm text-slate-600">{task.descriptionEn}</p>}
+                  {task.descriptionAr && <p dir="rtl" className="text-sm text-slate-600">{task.descriptionAr}</p>}
+                </div>
+              )}
+
+              <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                <div>
+                  <dt className="text-slate-400">Branch</dt>
+                  <dd className="text-slate-700">{task.branch?.valueEn || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Department</dt>
+                  <dd className="text-slate-700">{task.department?.valueEn || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Project</dt>
+                  <dd className="text-slate-700">{task.project?.name || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">For whom</dt>
+                  <dd className="text-slate-700">{task.assignedTo?.fullName || 'Unassigned'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Created by</dt>
+                  <dd className="text-slate-700">{task.createdBy?.fullName || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Father task</dt>
+                  <dd className="text-slate-700">{task.parentTask?.titleEn || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Start date</dt>
+                  <dd className="text-slate-700">{task.startDate || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Deadline</dt>
+                  <dd className="text-slate-700">{task.deadlineDate || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-400">Actually ended</dt>
+                  <dd className="text-slate-700">
+                    {task.actualEndDate ? new Date(task.actualEndDate).toLocaleDateString() : '—'}
+                  </dd>
+                </div>
+              </dl>
+            </>
+          )}
 
           {task.needsBudget && (
             <div className="mt-4 rounded-md bg-slate-50 p-3 text-sm">

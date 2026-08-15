@@ -50,6 +50,14 @@ export class TasksController {
     return this.tasksService.findMyTasks(user.id, query);
   }
 
+  // "Assigned by me": Tasks the current user created for someone else —
+  // lets a Task owner review, edit, finish, or archive what they've handed out.
+  // NOTE: must stay declared before ':id' or Nest will treat "assigned-by-me" as an id.
+  @Get('assigned-by-me')
+  findAssignedByMe(@Query() query: QueryMyTasksDto, @CurrentUser() user: UserEntity) {
+    return this.tasksService.findAssignedByMe(user.id, query);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id);

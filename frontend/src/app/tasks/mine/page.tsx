@@ -5,14 +5,17 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import ReasonModal from '@/components/ReasonModal';
 import { ApiError } from '@/lib/api';
 import { TasksApi } from '@/lib/endpoints';
 import type { Task, TaskPriority } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 const PRIORITIES: TaskPriority[] = ['Low', 'Medium', 'High', 'Critical'];
 const RATINGS = [5, 4, 3, 2, 1];
+
+type Tab = 'assignedToMe' | 'assignedByMe';
 
 function avgRating(task: Task): number | null {
   if (!task.ratings || task.ratings.length === 0) return null;
@@ -38,6 +41,7 @@ function isOverdue(task: Task): boolean {
 
 function MyTasksContent() {
   const searchParams = useSearchParams();
+  const [tab, setTab] = useState<Tab>('assignedToMe');
   const [status] = useState(searchParams.get('status') || '');
   const [priority, setPriority] = useState('');
   const [minRating, setMinRating] = useState('');
@@ -51,6 +55,11 @@ function MyTasksContent() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
 
+  // Which Task (if any) is currently mid-action, and any confirmation modal
+  // that action needs (only "Finish" requires a reason).
+  const [actingOnId, setActingOnId] = useState<string | null>(null);
+  const [finishModalTask, setFinishModalTask] = useState<Task | null>(null);
+
   // Debounce the free-text search so we're not firing a request on every
   // keystroke — wait for a short pause in typing instead.
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -59,12 +68,12 @@ function MyTasksContent() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Reset to page 1 whenever a filter changes
+  // Reset to page 1 whenever a filter or tab changes
   useEffect(() => {
     setPage(1);
-  }, [status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo]);
+  }, [tab, status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo]);
 
-  useEffect(() => {
+  function reload() {
     setLoading(true);
     setError('');
     const params: Record<string, string> = {
@@ -81,14 +90,47 @@ function MyTasksContent() {
     if (deadlineFrom) params.deadlineFrom = deadlineFrom;
     if (deadlineTo) params.deadlineTo = deadlineTo;
 
-    TasksApi.mine(params)
+    const fetcher = tab === 'assignedToMe' ? TasksApi.mine(params) : TasksApi.assignedByMe(params);
+    fetcher
       .then((res) => {
         setTasks(res.items);
         setTotal(res.total);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
+      .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load tasks.'))
       .finally(() => setLoading(false));
-  }, [status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo, page]);
+  }
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, status, priority, minRating, upcomingOnly, debouncedSearch, deadlineFrom, deadlineTo, page]);
+
+  async function archiveTask(task: Task) {
+    setActingOnId(task.id);
+    setError('');
+    try {
+      await TasksApi.remove(task.id);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not archive this task.');
+    } finally {
+      setActingOnId(null);
+    }
+  }
+
+  async function finishTask(task: Task, reason: string) {
+    setFinishModalTask(null);
+    setActingOnId(task.id);
+    setError('');
+    try {
+      await TasksApi.changeStatus(task.id, 'Finished', reason);
+      reload();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not finish this task.');
+    } finally {
+      setActingOnId(null);
+    }
+  }
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
@@ -102,6 +144,30 @@ function MyTasksContent() {
             + New task
           </Link>
         </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-4 flex gap-2 border-b border-slate-200">
+        <button
+          onClick={() => setTab('assignedToMe')}
+          className={`border-b-2 px-3 py-2 text-sm font-medium ${
+            tab === 'assignedToMe'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Assigned to me
+        </button>
+        <button
+          onClick={() => setTab('assignedByMe')}
+          className={`border-b-2 px-3 py-2 text-sm font-medium ${
+            tab === 'assignedByMe'
+              ? 'border-brand-600 text-brand-600'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Assigned by me
+        </button>
       </div>
 
       {/* Filters */}
@@ -198,54 +264,91 @@ function MyTasksContent() {
         </label>
       </div>
 
+      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+
       {/* Results, sorted by nearest deadline */}
       <div className="mt-4">
-        {error ? (
-          <div className="card p-6 text-center text-red-600">{error}</div>
-        ) : loading ? (
+        {loading ? (
           <div className="card p-6 text-center text-slate-500">Loading…</div>
         ) : tasks.length === 0 ? (
-          <div className="card p-6 text-center text-slate-500">No tasks match this filter.</div>
+          <div className="card p-6 text-center text-slate-500">
+            {tab === 'assignedToMe' ? 'No tasks match this filter.' : "You haven't assigned any tasks to others yet."}
+          </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {tasks.map((task) => (
-              <Link
-                key={task.id}
-                href={`/tasks/${task.id}`}
-                className="card flex flex-col gap-2 p-4 hover:bg-slate-50"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <StatusBadge value={task.priority} />
-                    <StatusBadge value={task.status} />
+            {tasks.map((task) => {
+              const canArchive = task.status !== 'Archived';
+              const canFinish = task.status !== 'Archived' && task.status !== 'Finished';
+              const busy = actingOnId === task.id;
+              return (
+                <div key={task.id} className="card flex flex-col gap-2 p-4">
+                  <Link href={`/tasks/${task.id}`} className="flex items-start justify-between gap-2 hover:opacity-80">
+                    <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <StatusBadge value={task.priority} />
+                      <StatusBadge value={task.status} />
+                    </div>
+                  </Link>
+
+                  {task.descriptionEn && (
+                    <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
+                  )}
+
+                  {task.project?.name && (
+                    <div className="text-xs text-slate-600">
+                      Project: <span className="font-medium">{task.project.name}</span>
+                    </div>
+                  )}
+
+                  {tab === 'assignedByMe' && (
+                    <div className="text-xs text-slate-600">
+                      Assigned to: <span className="font-medium">{task.assignedTo?.fullName || 'Unassigned'}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-1 flex items-center justify-between text-xs">
+                    <span className={isOverdue(task) ? 'font-medium text-red-600' : 'text-slate-500'}>
+                      {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
+                      {isOverdue(task) ? ' · Overdue' : ''}
+                    </span>
+                    <Stars value={avgRating(task)} />
                   </div>
+
+                  {tab === 'assignedByMe' && (
+                    <div className="mt-2 flex flex-wrap gap-2 border-t border-slate-100 pt-2">
+                      <Link href={`/tasks/${task.id}`} className="btn-secondary px-3 py-1 text-xs">
+                        Edit
+                      </Link>
+                      {canFinish && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setFinishModalTask(task)}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          Mark finished
+                        </button>
+                      )}
+                      {canArchive && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => archiveTask(task)}
+                          className="btn-secondary px-3 py-1 text-xs"
+                        >
+                          Archive
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {task.descriptionEn && (
-                  <p className="line-clamp-2 text-xs text-slate-500">{task.descriptionEn}</p>
-                )}
-
-                {task.project?.name && (
-                  <div className="text-xs text-slate-600">
-                    Project: <span className="font-medium">{task.project.name}</span>
-                  </div>
-                )}
-
-                <div className="mt-1 flex items-center justify-between text-xs">
-                  <span className={isOverdue(task) ? 'font-medium text-red-600' : 'text-slate-500'}>
-                    {task.deadlineDate ? `Due ${task.deadlineDate}` : 'No deadline'}
-                    {isOverdue(task) ? ' · Overdue' : ''}
-                  </span>
-                  <Stars value={avgRating(task)} />
-                </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {!loading && !error && (
+      {!loading && (
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -254,6 +357,16 @@ function MyTasksContent() {
           itemLabel="tasks"
         />
       )}
+
+      <ReasonModal
+        open={!!finishModalTask}
+        title="Finish task"
+        description="This will stop the task — please explain why it's being finished."
+        minLength={10}
+        confirmLabel="Finish"
+        onCancel={() => setFinishModalTask(null)}
+        onConfirm={(reason) => finishModalTask && finishTask(finishModalTask, reason)}
+      />
     </div>
   );
 }

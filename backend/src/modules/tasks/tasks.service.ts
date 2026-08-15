@@ -257,6 +257,97 @@ export class TasksService {
     return { items, total, page, limit };
   }
 
+  /**
+   * "Assigned by me": Tasks the current user created (owns) for someone
+   * else — i.e. `createdById` is this user but the Task isn't just a
+   * private, self-assigned Task. Lets a Task owner see, edit, and manage
+   * (finish/archive) everything they've handed out, mirroring the filters
+   * available on "My Tasks".
+   */
+  async findAssignedByMe(userId: string, query: QueryMyTasksDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+
+    const idQb = this.taskRepo
+      .createQueryBuilder('task')
+      .leftJoin('task.ratings', 'rating')
+      .select('task.id', 'id')
+      .addSelect('task.deadlineDate', 'deadlineDate')
+      .addSelect('task.priority', 'priority')
+      .addSelect('AVG(rating.score)', 'avgRating')
+      .where('task.createdById = :userId', { userId })
+      .andWhere('(task.assignedToId IS NULL OR task.assignedToId != :userId)', { userId })
+      .andWhere('task.archivedAt IS NULL')
+      .groupBy('task.id');
+
+    if (query.status) idQb.andWhere('task.status = :status', { status: query.status });
+    if (query.priority) idQb.andWhere('task.priority = :priority', { priority: query.priority });
+    if (query.projectId) idQb.andWhere('task.projectId = :projectId', { projectId: query.projectId });
+    if (query.search) {
+      idQb.andWhere(
+        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
+
+    if (query.upcomingOnly === 'true') {
+      idQb
+        .andWhere('task.deadlineDate IS NOT NULL')
+        .andWhere('task.deadlineDate >= CURRENT_DATE')
+        .andWhere('task.status NOT IN (:...doneStatuses)', {
+          doneStatuses: [TaskStatus.COMPLETED, TaskStatus.FINISHED, TaskStatus.ARCHIVED],
+        });
+    }
+    if (query.deadlineFrom) {
+      idQb.andWhere('task.deadlineDate >= :deadlineFrom', { deadlineFrom: query.deadlineFrom });
+    }
+    if (query.deadlineTo) {
+      idQb.andWhere('task.deadlineDate <= :deadlineTo', { deadlineTo: query.deadlineTo });
+    }
+
+    if (query.minRating) {
+      idQb.having('AVG(rating.score) >= :minRating', { minRating: Number(query.minRating) });
+    }
+
+    const dir = query.sortDir === 'asc' ? 'ASC' : 'DESC';
+    switch (query.sortBy) {
+      case 'priority':
+        idQb.orderBy(
+          `CASE task.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`,
+          query.sortDir === 'desc' ? 'DESC' : 'ASC',
+        );
+        break;
+      case 'rating':
+        idQb.orderBy('"avgRating"', dir);
+        break;
+      case 'createdAt':
+        idQb.orderBy('task.createdAt', dir);
+        break;
+      case 'deadline':
+      default:
+        idQb.orderBy('task.deadlineDate', query.sortDir === 'desc' ? 'DESC' : 'ASC', 'NULLS LAST');
+        break;
+    }
+    idQb.addOrderBy('task.id', 'ASC'); // stable tiebreaker
+
+    const rawRows = await idQb.getRawMany<{ id: string }>();
+    const total = rawRows.length;
+    const pageIds = rawRows.slice((page - 1) * limit, (page - 1) * limit + limit).map((r) => r.id);
+
+    if (pageIds.length === 0) {
+      return { items: [], total, page, limit };
+    }
+
+    const hydrated = await this.taskRepo.find({
+      where: { id: In(pageIds) },
+      relations: ['branch', 'department', 'project', 'assignedTo', 'createdBy', 'ratings'],
+    });
+    const byId = new Map(hydrated.map((t) => [t.id, t]));
+    const items = pageIds.map((id) => byId.get(id)).filter((t): t is TaskEntity => !!t);
+
+    return { items, total, page, limit };
+  }
+
   async findOne(id: string): Promise<TaskEntity> {
     const task = await this.taskRepo.findOne({ where: { id }, relations: TASK_RELATIONS });
     if (!task) throw new NotFoundException('Task not found');
@@ -364,6 +455,11 @@ export class TasksService {
 
   async update(id: string, dto: UpdateTaskDto, actor: UserEntity): Promise<TaskEntity> {
     const task = await this.findOne(id);
+
+    const isAdmin = actor.role.name === RoleName.ADMIN;
+    if (!isAdmin && task.createdById !== actor.id) {
+      throw new ForbiddenException('Only the Task creator or Admin may edit this Task');
+    }
 
     if (task.archivedAt) {
       throw new BadRequestException('Cannot edit an archived Task');
@@ -692,6 +788,10 @@ export class TasksService {
         reason: 'Hard delete',
       });
       return;
+    }
+
+    if (actor.role.name !== RoleName.ADMIN && task.createdById !== actor.id) {
+      throw new ForbiddenException('Only the Task creator or Admin may archive this Task');
     }
 
     task.statusBeforeArchive = task.status;

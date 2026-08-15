@@ -206,6 +206,9 @@ export const TasksApi = {
   // filterable by importance (priority), rating, and upcoming deadline.
   mine: (params: Record<string, string> = {}) =>
     api<Paginated<Task>>(`/tasks/mine?${new URLSearchParams(params)}`),
+  // "Assigned by me": Tasks the current user created for someone else.
+  assignedByMe: (params: Record<string, string> = {}) =>
+    api<Paginated<Task>>(`/tasks/assigned-by-me?${new URLSearchParams(params)}`),
   get: (id: string) => api<Task>(`/tasks/${id}`),
   create: (data: CreateTaskPayload) => api<Task>('/tasks', { method: 'POST', body: data }),
   update: (id: string, data: Partial<CreateTaskPayload>) =>

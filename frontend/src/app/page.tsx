@@ -38,6 +38,14 @@ const getFeatures = (t: (key: string) => string) => [
 
 type AuthMode = 'login' | 'register' | null;
 
+type BranchOrDept = {
+  id: string;
+  codeAr: string;
+  codeEn: string;
+  valueAr?: string;
+  valueEn?: string;
+};
+
 export default function Home() {
   const { user, loading, login, register } = useAuth();
   const router = useRouter();
@@ -55,12 +63,8 @@ export default function Home() {
   const [phoneError, setPhoneError] = useState('');
   const [branchId, setBranchId] = useState('');
   const [departmentId, setDepartmentId] = useState('');
-  const [branches, setBranches] = useState<
-    { id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]
-  >([]);
-  const [departments, setDepartments] = useState<
-    { id: string; codeAr: string; codeEn: string; valueAr?: string; valueEn?: string }[]
-  >([]);
+  const [branches, setBranches] = useState<BranchOrDept[]>([]);
+  const [departments, setDepartments] = useState<BranchOrDept[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
 
@@ -113,12 +117,16 @@ export default function Home() {
   }, []);
 
   const openAuth = (selectedMode: AuthMode) => {
-    if (!selectedMode) return;
     setMode(selectedMode);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
-      url.searchParams.set('auth', selectedMode);
-      url.hash = 'auth';
+      if (selectedMode) {
+        url.searchParams.set('auth', selectedMode);
+        url.hash = 'auth';
+      } else {
+        url.searchParams.delete('auth');
+        url.hash = '';
+      }
       window.history.replaceState({}, '', url.toString());
     }
   };
@@ -134,9 +142,11 @@ export default function Home() {
     setDepartmentId('');
   };
 
+  // Toggle behaviour: clicking the button for the panel that's already open
+  // closes it; clicking the other button switches to it.
   const handleModeChange = (selectedMode: AuthMode) => {
     resetForm();
-    openAuth(selectedMode);
+    openAuth(mode === selectedMode ? null : selectedMode);
   };
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {

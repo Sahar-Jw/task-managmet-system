@@ -18,7 +18,7 @@ synchronize: process.env.DB_SYNCHRONIZE === 'true',
     accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret',
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
     refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret',
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '60d',
   },
 
   security: {

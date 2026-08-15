@@ -21,9 +21,14 @@ const REFRESH_COOKIE_NAME = 'refreshToken';
 // Without maxAge this becomes a session cookie that the browser deletes as
 // soon as the tab/browser is closed — that was silently forcing everyone
 // back to the login page on every fresh visit, even though the refresh
-// token was still valid for 7 days server-side. Keep this in sync with
-// jwt.refreshExpiresIn (see auth.service#issueTokens).
-const REFRESH_COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+// token was still valid server-side. Keep this in sync with
+// jwt.refreshExpiresIn (see auth.service#issueTokens) — currently 60 days.
+// Refresh tokens rotate on every /auth/refresh call and get a fresh 60-day
+// expiry each time (see AuthService#issueTokens), so this is effectively a
+// sliding session: a user who opens the app at least once every 60 days
+// never has to log in again, and only a stretch of true inactivity (or an
+// explicit logout) will sign them out.
+const REFRESH_COOKIE_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
 // `secure: true` unconditionally also blocks the cookie from ever being set
 // over plain http (e.g. local dev on http://localhost), which produces the
 // exact same "logged out on refresh" symptom. Only require it outside dev.

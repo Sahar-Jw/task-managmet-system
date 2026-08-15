@@ -8,7 +8,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { IsPhoneNumber10 } from '../../../common/validators/is-phone-number.decorator';
+import { IsPhoneNumber12 } from '../../../common/validators/is-phone-number.decorator';
 
 // Kept for shape reference / potential future admin-invite flow, but not
 // wired to any endpoint — account creation is self-service only via
@@ -27,12 +27,12 @@ export class CreateUserDto {
   @IsUUID() departmentId!: string;
   @IsUUID() branchId!: string;
 
-  @IsOptional() @IsString() @IsPhoneNumber10() phone?: string;
+  @IsOptional() @IsString() @IsPhoneNumber12() phone?: string;
 }
 
 export class UpdateOwnProfileDto {
   @IsOptional() @IsString() @MaxLength(150) fullName?: string;
-  @IsOptional() @IsString() @IsPhoneNumber10() phone?: string;
+  @IsOptional() @IsString() @IsPhoneNumber12() phone?: string;
   @IsOptional() @IsString() avatarUrl?: string;
   @IsOptional() @IsString() locale?: string;
   @IsOptional() @IsString() timezone?: string;
@@ -69,5 +69,5 @@ export class RegisterUserDto {
   @IsUUID() branchId!: string;
   @IsUUID() departmentId!: string;
 
-  @IsOptional() @IsString() @IsPhoneNumber10() phone?: string;
+  @IsOptional() @IsString() @IsPhoneNumber12() phone?: string;
 }

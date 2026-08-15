@@ -346,7 +346,11 @@ export class UsersService {
     const user = await this.findById(id);
     const previousUrl = user.avatarUrl;
 
-    user.avatarUrl = undefined;
+    // Must be `null`, not `undefined` — TypeORM's save() treats an
+    // `undefined` property as "not specified" and leaves the existing
+    // column value untouched, so the old avatar_url would survive a
+    // "remove" and the picture would never actually disappear.
+    user.avatarUrl = null;
     const saved = await this.userRepo.save(user);
 
     if (previousUrl && previousUrl.startsWith('/avatars/')) {

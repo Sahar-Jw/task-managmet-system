@@ -35,8 +35,8 @@ function ProfileContent() {
   if (!user) return null;
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
-    // Digits only, capped at 10 as they type.
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    // Digits only, capped at 12 as they type.
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
     setPhone(digitsOnly);
     if (phoneError) setPhoneError('');
   }
@@ -150,14 +150,14 @@ function ProfileContent() {
             value={phone}
             type="tel"
             inputMode="numeric"
-            maxLength={10}
-            placeholder="0912345678"
+            maxLength={12}
+            placeholder="963 912 345 690"
             onChange={handlePhoneChange}
           />
           {phoneError ? (
             <p className="mt-1 text-xs text-red-600">{phoneError}</p>
           ) : (
-            <p className="mt-1 text-xs text-slate-400">10 digits, starting with 09.</p>
+            <p className="mt-1 text-xs text-slate-400">12 digits.</p>
           )}
         </div>
         <div>

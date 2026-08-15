@@ -22,6 +22,7 @@ import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { NotificationType } from '../../shared/enums/notification-type.enum';
 import { TaskStatus } from '../../shared/enums/task-status.enum';
 import { RoleName } from '../../shared/enums/role.enum';
+import { formatTaskDetails } from '../../shared/utils/task-notification.util';
 
 @Injectable()
 export class TaskAssignmentsService {
@@ -115,7 +116,7 @@ export class TaskAssignmentsService {
       recipientId: assignee.id,
       type: NotificationType.TASK_ASSIGNED,
       title: 'New Task assigned to you',
-      message: `You have been assigned to the Task "${task.titleEn}".`,
+      message: `${actor.fullName} assigned you to "${task.titleEn}".${formatTaskDetails(task)}`,
       metadata: { taskId: task.id, assignmentId: assignment.id },
     });
 
@@ -149,6 +150,18 @@ export class TaskAssignmentsService {
       action: AuditAction.UPDATE,
       newValue: { status: saved.status },
     });
+
+    // Mirrors reject()'s notification below — the Task creator previously
+    // only heard about a rejected Assignment, never an accepted one.
+    if (task) {
+      await this.notificationsService.dispatch({
+        recipientId: task.createdById,
+        type: NotificationType.ASSIGNMENT_ACCEPTED,
+        title: 'Assignment accepted',
+        message: `${actor.fullName} accepted the assignment for "${task.titleEn}".${formatTaskDetails(task)}`,
+        metadata: { taskId: task.id, assignmentId: saved.id },
+      });
+    }
 
     return saved;
   }
@@ -193,7 +206,7 @@ export class TaskAssignmentsService {
         recipientId: task.createdById,
         type: NotificationType.ASSIGNMENT_REJECTED,
         title: 'Assignment rejected',
-        message: `The Assignment for "${task.titleEn}" was rejected: ${dto.reason}`,
+        message: `${actor.fullName} rejected the assignment for "${task.titleEn}".${formatTaskDetails(task)} Reason: ${dto.reason}`,
         metadata: { taskId: task.id, assignmentId: saved.id },
       });
     }
@@ -254,7 +267,7 @@ export class TaskAssignmentsService {
       recipientId: newAssignee.id,
       type: NotificationType.TASK_REASSIGNED,
       title: 'Task reassigned to you',
-      message: `You have been assigned to the Task "${task.titleEn}".`,
+      message: `${actor.fullName} reassigned "${task.titleEn}" to you.${formatTaskDetails(task)}`,
       metadata: { taskId: task.id, assignmentId: newAssignment.id },
     });
 

@@ -140,10 +140,10 @@ export default function Home() {
   };
 
   function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
-    // Digits only, capped at 10 as they type — catches most mistakes before
+    // Digits only, capped at 12 as they type — catches most mistakes before
     // they ever hit "Create account", instead of only after a round trip
     // to the server.
-    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 10);
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 12);
     setPhone(digitsOnly);
     if (phoneError) setPhoneError('');
   }
@@ -263,8 +263,8 @@ export default function Home() {
                         id="phone"
                         type="tel"
                         inputMode="numeric"
-                        maxLength={10}
-                        placeholder="0912345678"
+                        maxLength={12}
+                        placeholder="091234567890"
                         className="input"
                         value={phone}
                         onChange={handlePhoneChange}
@@ -272,7 +272,7 @@ export default function Home() {
                       {phoneError ? (
                         <p className="mt-1 text-xs text-red-600">{phoneError}</p>
                       ) : (
-                        <p className="mt-1 text-xs text-slate-400">10 digits, starting with 09.</p>
+                        <p className="mt-1 text-xs text-slate-400">12 digits.</p>
                       )}
                     </div>
                   </>

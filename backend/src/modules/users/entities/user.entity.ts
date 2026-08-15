@@ -26,7 +26,7 @@ export class UserEntity extends VersionedEntity {
   phone?: string;
 
   @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true })
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 
   @Column({ name: 'role_id', type: 'uuid' })
   roleId!: string;

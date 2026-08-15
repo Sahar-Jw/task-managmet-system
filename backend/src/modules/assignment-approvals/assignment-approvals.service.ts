@@ -19,6 +19,7 @@ import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { ApprovalDecision } from '../../shared/enums/approval-decision.enum';
 import { RoleName } from '../../shared/enums/role.enum';
 import { NotificationType } from '../../shared/enums/notification-type.enum';
+import { formatTaskDetails } from '../../shared/utils/task-notification.util';
 
 @Injectable()
 export class AssignmentApprovalsService {
@@ -117,7 +118,7 @@ export class AssignmentApprovalsService {
       recipientId: assignment.assigneeId,
       type: NotificationType.APPROVAL_DECISION,
       title: `Task ${decision === ApprovalDecision.APPROVED ? 'approved' : 'rejected'}`,
-      message: `Your submission for "${task.titleEn}" was ${decision.toLowerCase()}.${reason ? ` Reason: ${reason}` : ''}`,
+      message: `${actor.fullName} ${decision.toLowerCase()} your submission for "${task.titleEn}".${formatTaskDetails(task)}${reason ? ` Reason: ${reason}` : ''}`,
       metadata: { taskId: task.id, assignmentId },
     });
 

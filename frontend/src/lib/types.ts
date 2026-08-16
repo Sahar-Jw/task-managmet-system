@@ -3,107 +3,190 @@ export interface Role {
   name: 'ADMIN' | 'USER';
 }
 
+
 export type SettingType =
   | 'department'
   | 'branch'
   | 'project_setting'
-  // Bilingual lookup lists edited from Settings > "Statuses & Types".
   | 'task_status'
   | 'task_type'
   | 'task_priority'
   | 'project_status';
-export type SettingValueType = 'string' | 'number';
 
-// Setting is the single polymorphic lookup table that replaced the old
-// standalone Branch and Department tables (and also carries generic
-// Project Settings, plus the Task/Project status & type lists). Every row
-// is exactly one `type`; only the value pair matching `valueType` is
-// populated (string pair OR number).
+
+export type SettingValueType =
+  | 'string'
+  | 'number';
+
+
 export interface Setting {
   id: string;
+
   type: SettingType;
+
   codeAr: string;
   codeEn: string;
+
   valueType: SettingValueType;
+
   valueAr?: string;
   valueEn?: string;
+
   valueNumber?: string;
-  address?: string; // branch-only
-  isAdminDepartment?: boolean; // department-only
+
+  address?: string;
+
+  isAdminDepartment?: boolean;
+
   isActive: boolean;
-  // List-type rows only (task_status/task_type/task_priority/project_status):
-  key?: string; // stable machine value stored on Task/Project rows
-  isSystem?: boolean; // built-in (relabelable, not deletable) vs admin-added custom
+
+  key?: string;
+
+  isSystem?: boolean;
 }
 
-// Thin aliases kept so Task.branch / Task.department (below) read naturally
-// — both are just Setting rows filtered by type.
-export type Branch = Setting;
-export type Department = Setting;
 
-// Singleton row (GET /branding always returns the one row, creating it
-// with defaults on first access). logoUrl/faviconUrl are relative paths
-// like "/branding-assets/xyz.png" — resolve with resolveBrandingAssetUrl
-// from lib/api.ts before rendering as an <img src>.
+export type Branch =
+  Setting;
+
+
+export type Department =
+  Setting;
+
+
+/*
+ * ============================================================
+ * BRANDING
+ * ============================================================
+ */
+
 export interface BrandingSettings {
   id: string;
+
   siteName: string;
-  logoUrl?: string;
-  faviconUrl?: string;
+
+  logoUrl?: string | null;
+
+  faviconUrl?: string | null;
+
   metaTitle?: string;
+
   metaDescription?: string;
+
   metaKeywords?: string;
 }
+
+
+/*
+ * ============================================================
+ * USER
+ * ============================================================
+ */
 
 export interface User {
   id: string;
 
   fullName: string;
+
   email: string;
 
   phone?: string;
-  avatarUrl?: string;
+
+  avatarUrl?: string | null;
 
   role: Role;
+
   roleId?: string;
 
-  departmentId?: string | null;
-  branchId?: string;
+  departmentId?:
+    string | null;
 
-  isActive: boolean;
+  branchId?:
+    string;
 
-  locale?: string;
-  timezone?: string;
+  isActive:
+    boolean;
 
-  createdAt: string;
-  updatedAt?: string;
+  locale?:
+    string;
 
-  archivedAt?: string | null;
+  timezone?:
+    string;
 
-  failedLoginAttempts?: number;
-  lockedUntil?: string | null;
+  createdAt:
+    string;
+
+  updatedAt?:
+    string;
+
+  archivedAt?:
+    string | null;
+
+  failedLoginAttempts?:
+    number;
+
+  lockedUntil?:
+    string | null;
 }
 
-// Project is a standalone lookup entity: no relation to Branch or any
-// other entity. Only Task references Project.
-export type ProjectStatus = 'Planned' | 'Active' | 'Completed' | 'Archived';
+
+/*
+ * ============================================================
+ * PROJECT
+ * ============================================================
+ */
+
+export type ProjectStatus =
+  | 'Planned'
+  | 'Active'
+  | 'Completed'
+  | 'Archived';
+
 
 export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  status: ProjectStatus;
-  startDate?: string;
-  endDate?: string;
-  createdById?: string;
-  // Owner's display name, resolved server-side (Project has no relation to
-  // User — see backend entity comment). Present on list/detail responses.
-  ownerName?: string;
-  ownerDepartmentName?: string;
-  ownerBranchName?: string;
-  createdAt: string;
-  archivedAt?: string;
+  id:
+    string;
+
+  name:
+    string;
+
+  description?:
+    string;
+
+  status:
+    ProjectStatus;
+
+  startDate?:
+    string;
+
+  endDate?:
+    string;
+
+  createdById?:
+    string;
+
+  ownerName?:
+    string;
+
+  ownerDepartmentName?:
+    string;
+
+  ownerBranchName?:
+    string;
+
+  createdAt:
+    string;
+
+  archivedAt?:
+    string;
 }
+
+
+/*
+ * ============================================================
+ * TASK
+ * ============================================================
+ */
 
 export type TaskStatus =
   | 'Pending'
@@ -115,7 +198,13 @@ export type TaskStatus =
   | 'Finished'
   | 'Archived';
 
-export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical';
+
+export type TaskPriority =
+  | 'Low'
+  | 'Medium'
+  | 'High'
+  | 'Critical';
+
 
 export type TaskType =
   | 'General'
@@ -127,77 +216,193 @@ export type TaskType =
   | 'Procurement'
   | 'Other';
 
-export type ApprovalStatus = 'NotRequired' | 'Pending' | 'Approved' | 'Rejected';
 
-/**
- * Task is the central/hub entity of the system: it is the ONLY entity that
- * relates to Branch, Department and Project — each independently, with no
- * relation between those three themselves.
- */
+export type ApprovalStatus =
+  | 'NotRequired'
+  | 'Pending'
+  | 'Approved'
+  | 'Rejected';
+
+
 export interface Task {
-  id: string;
+  id:
+    string;
 
-  // Bilingual title & description
-  titleAr: string;
-  titleEn: string;
-  descriptionAr?: string;
-  descriptionEn?: string;
 
-  // Classification
-  taskType: TaskType;
-  priority: TaskPriority;
-  status: TaskStatus;
-  color?: string;
+  /*
+   * Bilingual content
+   */
 
-  // Organizational placement (each independent of the others)
-  branchId?: string;
-  branch?: Branch;
-  departmentId?: string;
-  department?: Department;
-  projectId?: string;
-  project?: Project;
+  titleAr:
+    string;
 
-  // People
-  assignedToId?: string; // for whom this task is
-  assignedTo?: User;
-  createdById: string;
-  createdBy?: User;
+  titleEn:
+    string;
 
-  // Approval
-  needsApproval: boolean;
-  approverId?: string;
-  approver?: User;
-  approvalStatus: ApprovalStatus;
-  rejectionReason?: string;
+  descriptionAr?:
+    string;
 
-  // Money range
-  needsBudget: boolean;
-  budgetMin?: string;
-  budgetMax?: string;
-  budgetCurrency?: string;
+  descriptionEn?:
+    string;
 
-  // Dates
-  startDate?: string;
-  deadlineDate?: string;
-  actualEndDate?: string;
 
-  // Hierarchy
-  parentTaskId?: string;
-  parentTask?: Task;
-  subTasks?: Task[];
+  /*
+   * Classification
+   */
 
-  createdAt: string;
+  taskType:
+    TaskType;
 
-  // Set by the Task creator (or Admin) — whether the assigned User(s) may
-  // download attachments. They can always preview them regardless.
-  assigneeCanDownloadAttachments: boolean;
+  priority:
+    TaskPriority;
 
-  // Children
-  assignments?: TaskAssignment[];
-  comments?: TaskComment[];
-  ratings?: TaskRating[];
-  attachments?: TaskAttachment[];
+  status:
+    TaskStatus;
+
+  color?:
+    string;
+
+
+  /*
+   * Organization
+   */
+
+  branchId?:
+    string;
+
+  branch?:
+    Branch;
+
+  departmentId?:
+    string;
+
+  department?:
+    Department;
+
+  projectId?:
+    string;
+
+  project?:
+    Project;
+
+
+  /*
+   * People
+   */
+
+  assignedToId?:
+    string;
+
+  assignedTo?:
+    User;
+
+  createdById:
+    string;
+
+  createdBy?:
+    User;
+
+
+  /*
+   * Approval
+   */
+
+  needsApproval:
+    boolean;
+
+  approverId?:
+    string;
+
+  approver?:
+    User;
+
+  approvalStatus:
+    ApprovalStatus;
+
+  rejectionReason?:
+    string;
+
+
+  /*
+   * Budget
+   */
+
+  needsBudget:
+    boolean;
+
+  budgetMin?:
+    string;
+
+  budgetMax?:
+    string;
+
+  budgetCurrency?:
+    string;
+
+
+  /*
+   * Dates
+   */
+
+  startDate?:
+    string;
+
+  deadlineDate?:
+    string;
+
+  actualEndDate?:
+    string;
+
+
+  /*
+   * Hierarchy
+   */
+
+  parentTaskId?:
+    string;
+
+  parentTask?:
+    Task;
+
+  subTasks?:
+    Task[];
+
+
+  createdAt:
+    string;
+
+
+  /*
+   * Attachment permissions
+   */
+
+  assigneeCanDownloadAttachments:
+    boolean;
+
+
+  /*
+   * Children
+   */
+
+  assignments?:
+    TaskAssignment[];
+
+  comments?:
+    TaskComment[];
+
+  ratings?:
+    TaskRating[];
+
+  attachments?:
+    TaskAttachment[];
 }
+
+
+/*
+ * ============================================================
+ * ASSIGNMENT
+ * ============================================================
+ */
 
 export type AssignmentStatus =
   | 'PendingAcceptance'
@@ -206,64 +411,176 @@ export type AssignmentStatus =
   | 'Reassigned'
   | 'Completed';
 
+
 export interface TaskAssignment {
-  id: string;
-  taskId: string;
+  id:
+    string;
 
-  assigneeId: string;
-  assignedById: string;
+  taskId:
+    string;
 
-  dueDate?: string | null;
+  assigneeId:
+    string;
+
+  assignedById:
+    string;
+
+  dueDate?:
+    string | null;
 
   status:
-    | 'PendingAcceptance'
-    | 'Accepted'
-    | 'Rejected'
-    | 'Reassigned';
+    AssignmentStatus;
 
-  rejectionReason?: string | null;
+  rejectionReason?:
+    string | null;
 
-  acceptedAt?: string | null;
-  rejectedAt?: string | null;
+  acceptedAt?:
+    string | null;
 
-  createdAt: string;
-  updatedAt: string;
+  rejectedAt?:
+    string | null;
 
-  assignee?: User;
-  assignedBy?: User;
+  createdAt:
+    string;
+
+  updatedAt:
+    string;
+
+  assignee?:
+    User;
+
+  assignedBy?:
+    User;
 }
+
+
+/*
+ * ============================================================
+ * COMMENT
+ * ============================================================
+ */
 
 export interface TaskComment {
-  id: string;
-  taskId: string;
-  authorId: string;
-  author?: User;
-  content: string;
-  isEdited: boolean;
-  createdAt: string;
+  id:
+    string;
+
+  taskId:
+    string;
+
+  authorId:
+    string;
+
+  author?:
+    User;
+
+  content:
+    string;
+
+  isEdited:
+    boolean;
+
+  createdAt:
+    string;
 }
 
-// Task evaluation: left by the person who created/assigned the Task once
-// it's finished; the doer can see the evaluation left for them.
+
+/*
+ * ============================================================
+ * RATING
+ * ============================================================
+ */
+
 export interface TaskRating {
-  id: string;
-  taskId: string;
-  ratedById: string;
-  ratedBy?: User;
-  score: number;
-  feedback?: string;
+  id:
+    string;
+
+  taskId:
+    string;
+
+  ratedById:
+    string;
+
+  ratedBy?:
+    User;
+
+  score:
+    number;
+
+  feedback?:
+    string;
 }
 
-// File of any kind attached to a Task.
+
+/*
+ * ============================================================
+ * ATTACHMENT
+ * ============================================================
+ *
+ * IMAGE
+ *
+ * fileUrl points to:
+ *
+ * /storage/attachments/YYYY/MM/file.jpg
+ *
+ * Actual bytes live on disk.
+ *
+ *
+ * DATABASE
+ *
+ * fileUrl = null
+ *
+ * Actual bytes live inside MySQL LONGBLOB.
+ *
+ * fileData is deliberately NOT sent in Task API responses.
+ * ============================================================
+ */
+
+export type AttachmentStorageType =
+  | 'IMAGE'
+  | 'DATABASE';
+
+
 export interface TaskAttachment {
-  id: string;
-  taskId?: string;
-  fileName: string;
-  fileUrl?: string;
-  mimeType?: string;
-  fileSize?: number;
-  uploadedById?: string;
+  id:
+    string;
+
+  taskId?:
+    string | null;
+
+  assignmentId?:
+    string | null;
+
+  uploadedById:
+    string;
+
+  fileName:
+    string;
+
+  fileUrl?:
+    string | null;
+
+  mimeType:
+    string;
+
+  fileSize:
+    number;
+
+  storageType:
+    AttachmentStorageType;
+
+  createdAt:
+    string;
+
+  deletedAt?:
+    string | null;
 }
+
+
+/*
+ * ============================================================
+ * NOTIFICATIONS
+ * ============================================================
+ */
 
 export type NotificationType =
   | 'TaskAssigned'
@@ -286,28 +603,47 @@ export type NotificationType =
 
 
 export interface NotificationMetadata {
-  taskId?: string;
-  taskTitle?: string;
+  taskId?:
+    string;
 
-  projectId?: string;
-  projectName?: string;
+  taskTitle?:
+    string;
 
-  assignmentId?: string;
+  projectId?:
+    string;
 
-  commentId?: string;
+  projectName?:
+    string;
 
-  approvalId?: string;
+  assignmentId?:
+    string;
 
-  actorId?: string;
-  actorName?: string;
+  commentId?:
+    string;
 
-  status?: string;
-  previousStatus?: string;
+  approvalId?:
+    string;
 
-  dueDate?: string;
-  previousDueDate?: string;
+  actorId?:
+    string;
 
-  reason?: string;
+  actorName?:
+    string;
+
+  status?:
+    string;
+
+  previousStatus?:
+    string;
+
+  dueDate?:
+    string;
+
+  previousDueDate?:
+    string;
+
+  reason?:
+    string;
 
   [key: string]:
     unknown;
@@ -315,7 +651,8 @@ export interface NotificationMetadata {
 
 
 export interface Notification {
-  id: string;
+  id:
+    string;
 
   type:
     NotificationType;
@@ -339,42 +676,83 @@ export interface Notification {
     NotificationMetadata | null;
 }
 
+
+/*
+ * ============================================================
+ * AUDIT
+ * ============================================================
+ */
+
 export interface AuditLogEntry {
-  id: string;
+  id:
+    string;
 
-  actorId?: string | null;
+  actorId?:
+    string | null;
 
-  actor?: User | null;
+  actor?:
+    User | null;
 
-  entityType: string;
+  entityType:
+    string;
 
-  entityId: string;
+  entityId:
+    string;
 
-  action: string;
+  action:
+    string;
 
-  oldValue?: Record<
-    string,
-    unknown
-  > | null;
+  oldValue?:
+    Record<
+      string,
+      unknown
+    > | null;
 
-  newValue?: Record<
-    string,
-    unknown
-  > | null;
+  newValue?:
+    Record<
+      string,
+      unknown
+    > | null;
 
-  reason?: string | null;
+  reason?:
+    string | null;
 
-  ipAddress?: string | null;
+  ipAddress?:
+    string | null;
 
-  createdAt: string;
+  createdAt:
+    string;
 }
 
-export interface Paginated<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
+
+/*
+ * ============================================================
+ * PAGINATION
+ * ============================================================
+ */
+
+export interface Paginated<
+  T
+> {
+  items:
+    T[];
+
+  total:
+    number;
+
+  page:
+    number;
+
+  limit:
+    number;
 }
+
+
+/*
+ * ============================================================
+ * WORKFLOW
+ * ============================================================
+ */
 
 export type TaskWorkflowMode =
   | 'all_available'

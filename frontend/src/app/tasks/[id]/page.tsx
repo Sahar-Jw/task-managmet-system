@@ -45,6 +45,7 @@ import type {
   TaskWorkflowConfig,
   User,
 } from '@/lib/types';
+import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
 
 
 /*
@@ -2427,7 +2428,17 @@ function TaskDetailContent() {
             }
           />
 
-
+              <TaskAttachmentsPanel
+                  task={
+                    task
+                  }
+                  user={
+                    user
+                  }
+                  onChanged={
+                    refreshTask
+                  }
+                />
           {/*
            * ==================================================
            * ASSIGNMENT

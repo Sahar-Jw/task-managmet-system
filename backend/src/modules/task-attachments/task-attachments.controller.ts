@@ -12,105 +12,471 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { Response } from 'express';
-import { existsSync } from 'fs';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { UserEntity } from '../users/entities/user.entity';
-import { TaskAttachmentsService } from './task-attachments.service';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-// Max files accepted in a single multi-upload request.
-const MAX_FILES_PER_UPLOAD = 10;
+import {
+  FilesInterceptor,
+} from '@nestjs/platform-express';
 
-@ApiTags('attachments')
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiTags,
+} from '@nestjs/swagger';
+
+import {
+  Response,
+} from 'express';
+
+import {
+  existsSync,
+} from 'fs';
+
+import {
+  JwtAuthGuard,
+} from '../../common/guards/jwt-auth.guard';
+
+import {
+  UserEntity,
+} from '../users/entities/user.entity';
+
+import {
+  TaskAttachmentsService,
+} from './task-attachments.service';
+
+import {
+  CurrentUser,
+} from '../../common/decorators/current-user.decorator';
+
+import {
+  AttachmentStorageType,
+} from '../../shared/enums/attachment-storage-type.enum';
+
+import {
+  storagePathFromUrl,
+} from '../../common/storage/storage.util';
+
+
+const MAX_FILES_PER_UPLOAD =
+  10;
+
+
+@ApiTags(
+  'attachments',
+)
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(
+  JwtAuthGuard,
+)
 @Controller()
 export class TaskAttachmentsController {
-  constructor(private readonly attachmentsService: TaskAttachmentsService) {}
+  constructor(
+    private readonly attachmentsService:
+      TaskAttachmentsService,
+  ) {}
 
-  // POST /tasks/:taskId/attachments — BR-065, BR-066
-  // Accepts one or more files under the "files" field.
-  @Post('tasks/:taskId/attachments')
-  @ApiConsumes('multipart/form-data')
+
+  /*
+   * ==========================================================
+   * TASK ATTACHMENTS
+   * ==========================================================
+   */
+
+  @Post(
+    'tasks/:taskId/attachments',
+  )
+  @ApiConsumes(
+    'multipart/form-data',
+  )
   @ApiBody({
     schema: {
-      type: 'object',
+      type:
+        'object',
+
       properties: {
         files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
+          type:
+            'array',
+
+          items: {
+            type:
+              'string',
+
+            format:
+              'binary',
+          },
         },
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', MAX_FILES_PER_UPLOAD))
+  @UseInterceptors(
+    FilesInterceptor(
+      'files',
+      MAX_FILES_PER_UPLOAD,
+    ),
+  )
   uploadToTask(
-    @Param('taskId') taskId: string,
-    @UploadedFiles() files: Express.Multer.File[],
-    @CurrentUser() user: UserEntity,
+    @Param(
+      'taskId',
+    )
+    taskId:
+      string,
+
+    @UploadedFiles()
+    files:
+      Express.Multer.File[],
+
+    @CurrentUser()
+    user:
+      UserEntity,
   ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file is required');
+    if (
+      !files ||
+      files.length ===
+        0
+    ) {
+      throw new BadRequestException(
+        'At least one file is required',
+      );
     }
-    return this.attachmentsService.uploadManyToTask(taskId, files, user);
+
+
+    return this.attachmentsService
+      .uploadManyToTask(
+        taskId,
+        files,
+        user,
+      );
   }
 
-  // POST /assignments/:id/attachments — BR-065
-  // Accepts one or more files under the "files" field.
-  @Post('assignments/:id/attachments')
-  @ApiConsumes('multipart/form-data')
+
+  /*
+   * ==========================================================
+   * ASSIGNMENT ATTACHMENTS
+   * ==========================================================
+   */
+
+  @Post(
+    'assignments/:id/attachments',
+  )
+  @ApiConsumes(
+    'multipart/form-data',
+  )
   @ApiBody({
     schema: {
-      type: 'object',
+      type:
+        'object',
+
       properties: {
         files: {
-          type: 'array',
-          items: { type: 'string', format: 'binary' },
+          type:
+            'array',
+
+          items: {
+            type:
+              'string',
+
+            format:
+              'binary',
+          },
         },
       },
     },
   })
-  @UseInterceptors(FilesInterceptor('files', MAX_FILES_PER_UPLOAD))
+  @UseInterceptors(
+    FilesInterceptor(
+      'files',
+      MAX_FILES_PER_UPLOAD,
+    ),
+  )
   uploadToAssignment(
-    @Param('id') assignmentId: string,
-    @UploadedFiles() files: Express.Multer.File[],
-    @CurrentUser() user: UserEntity,
+    @Param(
+      'id',
+    )
+    assignmentId:
+      string,
+
+    @UploadedFiles()
+    files:
+      Express.Multer.File[],
+
+    @CurrentUser()
+    user:
+      UserEntity,
   ) {
-    if (!files || files.length === 0) {
-      throw new BadRequestException('At least one file is required');
+    if (
+      !files ||
+      files.length ===
+        0
+    ) {
+      throw new BadRequestException(
+        'At least one file is required',
+      );
     }
-    return this.attachmentsService.uploadManyToAssignment(assignmentId, files, user);
+
+
+    return this.attachmentsService
+      .uploadManyToAssignment(
+        assignmentId,
+        files,
+        user,
+      );
   }
 
-  // GET /attachments/:id — file bytes, used for both inline preview and
-  // download. `?intent=download` marks an actual download so BR-070's
-  // per-Task toggle is enforced; anything else (the default) is treated as
-  // preview, which the Task creator, Admin, and assigned User(s) can
-  // always do regardless of that toggle (BR-072).
-  @Get('attachments/:id')
+
+  /*
+   * ==========================================================
+   * PREVIEW / DOWNLOAD
+   * ==========================================================
+   *
+   * IMAGE:
+   *
+   * read physical image from backend/storage.
+   *
+   * DATABASE:
+   *
+   * return LONGBLOB bytes from MySQL.
+   * ==========================================================
+   */
+
+  @Get(
+    'attachments/:id',
+  )
   async download(
-    @Param('id') id: string,
-    @Query('intent') intent: string,
-    @CurrentUser() user: UserEntity,
-    @Res() res: Response,
-  ) {
-    const attachment = await this.attachmentsService.findOne(id);
-    const isDownload = intent === 'download';
-    await this.attachmentsService.assertCanAccess(attachment, user, isDownload);
+    @Param(
+      'id',
+    )
+    id:
+      string,
 
-    const path = `.${attachment.fileUrl}`;
-    if (attachment.deletedAt || !existsSync(path)) {
-      throw new NotFoundException('Attachment not found');
+    @Query(
+      'intent',
+    )
+    intent:
+      string,
+
+    @CurrentUser()
+    user:
+      UserEntity,
+
+    @Res()
+    res:
+      Response,
+  ) {
+    const attachment =
+      await this.attachmentsService
+        .findOne(
+          id,
+          true,
+        );
+
+
+    const isDownload =
+      intent ===
+      'download';
+
+
+    await this.attachmentsService
+      .assertCanAccess(
+        attachment,
+        user,
+        isDownload,
+      );
+
+
+    if (
+      attachment.deletedAt
+    ) {
+      throw new NotFoundException(
+        'Attachment not found',
+      );
     }
-    return res.download(path, attachment.fileName);
+
+
+    /*
+     * ========================================================
+     * IMAGE FROM DISK
+     * ========================================================
+     */
+
+    if (
+      attachment.storageType ===
+      AttachmentStorageType.IMAGE
+    ) {
+      if (
+        !attachment.fileUrl
+      ) {
+        throw new NotFoundException(
+          'Attachment image path is missing',
+        );
+      }
+
+
+      const physicalPath =
+        storagePathFromUrl(
+          attachment.fileUrl,
+        );
+
+
+      if (
+        !physicalPath ||
+        !existsSync(
+          physicalPath,
+        )
+      ) {
+        throw new NotFoundException(
+          'Attachment image not found',
+        );
+      }
+
+
+      res.type(
+        attachment.mimeType,
+      );
+
+
+      if (
+        isDownload
+      ) {
+        return res.download(
+          physicalPath,
+          attachment.fileName,
+        );
+      }
+
+
+      /*
+       * Browser preview.
+       */
+      res.setHeader(
+        'Content-Disposition',
+        this.contentDisposition(
+          'inline',
+          attachment.fileName,
+        ),
+      );
+
+
+      return res.sendFile(
+        physicalPath,
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * DOCUMENT FROM MYSQL
+     * ========================================================
+     */
+
+    if (
+      attachment.storageType ===
+      AttachmentStorageType.DATABASE
+    ) {
+      if (
+        !attachment.fileData
+      ) {
+        throw new NotFoundException(
+          'Attachment data not found',
+        );
+      }
+
+
+      res.setHeader(
+        'Content-Type',
+        attachment.mimeType ||
+          'application/octet-stream',
+      );
+
+
+      res.setHeader(
+        'Content-Length',
+        String(
+          attachment.fileData.length,
+        ),
+      );
+
+
+      res.setHeader(
+        'Content-Disposition',
+        this.contentDisposition(
+          isDownload
+            ? 'attachment'
+            : 'inline',
+
+          attachment.fileName,
+        ),
+      );
+
+
+      return res.send(
+        attachment.fileData,
+      );
+    }
+
+
+    throw new NotFoundException(
+      'Unknown attachment storage type',
+    );
   }
 
-  // DELETE /attachments/:id — BR-067, BR-068
-  @Delete('attachments/:id')
-  remove(@Param('id') id: string, @CurrentUser() user: UserEntity) {
-    return this.attachmentsService.remove(id, user);
+
+  /*
+   * ==========================================================
+   * DELETE
+   * ==========================================================
+   */
+
+  @Delete(
+    'attachments/:id',
+  )
+  remove(
+    @Param(
+      'id',
+    )
+    id:
+      string,
+
+    @CurrentUser()
+    user:
+      UserEntity,
+  ) {
+    return this.attachmentsService
+      .remove(
+        id,
+        user,
+      );
+  }
+
+
+  /*
+   * ==========================================================
+   * CONTENT DISPOSITION
+   * ==========================================================
+   */
+
+  private contentDisposition(
+    type:
+      'inline' |
+      'attachment',
+
+    fileName:
+      string,
+  ): string {
+    const safeAsciiName =
+      fileName
+        .replace(
+          /[\r\n"]/g,
+          '_',
+        );
+
+
+    const encodedName =
+      encodeURIComponent(
+        fileName,
+      );
+
+
+    return `${type}; filename="${safeAsciiName}"; filename*=UTF-8''${encodedName}`;
   }
 }

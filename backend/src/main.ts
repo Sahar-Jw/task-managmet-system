@@ -1,71 +1,290 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { ConfigService } from '@nestjs/config';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
-import { mkdirSync } from 'fs';
-import { join } from 'path';
-import { AppModule } from './app.module';
+import {
+  NestFactory,
+} from '@nestjs/core';
+
+import {
+  ValidationPipe,
+} from '@nestjs/common';
+
+import {
+  NestExpressApplication,
+} from '@nestjs/platform-express';
+
+import {
+  ConfigService,
+} from '@nestjs/config';
+
+import {
+  DocumentBuilder,
+  SwaggerModule,
+} from '@nestjs/swagger';
+
+import helmet
+  from 'helmet';
+
+import cookieParser
+  from 'cookie-parser';
+
+import {
+  mkdirSync,
+} from 'fs';
+
+import {
+  join,
+} from 'path';
+
+import {
+  AppModule,
+} from './app.module';
+
+import {
+  STORAGE_ROOT,
+} from './common/storage/storage.util';
+
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  const configService = app.get(ConfigService);
+  const app =
+    await NestFactory.create<
+      NestExpressApplication
+    >(
+      AppModule,
+    );
 
-  // multer won't create its destination folder on its own — make sure it
-  // exists before any avatar/logo/favicon upload comes in on a fresh deploy.
-  mkdirSync(join(process.cwd(), 'uploads', 'avatars'), { recursive: true });
-  mkdirSync(join(process.cwd(), 'uploads', 'branding'), { recursive: true });
 
-  // Avatars are served as plain static files (the field was already a
-  // publicly-settable URL before uploads existed, and other users need to
-  // see teammates' avatars in lists/assignments without extra auth plumbing).
-  app.useStaticAssets(join(process.cwd(), 'uploads', 'avatars'), { prefix: '/avatars' });
+  const configService =
+    app.get(
+      ConfigService,
+    );
 
-  // Logo/favicon are served the same way, and need to be reachable with no
-  // auth at all — the sign-in page and the browser tab icon load them
-  // before anyone has a token.
-  app.useStaticAssets(join(process.cwd(), 'uploads', 'branding'), { prefix: '/branding-assets' });
 
-  // NFR-SEC-12: security headers (CSP, X-Frame-Options, X-Content-Type-Options, HSTS)
-  app.use(helmet());
-  app.use(cookieParser());
+  /*
+   * ==========================================================
+   * STORAGE
+   * ==========================================================
+   *
+   * Create root category folders.
+   *
+   * YYYY/MM folders are created dynamically when a file arrives.
+   * ==========================================================
+   */
+
+  mkdirSync(
+    join(
+      STORAGE_ROOT,
+      'avatars',
+    ),
+    {
+      recursive:
+        true,
+    },
+  );
+
+
+  mkdirSync(
+    join(
+      STORAGE_ROOT,
+      'branding',
+    ),
+    {
+      recursive:
+        true,
+    },
+  );
+
+
+  mkdirSync(
+    join(
+      STORAGE_ROOT,
+      'attachments',
+    ),
+    {
+      recursive:
+        true,
+    },
+  );
+
+
+  /*
+   * ==========================================================
+   * PUBLIC IMAGE STORAGE
+   * ==========================================================
+   *
+   * Avatars and branding must be publicly reachable because:
+   *
+   * - avatars appear in UI lists
+   * - logo/favicon are needed before login
+   *
+   * DO NOT expose storage/attachments here.
+   *
+   * Task attachment images must still pass the authenticated
+   * /attachments/:id permission checks.
+   * ==========================================================
+   */
+
+  app.useStaticAssets(
+    join(
+      STORAGE_ROOT,
+      'avatars',
+    ),
+    {
+      prefix:
+        '/storage/avatars',
+    },
+  );
+
+
+  app.useStaticAssets(
+    join(
+      STORAGE_ROOT,
+      'branding',
+    ),
+    {
+      prefix:
+        '/storage/branding',
+    },
+  );
+
+
+  /*
+   * ==========================================================
+   * SECURITY
+   * ==========================================================
+   */
+
+  app.use(
+    helmet(),
+  );
+
+
+  app.use(
+    cookieParser(),
+  );
+
+
+  /*
+   * ==========================================================
+   * CORS
+   * ==========================================================
+   */
 
   app.enableCors({
-    origin: configService.get<string>('corsOrigin'),
-    credentials: true, // required for the HttpOnly refresh-token cookie
+    origin:
+      configService.get<string>(
+        'corsOrigin',
+      ),
+
+    credentials:
+      true,
   });
 
-  // NFR-SEC-05: all input validated/sanitized server-side via DTOs.
+
+  /*
+   * ==========================================================
+   * VALIDATION
+   * ==========================================================
+   */
+
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-      transformOptions: { enableImplicitConversion: true },
+      whitelist:
+        true,
+
+      forbidNonWhitelisted:
+        true,
+
+      transform:
+        true,
+
+      transformOptions: {
+        enableImplicitConversion:
+          true,
+      },
     }),
   );
 
-  const apiPrefix = configService.get<string>('apiPrefix') || 'api/v1';
-  app.setGlobalPrefix(apiPrefix);
 
-  // OpenAPI/Swagger docs (NFR-MAINT-06)
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('Enterprise Task & Project Management System API')
-    .setDescription('REST API implementing the SRS Section 7 contract')
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup(`${apiPrefix}/docs`, app, document);
+  /*
+   * ==========================================================
+   * API PREFIX
+   * ==========================================================
+   */
 
-  const port = configService.get<number>('port') || 3000;
-  await app.listen(port);
+  const apiPrefix =
+    configService.get<string>(
+      'apiPrefix',
+    ) ||
+    'api/v1';
+
+
+  app.setGlobalPrefix(
+    apiPrefix,
+  );
+
+
+  /*
+   * ==========================================================
+   * SWAGGER
+   * ==========================================================
+   */
+
+  const swaggerConfig =
+    new DocumentBuilder()
+      .setTitle(
+        'Enterprise Task & Project Management System API',
+      )
+      .setDescription(
+        'REST API implementing the SRS Section 7 contract',
+      )
+      .setVersion(
+        '1.0',
+      )
+      .addBearerAuth()
+      .build();
+
+
+  const document =
+    SwaggerModule.createDocument(
+      app,
+      swaggerConfig,
+    );
+
+
+  SwaggerModule.setup(
+    `${apiPrefix}/docs`,
+    app,
+    document,
+  );
+
+
+  /*
+   * ==========================================================
+   * START
+   * ==========================================================
+   */
+
+  const port =
+    configService.get<number>(
+      'port',
+    ) ||
+    3000;
+
+
+  await app.listen(
+    port,
+  );
+
+
   // eslint-disable-next-line no-console
-  console.log(`Application listening on port ${port} (prefix: /${apiPrefix})`);
+  console.log(
+    `Application listening on port ${port} (prefix: /${apiPrefix})`,
+  );
+
+
   // eslint-disable-next-line no-console
-  console.log(`Swagger docs: http://localhost:${port}/${apiPrefix}/docs`);
+  console.log(
+    `Swagger docs: http://localhost:${port}/${apiPrefix}/docs`,
+  );
 }
+
 
 bootstrap();

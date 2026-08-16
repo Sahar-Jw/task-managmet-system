@@ -1,7 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useLocale } from 'next-intl';
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  useLocale,
+} from 'next-intl';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Pagination from '@/components/Pagination';
@@ -9,7 +16,9 @@ import BrandingTab from '@/components/BrandingTab';
 import ListSettingsTab from '@/components/ListSettingsTab';
 import ColorThemeTab from '@/components/ColorThemeTab';
 
-import { ApiError } from '@/lib/api';
+import {
+  ApiError,
+} from '@/lib/api';
 
 import {
   SettingsApi,
@@ -22,428 +31,883 @@ import type {
   SettingValueType,
 } from '@/lib/types';
 
-const PAGE_SIZE = 10;
 
-type DataSettingType = 'department' | 'branch';
+/*
+ * ============================================================
+ * CONFIG
+ * ============================================================
+ */
 
-const TYPE_OPTIONS: {
-  value: DataSettingType;
-  labelEn: string;
-  labelAr: string;
-}[] = [
-  {
-    value: 'department',
-    labelEn: 'Department',
-    labelAr: 'القسم',
-  },
-  {
-    value: 'branch',
-    labelEn: 'Branch',
-    labelAr: 'الفرع',
-  },
-];
+const PAGE_SIZE =
+  10;
+
+
+type DataSettingType =
+  | 'department'
+  | 'branch';
+
+
+type PageTab =
+  | 'data'
+  | 'branding'
+  | 'color-theme'
+  | 'lists';
+
 
 type FormState = {
   code: string;
-  valueType: SettingValueType;
+
+  valueType:
+    SettingValueType;
+
   value: string;
+
   valueNumber: string;
+
   address: string;
 };
 
-const EMPTY_FORM: FormState = {
-  code: '',
-  valueType: 'string',
-  value: '',
-  valueNumber: '',
-  address: '',
-};
 
-type EditFormState = {
-  code: string;
-  valueType: SettingValueType;
-  value: string;
-  valueNumber: string;
-  address: string;
-};
+const EMPTY_FORM:
+  FormState = {
+    code: '',
 
-const EMPTY_EDIT_FORM: EditFormState = {
-  code: '',
-  valueType: 'string',
-  value: '',
-  valueNumber: '',
-  address: '',
-};
+    valueType:
+      'string',
 
-function SettingsContent() {
-  const locale = useLocale();
-  const isArabic = locale === 'ar';
+    value: '',
 
-  const [type, setType] =
-    useState<DataSettingType>('department');
+    valueNumber: '',
 
-  const [rows, setRows] =
-    useState<Setting[]>([]);
+    address: '',
+  };
 
-  const [loading, setLoading] =
-    useState(true);
 
-  const [error, setError] =
+/*
+ * ============================================================
+ * ICONS
+ * ============================================================
+ */
+
+function DataIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        d="M4 6.5h16v11H4z"
+        strokeWidth="1.7"
+      />
+
+      <path
+        d="M8 10h8M8 14h5"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+
+function BrandingIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        d="M5 5h14v14H5z"
+        strokeWidth="1.7"
+      />
+
+      <circle
+        cx="10"
+        cy="10"
+        r="2"
+        strokeWidth="1.7"
+      />
+
+      <path
+        d="m7 17 4-4 2.5 2.5L15 14l2 3"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+function ThemeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        d="M12 4a8 8 0 1 0 0 16h1.1a1.8 1.8 0 0 0 0-3.6H12a1.8 1.8 0 0 1 0-3.6h2.8A5.2 5.2 0 0 0 20 7.6C20 5.6 16.6 4 12 4Z"
+        strokeWidth="1.7"
+      />
+
+      <circle
+        cx="8"
+        cy="9"
+        r=".8"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="11"
+        cy="7"
+        r=".8"
+        fill="currentColor"
+      />
+
+      <circle
+        cx="15"
+        cy="8"
+        r=".8"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+
+function ListsIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <path
+        d="M9 6h11M9 12h11M9 18h11"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="m4 6 .7.7L6 5.4M4 12l.7.7L6 11.4M4 18l.7.7L6 17.4"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+/*
+ * ============================================================
+ * SETTINGS DATA TAB
+ * ============================================================
+ */
+
+function DataSettingsTab() {
+  const locale =
+    useLocale();
+
+
+  const isArabic =
+    locale ===
+    'ar';
+
+
+  /*
+   * ==========================================================
+   * DATA TYPE
+   * ==========================================================
+   */
+
+  const [
+    type,
+    setType,
+  ] =
+    useState<DataSettingType>(
+      'department',
+    );
+
+
+  /*
+   * ==========================================================
+   * ROWS
+   * ==========================================================
+   */
+
+  const [
+    rows,
+    setRows,
+  ] =
+    useState<Setting[]>(
+      [],
+    );
+
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      true,
+    );
+
+
+  const [
+    error,
+    setError,
+  ] =
     useState('');
 
-  const [form, setForm] =
-    useState<FormState>(EMPTY_FORM);
 
-  const [page, setPage] =
-    useState(1);
+  const [
+    page,
+    setPage,
+  ] =
+    useState(
+      1,
+    );
 
-  const [editingId, setEditingId] =
-    useState<string | null>(null);
 
-  const [editForm, setEditForm] =
-    useState<EditFormState>(EMPTY_EDIT_FORM);
+  /*
+   * ==========================================================
+   * CREATE
+   * ==========================================================
+   */
 
-  const [savingEdit, setSavingEdit] =
-    useState(false);
+  const [
+    form,
+    setForm,
+  ] =
+    useState<FormState>(
+      EMPTY_FORM,
+    );
 
-  async function load(forType: DataSettingType) {
-    setLoading(true);
+
+  const [
+    creating,
+    setCreating,
+  ] =
+    useState(
+      false,
+    );
+
+
+  /*
+   * ==========================================================
+   * EDIT
+   * ==========================================================
+   */
+
+  const [
+    editingRow,
+    setEditingRow,
+  ] =
+    useState<Setting | null>(
+      null,
+    );
+
+
+  const [
+    editForm,
+    setEditForm,
+  ] =
+    useState<FormState>(
+      EMPTY_FORM,
+    );
+
+
+  const [
+    editError,
+    setEditError,
+  ] =
+    useState('');
+
+
+  const [
+    savingEdit,
+    setSavingEdit,
+  ] =
+    useState(
+      false,
+    );
+
+
+  /*
+   * ==========================================================
+   * ACTIONS
+   * ==========================================================
+   */
+
+  const [
+    busyId,
+    setBusyId,
+  ] =
+    useState<string | null>(
+      null,
+    );
+
+
+  const [
+    pendingDeactivate,
+    setPendingDeactivate,
+  ] =
+    useState<Setting | null>(
+      null,
+    );
+
+
+  /*
+   * ==========================================================
+   * LOAD
+   * ==========================================================
+   */
+
+  async function load(
+    selectedType:
+      DataSettingType =
+      type,
+  ) {
+    setLoading(
+      true,
+    );
+
     setError('');
 
-    try {
-      const data = await SettingsApi.list(
-        forType as SettingType,
-      );
 
-      setRows(data);
-    } catch (err) {
+    try {
+      const data =
+        await SettingsApi.list(
+          selectedType as
+            SettingType,
+        );
+
+
+      setRows(
+        data,
+      );
+    } catch (
+      err
+    ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
           : isArabic
             ? 'تعذر تحميل الإعدادات.'
             : 'Could not load settings.',
       );
     } finally {
-      setLoading(false);
+      setLoading(
+        false,
+      );
     }
   }
 
+
   useEffect(() => {
-    load(type);
+    load(
+      type,
+    );
 
-    setForm(EMPTY_FORM);
-    setEditingId(null);
-    setEditForm(EMPTY_EDIT_FORM);
-    setPage(1);
-  }, [type]);
 
-  /*
-   * Only show records that have data in the
-   * currently selected website language.
-   *
-   * English mode:
-   * codeEn must exist.
-   *
-   * Arabic mode:
-   * codeAr must exist.
-   */
-  const visibleRows = useMemo(() => {
-    return rows.filter((row) => {
-      if (isArabic) {
-        return Boolean(row.codeAr?.trim());
-      }
-
-      return Boolean(row.codeEn?.trim());
+    setForm({
+      ...EMPTY_FORM,
     });
-  }, [rows, isArabic]);
 
-  const totalPages = Math.max(
-    Math.ceil(visibleRows.length / PAGE_SIZE),
-    1,
-  );
 
-  const pagedRows = visibleRows.slice(
-    (page - 1) * PAGE_SIZE,
-    page * PAGE_SIZE,
-  );
+    setEditingRow(
+      null,
+    );
 
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
+
+    setPage(
+      1,
+    );
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    type,
+  ]);
+
 
   /*
-   * -------------------------------------------------------
-   * CREATE
-   * -------------------------------------------------------
+   * ==========================================================
+   * LANGUAGE VISIBILITY
+   * ==========================================================
+   *
+   * English-only Department:
+   * visible only in English.
+   *
+   * Arabic-only Department:
+   * visible only in Arabic.
+   *
+   * Same logic for Branch.
+   * ==========================================================
    */
+
+  const visibleRows =
+    useMemo(
+      () =>
+        rows.filter(
+          (
+            row,
+          ) =>
+            Boolean(
+              isArabic
+                ? row.codeAr
+                    ?.trim()
+                : row.codeEn
+                    ?.trim(),
+            ),
+        ),
+      [
+        rows,
+        isArabic,
+      ],
+    );
+
+
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
+
+  const totalPages =
+    Math.max(
+      Math.ceil(
+        visibleRows.length /
+          PAGE_SIZE,
+      ),
+      1,
+    );
+
+
+  const pagedRows =
+    visibleRows.slice(
+      (
+        page -
+        1
+      ) *
+        PAGE_SIZE,
+
+      page *
+        PAGE_SIZE,
+    );
+
+
+  useEffect(() => {
+    if (
+      page >
+      totalPages
+    ) {
+      setPage(
+        totalPages,
+      );
+    }
+  }, [
+    page,
+    totalPages,
+  ]);
+
+
+  /*
+   * ==========================================================
+   * LABEL HELPERS
+   * ==========================================================
+   */
+
+  const selectedTypeName =
+    type ===
+    'department'
+      ? isArabic
+        ? 'قسم'
+        : 'Department'
+      : isArabic
+        ? 'فرع'
+        : 'Branch';
+
+
+  const pluralTypeName =
+    type ===
+    'department'
+      ? isArabic
+        ? 'الأقسام'
+        : 'Departments'
+      : isArabic
+        ? 'الفروع'
+        : 'Branches';
+
+
+  function displayCode(
+    row: Setting,
+  ) {
+    return isArabic
+      ? row.codeAr
+      : row.codeEn;
+  }
+
+
+  function displayValue(
+    row: Setting,
+  ) {
+    if (
+      row.valueType ===
+      'number'
+    ) {
+      return (
+        row.valueNumber ??
+        '—'
+      );
+    }
+
+
+    return isArabic
+      ? row.valueAr ||
+          '—'
+      : row.valueEn ||
+          '—';
+  }
+
+
+  /*
+   * ==========================================================
+   * VALIDATION
+   * ==========================================================
+   */
+
+  function validateForm(
+    target:
+      FormState,
+  ) {
+    if (
+      !target.code.trim()
+    ) {
+      return isArabic
+        ? 'يرجى إدخال الرمز.'
+        : 'Please enter the code.';
+    }
+
+
+    if (
+      target.valueType ===
+        'string' &&
+      !target.value.trim()
+    ) {
+      return isArabic
+        ? 'يرجى إدخال القيمة.'
+        : 'Please enter the value.';
+    }
+
+
+    if (
+      target.valueType ===
+        'number' &&
+      target.valueNumber.trim() ===
+        ''
+    ) {
+      return isArabic
+        ? 'يرجى إدخال القيمة الرقمية.'
+        : 'Please enter the integer value.';
+    }
+
+
+    if (
+      target.valueType ===
+        'number' &&
+      !Number.isInteger(
+        Number(
+          target.valueNumber,
+        ),
+      )
+    ) {
+      return isArabic
+        ? 'يجب أن تكون القيمة رقماً صحيحاً.'
+        : 'The value must be an integer.';
+    }
+
+
+    return '';
+  }
+
+
+  /*
+   * ==========================================================
+   * CREATE
+   * ==========================================================
+   */
+
   async function createRow(
-    event: React.FormEvent,
+    event:
+      React.FormEvent,
   ) {
     event.preventDefault();
 
+
     setError('');
 
-    const trimmedCode = form.code.trim();
 
-    if (!trimmedCode) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال الرمز.'
-          : 'Please enter the code.',
+    const validation =
+      validateForm(
+        form,
       );
 
-      return;
-    }
-
-    /*
-     * Validate String value.
-     */
-    if (
-      form.valueType === 'string' &&
-      !form.value.trim()
-    ) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال القيمة.'
-          : 'Please enter the value.',
-      );
-
-      return;
-    }
-
-    /*
-     * Validate Integer value.
-     */
-    if (
-      form.valueType === 'number' &&
-      form.valueNumber.trim() === ''
-    ) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال الرقم.'
-          : 'Please enter the integer value.',
-      );
-
-      return;
-    }
 
     if (
-      form.valueType === 'number' &&
-      !Number.isInteger(Number(form.valueNumber))
+      validation
     ) {
       setError(
-        isArabic
-          ? 'يجب أن تكون القيمة رقماً صحيحاً.'
-          : 'The value must be an integer.',
+        validation,
       );
 
       return;
     }
 
-    const payload: CreateSettingPayload = {
-      type,
 
-      valueType: form.valueType,
+    const payload:
+      CreateSettingPayload = {
+        type,
 
-      /*
-       * Save the code only in the current language.
-       */
-      ...(isArabic
-        ? {
-            codeAr: trimmedCode,
-          }
-        : {
-            codeEn: trimmedCode,
-          }),
+        valueType:
+          form.valueType,
 
-      /*
-       * String value:
-       * save only in the current language.
-       */
-      ...(form.valueType === 'string'
-        ? isArabic
+        /*
+         * Only current language.
+         */
+        ...(isArabic
           ? {
-              valueAr: form.value.trim(),
+              codeAr:
+                form.code.trim(),
             }
           : {
-              valueEn: form.value.trim(),
-            }
-        : {
-            /*
-             * Number is language-independent.
-             */
-            valueNumber: Number(form.valueNumber),
-          }),
+              codeEn:
+                form.code.trim(),
+            }),
 
-      /*
-       * Branch-only field.
-       */
-      ...(type === 'branch'
-        ? {
-            address:
-              form.address.trim() || undefined,
-          }
-        : {}),
-    };
+
+        /*
+         * String value only exists
+         * in current language.
+         */
+        ...(form.valueType ===
+        'string'
+          ? isArabic
+            ? {
+                valueAr:
+                  form.value.trim(),
+              }
+            : {
+                valueEn:
+                  form.value.trim(),
+              }
+          : {
+              /*
+               * Numeric values are shared.
+               */
+              valueNumber:
+                Number(
+                  form.valueNumber,
+                ),
+            }),
+
+
+        /*
+         * Branch only.
+         */
+        ...(type ===
+        'branch'
+          ? {
+              address:
+                form.address.trim() ||
+                undefined,
+            }
+          : {}),
+      };
+
+
+    setCreating(
+      true,
+    );
+
 
     try {
-      await SettingsApi.create(payload);
+      await SettingsApi.create(
+        payload,
+      );
 
-      setForm(EMPTY_FORM);
 
-      await load(type);
-    } catch (err) {
+      setForm({
+        ...EMPTY_FORM,
+      });
+
+
+      await load(
+        type,
+      );
+    } catch (
+      err
+    ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
           : isArabic
             ? 'تعذر إضافة السجل.'
-            : 'Could not create the row.',
+            : 'Could not create the entry.',
+      );
+    } finally {
+      setCreating(
+        false,
       );
     }
   }
 
-  /*
-   * -------------------------------------------------------
-   * START EDIT
-   * -------------------------------------------------------
-   */
-  function startEdit(row: Setting) {
-    setError('');
 
-    setEditingId(row.id);
+  /*
+   * ==========================================================
+   * EDIT
+   * ==========================================================
+   */
+
+  function startEdit(
+    row: Setting,
+  ) {
+    setEditError('');
+
+
+    setEditingRow(
+      row,
+    );
+
 
     setEditForm({
-      code: isArabic
-        ? row.codeAr ?? ''
-        : row.codeEn ?? '',
+      code:
+        isArabic
+          ? row.codeAr ||
+            ''
+          : row.codeEn ||
+            '',
 
       valueType:
-        row.valueType ?? 'string',
+        row.valueType ||
+        'string',
 
       value:
-        row.valueType === 'string'
+        row.valueType ===
+        'string'
           ? isArabic
-            ? row.valueAr ?? ''
-            : row.valueEn ?? ''
+            ? row.valueAr ||
+              ''
+            : row.valueEn ||
+              ''
           : '',
 
       valueNumber:
-        row.valueType === 'number' &&
-        row.valueNumber !== undefined &&
-        row.valueNumber !== null
-          ? String(row.valueNumber)
+        row.valueType ===
+          'number' &&
+        row.valueNumber !==
+          undefined
+          ? String(
+              row.valueNumber,
+            )
           : '',
 
       address:
-        row.address ?? '',
+        row.address ||
+        '',
     });
   }
 
-  /*
-   * -------------------------------------------------------
-   * CANCEL EDIT
-   * -------------------------------------------------------
-   */
-  function cancelEdit() {
-    setEditingId(null);
-    setEditForm(EMPTY_EDIT_FORM);
-    setError('');
+
+  function closeEdit() {
+    if (
+      savingEdit
+    ) {
+      return;
+    }
+
+
+    setEditingRow(
+      null,
+    );
+
+    setEditError('');
+
+    setEditForm({
+      ...EMPTY_FORM,
+    });
   }
 
-  /*
-   * -------------------------------------------------------
-   * SAVE EDIT
-   * -------------------------------------------------------
-   */
-  async function saveEdit(row: Setting) {
-    const trimmedCode =
-      editForm.code.trim();
 
-    if (!trimmedCode) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال الرمز.'
-          : 'Please enter the code.',
-      );
+  async function saveEdit(
+    event:
+      React.FormEvent,
+  ) {
+    event.preventDefault();
 
-      return;
-    }
 
     if (
-      editForm.valueType === 'string' &&
-      !editForm.value.trim()
+      !editingRow
     ) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال القيمة.'
-          : 'Please enter the value.',
-      );
-
       return;
     }
+
+
+    const validation =
+      validateForm(
+        editForm,
+      );
+
 
     if (
-      editForm.valueType === 'number' &&
-      editForm.valueNumber.trim() === ''
+      validation
     ) {
-      setError(
-        isArabic
-          ? 'يرجى إدخال الرقم.'
-          : 'Please enter the integer value.',
+      setEditError(
+        validation,
       );
 
       return;
     }
 
-    if (
-      editForm.valueType === 'number' &&
-      !Number.isInteger(
-        Number(editForm.valueNumber),
-      )
-    ) {
-      setError(
-        isArabic
-          ? 'يجب أن تكون القيمة رقماً صحيحاً.'
-          : 'The value must be an integer.',
-      );
 
-      return;
-    }
+    setSavingEdit(
+      true,
+    );
 
-    setSavingEdit(true);
-    setError('');
+    setEditError('');
+
 
     try {
       await SettingsApi.update(
-        row.id,
+        editingRow.id,
         {
           valueType:
             editForm.valueType,
 
+
           /*
-           * Edit only the currently active language.
+           * Only edit active language.
            */
           ...(isArabic
             ? {
                 codeAr:
-                  trimmedCode,
+                  editForm.code.trim(),
               }
             : {
                 codeEn:
-                  trimmedCode,
+                  editForm.code.trim(),
               }),
 
-          /*
-           * String:
-           * edit only current-language value.
-           *
-           * Integer:
-           * update shared numeric value.
-           */
+
           ...(editForm.valueType ===
           'string'
             ? isArabic
@@ -462,10 +926,9 @@ function SettingsContent() {
                   ),
               }),
 
-          /*
-           * Branch-only field.
-           */
-          ...(type === 'branch'
+
+          ...(type ===
+          'branch'
             ? {
                 address:
                   editForm.address.trim() ||
@@ -475,30 +938,49 @@ function SettingsContent() {
         },
       );
 
-      setEditingId(null);
-      setEditForm(EMPTY_EDIT_FORM);
 
-      await load(type);
-    } catch (err) {
-      setError(
-        err instanceof ApiError
+      setEditingRow(
+        null,
+      );
+
+
+      await load(
+        type,
+      );
+    } catch (
+      err
+    ) {
+      setEditError(
+        err instanceof
+          ApiError
           ? err.message
           : isArabic
             ? 'تعذر تحديث السجل.'
-            : 'Could not update the row.',
+            : 'Could not update the entry.',
       );
     } finally {
-      setSavingEdit(false);
+      setSavingEdit(
+        false,
+      );
     }
   }
 
+
   /*
-   * -------------------------------------------------------
+   * ==========================================================
    * ACTIVATE / DEACTIVATE
-   * -------------------------------------------------------
+   * ==========================================================
    */
-  async function toggleActive(row: Setting) {
+
+  async function toggleActive(
+    row: Setting,
+  ) {
+    setBusyId(
+      row.id,
+    );
+
     setError('');
+
 
     try {
       await SettingsApi.update(
@@ -509,724 +991,772 @@ function SettingsContent() {
         },
       );
 
-      await load(type);
-    } catch (err) {
+
+      setPendingDeactivate(
+        null,
+      );
+
+
+      await load(
+        type,
+      );
+    } catch (
+      err
+    ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
           : isArabic
-            ? 'تعذر تحديث السجل.'
-            : 'Could not update the row.',
+            ? 'تعذر تحديث حالة السجل.'
+            : 'Could not update the entry.',
+      );
+
+
+      setPendingDeactivate(
+        null,
+      );
+    } finally {
+      setBusyId(
+        null,
       );
     }
   }
 
+
   /*
-   * -------------------------------------------------------
-   * DELETE
-   * -------------------------------------------------------
+   * ==========================================================
+   * DELETE / ARCHIVE
+   * ==========================================================
+   *
+   * SettingsApi.remove() is a soft delete in the backend.
+   * ==========================================================
    */
-  async function remove(row: Setting) {
+
+  async function remove(
+    row: Setting,
+  ) {
+    setBusyId(
+      row.id,
+    );
+
     setError('');
 
-    try {
-      await SettingsApi.remove(row.id);
 
-      if (editingId === row.id) {
-        setEditingId(null);
-        setEditForm(EMPTY_EDIT_FORM);
+    try {
+      await SettingsApi.remove(
+        row.id,
+      );
+
+
+      if (
+        editingRow?.id ===
+        row.id
+      ) {
+        setEditingRow(
+          null,
+        );
       }
 
-      await load(type);
-    } catch (err) {
+
+      await load(
+        type,
+      );
+    } catch (
+      err
+    ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
           : isArabic
             ? 'تعذر حذف السجل.'
-            : 'Could not remove the row.',
+            : 'Could not remove the entry.',
+      );
+    } finally {
+      setBusyId(
+        null,
       );
     }
   }
 
-  const selectedTypeLabel =
-    type === 'department'
-      ? isArabic
-        ? 'قسم'
-        : 'Department'
-      : isArabic
-        ? 'فرع'
-        : 'Branch';
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
 
   return (
     <div
       className="space-y-6"
-      dir={isArabic ? 'rtl' : 'ltr'}
+      dir={
+        isArabic
+          ? 'rtl'
+          : 'ltr'
+      }
     >
       {/*
-       * =====================================================
-       * TYPE SELECTOR
-       * =====================================================
+       * ======================================================
+       * TYPE SWITCHER
+       * ======================================================
        */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <label className="label mb-0">
-            {isArabic
-              ? 'النوع'
-              : 'Type'}
-          </label>
 
-          <select
-            className="input w-56"
-            value={type}
-            onChange={(event) => {
-              setType(
-                event.target
-                  .value as DataSettingType,
-              );
-            }}
-          >
-            {TYPE_OPTIONS.map(
-              (option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                >
-                  {isArabic
-                    ? option.labelAr
-                    : option.labelEn}
-                </option>
-              ),
-            )}
-          </select>
+      <section className="rounded-2xl border border-slate-200 bg-white p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              {isArabic
+                ? 'بيانات المؤسسة'
+                : 'Organization data'}
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              {isArabic
+                ? 'إدارة الأقسام والفروع التي تظهر في أنحاء النظام.'
+                : 'Manage the departments and branches used throughout the system.'}
+            </p>
+          </div>
+
+
+          <div className="inline-flex rounded-xl bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() =>
+                setType(
+                  'department',
+                )
+              }
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                type ===
+                'department'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500'
+              }`}
+            >
+              {isArabic
+                ? 'الأقسام'
+                : 'Departments'}
+            </button>
+
+
+            <button
+              type="button"
+              onClick={() =>
+                setType(
+                  'branch',
+                )
+              }
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                type ===
+                'branch'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500'
+              }`}
+            >
+              {isArabic
+                ? 'الفروع'
+                : 'Branches'}
+            </button>
+          </div>
         </div>
-      </div>
+      </section>
+
 
       {/*
-       * =====================================================
-       * CREATE FORM
-       * =====================================================
+       * ======================================================
+       * CREATE + INFO
+       * ======================================================
        */}
-      <form
-        onSubmit={createRow}
-        className="card space-y-5 p-6"
-      >
-        <div>
-          <h2 className="text-base font-semibold">
-            {isArabic
-              ? `إضافة ${selectedTypeLabel}`
-              : `Add ${selectedTypeLabel}`}
-          </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
-            {isArabic
-              ? 'سيتم حفظ النص باللغة العربية فقط.'
-              : 'The text will be saved in English only.'}
-          </p>
-        </div>
-
-        {/*
-         * CODE
-         */}
-        <div>
-          <label className="label">
-            {isArabic
-              ? 'الرمز'
-              : 'Code'}
-          </label>
-
-          <input
-            className="input"
-            required
-            dir={isArabic ? 'rtl' : 'ltr'}
-            value={form.code}
-            onChange={(event) => {
-              setForm({
-                ...form,
-                code:
-                  event.target.value,
-              });
-            }}
-          />
-        </div>
-
-        {/*
-         * VALUE TYPE
-         */}
-        <div>
-          <label className="label">
-            {isArabic
-              ? 'نوع القيمة'
-              : 'Value Type'}
-          </label>
-
-          <select
-            className="input w-full sm:w-56"
-            value={form.valueType}
-            onChange={(event) => {
-              const nextType =
-                event.target
-                  .value as SettingValueType;
-
-              setForm({
-                ...form,
-                valueType: nextType,
-
-                /*
-                 * Clear the other value when switching type.
-                 */
-                value:
-                  nextType === 'string'
-                    ? form.value
-                    : '',
-
-                valueNumber:
-                  nextType === 'number'
-                    ? form.valueNumber
-                    : '',
-              });
-            }}
-          >
-            <option value="string">
+      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+        <form
+          onSubmit={
+            createRow
+          }
+          className="rounded-2xl border border-slate-200 bg-white"
+        >
+          <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+            <h2 className="text-base font-semibold text-slate-900">
               {isArabic
-                ? 'نص'
-                : 'String'}
-            </option>
+                ? `إضافة ${selectedTypeName}`
+                : `Add ${selectedTypeName}`}
+            </h2>
 
-            <option value="number">
+            <p className="mt-1 text-sm text-slate-500">
               {isArabic
-                ? 'عدد صحيح'
-                : 'Integer'}
-            </option>
-          </select>
-        </div>
-
-        {/*
-         * STRING VALUE
-         */}
-        {form.valueType === 'string' && (
-          <div>
-            <label className="label">
-              {isArabic
-                ? 'القيمة'
-                : 'Value'}
-            </label>
-
-            <input
-              className="input"
-              required
-              dir={isArabic ? 'rtl' : 'ltr'}
-              value={form.value}
-              onChange={(event) => {
-                setForm({
-                  ...form,
-                  value:
-                    event.target.value,
-                });
-              }}
-            />
+                ? 'سيتم حفظ النص باللغة العربية فقط لأن لغة الواجهة الحالية هي العربية.'
+                : 'This entry will be saved in English only because the interface is currently English.'}
+            </p>
           </div>
-        )}
 
-        {/*
-         * INTEGER VALUE
-         */}
-        {form.valueType === 'number' && (
-          <div>
-            <label className="label">
-              {isArabic
-                ? 'القيمة الرقمية'
-                : 'Integer Value'}
-            </label>
 
-            <input
-              type="number"
-              step="1"
-              className="input"
-              required
-              value={form.valueNumber}
-              onChange={(event) => {
-                setForm({
-                  ...form,
-                  valueNumber:
-                    event.target.value,
-                });
-              }}
-            />
-          </div>
-        )}
-
-        {/*
-         * BRANCH ADDRESS
-         */}
-        {type === 'branch' && (
-          <div>
-            <label className="label">
-              {isArabic
-                ? 'العنوان (اختياري)'
-                : 'Address (optional)'}
-            </label>
-
-            <input
-              className="input"
-              value={form.address}
-              onChange={(event) => {
-                setForm({
-                  ...form,
-                  address:
-                    event.target.value,
-                });
-              }}
-            />
-          </div>
-        )}
-
-        <div>
-          <button
-            type="submit"
-            className="btn-primary"
-          >
-            {isArabic
-              ? `إضافة ${selectedTypeLabel}`
-              : `Add ${selectedTypeLabel}`}
-          </button>
-        </div>
-      </form>
-
-      {/*
-       * ERROR MESSAGE
-       */}
-      {error && (
-        <p className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
-
-      {/*
-       * =====================================================
-       * TABLE
-       * =====================================================
-       */}
-      <div className="card overflow-x-auto">
-        {loading ? (
-          <p className="p-6 text-center text-slate-500">
-            {isArabic
-              ? 'جاري التحميل…'
-              : 'Loading…'}
-          </p>
-        ) : visibleRows.length === 0 ? (
-          <p className="p-6 text-center text-slate-500">
-            {isArabic
-              ? type === 'department'
-                ? 'لا توجد أقسام باللغة العربية.'
-                : 'لا توجد فروع باللغة العربية.'
-              : type === 'department'
-                ? 'No English departments yet.'
-                : 'No English branches yet.'}
-          </p>
-        ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-4 py-3 text-start">
+          <div className="space-y-5 p-5 sm:p-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="label">
                   {isArabic
                     ? 'الرمز'
                     : 'Code'}
-                </th>
+                </label>
 
-                <th className="px-4 py-3 text-start">
+                <input
+                  required
+                  className="input"
+                  dir={
+                    isArabic
+                      ? 'rtl'
+                      : 'ltr'
+                  }
+                  placeholder={
+                    type ===
+                    'department'
+                      ? isArabic
+                        ? 'مثال: الموارد البشرية'
+                        : 'e.g. HR'
+                      : isArabic
+                        ? 'مثال: الفرع الرئيسي'
+                        : 'e.g. MAIN'
+                  }
+                  value={
+                    form.code
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        code:
+                          event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
                   {isArabic
                     ? 'نوع القيمة'
-                    : 'Value Type'}
-                </th>
+                    : 'Value type'}
+                </label>
 
-                <th className="px-4 py-3 text-start">
+                <select
+                  className="input"
+                  value={
+                    form.valueType
+                  }
+                  onChange={(
+                    event,
+                  ) => {
+                    const next =
+                      event.target.value as
+                        SettingValueType;
+
+
+                    setForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        valueType:
+                          next,
+
+                        value:
+                          next ===
+                          'string'
+                            ? current.value
+                            : '',
+
+                        valueNumber:
+                          next ===
+                          'number'
+                            ? current.valueNumber
+                            : '',
+                      }),
+                    );
+                  }}
+                >
+                  <option value="string">
+                    {isArabic
+                      ? 'نص'
+                      : 'String'}
+                  </option>
+
+                  <option value="number">
+                    {isArabic
+                      ? 'عدد صحيح'
+                      : 'Integer'}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+
+            {form.valueType ===
+            'string' ? (
+              <div>
+                <label className="label">
                   {isArabic
                     ? 'القيمة'
                     : 'Value'}
-                </th>
+                </label>
 
-                {type === 'branch' && (
-                  <th className="px-4 py-3 text-start">
+                <input
+                  required
+                  className="input"
+                  dir={
+                    isArabic
+                      ? 'rtl'
+                      : 'ltr'
+                  }
+                  value={
+                    form.value
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        value:
+                          event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'القيمة الرقمية'
+                    : 'Integer value'}
+                </label>
+
+                <input
+                  required
+                  type="number"
+                  step="1"
+                  className="input"
+                  value={
+                    form.valueNumber
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        valueNumber:
+                          event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </div>
+            )}
+
+
+            {type ===
+              'branch' && (
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'العنوان'
+                    : 'Address'}{' '}
+
+                  <span className="font-normal text-slate-400">
                     {isArabic
-                      ? 'العنوان'
-                      : 'Address'}
-                  </th>
-                )}
+                      ? '(اختياري)'
+                      : '(optional)'}
+                  </span>
+                </label>
 
-                <th className="px-4 py-3 text-start">
-                  {isArabic
-                    ? 'الحالة'
-                    : 'Status'}
-                </th>
+                <input
+                  className="input"
+                  value={
+                    form.address
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
 
-                <th className="px-4 py-3 text-end">
-                  {isArabic
-                    ? 'الإجراءات'
-                    : 'Actions'}
-                </th>
-              </tr>
-            </thead>
+                        address:
+                          event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </div>
+            )}
 
-            <tbody className="divide-y divide-slate-100">
-              {pagedRows.map((row) => {
-                const isEditing =
-                  editingId === row.id;
 
-                /*
-                 * ============================================
-                 * EDIT MODE
-                 * ============================================
-                 */
-                if (isEditing) {
-                  return (
-                    <tr
-                      key={row.id}
-                      className="align-top"
-                    >
-                      {/*
-                       * CODE
-                       */}
-                      <td className="px-4 py-3">
-                        <input
-                          className="input min-w-[160px]"
-                          dir={
-                            isArabic
-                              ? 'rtl'
-                              : 'ltr'
-                          }
-                          value={editForm.code}
-                          onChange={(event) => {
-                            setEditForm({
-                              ...editForm,
-                              code:
-                                event.target.value,
-                            });
-                          }}
-                        />
-                      </td>
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                {
+                  error
+                }
+              </div>
+            )}
 
-                      {/*
-                       * VALUE TYPE
-                       */}
-                      <td className="px-4 py-3">
-                        <select
-                          className="input min-w-[140px]"
-                          value={
-                            editForm.valueType
-                          }
-                          onChange={(event) => {
-                            const nextType =
-                              event.target
-                                .value as SettingValueType;
 
-                            setEditForm({
-                              ...editForm,
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={
+                creating
+              }
+            >
+              {creating
+                ? isArabic
+                  ? 'جاري الإضافة…'
+                  : 'Adding…'
+                : isArabic
+                  ? `إضافة ${selectedTypeName}`
+                  : `Add ${selectedTypeName}`}
+            </button>
+          </div>
+        </form>
 
-                              valueType:
-                                nextType,
 
-                              value:
-                                nextType === 'string'
-                                  ? editForm.value
-                                  : '',
+        {/*
+         * ====================================================
+         * LANGUAGE INFO
+         * ====================================================
+         */}
 
-                              valueNumber:
-                                nextType === 'number'
-                                  ? editForm.valueNumber
-                                  : '',
-                            });
-                          }}
-                        >
-                          <option value="string">
-                            {isArabic
+        <aside className="rounded-2xl border border-brand-100 bg-brand-50/50 p-5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-5 w-5"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="8"
+                strokeWidth="1.7"
+              />
+
+              <path
+                d="M4.5 12h15M12 4c2 2.2 3 4.9 3 8s-1 5.8-3 8M12 4c-2 2.2-3 4.9-3 8s1 5.8 3 8"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </div>
+
+
+          <h3 className="mt-4 text-sm font-semibold text-slate-900">
+            {isArabic
+              ? 'منطق اللغة'
+              : 'Language behavior'}
+          </h3>
+
+
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            {isArabic
+              ? 'أنت ترى وتحرر حالياً البيانات التي تحتوي على نسخة عربية فقط. البيانات الإنجليزية فقط لن تظهر هنا.'
+              : 'You currently see and edit entries that contain English data. Arabic-only entries stay hidden in this language.'}
+          </p>
+
+
+          <p className="mt-3 text-xs leading-5 text-slate-500">
+            {isArabic
+              ? 'عند تبديل لغة الموقع إلى الإنجليزية، ستظهر بيانات الإنجليزية بدلاً منها.'
+              : 'Switch the website to Arabic to manage the Arabic records.'}
+          </p>
+        </aside>
+      </div>
+
+
+      {/*
+       * ======================================================
+       * DIRECTORY
+       * ======================================================
+       */}
+
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>
+            <h2 className="text-base font-semibold text-slate-900">
+              {
+                pluralTypeName
+              }
+            </h2>
+
+            <p className="mt-1 text-xs text-slate-400">
+              {visibleRows.length}{' '}
+
+              {isArabic
+                ? 'عنصر في اللغة الحالية'
+                : 'entries in the current language'}
+            </p>
+          </div>
+
+
+          <div className="flex items-center gap-2 text-xs text-slate-400">
+            <span className="h-2 w-2 rounded-full bg-green-500" />
+
+            {isArabic
+              ? 'نشط'
+              : 'Active'}
+
+            <span className="ml-2 h-2 w-2 rounded-full bg-slate-300" />
+
+            {isArabic
+              ? 'غير نشط'
+              : 'Inactive'}
+          </div>
+        </div>
+
+
+        {loading ? (
+          <div className="space-y-3 p-5 sm:p-6">
+            {[
+              1,
+              2,
+              3,
+            ].map(
+              (
+                item,
+              ) => (
+                <div
+                  key={
+                    item
+                  }
+                  className="h-20 animate-pulse rounded-xl bg-slate-100"
+                />
+              ),
+            )}
+          </div>
+        ) : visibleRows.length ===
+          0 ? (
+          <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+              <DataIcon />
+            </div>
+
+            <h3 className="mt-3 text-sm font-semibold text-slate-700">
+              {isArabic
+                ? 'لا توجد بيانات'
+                : `No ${pluralTypeName.toLowerCase()} yet`}
+            </h3>
+
+            <p className="mt-1 text-xs text-slate-400">
+              {isArabic
+                ? 'أضف أول عنصر باستخدام النموذج أعلاه.'
+                : 'Add the first entry using the form above.'}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {pagedRows.map(
+              (
+                row,
+              ) => (
+                <div
+                  key={
+                    row.id
+                  }
+                  className="flex flex-col gap-4 px-5 py-4 transition hover:bg-slate-50/60 sm:px-6 lg:flex-row lg:items-center"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="truncate text-sm font-semibold text-slate-800">
+                        {displayCode(
+                          row,
+                        )}
+                      </div>
+
+
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          row.isActive
+                            ? 'bg-green-50 text-green-700'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        {row.isActive
+                          ? isArabic
+                            ? 'نشط'
+                            : 'Active'
+                          : isArabic
+                            ? 'غير نشط'
+                            : 'Inactive'}
+                      </span>
+                    </div>
+
+
+                    <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                      <div>
+                        <span className="text-slate-400">
+                          {isArabic
+                            ? 'القيمة:'
+                            : 'Value:'}
+                        </span>{' '}
+
+                        <span className="font-medium text-slate-600">
+                          {displayValue(
+                            row,
+                          )}
+                        </span>
+                      </div>
+
+
+                      <div>
+                        <span className="text-slate-400">
+                          {isArabic
+                            ? 'النوع:'
+                            : 'Type:'}
+                        </span>{' '}
+
+                        <span className="font-medium text-slate-600">
+                          {row.valueType ===
+                          'number'
+                            ? isArabic
+                              ? 'عدد صحيح'
+                              : 'Integer'
+                            : isArabic
                               ? 'نص'
                               : 'String'}
-                          </option>
+                        </span>
+                      </div>
 
-                          <option value="number">
+
+                      {type ===
+                        'branch' && (
+                        <div>
+                          <span className="text-slate-400">
                             {isArabic
-                              ? 'عدد صحيح'
-                              : 'Integer'}
-                          </option>
-                        </select>
-                      </td>
+                              ? 'العنوان:'
+                              : 'Address:'}
+                          </span>{' '}
 
-                      {/*
-                       * VALUE
-                       */}
-                      <td className="px-4 py-3">
-                        {editForm.valueType ===
-                        'string' ? (
-                          <input
-                            className="input min-w-[180px]"
-                            dir={
-                              isArabic
-                                ? 'rtl'
-                                : 'ltr'
-                            }
-                            value={
-                              editForm.value
-                            }
-                            onChange={(event) => {
-                              setEditForm({
-                                ...editForm,
-                                value:
-                                  event.target
-                                    .value,
-                              });
-                            }}
-                          />
-                        ) : (
-                          <input
-                            type="number"
-                            step="1"
-                            className="input min-w-[150px]"
-                            value={
-                              editForm.valueNumber
-                            }
-                            onChange={(event) => {
-                              setEditForm({
-                                ...editForm,
-                                valueNumber:
-                                  event.target
-                                    .value,
-                              });
-                            }}
-                          />
-                        )}
-                      </td>
-
-                      {/*
-                       * BRANCH ADDRESS
-                       */}
-                      {type === 'branch' && (
-                        <td className="px-4 py-3">
-                          <input
-                            className="input min-w-[180px]"
-                            value={
-                              editForm.address
-                            }
-                            onChange={(event) => {
-                              setEditForm({
-                                ...editForm,
-                                address:
-                                  event.target
-                                    .value,
-                              });
-                            }}
-                          />
-                        </td>
-                      )}
-
-                      {/*
-                       * STATUS
-                       */}
-                      <td className="px-4 py-3">
-                        {row.isActive ? (
-                          <span className="badge bg-green-100 text-green-700">
-                            {isArabic
-                              ? 'نشط'
-                              : 'Active'}
+                          <span className="font-medium text-slate-600">
+                            {row.address ||
+                              '—'}
                           </span>
-                        ) : (
-                          <span className="badge bg-slate-100 text-slate-500">
-                            {isArabic
-                              ? 'غير نشط'
-                              : 'Inactive'}
-                          </span>
-                        )}
-                      </td>
-
-                      {/*
-                       * EDIT ACTIONS
-                       */}
-                      <td className="px-4 py-3">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            className="btn-primary"
-                            disabled={savingEdit}
-                            onClick={() => {
-                              saveEdit(row);
-                            }}
-                          >
-                            {savingEdit
-                              ? isArabic
-                                ? 'جاري الحفظ…'
-                                : 'Saving…'
-                              : isArabic
-                                ? 'حفظ'
-                                : 'Save'}
-                          </button>
-
-                          <button
-                            type="button"
-                            className="btn-secondary"
-                            disabled={savingEdit}
-                            onClick={cancelEdit}
-                          >
-                            {isArabic
-                              ? 'إلغاء'
-                              : 'Cancel'}
-                          </button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                }
+                      )}
+                    </div>
+                  </div>
 
-                /*
-                 * ============================================
-                 * NORMAL ROW
-                 * ============================================
-                 */
-                return (
-                  <tr key={row.id}>
-                    {/*
-                     * CODE
-                     */}
-                    <td
-                      className="px-4 py-3"
-                      dir={
-                        isArabic
-                          ? 'rtl'
-                          : 'ltr'
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="btn-secondary px-3 py-1.5 text-xs"
+                      onClick={() =>
+                        startEdit(
+                          row,
+                        )
                       }
                     >
                       {isArabic
-                        ? row.codeAr
-                        : row.codeEn}
-                    </td>
+                        ? 'تعديل'
+                        : 'Edit'}
+                    </button>
 
-                    {/*
-                     * VALUE TYPE
-                     */}
-                    <td className="px-4 py-3">
-                      {row.valueType ===
-                      'number'
+
+                    <button
+                      type="button"
+                      className="btn-secondary px-3 py-1.5 text-xs"
+                      disabled={
+                        busyId ===
+                        row.id
+                      }
+                      onClick={() => {
+                        if (
+                          row.isActive
+                        ) {
+                          setPendingDeactivate(
+                            row,
+                          );
+                        } else {
+                          toggleActive(
+                            row,
+                          );
+                        }
+                      }}
+                    >
+                      {busyId ===
+                      row.id
                         ? isArabic
-                          ? 'عدد صحيح'
-                          : 'Integer'
-                        : isArabic
-                          ? 'نص'
-                          : 'String'}
-                    </td>
-
-                    {/*
-                     * VALUE
-                     */}
-                    <td
-                      className="px-4 py-3"
-                      dir={
-                        row.valueType === 'string'
+                          ? 'جاري التحديث…'
+                          : 'Updating…'
+                        : row.isActive
                           ? isArabic
-                            ? 'rtl'
-                            : 'ltr'
-                          : 'ltr'
+                            ? 'تعطيل'
+                            : 'Deactivate'
+                          : isArabic
+                            ? 'تفعيل'
+                            : 'Activate'}
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="btn-danger px-3 py-1.5 text-xs"
+                      disabled={
+                        busyId ===
+                        row.id
+                      }
+                      onClick={() =>
+                        remove(
+                          row,
+                        )
                       }
                     >
-                      {row.valueType ===
-                      'number'
-                        ? row.valueNumber
-                        : isArabic
-                          ? row.valueAr
-                          : row.valueEn}
-                    </td>
-
-                    {/*
-                     * BRANCH ADDRESS
-                     */}
-                    {type === 'branch' && (
-                      <td className="px-4 py-3">
-                        {row.address || '—'}
-                      </td>
-                    )}
-
-                    {/*
-                     * STATUS
-                     */}
-                    <td className="px-4 py-3">
-                      {row.isActive ? (
-                        <span className="badge bg-green-100 text-green-700">
-                          {isArabic
-                            ? 'نشط'
-                            : 'Active'}
-                        </span>
-                      ) : (
-                        <span className="badge bg-slate-100 text-slate-500">
-                          {isArabic
-                            ? 'غير نشط'
-                            : 'Inactive'}
-                        </span>
-                      )}
-                    </td>
-
-                    {/*
-                     * ACTIONS
-                     */}
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => {
-                            startEdit(row);
-                          }}
-                        >
-                          {isArabic
-                            ? 'تعديل'
-                            : 'Edit'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn-secondary"
-                          onClick={() => {
-                            toggleActive(row);
-                          }}
-                        >
-                          {row.isActive
-                            ? isArabic
-                              ? 'تعطيل'
-                              : 'Deactivate'
-                            : isArabic
-                              ? 'تفعيل'
-                              : 'Activate'}
-                        </button>
-
-                        <button
-                          type="button"
-                          className="btn-secondary text-red-600"
-                          onClick={() => {
-                            remove(row);
-                          }}
-                        >
-                          {isArabic
-                            ? 'حذف'
-                            : 'Delete'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      {isArabic
+                        ? 'حذف'
+                        : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
         )}
-      </div>
+      </section>
 
-      {/*
-       * PAGINATION
-       */}
+
       {!loading && (
         <Pagination
-          page={page}
-          totalPages={totalPages}
-          total={visibleRows.length}
-          onPageChange={setPage}
+          page={
+            page
+          }
+          totalPages={
+            totalPages
+          }
+          total={
+            visibleRows.length
+          }
+          onPageChange={
+            setPage
+          }
           itemLabel={
-            type === 'department'
+            type ===
+            'department'
               ? isArabic
                 ? 'أقسام'
                 : 'departments'
@@ -1236,127 +1766,696 @@ function SettingsContent() {
           }
         />
       )}
+
+
+      {/*
+       * ======================================================
+       * EDIT MODAL
+       * ======================================================
+       */}
+
+      {editingRow && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          onMouseDown={(
+            event,
+          ) => {
+            if (
+              event.target ===
+              event.currentTarget
+            ) {
+              closeEdit();
+            }
+          }}
+        >
+          <form
+            onSubmit={
+              saveEdit
+            }
+            className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+          >
+            <div className="border-b border-slate-100 px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+                    {isArabic
+                      ? 'تعديل البيانات'
+                      : 'Edit data'}
+                  </div>
+
+                  <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                    {isArabic
+                      ? `تعديل ${selectedTypeName}`
+                      : `Edit ${selectedTypeName}`}
+                  </h2>
+                </div>
+
+
+                <button
+                  type="button"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+                  onClick={
+                    closeEdit
+                  }
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+
+            <div className="space-y-5 p-6">
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'الرمز'
+                    : 'Code'}
+                </label>
+
+                <input
+                  required
+                  className="input"
+                  dir={
+                    isArabic
+                      ? 'rtl'
+                      : 'ltr'
+                  }
+                  value={
+                    editForm.code
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setEditForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        code:
+                          event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'نوع القيمة'
+                    : 'Value type'}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    editForm.valueType
+                  }
+                  onChange={(
+                    event,
+                  ) => {
+                    const next =
+                      event.target.value as
+                        SettingValueType;
+
+
+                    setEditForm(
+                      (
+                        current,
+                      ) => ({
+                        ...current,
+
+                        valueType:
+                          next,
+
+                        value:
+                          next ===
+                          'string'
+                            ? current.value
+                            : '',
+
+                        valueNumber:
+                          next ===
+                          'number'
+                            ? current.valueNumber
+                            : '',
+                      }),
+                    );
+                  }}
+                >
+                  <option value="string">
+                    {isArabic
+                      ? 'نص'
+                      : 'String'}
+                  </option>
+
+                  <option value="number">
+                    {isArabic
+                      ? 'عدد صحيح'
+                      : 'Integer'}
+                  </option>
+                </select>
+              </div>
+
+
+              {editForm.valueType ===
+              'string' ? (
+                <div>
+                  <label className="label">
+                    {isArabic
+                      ? 'القيمة'
+                      : 'Value'}
+                  </label>
+
+                  <input
+                    required
+                    className="input"
+                    dir={
+                      isArabic
+                        ? 'rtl'
+                        : 'ltr'
+                    }
+                    value={
+                      editForm.value
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setEditForm(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+
+                          value:
+                            event.target.value,
+                        }),
+                      )
+                    }
+                  />
+                </div>
+              ) : (
+                <div>
+                  <label className="label">
+                    {isArabic
+                      ? 'القيمة الرقمية'
+                      : 'Integer value'}
+                  </label>
+
+                  <input
+                    required
+                    type="number"
+                    step="1"
+                    className="input"
+                    value={
+                      editForm.valueNumber
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setEditForm(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+
+                          valueNumber:
+                            event.target.value,
+                        }),
+                      )
+                    }
+                  />
+                </div>
+              )}
+
+
+              {type ===
+                'branch' && (
+                <div>
+                  <label className="label">
+                    {isArabic
+                      ? 'العنوان'
+                      : 'Address'}
+                  </label>
+
+                  <input
+                    className="input"
+                    value={
+                      editForm.address
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setEditForm(
+                        (
+                          current,
+                        ) => ({
+                          ...current,
+
+                          address:
+                            event.target.value,
+                        }),
+                      )
+                    }
+                  />
+                </div>
+              )}
+
+
+              <div className="rounded-xl bg-brand-50 p-3 text-xs leading-5 text-brand-800">
+                {isArabic
+                  ? 'سيتم تعديل النسخة العربية فقط. لن تتغير النسخة الإنجليزية.'
+                  : 'Only the English version will be updated. The Arabic version will remain untouched.'}
+              </div>
+
+
+              {editError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                  {
+                    editError
+                  }
+                </div>
+              )}
+            </div>
+
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={
+                  savingEdit
+                }
+                onClick={
+                  closeEdit
+                }
+              >
+                {isArabic
+                  ? 'إلغاء'
+                  : 'Cancel'}
+              </button>
+
+
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  savingEdit
+                }
+              >
+                {savingEdit
+                  ? isArabic
+                    ? 'جاري الحفظ…'
+                    : 'Saving…'
+                  : isArabic
+                    ? 'حفظ التغييرات'
+                    : 'Save changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+
+      {/*
+       * ======================================================
+       * DEACTIVATE CONFIRM
+       * ======================================================
+       */}
+
+      {pendingDeactivate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          onMouseDown={(
+            event,
+          ) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              busyId !==
+                pendingDeactivate.id
+            ) {
+              setPendingDeactivate(
+                null,
+              );
+            }
+          }}
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="p-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                !
+              </div>
+
+
+              <h2 className="mt-4 text-lg font-semibold text-slate-900">
+                {isArabic
+                  ? `تعطيل ${selectedTypeName}؟`
+                  : `Deactivate ${selectedTypeName}?`}
+              </h2>
+
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {isArabic
+                  ? 'لن يظهر هذا العنصر في القوائم النشطة، لكن السجل لن يتم حذفه من قاعدة البيانات.'
+                  : 'This entry will stop appearing in active dropdowns, but its database record will remain.'}
+              </p>
+            </div>
+
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() =>
+                  setPendingDeactivate(
+                    null,
+                  )
+                }
+              >
+                {isArabic
+                  ? 'إلغاء'
+                  : 'Cancel'}
+              </button>
+
+
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={
+                  busyId ===
+                  pendingDeactivate.id
+                }
+                onClick={() =>
+                  toggleActive(
+                    pendingDeactivate,
+                  )
+                }
+              >
+                {isArabic
+                  ? 'تعطيل'
+                  : 'Deactivate'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 /*
- * =========================================================
- * SETTINGS TABS
- * =========================================================
+ * ============================================================
+ * PAGE TABS
+ * ============================================================
  */
-const PAGE_TABS = [
+
+const PAGE_TABS: {
+  value: PageTab;
+
+  labelEn: string;
+
+  labelAr: string;
+
+  descriptionEn: string;
+
+  descriptionAr: string;
+
+  icon:
+    React.ReactNode;
+}[] = [
   {
-    value: 'data',
-    label: 'Data',
+    value:
+      'data',
+
+    labelEn:
+      'Data',
+
+    labelAr:
+      'البيانات',
+
+    descriptionEn:
+      'Departments and branches',
+
+    descriptionAr:
+      'الأقسام والفروع',
+
+    icon:
+      <DataIcon />,
   },
 
   {
-    value: 'branding',
-    label: 'Branding',
+    value:
+      'branding',
+
+    labelEn:
+      'Branding',
+
+    labelAr:
+      'الهوية',
+
+    descriptionEn:
+      'Logo, favicon and metadata',
+
+    descriptionAr:
+      'الشعار والأيقونة والبيانات',
+
+    icon:
+      <BrandingIcon />,
   },
 
   {
-    value: 'color-theme',
-    label: 'Color Theme',
+    value:
+      'color-theme',
+
+    labelEn:
+      'Color Theme',
+
+    labelAr:
+      'ألوان الموقع',
+
+    descriptionEn:
+      'Website color appearance',
+
+    descriptionAr:
+      'مظهر وألوان الموقع',
+
+    icon:
+      <ThemeIcon />,
   },
 
   {
-    value: 'lists',
-    label: 'Statuses & Types',
-  },
-] as const;
+    value:
+      'lists',
 
-type PageTab =
-  (typeof PAGE_TABS)[number]['value'];
+    labelEn:
+      'Statuses & Types',
+
+    labelAr:
+      'الحالات والأنواع',
+
+    descriptionEn:
+      'Task and project lists',
+
+    descriptionAr:
+      'قوائم المهام والمشاريع',
+
+    icon:
+      <ListsIcon />,
+  },
+];
+
+
+/*
+ * ============================================================
+ * SETTINGS PAGE
+ * ============================================================
+ */
 
 function SettingsPageContent() {
-  const locale = useLocale();
-  const isArabic = locale === 'ar';
+  const locale =
+    useLocale();
 
-  const [tab, setTab] =
-    useState<PageTab>('data');
+
+  const isArabic =
+    locale ===
+    'ar';
+
+
+  const [
+    tab,
+    setTab,
+  ] =
+    useState<PageTab>(
+      'data',
+    );
+
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-slate-800">
-        {isArabic
-          ? 'الإعدادات'
-          : 'Settings'}
-      </h1>
+    <div
+      className="mx-auto max-w-[1500px] pb-12"
+      dir={
+        isArabic
+          ? 'rtl'
+          : 'ltr'
+      }
+    >
+      {/*
+       * ======================================================
+       * HEADER
+       * ======================================================
+       */}
 
-      <div className="flex gap-1 overflow-x-auto border-b border-slate-200">
-        {PAGE_TABS.map((item) => {
-          /*
-           * Explicit string type avoids TypeScript trying
-           * to restrict this variable to only the English
-           * literal labels from PAGE_TABS.
-           */
-          let label: string = item.label;
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
 
-          if (isArabic) {
-            if (item.value === 'data') {
-              label = 'البيانات';
-            }
 
-            if (item.value === 'branding') {
-              label = 'الهوية';
-            }
+        <div className="relative">
+          <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+            {isArabic
+              ? 'إدارة النظام'
+              : 'System management'}
+          </div>
 
-            if (
-              item.value ===
-              'color-theme'
-            ) {
-              label = 'ألوان الموقع';
-            }
 
-            if (item.value === 'lists') {
-              label =
-                'الحالات والأنواع';
-            }
-          }
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            {isArabic
+              ? 'الإعدادات'
+              : 'Settings'}
+          </h1>
 
-          return (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => {
-                setTab(item.value);
-              }}
-              className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
-                tab === item.value
-                  ? 'border-brand-600 text-brand-700'
-                  : 'border-transparent text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              {label}
-            </button>
-          );
-        })}
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            {isArabic
+              ? 'إدارة بيانات المؤسسة والهوية والألوان والقوائم المستخدمة في جميع أنحاء النظام.'
+              : 'Manage organization data, branding, website appearance and reusable workflow lists.'}
+          </p>
+        </div>
+      </section>
+
+
+      {/*
+       * ======================================================
+       * TAB NAVIGATION
+       * ======================================================
+       */}
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {PAGE_TABS.map(
+          (
+            item,
+          ) => {
+            const active =
+              tab ===
+              item.value;
+
+
+            return (
+              <button
+                key={
+                  item.value
+                }
+                type="button"
+                onClick={() =>
+                  setTab(
+                    item.value,
+                  )
+                }
+                className={`flex items-center gap-3 rounded-2xl border p-4 text-start transition ${
+                  active
+                    ? 'border-brand-200 bg-brand-50/60 shadow-sm'
+                    : 'border-slate-200 bg-white hover:border-brand-200 hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                    active
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {
+                    item.icon
+                  }
+                </div>
+
+
+                <div className="min-w-0">
+                  <div
+                    className={`text-sm font-semibold ${
+                      active
+                        ? 'text-brand-800'
+                        : 'text-slate-800'
+                    }`}
+                  >
+                    {isArabic
+                      ? item.labelAr
+                      : item.labelEn}
+                  </div>
+
+
+                  <div className="mt-0.5 truncate text-xs text-slate-400">
+                    {isArabic
+                      ? item.descriptionAr
+                      : item.descriptionEn}
+                  </div>
+                </div>
+              </button>
+            );
+          },
+        )}
       </div>
 
-      {tab === 'data' && (
-        <SettingsContent />
-      )}
 
-      {tab === 'branding' && (
-        <BrandingTab />
-      )}
+      {/*
+       * ======================================================
+       * ACTIVE TAB
+       * ======================================================
+       */}
 
-      {tab === 'color-theme' && (
-        <ColorThemeTab />
-      )}
+      <div className="mt-6">
+        {tab ===
+          'data' && (
+          <DataSettingsTab />
+        )}
 
-      {tab === 'lists' && (
-        <ListSettingsTab />
-      )}
+
+        {tab ===
+          'branding' && (
+          <BrandingTab />
+        )}
+
+
+        {tab ===
+          'color-theme' && (
+          <ColorThemeTab />
+        )}
+
+
+        {tab ===
+          'lists' && (
+          <ListSettingsTab />
+        )}
+      </div>
     </div>
   );
 }
+
+
+/*
+ * ============================================================
+ * PAGE
+ * ============================================================
+ */
 
 export default function SettingsPage() {
   return (
-    <ProtectedRoute adminOnly>
+    <ProtectedRoute
+      adminOnly
+    >
       <SettingsPageContent />
     </ProtectedRoute>
   );

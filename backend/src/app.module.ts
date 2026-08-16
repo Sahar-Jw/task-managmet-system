@@ -39,57 +39,73 @@ import { TaskWorkflowModule } from './modules/task-workflow/task-workflow.module
     }),
 
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (
-  config:
+  imports: [
+    ConfigModule,
+  ],
+
+  inject: [
     ConfigService,
-) => ({
-  type:
-    'mysql' as const,
+  ],
 
-  host:
-    config.get<string>(
-      'DB_HOST',
-    ),
+  useFactory: (
+    config:
+      ConfigService,
+  ) => ({
+    type:
+      'mysql' as const,
 
-  port:
-    config.get<number>(
-      'DB_PORT',
-    ),
+    host:
+      config.get<string>(
+        'database.host',
+        'localhost',
+      ),
 
-  username:
-    config.get<string>(
-      'DB_USERNAME',
-    ),
+    port:
+      config.get<number>(
+        'database.port',
+        3306,
+      ),
 
-  password:
-    config.get<string>(
-      'DB_PASSWORD',
-    ),
+    username:
+      config.get<string>(
+        'database.username',
+        'root',
+      ),
 
-  database:
-    config.get<string>(
-      'DB_NAME',
-    ),
+    password:
+      config.get<string>(
+        'database.password',
+        '',
+      ),
 
-  charset:
-    'utf8mb4',
+    database:
+      config.get<string>(
+        'database.name',
+        'task_pm_system',
+      ),
 
-  autoLoadEntities:
-    true,   
+    charset:
+      'utf8mb4',
 
-  synchronize:
-    config.get<boolean>(
-      'DB_SYNCHRONIZE',
-    ),
+    autoLoadEntities:
+      true,
 
-  logging:
-    config.get<boolean>(
-      'DB_LOGGING',
-    ),
+    /*
+     * IMPORTANT:
+     *
+     * We use migrations.
+     * Never let TypeORM modify the schema automatically.
+     */
+    synchronize:
+      false,
+
+    logging:
+      config.get<boolean>(
+        'database.logging',
+        false,
+      ),
+  }),
 }),
-    }),
 
     ThrottlerModule.forRoot([
       {

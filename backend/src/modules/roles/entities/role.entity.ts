@@ -10,8 +10,18 @@ export class RoleEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description?: string;
 
-  @Column({ type: 'json', default: {} })
-  permissions!: Record<string, boolean>;
+ @Column({
+  type:
+    'json',
+
+  nullable:
+    false,
+})
+permissions!:
+  Record<
+    string,
+    boolean
+  >;
 
   @OneToMany(() => UserEntity, (user) => user.role)
   users!: UserEntity[];

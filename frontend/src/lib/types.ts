@@ -265,19 +265,78 @@ export interface TaskAttachment {
   uploadedById?: string;
 }
 
+export type NotificationType =
+  | 'TaskAssigned'
+  | 'TaskReassigned'
+  | 'AssignmentAccepted'
+  | 'AssignmentRejected'
+  | 'ApprovalRequested'
+  | 'ApprovalDecision'
+  | 'TaskStatusChanged'
+  | 'TaskCompleted'
+  | 'TaskReopened'
+  | 'TaskUpdated'
+  | 'DueDateChanged'
+  | 'DueDateApproaching'
+  | 'TaskOverdue'
+  | 'NewComment'
+  | 'ProjectUpdated'
+  | 'ProjectArchived'
+  | 'ProjectRestored';
+
+
+export interface NotificationMetadata {
+  taskId?: string;
+  taskTitle?: string;
+
+  projectId?: string;
+  projectName?: string;
+
+  assignmentId?: string;
+
+  commentId?: string;
+
+  approvalId?: string;
+
+  actorId?: string;
+  actorName?: string;
+
+  status?: string;
+  previousStatus?: string;
+
+  dueDate?: string;
+  previousDueDate?: string;
+
+  reason?: string;
+
+  [key: string]:
+    unknown;
+}
+
+
 export interface Notification {
   id: string;
-  type: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  createdAt: string;
-  metadata?: {
-    taskId?: string;
-    assignmentId?: string;
-    commentId?: string;
-    [key: string]: unknown;
-  } | null;
+
+  type:
+    NotificationType;
+
+  title:
+    string;
+
+  message:
+    string;
+
+  isRead:
+    boolean;
+
+  readAt?:
+    string | null;
+
+  createdAt:
+    string;
+
+  metadata?:
+    NotificationMetadata | null;
 }
 
 export interface AuditLogEntry {

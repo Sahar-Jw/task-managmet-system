@@ -1042,13 +1042,17 @@ export const AttachmentsApi = {
     `/attachments/${id}?intent=download`,
 };
 
-/*
- * ============================================================
+/* ============================================================
  * NOTIFICATIONS
- * ============================================================
- */
+ * ============================================================ */
 
 export const NotificationsApi = {
+  /*
+   * ==========================================================
+   * LIST
+   * ==========================================================
+   */
+
   list: (
     params:
       Record<
@@ -1064,45 +1068,102 @@ export const NotificationsApi = {
       )}`,
     ),
 
-  unreadCount: () =>
-    NotificationsApi
-      .list({
-        unreadOnly:
-          'true',
 
-        limit:
-          '1',
-      })
-      .then(
-        (response) =>
-          response.total,
-      ),
+  /*
+   * ==========================================================
+   * UNREAD COUNT
+   * ==========================================================
+   */
+
+  unreadCount: () =>
+    api<{
+      count:
+        number;
+    }>(
+      '/notifications/unread-count',
+    ).then(
+      (
+        response,
+      ) =>
+        response.count,
+    ),
+
+
+  /*
+   * ==========================================================
+   * MARK ONE READ
+   * ==========================================================
+   */
 
   markRead: (
-    id: string,
+    id:
+      string,
   ) =>
-    api(
+    api<Notification>(
       `/notifications/${id}/read`,
       {
-        method: 'PATCH',
+        method:
+          'PATCH',
       },
     ),
+
+
+  /*
+   * ==========================================================
+   * MARK ALL READ
+   * ==========================================================
+   */
 
   markAllRead: () =>
-    api(
+    api<{
+      updated:
+        number;
+    }>(
       '/notifications/read-all',
       {
-        method: 'PATCH',
+        method:
+          'PATCH',
       },
     ),
 
+
+  /*
+   * ==========================================================
+   * DELETE ONE
+   * ==========================================================
+   */
+
   remove: (
-    id: string,
+    id:
+      string,
   ) =>
-    api(
+    api<{
+      deleted:
+        boolean;
+    }>(
       `/notifications/${id}`,
       {
-        method: 'DELETE',
+        method:
+          'DELETE',
+      },
+    ),
+
+
+  /*
+   * ==========================================================
+   * CLEAR READ
+   * ==========================================================
+   */
+
+  clearRead: () =>
+    api<{
+      deleted:
+        number;
+    }>(
+      '/notifications/read',
+      {
+        method:
+          'DELETE',
       },
     ),
 };

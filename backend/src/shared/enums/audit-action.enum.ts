@@ -12,6 +12,8 @@ export enum AuditAction {
   LOGIN_FAILED = 'LoginFailed',
   ACCOUNT_LOCKED = 'AccountLocked',
   ACCOUNT_UNLOCKED = 'AccountUnlocked',
+  ACTIVATE = 'Activate',
+  DEACTIVATE = 'Deactivate',
   RESTORE = 'Restore',
   ARCHIVE = 'Archive',
 }

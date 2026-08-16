@@ -5,13 +5,18 @@ import { cookies } from 'next/headers';
 // @ts-ignore: side-effect CSS import declaration missing
 import './globals.css';
 import Shell from '@/components/Shell';
+import { ThemeProvider } from '@/lib/theme-context';
 
 export const metadata: Metadata = {
   title: 'Task & Project Manager',
   description: 'Enterprise Task & Project Management System',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const cookieStore = await cookies();
   const locale = cookieStore.get('NEXT_LOCALE')?.value === 'ar' ? 'ar' : 'en';
   const messages = await getMessages();
@@ -20,7 +25,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale}>
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <Shell>{children}</Shell>
+          <ThemeProvider>
+            <Shell>{children}</Shell>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

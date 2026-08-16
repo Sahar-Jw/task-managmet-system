@@ -2,57 +2,148 @@
 @tailwind components;
 @tailwind utilities;
 
-html, body {
+:root {
+  --theme-primary: #3364b8;
+  --theme-primary-text: #ffffff;
+  --theme-secondary: #b8912f;
+
+  --theme-page-background: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-body-text: #0f172a;
+
+  --theme-primary-lightest: #f2f6fc;
+  --theme-primary-lighter: #e2ebf7;
+  --theme-primary-light: #c2d7ee;
+
+  --theme-primary-dark: #28518f;
+  --theme-primary-darker: #203f6f;
+  --theme-primary-darkest: #152a4a;
+}
+
+html,
+body {
   height: 100%;
 }
 
-/* Chrome/Edge/Safari fill autofilled inputs (e.g. saved email/password)
-   with a yellow or light-blue background by default. Force it back to
-   white so autofilled fields match every other input. */
+html {
+  background-color: var(--theme-page-background);
+}
+
+body {
+  background-color: var(--theme-page-background);
+  color: var(--theme-body-text);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/*
+  Chrome / Edge / Safari autofill styling.
+  Use the theme surface instead of forcing white.
+*/
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #0f172a !important;
-  caret-color: #0f172a;
-  transition: background-color 9999s ease-in-out 0s;
+  -webkit-box-shadow:
+    0 0 0 1000px var(--theme-surface) inset !important;
+
+  -webkit-text-fill-color:
+    var(--theme-body-text) !important;
+
+  caret-color:
+    var(--theme-body-text);
+
+  transition:
+    background-color 9999s ease-in-out 0s;
 }
 
-body {
-  @apply bg-slate-50 text-slate-900;
-}
-
-/* A handful of reusable classes to keep every page's markup short */
+/* Reusable application components */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-3.5 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center rounded-md px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
+
   .btn-primary {
-    @apply btn bg-brand-500 text-white hover:bg-brand-600;
+    @apply btn bg-brand-500 hover:bg-brand-600;
+    color: var(--theme-primary-text);
   }
+
   .btn-secondary {
-    @apply btn bg-white text-slate-700 border border-slate-300 hover:bg-slate-50;
+    @apply btn border border-slate-300 hover:bg-slate-50;
+    background-color: var(--theme-surface);
+    color: var(--theme-body-text);
   }
+
   .btn-danger {
     @apply btn bg-red-600 text-white hover:bg-red-700;
   }
+
   .card {
-    @apply bg-white border border-slate-200 rounded-lg shadow-sm;
+    @apply rounded-lg border border-slate-200 shadow-sm;
+    background-color: var(--theme-surface);
+    color: var(--theme-body-text);
+
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
   }
+
   .input {
-    @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500;
+    @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500;
+
+    background-color: var(--theme-surface);
+    color: var(--theme-body-text);
+
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
   }
+
+  .input::placeholder {
+    color: #94a3b8;
+  }
+
   .label {
-    @apply block text-sm font-medium text-slate-700 mb-1;
+    @apply mb-1 block text-sm font-medium;
+    color: var(--theme-body-text);
   }
+
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
+
   .icon-btn {
-    @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+    color: var(--theme-body-text);
   }
+
   .icon-btn-danger {
-    @apply icon-btn border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300;
+    @apply icon-btn border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50;
   }
+}
+
+/*
+  Optional theme helpers.
+  These can be used on individual components later.
+*/
+.theme-primary-text {
+  color: var(--theme-primary);
+}
+
+.theme-secondary-text {
+  color: var(--theme-secondary);
+}
+
+.theme-body-text {
+  color: var(--theme-body-text);
+}
+
+.theme-surface {
+  background-color: var(--theme-surface);
+}
+
+.theme-page-background {
+  background-color: var(--theme-page-background);
 }

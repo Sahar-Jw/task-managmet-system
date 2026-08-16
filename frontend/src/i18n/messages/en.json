@@ -30,5 +30,16 @@
     "preview": "Preview",
     "download": "Download",
     "delete": "Delete"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "network": "Could not connect to the server. Check your connection and try again.",
+    "unauthorized": "Your session has expired. Please sign in again.",
+    "forbidden": "You do not have permission to perform this action.",
+    "notFound": "The requested item could not be found.",
+    "validation": "Please check the highlighted fields and try again.",
+    "conflict": "This action conflicts with the current state of the data.",
+    "server": "An unexpected server error occurred. Please try again later.",
+    "fileLoad": "Could not load the file."
   }
 }

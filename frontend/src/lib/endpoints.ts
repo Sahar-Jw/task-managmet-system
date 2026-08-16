@@ -441,10 +441,28 @@ export const UsersApi = {
     data: {
       fullName?: string;
       phone?: string;
+      locale?: string;
+      timezone?: string;
     },
   ) =>
     api<User>(
       '/users/me',
+      {
+        method: 'PATCH',
+        body: data,
+      },
+    ),
+
+  changeOwnPassword: (
+    data: {
+      currentPassword: string;
+      newPassword: string;
+    },
+  ) =>
+    api<{
+      message?: string;
+    }>(
+      '/users/me/password',
       {
         method: 'PATCH',
         body: data,
@@ -508,16 +526,6 @@ export const UsersApi = {
       {
         method: 'PATCH',
       },
-    ),
-
-  roles: () =>
-    api<
-      {
-        id: string;
-        name: string;
-      }[]
-    >(
-      '/roles',
     ),
 };
 

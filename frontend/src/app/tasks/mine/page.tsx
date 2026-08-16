@@ -1,37 +1,57 @@
-// frontend/src/app/tasks/mine/page.tsx
-
 'use client';
 
 import {
+  useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+
+import {
+  useSearchParams,
+} from 'next/navigation';
+
+import {
+  useLocale,
+} from 'next-intl';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import ReasonModal from '@/components/ReasonModal';
 import Pagination from '@/components/Pagination';
 
-import { ApiError } from '@/lib/api';
-import { TasksApi } from '@/lib/endpoints';
+import {
+  useListLabels,
+} from '@/lib/list-labels-context';
+
+import {
+  ApiError,
+} from '@/lib/api';
+
+import {
+  ProjectsApi,
+  SettingsApi,
+  TasksApi,
+} from '@/lib/endpoints';
 
 import type {
+  Project,
+  Setting,
   Task,
-  TaskPriority,
-  TaskType,
 } from '@/lib/types';
 
-const PAGE_SIZE = 10;
 
-const PRIORITIES: TaskPriority[] = [
-  'Low',
-  'Medium',
-  'High',
-  'Critical',
-];
+/*
+ * ============================================================
+ * CONFIG
+ * ============================================================
+ */
+
+const PAGE_SIZE =
+  12;
+
 
 const RATINGS = [
   5,
@@ -41,65 +61,84 @@ const RATINGS = [
   1,
 ];
 
-const STATUSES = [
-  'Pending',
-  'Unassigned',
-  'InProgress',
-  'PendingApproval',
-  'Completed',
-  'Reopened',
-  'Finished',
-  'Archived',
-];
-
-const TASK_TYPES: TaskType[] = [
-  'General',
-  'Administrative',
-  'Financial',
-  'Technical',
-  'Maintenance',
-  'HR',
-  'Procurement',
-  'Other',
-];
 
 type Tab =
   | 'assignedToMe'
   | 'assignedByMe';
 
+
 type ViewMode =
-  | 'list'
-  | 'cards';
+  | 'cards'
+  | 'list';
+
+
+type SortBy =
+  | 'deadline'
+  | 'priority'
+  | 'rating'
+  | 'createdAt';
+
+
+type SortDir =
+  | 'asc'
+  | 'desc';
+
+
+/*
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
 
 function avgRating(
   task: Task,
 ): number | null {
   if (
     !task.ratings ||
-    task.ratings.length === 0
+    task.ratings.length ===
+      0
   ) {
     return null;
   }
 
-  const sum =
+
+  const total =
     task.ratings.reduce(
-      (acc, rating) =>
-        acc + rating.score,
+      (
+        sum,
+        rating,
+      ) =>
+        sum +
+        rating.score,
       0,
     );
 
+
   return (
-    sum /
+    total /
     task.ratings.length
   );
 }
 
+
 function Stars({
   value,
+  showEmpty = false,
 }: {
   value: number | null;
+  showEmpty?: boolean;
 }) {
-  if (value === null) {
+  if (
+    value ===
+    null
+  ) {
+    if (
+      !showEmpty
+    ) {
+      return null;
+    }
+
+
     return (
       <span className="text-xs text-slate-400">
         Not rated
@@ -107,8 +146,12 @@ function Stars({
     );
   }
 
+
   const rounded =
-    Math.round(value);
+    Math.round(
+      value,
+    );
+
 
   return (
     <span
@@ -121,36 +164,49 @@ function Stars({
 
       <span className="text-slate-300">
         {'★'.repeat(
-          5 - rounded,
+          5 -
+          rounded,
         )}
       </span>
     </span>
   );
 }
 
-function isOverdue(
-  task: Task,
-): boolean {
-  if (!task.deadlineDate) {
-    return false;
-  }
 
-  const done = [
+function isDone(
+  task: Task,
+) {
+  return [
     'Completed',
     'Finished',
     'Archived',
   ].includes(
     task.status,
   );
+}
 
-  if (done) {
+
+function isOverdue(
+  task: Task,
+) {
+  if (
+    !task.deadlineDate ||
+    isDone(
+      task,
+    )
+  ) {
     return false;
   }
+
 
   const today =
     new Date()
       .toISOString()
-      .slice(0, 10);
+      .slice(
+        0,
+        10,
+      );
+
 
   return (
     task.deadlineDate <
@@ -158,24 +214,19 @@ function isOverdue(
   );
 }
 
+
 function isDueSoon(
   task: Task,
-): boolean {
-  if (!task.deadlineDate) {
-    return false;
-  }
-
+) {
   if (
-    [
-      'Completed',
-      'Finished',
-      'Archived',
-    ].includes(
-      task.status,
+    !task.deadlineDate ||
+    isDone(
+      task,
     )
   ) {
     return false;
   }
+
 
   const today =
     new Date();
@@ -187,14 +238,17 @@ function isDueSoon(
     0,
   );
 
+
   const deadline =
     new Date(
       `${task.deadlineDate}T00:00:00`,
     );
 
+
   const difference =
     deadline.getTime() -
     today.getTime();
+
 
   const days =
     difference /
@@ -205,113 +259,258 @@ function isDueSoon(
       24
     );
 
+
   return (
     days >= 0 &&
     days <= 7
   );
 }
 
-function formatDeadline(
-  date?: string | null,
+
+function formatDate(
+  value?: string | null,
+  locale?: string,
 ) {
-  if (!date) {
-    return 'No deadline';
+  if (!value) {
+    return '—';
   }
 
-  const parsed =
-    new Date(
-      `${date}T00:00:00`,
-    );
 
-  return parsed.toLocaleDateString(
-    undefined,
+  const date =
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      value,
+    )
+      ? new Date(
+          `${value}T00:00:00`,
+        )
+      : new Date(
+          value,
+        );
+
+
+  return date.toLocaleDateString(
+    locale,
     {
+      year: 'numeric',
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
     },
   );
 }
 
-function TaskActions({
-  task,
-  tab,
-  busy,
-  onFinish,
-  onArchive,
+
+/*
+ * ============================================================
+ * VIEW TOGGLE
+ * ============================================================
+ */
+
+function ViewToggle({
+  value,
+  onChange,
+  isArabic,
 }: {
-  task: Task;
-  tab: Tab;
-  busy: boolean;
-  onFinish: (
-    task: Task,
+  value: ViewMode;
+
+  onChange: (
+    value: ViewMode,
   ) => void;
-  onArchive: (
-    task: Task,
-  ) => void;
+
+  isArabic: boolean;
 }) {
-  if (
-    tab !==
-    'assignedByMe'
-  ) {
-    return null;
-  }
-
-  const canArchive =
-    task.status !==
-    'Archived';
-
-  const canFinish =
-    task.status !==
-      'Archived' &&
-    task.status !==
-      'Finished';
-
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Link
-        href={`/tasks/${task.id}`}
-        className="btn-secondary px-3 py-1.5 text-xs"
+    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+      <button
+        type="button"
+        title={
+          isArabic
+            ? 'بطاقات'
+            : 'Cards'
+        }
+        onClick={() =>
+          onChange(
+            'cards',
+          )
+        }
+        className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
+          value ===
+          'cards'
+            ? 'bg-slate-100 text-slate-900'
+            : 'text-slate-400 hover:text-slate-700'
+        }`}
       >
-        Edit
-      </Link>
-
-      {canFinish && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() =>
-            onFinish(
-              task,
-            )
-          }
-          className="btn-secondary px-3 py-1.5 text-xs"
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-4 w-4"
         >
-          Finish
-        </button>
-      )}
+          <rect
+            x="4"
+            y="4"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
 
-      {canArchive && (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() =>
-            onArchive(
-              task,
-            )
-          }
-          className="btn-secondary px-3 py-1.5 text-xs"
+          <rect
+            x="14"
+            y="4"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+
+          <rect
+            x="4"
+            y="14"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+
+          <rect
+            x="14"
+            y="14"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+        </svg>
+      </button>
+
+
+      <button
+        type="button"
+        title={
+          isArabic
+            ? 'قائمة'
+            : 'List'
+        }
+        onClick={() =>
+          onChange(
+            'list',
+          )
+        }
+        className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
+          value ===
+          'list'
+            ? 'bg-slate-100 text-slate-900'
+            : 'text-slate-400 hover:text-slate-700'
+        }`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-4 w-4"
         >
-          Archive
-        </button>
-      )}
+          <path
+            d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
     </div>
   );
 }
 
+
+/*
+ * ============================================================
+ * EMPTY STATE
+ * ============================================================
+ */
+
+function EmptyState({
+  tab,
+  isArabic,
+}: {
+  tab: Tab;
+  isArabic: boolean;
+}) {
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-6 w-6"
+        >
+          <path
+            d="M8 7h11M8 12h11M8 17h7"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="m3 7 1 1 2-2m-3 6 1 1 2-2m-3 6 1 1 2-2"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+
+      <h3 className="mt-4 text-sm font-semibold text-slate-800">
+        {tab ===
+        'assignedToMe'
+          ? isArabic
+            ? 'لا توجد مهام مسندة إليك'
+            : 'No tasks assigned to you'
+          : isArabic
+            ? 'لا توجد مهام قمت بتكليفها'
+            : 'No tasks assigned by you'}
+      </h3>
+
+
+      <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
+        {isArabic
+          ? 'غيّر عوامل التصفية أو أنشئ مهمة جديدة.'
+          : 'Try changing your filters or create a new task.'}
+      </p>
+    </div>
+  );
+}
+
+
+/*
+ * ============================================================
+ * MY TASKS
+ * ============================================================
+ */
+
 function MyTasksContent() {
   const searchParams =
     useSearchParams();
+
+
+  const locale =
+    useLocale();
+
+
+  const isArabic =
+    locale ===
+    'ar';
+
+
+  const {
+    getLabel,
+  } = useListLabels();
+
+
+  /*
+   * ==========================================================
+   * TAB / VIEW
+   * ==========================================================
+   */
 
   const [
     tab,
@@ -320,17 +519,38 @@ function MyTasksContent() {
     'assignedToMe',
   );
 
+
   const [
     viewMode,
     setViewMode,
   ] = useState<ViewMode>(
-    'list',
+    'cards',
   );
 
+
   const [
-    showMoreFilters,
-    setShowMoreFilters,
+    showFilters,
+    setShowFilters,
   ] = useState(false);
+
+
+  /*
+   * ==========================================================
+   * FILTERS
+   * ==========================================================
+   */
+
+  const [
+    search,
+    setSearch,
+  ] = useState('');
+
+
+  const [
+    debouncedSearch,
+    setDebouncedSearch,
+  ] = useState('');
+
 
   const [
     status,
@@ -338,8 +558,10 @@ function MyTasksContent() {
   ] = useState(
     searchParams.get(
       'status',
-    ) || '',
+    ) ||
+    '',
   );
+
 
   const [
     taskType,
@@ -347,8 +569,10 @@ function MyTasksContent() {
   ] = useState(
     searchParams.get(
       'taskType',
-    ) || '',
+    ) ||
+    '',
   );
+
 
   const [
     priority,
@@ -356,33 +580,111 @@ function MyTasksContent() {
   ] = useState(
     searchParams.get(
       'priority',
-    ) || '',
+    ) ||
+    '',
   );
+
+
+  const [
+    projectId,
+    setProjectId,
+  ] = useState(
+    searchParams.get(
+      'projectId',
+    ) ||
+    '',
+  );
+
 
   const [
     minRating,
     setMinRating,
   ] = useState('');
 
+
   const [
     upcomingOnly,
     setUpcomingOnly,
   ] = useState(false);
 
-  const [
-    search,
-    setSearch,
-  ] = useState('');
 
   const [
     deadlineFrom,
     setDeadlineFrom,
   ] = useState('');
 
+
   const [
     deadlineTo,
     setDeadlineTo,
   ] = useState('');
+
+
+  /*
+   * ==========================================================
+   * SORTING
+   * ==========================================================
+   */
+
+  const [
+    sortBy,
+    setSortBy,
+  ] = useState<SortBy>(
+    'deadline',
+  );
+
+
+  const [
+    sortDir,
+    setSortDir,
+  ] = useState<SortDir>(
+    'asc',
+  );
+
+
+  /*
+   * ==========================================================
+   * LOOKUPS
+   * ==========================================================
+   */
+
+  const [
+    taskStatuses,
+    setTaskStatuses,
+  ] = useState<
+    Setting[]
+  >([]);
+
+
+  const [
+    taskTypes,
+    setTaskTypes,
+  ] = useState<
+    Setting[]
+  >([]);
+
+
+  const [
+    taskPriorities,
+    setTaskPriorities,
+  ] = useState<
+    Setting[]
+  >([]);
+
+
+  const [
+    projects,
+    setProjects,
+  ] = useState<
+    Project[]
+  >([]);
+
+
+  /*
+   * ==========================================================
+   * TASK DATA
+   * ==========================================================
+   */
 
   const [
     tasks,
@@ -391,25 +693,42 @@ function MyTasksContent() {
     Task[]
   >([]);
 
+
   const [
     total,
     setTotal,
-  ] = useState(0);
+  ] = useState(
+    0,
+  );
+
+
+  const [
+    page,
+    setPage,
+  ] = useState(
+    1,
+  );
+
 
   const [
     loading,
     setLoading,
-  ] = useState(true);
+  ] = useState(
+    true,
+  );
+
 
   const [
     error,
     setError,
   ] = useState('');
 
-  const [
-    page,
-    setPage,
-  ] = useState(1);
+
+  /*
+   * ==========================================================
+   * ACTION STATE
+   * ==========================================================
+   */
 
   const [
     actingOnId,
@@ -418,6 +737,18 @@ function MyTasksContent() {
     string | null
   >(null);
 
+
+  const [
+    rowError,
+    setRowError,
+  ] = useState<{
+    id: string;
+    message: string;
+  } | null>(
+    null,
+  );
+
+
   const [
     finishModalTask,
     setFinishModalTask,
@@ -425,14 +756,230 @@ function MyTasksContent() {
     Task | null
   >(null);
 
+
   const [
-    debouncedSearch,
-    setDebouncedSearch,
-  ] = useState('');
+    archiveModalTask,
+    setArchiveModalTask,
+  ] = useState<
+    Task | null
+  >(null);
+
+
+  /*
+   * ==========================================================
+   * SAVED VIEW
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    const stored =
+      window.localStorage.getItem(
+        'my-tasks-view-mode',
+      );
+
+
+    if (
+      stored ===
+        'cards' ||
+      stored ===
+        'list'
+    ) {
+      setViewMode(
+        stored,
+      );
+    }
+  }, []);
+
+
+  function changeViewMode(
+    value: ViewMode,
+  ) {
+    setViewMode(
+      value,
+    );
+
+
+    window.localStorage.setItem(
+      'my-tasks-view-mode',
+      value,
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * LOAD SETTINGS
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    SettingsApi.list(
+      'task_status',
+      true,
+    )
+      .then(
+        setTaskStatuses,
+      )
+      .catch(
+        () => {},
+      );
+
+
+    SettingsApi.list(
+      'task_type',
+      true,
+    )
+      .then(
+        setTaskTypes,
+      )
+      .catch(
+        () => {},
+      );
+
+
+    SettingsApi.list(
+      'task_priority',
+      true,
+    )
+      .then(
+        setTaskPriorities,
+      )
+      .catch(
+        () => {},
+      );
+
+
+    ProjectsApi.list({
+      limit: '100',
+      excludeArchived:
+        'true',
+    })
+      .then(
+        (
+          response,
+        ) =>
+          setProjects(
+            response.items,
+          ),
+      )
+      .catch(
+        () => {},
+      );
+  }, []);
+
+
+  /*
+   * ==========================================================
+   * CURRENT LANGUAGE SETTINGS
+   * ==========================================================
+   */
+
+  const visibleStatuses =
+    useMemo(
+      () =>
+        taskStatuses.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
+                (
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskStatuses,
+        isArabic,
+      ],
+    );
+
+
+  const visibleTypes =
+    useMemo(
+      () =>
+        taskTypes.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
+                (
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskTypes,
+        isArabic,
+      ],
+    );
+
+
+  const visiblePriorities =
+    useMemo(
+      () =>
+        taskPriorities.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
+                (
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskPriorities,
+        isArabic,
+      ],
+    );
+
+
+  /*
+   * ==========================================================
+   * TASK LANGUAGE
+   * ==========================================================
+   */
+
+  function taskTitle(
+    task: Task,
+  ) {
+    return isArabic
+      ? task.titleAr ||
+          task.titleEn
+      : task.titleEn ||
+          task.titleAr;
+  }
+
+
+  function taskDescription(
+    task: Task,
+  ) {
+    return isArabic
+      ? task.descriptionAr ||
+          task.descriptionEn
+      : task.descriptionEn ||
+          task.descriptionAr;
+  }
+
+
+  /*
+   * ==========================================================
+   * SEARCH DEBOUNCE
+   * ==========================================================
+   */
 
   useEffect(() => {
     const timer =
-      setTimeout(
+      window.setTimeout(
         () => {
           setDebouncedSearch(
             search.trim(),
@@ -441,177 +988,334 @@ function MyTasksContent() {
         350,
       );
 
+
     return () =>
-      clearTimeout(
+      window.clearTimeout(
         timer,
       );
-  }, [search]);
-
-  useEffect(() => {
-    setPage(1);
   }, [
-    tab,
-    status,
-    taskType,
-    priority,
-    minRating,
-    upcomingOnly,
-    debouncedSearch,
-    deadlineFrom,
-    deadlineTo,
+    search,
   ]);
 
-  function reload() {
-    setLoading(true);
-    setError('');
 
-    const params: Record<
-      string,
-      string
-    > = {
-      limit:
-        String(
-          PAGE_SIZE,
-        ),
+  /*
+   * ==========================================================
+   * LOAD TASKS
+   * ==========================================================
+   */
 
-      page:
-        String(
-          page,
-        ),
+  const reload =
+    useCallback(
+      async () => {
+        setLoading(
+          true,
+        );
 
-      sortBy:
-        'deadline',
+        setError('');
 
-      sortDir:
-        'asc',
-    };
 
-    if (status) {
-      params.status =
-        status;
-    }
+        try {
+          const params: Record<
+            string,
+            string
+          > = {
+            limit:
+              String(
+                PAGE_SIZE,
+              ),
 
-    if (taskType) {
-      params.taskType =
-        taskType;
-    }
+            page:
+              String(
+                page,
+              ),
 
-    if (priority) {
-      params.priority =
-        priority;
-    }
+            sortBy,
 
-    if (minRating) {
-      params.minRating =
-        minRating;
-    }
+            sortDir,
+          };
 
-    if (upcomingOnly) {
-      params.upcomingOnly =
-        'true';
-    }
 
-    if (
-      debouncedSearch
-    ) {
-      params.search =
-        debouncedSearch;
-    }
+          if (
+            status
+          ) {
+            params.status =
+              status;
+          }
 
-    if (
-      deadlineFrom
-    ) {
-      params.deadlineFrom =
-        deadlineFrom;
-    }
 
-    if (
-      deadlineTo
-    ) {
-      params.deadlineTo =
-        deadlineTo;
-    }
+          if (
+            taskType
+          ) {
+            params.taskType =
+              taskType;
+          }
 
-    const fetcher =
-      tab ===
-      'assignedToMe'
-        ? TasksApi.mine(
-            params,
-          )
-        : TasksApi.assignedByMe(
-            params,
+
+          if (
+            priority
+          ) {
+            params.priority =
+              priority;
+          }
+
+
+          if (
+            projectId
+          ) {
+            params.projectId =
+              projectId;
+          }
+
+
+          if (
+            minRating
+          ) {
+            params.minRating =
+              minRating;
+          }
+
+
+          if (
+            upcomingOnly
+          ) {
+            params.upcomingOnly =
+              'true';
+          }
+
+
+          if (
+            debouncedSearch
+          ) {
+            params.search =
+              debouncedSearch;
+          }
+
+
+          if (
+            deadlineFrom
+          ) {
+            params.deadlineFrom =
+              deadlineFrom;
+          }
+
+
+          if (
+            deadlineTo
+          ) {
+            params.deadlineTo =
+              deadlineTo;
+          }
+
+
+          const response =
+            tab ===
+            'assignedToMe'
+              ? await TasksApi.mine(
+                  params,
+                )
+              : await TasksApi.assignedByMe(
+                  params,
+                );
+
+
+          setTasks(
+            response.items,
           );
 
-    fetcher
-      .then((res) => {
-        setTasks(
-          res.items,
-        );
 
-        setTotal(
-          res.total,
-        );
-      })
-      .catch((err) => {
-        setError(
-          err instanceof
-            ApiError
-            ? err.message
-            : 'Could not load tasks.',
-        );
-      })
-      .finally(() => {
-        setLoading(
-          false,
-        );
-      });
-  }
+          setTotal(
+            response.total,
+          );
+        } catch (
+          err
+        ) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : isArabic
+                ? 'تعذر تحميل المهام.'
+                : 'Could not load tasks.',
+          );
+        } finally {
+          setLoading(
+            false,
+          );
+        }
+      },
+      [
+        tab,
+        page,
+        sortBy,
+        sortDir,
+        status,
+        taskType,
+        priority,
+        projectId,
+        minRating,
+        upcomingOnly,
+        debouncedSearch,
+        deadlineFrom,
+        deadlineTo,
+        isArabic,
+      ],
+    );
+
 
   useEffect(() => {
     reload();
+  }, [
+    reload,
+  ]);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+  /*
+   * Reset pagination whenever filtering/sorting/tab changes.
+   */
+
+  useEffect(() => {
+    setPage(
+      1,
+    );
   }, [
     tab,
     status,
     taskType,
     priority,
+    projectId,
     minRating,
     upcomingOnly,
     debouncedSearch,
     deadlineFrom,
     deadlineTo,
-    page,
+    sortBy,
+    sortDir,
   ]);
+
+
+  /*
+   * ==========================================================
+   * FILTER HELPERS
+   * ==========================================================
+   */
+
+  const hasFilters =
+    Boolean(
+      search ||
+      status ||
+      taskType ||
+      priority ||
+      projectId ||
+      minRating ||
+      upcomingOnly ||
+      deadlineFrom ||
+      deadlineTo,
+    );
+
+
+  const filterCount =
+    [
+      Boolean(
+        search,
+      ),
+
+      Boolean(
+        status,
+      ),
+
+      Boolean(
+        priority,
+      ),
+
+      Boolean(
+        taskType,
+      ),
+
+      Boolean(
+        projectId,
+      ),
+
+      Boolean(
+        minRating,
+      ),
+
+      upcomingOnly,
+
+      Boolean(
+        deadlineFrom ||
+        deadlineTo,
+      ),
+    ].filter(
+      Boolean,
+    ).length;
+
+
+  function clearFilters() {
+    setSearch('');
+    setStatus('');
+    setTaskType('');
+    setPriority('');
+    setProjectId('');
+    setMinRating('');
+    setUpcomingOnly(
+      false,
+    );
+    setDeadlineFrom('');
+    setDeadlineTo('');
+  }
+
+
+  /*
+   * ==========================================================
+   * ACTIONS
+   * ==========================================================
+   */
 
   async function archiveTask(
     task: Task,
   ) {
+    setArchiveModalTask(
+      null,
+    );
+
+
     setActingOnId(
       task.id,
     );
 
-    setError('');
+
+    setRowError(
+      null,
+    );
+
 
     try {
       await TasksApi.remove(
         task.id,
       );
 
-      reload();
-    } catch (err) {
-      setError(
-        err instanceof
-          ApiError
-          ? err.message
-          : 'Could not archive this task.',
-      );
+
+      await reload();
+    } catch (
+      err
+    ) {
+      setRowError({
+        id:
+          task.id,
+
+        message:
+          err instanceof ApiError
+            ? err.message
+            : isArabic
+              ? 'تعذر أرشفة المهمة.'
+              : 'Could not archive this task.',
+      });
     } finally {
       setActingOnId(
         null,
       );
     }
   }
+
 
   async function finishTask(
     task: Task,
@@ -621,11 +1325,16 @@ function MyTasksContent() {
       null,
     );
 
+
     setActingOnId(
       task.id,
     );
 
-    setError('');
+
+    setRowError(
+      null,
+    );
+
 
     try {
       await TasksApi.changeStatus(
@@ -634,14 +1343,22 @@ function MyTasksContent() {
         reason,
       );
 
-      reload();
-    } catch (err) {
-      setError(
-        err instanceof
-          ApiError
-          ? err.message
-          : 'Could not finish this task.',
-      );
+
+      await reload();
+    } catch (
+      err
+    ) {
+      setRowError({
+        id:
+          task.id,
+
+        message:
+          err instanceof ApiError
+            ? err.message
+            : isArabic
+              ? 'تعذر إنهاء المهمة.'
+              : 'Could not finish this task.',
+      });
     } finally {
       setActingOnId(
         null,
@@ -649,924 +1366,1332 @@ function MyTasksContent() {
     }
   }
 
-  function clearFilters() {
-    setSearch('');
-    setStatus('');
-    setTaskType('');
-    setPriority('');
-    setMinRating('');
-    setUpcomingOnly(
-      false,
-    );
-    setDeadlineFrom('');
-    setDeadlineTo('');
-  }
 
-  const hasFilters =
-    Boolean(
-      search ||
-        status ||
-        taskType ||
-        priority ||
-        minRating ||
-        upcomingOnly ||
-        deadlineFrom ||
-        deadlineTo,
-    );
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
 
   const totalPages =
     Math.max(
       Math.ceil(
         total /
-          PAGE_SIZE,
+        PAGE_SIZE,
       ),
       1,
     );
 
-  return (
-    <div>
-      {/* HEADER */}
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-            My Tasks
-          </h1>
+  /*
+   * ==========================================================
+   * TASK ACTIONS
+   * ==========================================================
+   */
 
-          <p className="mt-1 text-sm text-slate-500">
-            Keep track of
-            assignments without
-            all the noise.
-          </p>
-        </div>
+  function TaskActions({
+    task,
+  }: {
+    task: Task;
+  }) {
+    const busy =
+      actingOnId ===
+      task.id;
 
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-slate-500 sm:block">
-            {loading
-              ? 'Loading…'
-              : `${total} task${total === 1 ? '' : 's'}`}
-          </span>
 
-          <Link
-            href="/tasks/new"
-            className="btn-primary"
+    /*
+     * Assigned-to-me Tasks are controlled by the Task's own
+     * workflow from Task Details.
+     */
+    if (
+      tab ===
+      'assignedToMe'
+    ) {
+      return (
+        <Link
+          href={`/tasks/${task.id}`}
+          onClick={(
+            event,
+          ) =>
+            event.stopPropagation()
+          }
+          className="btn-secondary px-3 py-1.5 text-xs"
+        >
+          {isArabic
+            ? 'التفاصيل'
+            : 'Details'}
+        </Link>
+      );
+    }
+
+
+    /*
+     * Creator actions.
+     */
+    const canFinish =
+      task.status !==
+        'Archived' &&
+      task.status !==
+        'Finished';
+
+
+    const canArchive =
+      task.status !==
+      'Archived';
+
+
+    return (
+      <div className="relative z-20 flex flex-wrap items-center gap-2">
+        <Link
+          href={`/tasks/${task.id}`}
+          onClick={(
+            event,
+          ) =>
+            event.stopPropagation()
+          }
+          className="btn-secondary px-3 py-1.5 text-xs"
+        >
+          {isArabic
+            ? 'التفاصيل'
+            : 'Details'}
+        </Link>
+
+
+        {canFinish && (
+          <button
+            type="button"
+            disabled={
+              busy
+            }
+            onClick={(
+              event,
+            ) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              setFinishModalTask(
+                task,
+              );
+            }}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
           >
-            + New task
-          </Link>
+            {isArabic
+              ? 'إنهاء'
+              : 'Finish'}
+          </button>
+        )}
+
+
+        {canArchive && (
+          <button
+            type="button"
+            disabled={
+              busy
+            }
+            onClick={(
+              event,
+            ) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              setArchiveModalTask(
+                task,
+              );
+            }}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+          >
+            {isArabic
+              ? 'أرشفة'
+              : 'Archive'}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
+
+  return (
+    <div
+      className="mx-auto max-w-[1600px] pb-12"
+      dir={
+        isArabic
+          ? 'rtl'
+          : 'ltr'
+      }
+    >
+      {/*
+       * ======================================================
+       * HEADER
+       * ======================================================
+       */}
+
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
+
+
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+              {isArabic
+                ? 'مساحة عملي'
+                : 'My workspace'}
+            </div>
+
+
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+              {isArabic
+                ? 'مهامي'
+                : 'My Tasks'}
+            </h1>
+
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              {tab ===
+              'assignedToMe'
+                ? isArabic
+                  ? 'تابع المهام المسندة إليك والمواعيد والحالات التي تحتاج إلى انتباهك.'
+                  : 'Track work assigned to you, upcoming deadlines and tasks that need your attention.'
+                : isArabic
+                  ? 'تابع المهام التي أنشأتها وكلّفت بها مستخدمين آخرين.'
+                  : 'Track tasks you created and assigned to other users.'}
+            </p>
+          </div>
+
+
+          <div className="flex flex-wrap items-center gap-2">
+            <ViewToggle
+              value={
+                viewMode
+              }
+              onChange={
+                changeViewMode
+              }
+              isArabic={
+                isArabic
+              }
+            />
+
+
+            <Link
+              href="/tasks/new"
+              className="btn-primary"
+            >
+              +{' '}
+              {isArabic
+                ? 'مهمة جديدة'
+                : 'New task'}
+            </Link>
+          </div>
         </div>
+      </section>
+
+
+      {/*
+       * ======================================================
+       * TABS
+       * ======================================================
+       */}
+
+      <div className="mt-5 inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
+        <button
+          type="button"
+          onClick={() =>
+            setTab(
+              'assignedToMe',
+            )
+          }
+          className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab ===
+            'assignedToMe'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {isArabic
+            ? 'مسندة إليّ'
+            : 'Assigned to me'}
+        </button>
+
+
+        <button
+          type="button"
+          onClick={() =>
+            setTab(
+              'assignedByMe',
+            )
+          }
+          className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab ===
+            'assignedByMe'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {isArabic
+            ? 'مسندة بواسطتي'
+            : 'Assigned by me'}
+        </button>
       </div>
 
-      {/* TABS + VIEW SWITCHER */}
 
-      <div className="mt-6 flex flex-col gap-3 border-b border-slate-200 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={() =>
-              setTab(
-                'assignedToMe',
-              )
-            }
-            className={`-mb-px border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              tab ===
-              'assignedToMe'
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Assigned to me
-          </button>
+      {/*
+       * ======================================================
+       * FILTER BAR
+       * ======================================================
+       */}
 
-          <button
-            type="button"
-            onClick={() =>
-              setTab(
-                'assignedByMe',
-              )
-            }
-            className={`-mb-px border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
-              tab ===
-              'assignedByMe'
-                ? 'border-brand-600 text-brand-700'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Assigned by me
-          </button>
-        </div>
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          {/*
+           * SEARCH
+           */}
 
-        <div className="mb-2 flex w-fit rounded-lg border border-slate-200 bg-slate-50 p-1">
-          <button
-            type="button"
-            onClick={() =>
-              setViewMode(
-                'list',
-              )
-            }
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              viewMode ===
-              'list'
-                ? 'bg-white text-slate-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
+          <div className="relative min-w-0 flex-1">
             <svg
-              className="h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
+              className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 ${
+                isArabic
+                  ? 'right-3'
+                  : 'left-3'
+              }`}
             >
+              <circle
+                cx="11"
+                cy="11"
+                r="6"
+                strokeWidth="1.8"
+              />
+
               <path
-                d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
-                strokeWidth="2"
+                d="m16 16 4 4"
+                strokeWidth="1.8"
                 strokeLinecap="round"
               />
             </svg>
 
-            List
-          </button>
 
-          <button
-            type="button"
-            onClick={() =>
-              setViewMode(
-                'cards',
+            <input
+              className={`input ${
+                isArabic
+                  ? 'pr-9'
+                  : 'pl-9'
+              }`}
+              placeholder={
+                isArabic
+                  ? 'ابحث في العنوان أو الوصف…'
+                  : 'Search title or description…'
+              }
+              value={
+                search
+              }
+              onChange={(
+                event,
+              ) =>
+                setSearch(
+                  event.target.value,
+                )
+              }
+            />
+          </div>
+
+
+          {/*
+           * STATUS
+           */}
+
+          <select
+            className="input xl:w-[190px]"
+            value={
+              status
+            }
+            onChange={(
+              event,
+            ) =>
+              setStatus(
+                event.target.value,
               )
             }
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-              viewMode ===
-              'cards'
-                ? 'bg-white text-slate-800 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
           >
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-            >
-              <rect
-                x="4"
-                y="4"
-                width="6"
-                height="6"
-                rx="1"
-                strokeWidth="2"
-              />
+            <option value="">
+              {isArabic
+                ? 'كل الحالات'
+                : 'All statuses'}
+            </option>
 
-              <rect
-                x="14"
-                y="4"
-                width="6"
-                height="6"
-                rx="1"
-                strokeWidth="2"
-              />
 
-              <rect
-                x="4"
-                y="14"
-                width="6"
-                height="6"
-                rx="1"
-                strokeWidth="2"
-              />
+            {visibleStatuses.map(
+              (
+                item,
+              ) => (
+                <option
+                  key={
+                    item.id
+                  }
+                  value={
+                    item.key
+                  }
+                >
+                  {isArabic
+                    ? item.codeAr
+                    : item.codeEn}
+                </option>
+              ),
+            )}
+          </select>
 
-              <rect
-                x="14"
-                y="14"
-                width="6"
-                height="6"
-                rx="1"
-                strokeWidth="2"
-              />
-            </svg>
 
-            Cards
-          </button>
-        </div>
-      </div>
+          {/*
+           * PRIORITY
+           */}
 
-      {/* FILTER BAR */}
+          <select
+            className="input xl:w-[180px]"
+            value={
+              priority
+            }
+            onChange={(
+              event,
+            ) =>
+              setPriority(
+                event.target.value,
+              )
+            }
+          >
+            <option value="">
+              {isArabic
+                ? 'كل الأهميات'
+                : 'All importance'}
+            </option>
 
-      <div className="card mt-5 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="min-w-0 flex-1">
-            <label className="label">
-              Search tasks
-            </label>
 
-            <div className="relative">
-              <svg
-                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <circle
-                  cx="11"
-                  cy="11"
-                  r="7"
-                  strokeWidth="2"
-                />
+            {visiblePriorities.map(
+              (
+                item,
+              ) => (
+                <option
+                  key={
+                    item.id
+                  }
+                  value={
+                    item.key
+                  }
+                >
+                  {isArabic
+                    ? item.codeAr
+                    : item.codeEn}
+                </option>
+              ),
+            )}
+          </select>
 
-                <path
-                  d="m20 20-3.5-3.5"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
 
-              <input
-                className="input pl-9"
-                placeholder="Search title or description…"
-                value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value,
-                  )
-                }
-              />
-            </div>
-          </div>
+          {/*
+           * SORT
+           */}
 
-          <div className="min-w-[170px]">
-            <label className="label">
-              Status
-            </label>
+          <select
+            className="input xl:w-[180px]"
+            value={
+              sortBy
+            }
+            onChange={(
+              event,
+            ) =>
+              setSortBy(
+                event.target.value as
+                  SortBy,
+              )
+            }
+          >
+            <option value="deadline">
+              {isArabic
+                ? 'الموعد النهائي'
+                : 'Deadline'}
+            </option>
 
-            <select
-              className="input"
-              value={status}
-              onChange={(e) =>
-                setStatus(
-                  e.target.value,
-                )
-              }
-            >
-              <option value="">
-                All statuses
-              </option>
+            <option value="createdAt">
+              {isArabic
+                ? 'تاريخ الإنشاء'
+                : 'Created'}
+            </option>
 
-              {STATUSES.map(
-                (value) => (
-                  <option
-                    key={value}
-                    value={value}
-                  >
-                    {value}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
+            <option value="priority">
+              {isArabic
+                ? 'الأهمية'
+                : 'Importance'}
+            </option>
 
-          <div className="min-w-[160px]">
-            <label className="label">
-              Priority
-            </label>
+            <option value="rating">
+              {isArabic
+                ? 'التقييم'
+                : 'Rating'}
+            </option>
+          </select>
 
-            <select
-              className="input"
-              value={priority}
-              onChange={(e) =>
-                setPriority(
-                  e.target.value,
-                )
-              }
-            >
-              <option value="">
-                All priorities
-              </option>
-
-              {PRIORITIES.map(
-                (value) => (
-                  <option
-                    key={value}
-                    value={value}
-                  >
-                    {value}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
 
           <button
             type="button"
+            className="btn-secondary shrink-0"
             onClick={() =>
-              setShowMoreFilters(
-                (current) =>
+              setSortDir(
+                (
+                  current,
+                ) =>
+                  current ===
+                  'asc'
+                    ? 'desc'
+                    : 'asc',
+              )
+            }
+          >
+            {sortDir ===
+            'asc'
+              ? '↑'
+              : '↓'}
+
+            <span className="ml-1">
+              {sortDir ===
+              'asc'
+                ? isArabic
+                  ? 'تصاعدي'
+                  : 'Ascending'
+                : isArabic
+                  ? 'تنازلي'
+                  : 'Descending'}
+            </span>
+          </button>
+
+
+          <button
+            type="button"
+            className="btn-secondary shrink-0"
+            onClick={() =>
+              setShowFilters(
+                (
+                  current,
+                ) =>
                   !current,
               )
             }
-            className={`btn-secondary whitespace-nowrap ${
-              showMoreFilters
-                ? 'border-brand-300 bg-brand-50 text-brand-700'
-                : ''
-            }`}
           >
             <svg
-              className="mr-1.5 h-4 w-4"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
+              className="mr-1.5 h-4 w-4"
             >
               <path
                 d="M4 6h16M7 12h10M10 18h4"
-                strokeWidth="2"
+                strokeWidth="1.8"
                 strokeLinecap="round"
               />
             </svg>
 
-            More filters
+            {isArabic
+              ? 'التصفية'
+              : 'Filters'}
 
-            {(
-              taskType ||
-              minRating ||
-              upcomingOnly ||
-              deadlineFrom ||
-              deadlineTo
-            ) && (
-              <span className="ml-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-brand-500 px-1 text-[10px] text-white">
+
+            {filterCount >
+              0 && (
+              <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
                 {
-                  [
-                    taskType,
-                    minRating,
-                    upcomingOnly
-                      ? '1'
-                      : '',
-                    deadlineFrom,
-                    deadlineTo,
-                  ].filter(
-                    Boolean,
-                  ).length
+                  filterCount
                 }
               </span>
             )}
           </button>
-
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={
-                clearFilters
-              }
-              className="btn-secondary whitespace-nowrap text-slate-500"
-            >
-              Clear
-            </button>
-          )}
         </div>
 
-        {/* ADVANCED FILTERS */}
 
-        {showMoreFilters && (
-          <div className="mt-4 grid gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div>
-              <label className="label">
-                Task type
-              </label>
+        {/*
+         * ====================================================
+         * ADVANCED FILTERS
+         * ====================================================
+         */}
 
-              <select
-                className="input"
-                value={taskType}
-                onChange={(e) =>
-                  setTaskType(
-                    e.target.value,
-                  )
-                }
-              >
-                <option value="">
-                  All types
-                </option>
+        {showFilters && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'نوع المهمة'
+                    : 'Task type'}
+                </label>
 
-                {TASK_TYPES.map(
-                  (value) => (
-                    <option
-                      key={value}
-                      value={value}
-                    >
-                      {value}
-                    </option>
-                  ),
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="label">
-                Minimum rating
-              </label>
-
-              <select
-                className="input"
-                value={minRating}
-                onChange={(e) =>
-                  setMinRating(
-                    e.target.value,
-                  )
-                }
-              >
-                <option value="">
-                  Any rating
-                </option>
-
-                {RATINGS.map(
-                  (rating) => (
-                    <option
-                      key={rating}
-                      value={rating}
-                    >
-                      {rating}★ or higher
-                    </option>
-                  ),
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="label">
-                Due from
-              </label>
-
-              <input
-                type="date"
-                className="input"
-                value={deadlineFrom}
-                onChange={(e) =>
-                  setDeadlineFrom(
-                    e.target.value,
-                  )
-                }
-              />
-            </div>
-
-            <div>
-              <label className="label">
-                Due to
-              </label>
-
-              <input
-                type="date"
-                className="input"
-                value={deadlineTo}
-                onChange={(e) =>
-                  setDeadlineTo(
-                    e.target.value,
-                  )
-                }
-              />
-            </div>
-
-            <div className="flex items-end">
-              <label className="flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-md border border-slate-200 px-3 text-sm text-slate-600">
-                <input
-                  type="checkbox"
-                  checked={
-                    upcomingOnly
+                <select
+                  className="input"
+                  value={
+                    taskType
                   }
-                  onChange={(e) =>
-                    setUpcomingOnly(
-                      e.target.checked,
+                  onChange={(
+                    event,
+                  ) =>
+                    setTaskType(
+                      event.target.value,
                     )
                   }
-                  className="rounded border-slate-300"
-                />
+                >
+                  <option value="">
+                    {isArabic
+                      ? 'كل الأنواع'
+                      : 'All types'}
+                  </option>
 
-                Due soon only
-              </label>
+
+                  {visibleTypes.map(
+                    (
+                      item,
+                    ) => (
+                      <option
+                        key={
+                          item.id
+                        }
+                        value={
+                          item.key
+                        }
+                      >
+                        {isArabic
+                          ? item.codeAr
+                          : item.codeEn}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'المشروع'
+                    : 'Project'}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    projectId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setProjectId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {isArabic
+                      ? 'كل المشاريع'
+                      : 'All projects'}
+                  </option>
+
+
+                  {projects.map(
+                    (
+                      project,
+                    ) => (
+                      <option
+                        key={
+                          project.id
+                        }
+                        value={
+                          project.id
+                        }
+                      >
+                        {
+                          project.name
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'أقل تقييم'
+                    : 'Minimum rating'}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    minRating
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setMinRating(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {isArabic
+                      ? 'أي تقييم'
+                      : 'Any rating'}
+                  </option>
+
+
+                  {RATINGS.map(
+                    (
+                      rating,
+                    ) => (
+                      <option
+                        key={
+                          rating
+                        }
+                        value={
+                          String(
+                            rating,
+                          )
+                        }
+                      >
+                        {rating}★{' '}
+
+                        {isArabic
+                          ? 'أو أعلى'
+                          : 'or higher'}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'الموعد من'
+                    : 'Deadline from'}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    deadlineFrom
+                  }
+                  max={
+                    deadlineTo ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDeadlineFrom(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {isArabic
+                    ? 'الموعد إلى'
+                    : 'Deadline to'}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    deadlineTo
+                  }
+                  min={
+                    deadlineFrom ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDeadlineTo(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div className="flex items-end">
+                <label className="flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4">
+                  <input
+                    type="checkbox"
+                    checked={
+                      upcomingOnly
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setUpcomingOnly(
+                        event.target.checked,
+                      )
+                    }
+                  />
+
+                  <span className="text-sm font-medium text-slate-700">
+                    {isArabic
+                      ? 'المواعيد القادمة فقط'
+                      : 'Upcoming only'}
+                  </span>
+                </label>
+              </div>
             </div>
+
+
+            {hasFilters && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-red-600 hover:text-red-700"
+                  onClick={
+                    clearFilters
+                  }
+                >
+                  {isArabic
+                    ? 'مسح عوامل التصفية'
+                    : 'Clear filters'}
+                </button>
+              </div>
+            )}
           </div>
+        )}
+      </section>
+
+
+      {/*
+       * ======================================================
+       * RESULT BAR
+       * ======================================================
+       */}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-slate-500">
+          <span className="font-semibold text-slate-800">
+            {
+              total
+            }
+          </span>{' '}
+
+          {isArabic
+            ? 'مهمة'
+            : total ===
+                1
+              ? 'task'
+              : 'tasks'}
+        </div>
+
+
+        {hasFilters && (
+          <button
+            type="button"
+            className="text-xs font-medium text-brand-600 hover:text-brand-800"
+            onClick={
+              clearFilters
+            }
+          >
+            {isArabic
+              ? 'إعادة تعيين التصفية'
+              : 'Reset filters'}
+          </button>
         )}
       </div>
 
-      {/* ACTIVE FILTERS */}
 
-      {hasFilters && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-400">
-            Filters:
-          </span>
-
-          {status && (
-            <button
-              type="button"
-              onClick={() =>
-                setStatus('')
-              }
-              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
-            >
-              Status: {status} ×
-            </button>
-          )}
-
-          {priority && (
-            <button
-              type="button"
-              onClick={() =>
-                setPriority('')
-              }
-              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
-            >
-              Priority: {priority} ×
-            </button>
-          )}
-
-          {taskType && (
-            <button
-              type="button"
-              onClick={() =>
-                setTaskType('')
-              }
-              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
-            >
-              Type: {taskType} ×
-            </button>
-          )}
-
-          {upcomingOnly && (
-            <button
-              type="button"
-              onClick={() =>
-                setUpcomingOnly(
-                  false,
-                )
-              }
-              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs text-slate-600 hover:border-slate-300"
-            >
-              Due soon ×
-            </button>
-          )}
-        </div>
-      )}
+      {/*
+       * ======================================================
+       * GENERAL ERROR
+       * ======================================================
+       */}
 
       {error && (
-        <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-          {error}
-        </p>
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {
+            error
+          }
+        </div>
       )}
 
-      {/* RESULTS HEADER */}
 
-      <div className="mt-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-800">
-            {tab ===
-            'assignedToMe'
-              ? 'Your assignments'
-              : 'Tasks you assigned'}
-          </h2>
+      {/*
+       * ======================================================
+       * LOADING
+       * ======================================================
+       */}
 
-          <p className="mt-0.5 text-xs text-slate-400">
-            Sorted by nearest
-            deadline
-          </p>
-        </div>
-
-        <span className="text-xs text-slate-400 sm:hidden">
-          {loading
-            ? '…'
-            : `${total} tasks`}
-        </span>
-      </div>
-
-      {/* RESULTS */}
-
-      <div className="mt-3">
-        {loading ? (
-          <div className="card p-10 text-center">
-            <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-brand-500" />
-
-            <p className="mt-3 text-sm text-slate-500">
-              Loading tasks…
-            </p>
-          </div>
-        ) : tasks.length ===
-          0 ? (
-          <div className="card px-6 py-14 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-              <svg
-                className="h-6 w-6 text-slate-400"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  d="m9 11 2 2 4-4M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+      {loading ? (
+        viewMode ===
+        'cards' ? (
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+            ].map(
+              (
+                item,
+              ) => (
+                <div
+                  key={
+                    item
+                  }
+                  className="h-[300px] animate-pulse rounded-2xl bg-slate-100"
                 />
-              </svg>
-            </div>
-
-            <h3 className="mt-4 text-sm font-semibold text-slate-800">
-              {tab ===
-              'assignedToMe'
-                ? 'No matching tasks'
-                : 'No assigned tasks'}
-            </h3>
-
-            <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
-              {tab ===
-              'assignedToMe'
-                ? 'Try changing or clearing your filters.'
-                : "You haven't assigned any tasks to others yet."}
-            </p>
-          </div>
-        ) : viewMode ===
-          'list' ? (
-          /*
-           * ================================================
-           * LIST VIEW
-           * Whole row is clickable.
-           * ================================================
-           */
-          <div className="card overflow-hidden">
-            <div className="hidden grid-cols-[minmax(0,1fr)_150px_135px_135px_80px] gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:grid">
-              <div>
-                Task
-              </div>
-
-              <div>
-                Project
-              </div>
-
-              <div>
-                Deadline
-              </div>
-
-              <div>
-                Status
-              </div>
-
-              <div />
-            </div>
-
-            <div className="divide-y divide-slate-100">
-              {tasks.map(
-                (task) => {
-                  const overdue =
-                    isOverdue(
-                      task,
-                    );
-
-                  const dueSoon =
-                    isDueSoon(
-                      task,
-                    );
-
-                  const busy =
-                    actingOnId ===
-                    task.id;
-
-                  return (
-                    <div
-                      key={
-                        task.id
-                      }
-                      className="group"
-                    >
-                      <Link
-                        href={`/tasks/${task.id}`}
-                        className="block px-4 py-4 transition hover:bg-slate-50/70 sm:px-5"
-                      >
-                        <div className="grid items-center gap-4 lg:grid-cols-[minmax(0,1fr)_150px_135px_135px_80px]">
-                          {/* TASK */}
-
-                          <div className="min-w-0">
-                            <div className="flex items-start gap-3">
-                              <div
-                                className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                                  overdue
-                                    ? 'bg-red-500'
-                                    : dueSoon
-                                      ? 'bg-amber-400'
-                                      : 'bg-brand-500'
-                                }`}
-                              />
-
-                              <div className="min-w-0">
-                                <div className="block truncate font-medium text-slate-800 transition group-hover:text-brand-700">
-                                  {
-                                    task.titleEn
-                                  }
-                                </div>
-
-                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
-                                  <StatusBadge
-                                    value={
-                                      task.priority
-                                    }
-                                    listType="task_priority"
-                                  />
-
-                                  {tab ===
-                                    'assignedByMe' && (
-                                    <span>
-                                      To:{' '}
-                                      <span className="font-medium text-slate-500">
-                                        {task
-                                          .assignedTo
-                                          ?.fullName ||
-                                          'Unassigned'}
-                                      </span>
-                                    </span>
-                                  )}
-
-                                  <Stars
-                                    value={avgRating(
-                                      task,
-                                    )}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* PROJECT */}
-
-                          <div className="min-w-0">
-                            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Project
-                            </span>
-
-                            {task
-                              .project
-                              ?.name ? (
-                              <span className="block truncate text-sm text-slate-600">
-                                {
-                                  task
-                                    .project
-                                    .name
-                                }
-                              </span>
-                            ) : (
-                              <span className="text-sm text-slate-300">
-                                —
-                              </span>
-                            )}
-                          </div>
-
-                          {/* DEADLINE */}
-
-                          <div>
-                            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Deadline
-                            </span>
-
-                            <div
-                              className={`text-sm ${
-                                overdue
-                                  ? 'font-medium text-red-600'
-                                  : dueSoon
-                                    ? 'font-medium text-amber-600'
-                                    : 'text-slate-500'
-                              }`}
-                            >
-                              {formatDeadline(
-                                task.deadlineDate,
-                              )}
-                            </div>
-
-                            {overdue && (
-                              <div className="mt-0.5 text-[11px] font-medium text-red-500">
-                                Overdue
-                              </div>
-                            )}
-
-                            {!overdue &&
-                              dueSoon && (
-                                <div className="mt-0.5 text-[11px] font-medium text-amber-500">
-                                  Due soon
-                                </div>
-                              )}
-                          </div>
-
-                          {/* STATUS */}
-
-                          <div>
-                            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-400 lg:hidden">
-                              Status
-                            </span>
-
-                            <StatusBadge
-                              value={
-                                task.status
-                              }
-                              listType="task_status"
-                            />
-                          </div>
-
-                          {/* ARROW */}
-
-                          <div className="flex justify-end">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition group-hover:bg-slate-100 group-hover:text-brand-700">
-                              <svg
-                                className="h-4 w-4"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  d="m9 18 6-6-6-6"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-
-                      {tab ===
-                        'assignedByMe' && (
-                        <div className="flex justify-end border-t border-slate-100 px-4 py-3 sm:px-5">
-                          <TaskActions
-                            task={
-                              task
-                            }
-                            tab={
-                              tab
-                            }
-                            busy={
-                              busy
-                            }
-                            onFinish={
-                              setFinishModalTask
-                            }
-                            onArchive={
-                              archiveTask
-                            }
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                },
-              )}
-            </div>
+              ),
+            )}
           </div>
         ) : (
-          /*
-           * ================================================
-           * CARD VIEW
-           * Whole card body is clickable.
-           * ================================================
-           */
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {tasks.map(
-              (task) => {
-                const busy =
-                  actingOnId ===
-                  task.id;
+          <div className="mt-4 space-y-2">
+            {[
+              1,
+              2,
+              3,
+              4,
+              5,
+            ].map(
+              (
+                item,
+              ) => (
+                <div
+                  key={
+                    item
+                  }
+                  className="h-24 animate-pulse rounded-xl bg-slate-100"
+                />
+              ),
+            )}
+          </div>
+        )
+      ) : tasks.length ===
+        0 ? (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+          <EmptyState
+            tab={
+              tab
+            }
+            isArabic={
+              isArabic
+            }
+          />
+        </div>
+      ) : viewMode ===
+        'cards' ? (
+        /*
+         * ====================================================
+         * CARD VIEW
+         * ====================================================
+         */
 
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {tasks.map(
+            (
+              task,
+            ) => {
+              const rating =
+                avgRating(
+                  task,
+                );
+
+
+              const overdue =
+                isOverdue(
+                  task,
+                );
+
+
+              const dueSoon =
+                isDueSoon(
+                  task,
+                );
+
+
+              const description =
+                taskDescription(
+                  task,
+                );
+
+
+              return (
+                <article
+                  key={
+                    task.id
+                  }
+                  className="group relative flex min-h-[305px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg"
+                  style={
+                    task.color
+                      ? {
+                          borderTop:
+                            `3px solid ${task.color}`,
+                        }
+                      : undefined
+                  }
+                >
+                  {/*
+                   * FULL CARD CLICKABLE
+                   */}
+
+                  <Link
+                    href={`/tasks/${task.id}`}
+                    className="absolute inset-0 z-10"
+                    aria-label={
+                      taskTitle(
+                        task,
+                      )
+                    }
+                  />
+
+
+                  <div className="p-5">
+                    <div className="relative z-0 flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge
+                          value={
+                            task.status
+                          }
+                          listType="task_status"
+                        />
+
+                        <StatusBadge
+                          value={
+                            task.priority
+                          }
+                          listType="task_priority"
+                        />
+                      </div>
+
+
+                      {overdue && (
+                        <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-700">
+                          {isArabic
+                            ? 'متأخرة'
+                            : 'Overdue'}
+                        </span>
+                      )}
+
+
+                      {!overdue &&
+                        dueSoon && (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
+                            {isArabic
+                              ? 'موعد قريب'
+                              : 'Due soon'}
+                          </span>
+                        )}
+                    </div>
+
+
+                    <h2 className="mt-4 line-clamp-2 text-lg font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
+                      {taskTitle(
+                        task,
+                      )}
+                    </h2>
+
+
+                    <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-5 text-slate-500">
+                      {description ||
+                        (
+                          isArabic
+                            ? 'لا يوجد وصف.'
+                            : 'No description.'
+                        )}
+                    </p>
+
+
+                    <div className="mt-4">
+                      <StatusBadge
+                        value={
+                          task.taskType
+                        }
+                        listType="task_type"
+                      />
+                    </div>
+
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                          {tab ===
+                          'assignedToMe'
+                            ? isArabic
+                              ? 'أنشأها'
+                              : 'Created by'
+                            : isArabic
+                              ? 'المكلف'
+                              : 'Assigned to'}
+                        </div>
+
+                        <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                          {tab ===
+                          'assignedToMe'
+                            ? task.createdBy
+                                ?.fullName ||
+                              '—'
+                            : task.assignedTo
+                                ?.fullName ||
+                              (
+                                isArabic
+                                  ? 'غير مسندة'
+                                  : 'Unassigned'
+                              )}
+                        </div>
+                      </div>
+
+
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                          {isArabic
+                            ? 'الموعد'
+                            : 'Deadline'}
+                        </div>
+
+                        <div
+                          className={`mt-1 truncate text-xs font-medium ${
+                            overdue
+                              ? 'text-red-600'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          {formatDate(
+                            task.deadlineDate,
+                            locale,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                      <div>
+                        <div className="text-slate-400">
+                          {isArabic
+                            ? 'المشروع'
+                            : 'Project'}
+                        </div>
+
+                        <div className="mt-1 truncate font-medium text-slate-600">
+                          {task.project
+                            ?.name ||
+                            '—'}
+                        </div>
+                      </div>
+
+
+                      <div>
+                        <div className="text-slate-400">
+                          {isArabic
+                            ? 'تاريخ البدء'
+                            : 'Start date'}
+                        </div>
+
+                        <div className="mt-1 truncate font-medium text-slate-600">
+                          {formatDate(
+                            task.startDate,
+                            locale,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+
+                  <div className="relative z-20 mt-auto border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(
+                            task.createdAt,
+                          ).toLocaleDateString(
+                            locale,
+                          )}
+                        </span>
+
+                        <Stars
+                          value={
+                            rating
+                          }
+                        />
+                      </div>
+
+
+                      <TaskActions
+                        task={
+                          task
+                        }
+                      />
+                    </div>
+
+
+                    {rowError?.id ===
+                      task.id && (
+                      <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
+                        {
+                          rowError.message
+                        }
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            },
+          )}
+        </div>
+      ) : (
+        /*
+         * ====================================================
+         * LIST VIEW
+         * ====================================================
+         */
+
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="hidden grid-cols-[minmax(280px,1fr)_140px_170px_170px_160px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+            <div>
+              {isArabic
+                ? 'المهمة'
+                : 'Task'}
+            </div>
+
+            <div>
+              {isArabic
+                ? 'الحالة'
+                : 'Status'}
+            </div>
+
+            <div>
+              {tab ===
+              'assignedToMe'
+                ? isArabic
+                  ? 'أنشأها'
+                  : 'Created by'
+                : isArabic
+                  ? 'المكلف'
+                  : 'Assigned to'}
+            </div>
+
+            <div>
+              {isArabic
+                ? 'المشروع'
+                : 'Project'}
+            </div>
+
+            <div>
+              {isArabic
+                ? 'الموعد'
+                : 'Deadline'}
+            </div>
+
+            <div />
+          </div>
+
+
+          <div className="divide-y divide-slate-100">
+            {tasks.map(
+              (
+                task,
+              ) => {
                 const overdue =
                   isOverdue(
                     task,
                   );
+
 
                 const dueSoon =
                   isDueSoon(
                     task,
                   );
 
+
+                const rating =
+                  avgRating(
+                    task,
+                  );
+
+
                 return (
-                  <div
+                  <article
                     key={
                       task.id
                     }
-                    className="card group overflow-hidden transition hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-md"
+                    className="group relative px-5 py-4 transition hover:bg-slate-50/70"
                   >
+                    {/*
+                     * ENTIRE ROW CLICKABLE
+                     */}
+
                     <Link
                       href={`/tasks/${task.id}`}
-                      className="block p-4"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="flex items-start gap-2">
-                            <div
-                              className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${
-                                overdue
-                                  ? 'bg-red-500'
-                                  : dueSoon
-                                    ? 'bg-amber-400'
-                                    : 'bg-brand-500'
-                              }`}
-                            />
+                      className="absolute inset-0 z-10"
+                      aria-label={
+                        taskTitle(
+                          task,
+                        )
+                      }
+                    />
 
-                            <h3 className="min-w-0 truncate font-medium text-slate-800 transition group-hover:text-brand-700">
-                              {
-                                task.titleEn
-                              }
-                            </h3>
-                          </div>
+
+                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_160px_auto] xl:items-center">
+                      {/*
+                       * TASK
+                       */}
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          {task.color && (
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  task.color,
+                              }}
+                            />
+                          )}
+
+
+                          <h2 className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-brand-700">
+                            {taskTitle(
+                              task,
+                            )}
+                          </h2>
+
+
+                          {overdue && (
+                            <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
+                              {isArabic
+                                ? 'متأخرة'
+                                : 'Overdue'}
+                            </span>
+                          )}
+
+
+                          {!overdue &&
+                            dueSoon && (
+                              <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
+                                {isArabic
+                                  ? 'قريب'
+                                  : 'Soon'}
+                              </span>
+                            )}
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-1">
+
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
                           <StatusBadge
                             value={
                               task.priority
@@ -1576,218 +2701,196 @@ function MyTasksContent() {
 
                           <StatusBadge
                             value={
-                              task.status
+                              task.taskType
                             }
-                            listType="task_status"
+                            listType="task_type"
+                          />
+
+                          <Stars
+                            value={
+                              rating
+                            }
                           />
                         </div>
                       </div>
 
-                      {task.descriptionEn && (
-                        <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-500">
-                          {
-                            task.descriptionEn
+
+                      {/*
+                       * STATUS
+                       */}
+
+                      <div>
+                        <StatusBadge
+                          value={
+                            task.status
                           }
-                        </p>
-                      )}
-
-                      <div className="mt-4 space-y-2">
-                        {task
-                          .project
-                          ?.name && (
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
-                            <svg
-                              className="h-4 w-4 shrink-0 text-slate-400"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <path
-                                d="M4 7h6l2 2h8v10H4V7Z"
-                                strokeWidth="1.8"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-
-                            <span className="truncate">
-                              Project:{' '}
-                              <span className="font-medium">
-                                {
-                                  task
-                                    .project
-                                    .name
-                                }
-                              </span>
-                            </span>
-                          </div>
-                        )}
-
-                        {tab ===
-                          'assignedByMe' && (
-                          <div className="flex items-center gap-2 text-xs text-slate-600">
-                            <svg
-                              className="h-4 w-4 shrink-0 text-slate-400"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <circle
-                                cx="12"
-                                cy="8"
-                                r="3"
-                                strokeWidth="1.8"
-                              />
-
-                              <path
-                                d="M6 19c.7-3 2.7-5 6-5s5.3 2 6 5"
-                                strokeWidth="1.8"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-
-                            <span className="truncate">
-                              Assigned
-                              to:{' '}
-                              <span className="font-medium">
-                                {task
-                                  .assignedTo
-                                  ?.fullName ||
-                                  'Unassigned'}
-                              </span>
-                            </span>
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-2 text-xs">
-                          <svg
-                            className={`h-4 w-4 shrink-0 ${
-                              overdue
-                                ? 'text-red-500'
-                                : dueSoon
-                                  ? 'text-amber-500'
-                                  : 'text-slate-400'
-                            }`}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                          >
-                            <rect
-                              x="4"
-                              y="5"
-                              width="16"
-                              height="15"
-                              rx="2"
-                              strokeWidth="1.8"
-                            />
-
-                            <path
-                              d="M8 3v4M16 3v4M4 10h16"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-
-                          <span
-                            className={
-                              overdue
-                                ? 'font-medium text-red-600'
-                                : dueSoon
-                                  ? 'font-medium text-amber-600'
-                                  : 'text-slate-500'
-                            }
-                          >
-                            {formatDeadline(
-                              task.deadlineDate,
-                            )}
-
-                            {overdue
-                              ? ' · Overdue'
-                              : dueSoon
-                                ? ' · Due soon'
-                                : ''}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3">
-                        <Stars
-                          value={avgRating(
-                            task,
-                          )}
+                          listType="task_status"
                         />
+                      </div>
 
-                        <div className="flex items-center gap-1 text-xs font-medium text-brand-700">
-                          Open task
 
-                          <svg
-                            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                          >
-                            <path
-                              d="m9 18 6-6-6-6"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
+                      {/*
+                       * PERSON
+                       */}
+
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-medium text-slate-700">
+                          {tab ===
+                          'assignedToMe'
+                            ? task.createdBy
+                                ?.fullName ||
+                              '—'
+                            : task.assignedTo
+                                ?.fullName ||
+                              (
+                                isArabic
+                                  ? 'غير مسندة'
+                                  : 'Unassigned'
+                              )}
                         </div>
                       </div>
-                    </Link>
 
-                    {tab ===
-                      'assignedByMe' && (
-                      <div className="border-t border-slate-100 px-4 py-3">
+
+                      {/*
+                       * PROJECT
+                       */}
+
+                      <div className="min-w-0">
+                        <div className="truncate text-xs font-medium text-slate-700">
+                          {task.project
+                            ?.name ||
+                            '—'}
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * DEADLINE
+                       */}
+
+                      <div>
+                        <div
+                          className={`text-xs font-medium ${
+                            overdue
+                              ? 'text-red-600'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          {formatDate(
+                            task.deadlineDate,
+                            locale,
+                          )}
+                        </div>
+
+                        <div className="mt-1 text-[10px] text-slate-400">
+                          {isArabic
+                            ? 'البدء'
+                            : 'Start'}{' '}
+
+                          {formatDate(
+                            task.startDate,
+                            locale,
+                          )}
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * ACTIONS
+                       */}
+
+                      <div className="relative z-20 flex justify-start xl:justify-end">
                         <TaskActions
                           task={
                             task
                           }
-                          tab={
-                            tab
-                          }
-                          busy={
-                            busy
-                          }
-                          onFinish={
-                            setFinishModalTask
-                          }
-                          onArchive={
-                            archiveTask
-                          }
                         />
                       </div>
+                    </div>
+
+
+                    {rowError?.id ===
+                      task.id && (
+                      <div className="relative z-20 mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
+                        {
+                          rowError.message
+                        }
+                      </div>
                     )}
-                  </div>
+                  </article>
                 );
               },
             )}
           </div>
-        )}
-      </div>
-
-      {!loading && (
-        <Pagination
-          page={page}
-          totalPages={
-            totalPages
-          }
-          total={total}
-          onPageChange={
-            setPage
-          }
-          itemLabel="tasks"
-        />
+        </div>
       )}
+
+
+      {/*
+       * ======================================================
+       * PAGINATION
+       * ======================================================
+       */}
+
+      {!loading &&
+        !error && (
+          <Pagination
+            page={
+              page
+            }
+            totalPages={
+              totalPages
+            }
+            total={
+              total
+            }
+            onPageChange={
+              setPage
+            }
+            itemLabel={
+              isArabic
+                ? 'مهام'
+                : 'tasks'
+            }
+          />
+        )}
+
+
+      {/*
+       * ======================================================
+       * FINISH REASON MODAL
+       * ======================================================
+       */}
 
       <ReasonModal
         open={
-          !!finishModalTask
+          finishModalTask !==
+          null
         }
-        title="Finish task"
-        description="This will stop the task — please explain why it's being finished."
-        minLength={10}
-        confirmLabel="Finish"
+        title={
+          isArabic
+            ? 'إنهاء المهمة'
+            : 'Finish task'
+        }
+        description={
+          finishModalTask
+            ? isArabic
+              ? `وضح سبب إنهاء "${taskTitle(
+                  finishModalTask,
+                )}".`
+              : `Explain why "${taskTitle(
+                  finishModalTask,
+                )}" is being finished.`
+            : ''
+        }
+        minLength={
+          10
+        }
+        confirmLabel={
+          isArabic
+            ? 'إنهاء'
+            : 'Finish'
+        }
         onCancel={() =>
           setFinishModalTask(
             null,
@@ -1795,17 +2898,137 @@ function MyTasksContent() {
         }
         onConfirm={(
           reason,
-        ) =>
-          finishModalTask &&
-          finishTask(
-            finishModalTask,
-            reason,
-          )
-        }
+        ) => {
+          if (
+            finishModalTask
+          ) {
+            finishTask(
+              finishModalTask,
+              reason,
+            );
+          }
+        }}
       />
+
+
+      {/*
+       * ======================================================
+       * ARCHIVE CONFIRMATION
+       * ======================================================
+       */}
+
+      {archiveModalTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          onMouseDown={(
+            event,
+          ) => {
+            if (
+              event.target ===
+                event.currentTarget &&
+              actingOnId !==
+                archiveModalTask.id
+            ) {
+              setArchiveModalTask(
+                null,
+              );
+            }
+          }}
+        >
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="p-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+                >
+                  <path
+                    d="M5 8h14v12H5zM4 4h16v4H4zM9 12h6"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+
+              <h2 className="mt-4 text-lg font-semibold text-slate-900">
+                {isArabic
+                  ? 'أرشفة المهمة؟'
+                  : 'Archive task?'}
+              </h2>
+
+
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {isArabic
+                  ? `سيتم نقل "${taskTitle(
+                      archiveModalTask,
+                    )}" إلى الأرشيف.`
+                  : `"${taskTitle(
+                      archiveModalTask,
+                    )}" will be moved to the archive.`}
+              </p>
+            </div>
+
+
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={
+                  actingOnId ===
+                  archiveModalTask.id
+                }
+                onClick={() =>
+                  setArchiveModalTask(
+                    null,
+                  )
+                }
+              >
+                {isArabic
+                  ? 'إلغاء'
+                  : 'Cancel'}
+              </button>
+
+
+              <button
+                type="button"
+                className="btn-primary"
+                disabled={
+                  actingOnId ===
+                  archiveModalTask.id
+                }
+                onClick={() =>
+                  archiveTask(
+                    archiveModalTask,
+                  )
+                }
+              >
+                {actingOnId ===
+                archiveModalTask.id
+                  ? isArabic
+                    ? 'جاري الأرشفة…'
+                    : 'Archiving…'
+                  : isArabic
+                    ? 'أرشفة المهمة'
+                    : 'Archive task'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+
+/*
+ * ============================================================
+ * PAGE
+ * ============================================================
+ */
 
 export default function MyTasksPage() {
   return (

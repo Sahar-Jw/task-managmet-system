@@ -34,36 +34,303 @@ export class UsersService {
     private readonly configService: ConfigService,
   ) {}
 
-  async findAll(query: QueryUsersDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 20;
+  async findAll(
+  query: QueryUsersDto,
+) {
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
 
-    const qb = this.userRepo
-      .createQueryBuilder('user')
-      .leftJoinAndSelect('user.role', 'role')
-      .orderBy('user.fullName', 'ASC')
-      .skip((page - 1) * limit)
-      .take(limit);
+  const page =
+    query.page ??
+    1;
 
-    if (query.branchId) qb.andWhere('user.branchId = :branchId', { branchId: query.branchId });
-    if (query.departmentId) qb.andWhere('user.departmentId = :departmentId', { departmentId: query.departmentId });
-    if (query.roleId) qb.andWhere('user.roleId = :roleId', { roleId: query.roleId });
-    if (query.isActive !== undefined) qb.andWhere('user.isActive = :isActive', { isActive: query.isActive === 'true' });
-    if (query.search) {
-      qb.andWhere('(user.fullName ILIKE :search OR user.email ILIKE :search)', {
-        search: `%${query.search}%`,
-      });
-    }
-    if (query.joinDateFrom) {
-      qb.andWhere('user.createdAt::date >= :joinDateFrom', { joinDateFrom: query.joinDateFrom });
-    }
-    if (query.joinDateTo) {
-      qb.andWhere('user.createdAt::date <= :joinDateTo', { joinDateTo: query.joinDateTo });
-    }
 
-    const [items, total] = await qb.getManyAndCount();
-    return { items, total, page, limit };
+  const limit =
+    query.limit ??
+    20;
+
+
+  /*
+   * ==========================================================
+   * DATE VALIDATION
+   * ==========================================================
+   */
+
+  if (
+    query.joinDateFrom &&
+    query.joinDateTo &&
+    query.joinDateTo <
+      query.joinDateFrom
+  ) {
+    throw new BadRequestException(
+      'Join date "to" cannot be before the "from" date',
+    );
   }
+
+
+  /*
+   * ==========================================================
+   * BASE QUERY
+   * ==========================================================
+   */
+
+  const qb =
+    this.userRepo
+      .createQueryBuilder(
+        'user',
+      )
+      .leftJoinAndSelect(
+        'user.role',
+        'role',
+      );
+
+
+  /*
+   * ==========================================================
+   * ORGANIZATION
+   * ==========================================================
+   */
+
+  if (
+    query.branchId
+  ) {
+    qb.andWhere(
+      'user.branchId = :branchId',
+      {
+        branchId:
+          query.branchId,
+      },
+    );
+  }
+
+
+  if (
+    query.departmentId
+  ) {
+    qb.andWhere(
+      'user.departmentId = :departmentId',
+      {
+        departmentId:
+          query.departmentId,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * ROLE
+   * ==========================================================
+   */
+
+  if (
+    query.roleId
+  ) {
+    qb.andWhere(
+      'user.roleId = :roleId',
+      {
+        roleId:
+          query.roleId,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * ACTIVE / INACTIVE
+   * ==========================================================
+   */
+
+  if (
+    query.isActive !==
+    undefined
+  ) {
+    qb.andWhere(
+      'user.isActive = :isActive',
+      {
+        isActive:
+          query.isActive ===
+          'true',
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * SEARCH
+   * ==========================================================
+   *
+   * Search:
+   *
+   * - full name
+   * - email
+   * - phone
+   */
+
+  if (
+    query.search?.trim()
+  ) {
+    const search =
+      `%${query.search.trim()}%`;
+
+
+    qb.andWhere(
+      `(
+        user.fullName ILIKE :search
+        OR user.email ILIKE :search
+        OR user.phone ILIKE :search
+      )`,
+      {
+        search,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * JOIN DATE
+   * ==========================================================
+   */
+
+  if (
+    query.joinDateFrom
+  ) {
+    qb.andWhere(
+      'user.createdAt >= :joinDateFrom',
+      {
+        joinDateFrom:
+          query.joinDateFrom,
+      },
+    );
+  }
+
+
+  /*
+   * Include the entire final day.
+   */
+  if (
+    query.joinDateTo
+  ) {
+    qb.andWhere(
+      `user.createdAt < (
+        :joinDateTo::date +
+        INTERVAL '1 day'
+      )`,
+      {
+        joinDateTo:
+          query.joinDateTo,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * SORT
+   * ==========================================================
+   */
+
+  const sortColumns: Record<
+    string,
+    string
+  > = {
+    fullName:
+      'user.fullName',
+
+    email:
+      'user.email',
+
+    createdAt:
+      'user.createdAt',
+
+    role:
+      'role.name',
+
+    isActive:
+      'user.isActive',
+  };
+
+
+  const sortColumn =
+    sortColumns[
+      query.sortBy ??
+        'fullName'
+    ] ??
+    'user.fullName';
+
+
+  const sortDirection =
+    query.sortDir ===
+    'desc'
+      ? 'DESC'
+      : 'ASC';
+
+
+  qb.orderBy(
+    sortColumn,
+    sortDirection,
+  );
+
+
+  /*
+   * Stable secondary ordering.
+   */
+  if (
+    sortColumn !==
+    'user.fullName'
+  ) {
+    qb.addOrderBy(
+      'user.fullName',
+      'ASC',
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
+
+  qb
+    .skip(
+      (
+        page -
+        1
+      ) *
+      limit,
+    )
+    .take(
+      limit,
+    );
+
+
+  /*
+   * ==========================================================
+   * RESPONSE
+   * ==========================================================
+   */
+
+  const [
+    items,
+    total,
+  ] =
+    await qb.getManyAndCount();
+
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+  };
+}
 
   async findById(id: string): Promise<UserEntity> {
     const user = await this.userRepo.findOne({ where: { id } });
@@ -169,22 +436,88 @@ export class UsersService {
   }
 
   // only Admin deactivates; last active Admin cannot be removed.
-  async deactivate(id: string, actor: UserEntity): Promise<void> {
-    const user = await this.findById(id);
-    await this.assertNotLastActiveAdmin(user);
+async deactivate(
+  id: string,
+  actor: UserEntity,
+): Promise<void> {
+  const user =
+    await this.findById(
+      id,
+    );
 
-    user.isActive = false;
-    user.archivedAt = new Date();
-    await this.userRepo.save(user);
 
-    await this.auditLogsService.record({
-      actorId: actor.id,
-      entityType: 'User',
-      entityId: user.id,
-      action: AuditAction.DELETE,
-      newValue: { isActive: false },
-    });
+  /*
+   * Do not allow an Admin to deactivate their own current account.
+   */
+  if (
+    actor.id ===
+    id
+  ) {
+    throw new BadRequestException(
+      'You cannot deactivate your own account',
+    );
   }
+
+
+  /*
+   * Do not allow the last active Admin to be deactivated.
+   */
+  await this.assertNotLastActiveAdmin(
+    user,
+  );
+
+
+  /*
+   * Already inactive — nothing to change.
+   */
+  if (
+    !user.isActive
+  ) {
+    throw new ConflictException(
+      'User is already deactivated',
+    );
+  }
+
+
+  user.isActive =
+    false;
+
+  user.archivedAt =
+    new Date();
+
+
+  await this.userRepo.save(
+    user,
+  );
+
+
+  await this.auditLogsService.record({
+    actorId:
+      actor.id,
+
+    entityType:
+      'User',
+
+    entityId:
+      user.id,
+
+    action:
+      AuditAction.DELETE,
+
+    oldValue: {
+      isActive:
+        true,
+    },
+
+    newValue: {
+      isActive:
+        false,
+    },
+
+    reason:
+      'Account deactivated by Admin',
+  });
+}
 
   // Permanently removes the row from the database. Only Admin; last active
   // Admin cannot be removed and an Admin cannot delete their own account.

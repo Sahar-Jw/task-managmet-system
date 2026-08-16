@@ -405,286 +405,678 @@ export class TasksService {
    */
 
   async findAll(
-    query: QueryTasksDto,
-  ) {
-    const page =
-      query.page ?? 1;
+  query: QueryTasksDto,
+) {
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
 
-    const limit =
-      query.limit ?? 20;
+  const page =
+    query.page ??
+    1;
 
-    const qb =
-      this.taskRepo
-        .createQueryBuilder(
-          'task',
-        )
-        .leftJoinAndSelect(
-          'task.branch',
-          'branch',
-        )
-        .leftJoinAndSelect(
-          'task.department',
-          'department',
-        )
-        .leftJoinAndSelect(
-          'task.project',
-          'project',
-        )
-        .leftJoinAndSelect(
-          'task.assignedTo',
-          'assignedTo',
-        )
-        .leftJoinAndSelect(
-          'task.createdBy',
-          'createdBy',
-        )
-        .orderBy(
-          'task.createdAt',
-          'DESC',
-        )
-        .skip(
-          (page - 1) *
-            limit,
-        )
-        .take(
-          limit,
-        );
 
-    if (
-      query.status
-    ) {
-      qb.andWhere(
-        'task.status = :status',
-        {
-          status:
-            query.status,
-        },
-      );
-    }
+  const limit =
+    query.limit ??
+    20;
 
-    if (
-      query.excludeArchived ===
-      'true'
-    ) {
-      qb.andWhere(
-        'task.status != :archivedStatus',
-        {
-          archivedStatus:
-            TaskStatus.ARCHIVED,
-        },
-      );
-    }
 
-    if (
-      query.taskType
-    ) {
-      qb.andWhere(
-        'task.taskType = :taskType',
-        {
-          taskType:
-            query.taskType,
-        },
-      );
-    }
+  /*
+   * ==========================================================
+   * VALIDATE FILTER DATE RANGES
+   * ==========================================================
+   */
 
-    if (
-      query.priority
-    ) {
-      qb.andWhere(
-        'task.priority = :priority',
-        {
-          priority:
-            query.priority,
-        },
-      );
-    }
-
-    if (
-      query.branchId
-    ) {
-      qb.andWhere(
-        'task.branchId = :branchId',
-        {
-          branchId:
-            query.branchId,
-        },
-      );
-    }
-
-    if (
-      query.projectId
-    ) {
-      qb.andWhere(
-        'task.projectId = :projectId',
-        {
-          projectId:
-            query.projectId,
-        },
-      );
-    }
-
-    if (
-      query.departmentId
-    ) {
-      qb.andWhere(
-        'task.departmentId = :departmentId',
-        {
-          departmentId:
-            query.departmentId,
-        },
-      );
-    }
-
-    if (
-      query.createdById
-    ) {
-      qb.andWhere(
-        'task.createdById = :createdById',
-        {
-          createdById:
-            query.createdById,
-        },
-      );
-    }
-
-    if (
-      query.assignedToId
-    ) {
-      qb.andWhere(
-        'task.assignedToId = :assignedToId',
-        {
-          assignedToId:
-            query.assignedToId,
-        },
-      );
-    }
-
-    if (
-      query.assigneeId
-    ) {
-      qb
-        .innerJoin(
-          'task.assignments',
-          'assignment',
-        )
-        .andWhere(
-          'assignment.assigneeId = :assigneeId',
-          {
-            assigneeId:
-              query.assigneeId,
-          },
-        );
-    }
-
-    if (
+  if (
+    query.dueDateFrom &&
+    query.dueDateTo &&
+    query.dueDateTo <
       query.dueDateFrom
-    ) {
-      qb.andWhere(
-        'task.deadlineDate >= :dueDateFrom',
-        {
-          dueDateFrom:
-            query.dueDateFrom,
-        },
-      );
-    }
-
-    if (
-      query.dueDateTo
-    ) {
-      qb.andWhere(
-        'task.deadlineDate <= :dueDateTo',
-        {
-          dueDateTo:
-            query.dueDateTo,
-        },
-      );
-    }
-
-    if (
-      query.search
-    ) {
-      qb.andWhere(
-        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
-        {
-          search:
-            `%${query.search}%`,
-        },
-      );
-    }
-
-    const [
-      items,
-      total,
-    ] =
-      await qb.getManyAndCount();
-
-    if (
-      items.length >
-      0
-    ) {
-      const ratings =
-        await this.taskRepo.manager
-          .createQueryBuilder(
-            TaskRatingEntity,
-            'rating',
-          )
-          .where(
-            'rating.taskId IN (:...taskIds)',
-            {
-              taskIds:
-                items.map(
-                  (task) =>
-                    task.id,
-                ),
-            },
-          )
-          .getMany();
-
-      const ratingsByTaskId =
-        new Map<
-          string,
-          TaskRatingEntity[]
-        >();
-
-      for (
-        const rating
-        of ratings
-      ) {
-        const list =
-          ratingsByTaskId.get(
-            rating.taskId,
-          ) ??
-          [];
-
-        list.push(
-          rating,
-        );
-
-        ratingsByTaskId.set(
-          rating.taskId,
-          list,
-        );
-      }
-
-      for (
-        const task
-        of items
-      ) {
-        task.ratings =
-          ratingsByTaskId.get(
-            task.id,
-          ) ??
-          [];
-      }
-    }
-
-    return {
-      items,
-      total,
-      page,
-      limit,
-    };
+  ) {
+    throw new BadRequestException(
+      'Deadline "to" date cannot be before the "from" date',
+    );
   }
+
+
+  if (
+    query.startDateFrom &&
+    query.startDateTo &&
+    query.startDateTo <
+      query.startDateFrom
+  ) {
+    throw new BadRequestException(
+      'Start date "to" cannot be before the "from" date',
+    );
+  }
+
+
+  if (
+    query.createdDateFrom &&
+    query.createdDateTo &&
+    query.createdDateTo <
+      query.createdDateFrom
+  ) {
+    throw new BadRequestException(
+      'Created date "to" cannot be before the "from" date',
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * BASE QUERY
+   * ==========================================================
+   */
+
+  const qb =
+    this.taskRepo
+      .createQueryBuilder(
+        'task',
+      )
+      .leftJoinAndSelect(
+        'task.branch',
+        'branch',
+      )
+      .leftJoinAndSelect(
+        'task.department',
+        'department',
+      )
+      .leftJoinAndSelect(
+        'task.project',
+        'project',
+      )
+      .leftJoinAndSelect(
+        'task.assignedTo',
+        'assignedTo',
+      )
+      .leftJoinAndSelect(
+        'task.createdBy',
+        'createdBy',
+      );
+
+
+  /*
+   * ==========================================================
+   * STATUS
+   * ==========================================================
+   */
+
+  if (
+    query.status
+  ) {
+    qb.andWhere(
+      'task.status = :status',
+      {
+        status:
+          query.status,
+      },
+    );
+  }
+
+
+  if (
+    query.excludeArchived ===
+      'true' &&
+    query.status !==
+      TaskStatus.ARCHIVED
+  ) {
+    qb.andWhere(
+      'task.status != :archivedStatus',
+      {
+        archivedStatus:
+          TaskStatus.ARCHIVED,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * CLASSIFICATION
+   * ==========================================================
+   */
+
+  if (
+    query.taskType
+  ) {
+    qb.andWhere(
+      'task.taskType = :taskType',
+      {
+        taskType:
+          query.taskType,
+      },
+    );
+  }
+
+
+  if (
+    query.priority
+  ) {
+    qb.andWhere(
+      'task.priority = :priority',
+      {
+        priority:
+          query.priority,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * ORGANIZATION
+   * ==========================================================
+   */
+
+  if (
+    query.branchId
+  ) {
+    qb.andWhere(
+      'task.branchId = :branchId',
+      {
+        branchId:
+          query.branchId,
+      },
+    );
+  }
+
+
+  if (
+    query.projectId
+  ) {
+    qb.andWhere(
+      'task.projectId = :projectId',
+      {
+        projectId:
+          query.projectId,
+      },
+    );
+  }
+
+
+  if (
+    query.departmentId
+  ) {
+    qb.andWhere(
+      'task.departmentId = :departmentId',
+      {
+        departmentId:
+          query.departmentId,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * PEOPLE
+   * ==========================================================
+   */
+
+  if (
+    query.createdById
+  ) {
+    qb.andWhere(
+      'task.createdById = :createdById',
+      {
+        createdById:
+          query.createdById,
+      },
+    );
+  }
+
+
+  /*
+   * Current assignee.
+   *
+   * Task.assignedToId is synchronized with the Assignment
+   * workflow, so this represents the current assignee.
+   */
+  if (
+    query.assignedToId
+  ) {
+    qb.andWhere(
+      'task.assignedToId = :assignedToId',
+      {
+        assignedToId:
+          query.assignedToId,
+      },
+    );
+  }
+
+
+  /*
+   * Historical / Assignment-record assignee.
+   *
+   * Keep this because other parts of the app may use it.
+   */
+  if (
+    query.assigneeId
+  ) {
+    qb
+      .innerJoin(
+        'task.assignments',
+        'assignment',
+      )
+      .andWhere(
+        'assignment.assigneeId = :assigneeId',
+        {
+          assigneeId:
+            query.assigneeId,
+        },
+      );
+  }
+
+
+  /*
+   * ==========================================================
+   * BILINGUAL SEARCH
+   * ==========================================================
+   */
+
+  if (
+    query.search?.trim()
+  ) {
+    const search =
+      `%${query.search.trim()}%`;
+
+
+    qb.andWhere(
+      `(
+        task.titleEn ILIKE :search
+        OR task.titleAr ILIKE :search
+        OR task.descriptionEn ILIKE :search
+        OR task.descriptionAr ILIKE :search
+        OR createdBy.fullName ILIKE :search
+        OR assignedTo.fullName ILIKE :search
+        OR project.name ILIKE :search
+      )`,
+      {
+        search,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * DEADLINE FILTER
+   * ==========================================================
+   */
+
+  if (
+    query.dueDateFrom
+  ) {
+    qb.andWhere(
+      'task.deadlineDate >= :dueDateFrom',
+      {
+        dueDateFrom:
+          query.dueDateFrom,
+      },
+    );
+  }
+
+
+  if (
+    query.dueDateTo
+  ) {
+    qb.andWhere(
+      'task.deadlineDate <= :dueDateTo',
+      {
+        dueDateTo:
+          query.dueDateTo,
+      },
+    );
+  }
+
+
+  /*
+   * Has / does not have a deadline.
+   */
+  if (
+    query.hasDeadline ===
+    'true'
+  ) {
+    qb.andWhere(
+      'task.deadlineDate IS NOT NULL',
+    );
+  }
+
+
+  if (
+    query.hasDeadline ===
+    'false'
+  ) {
+    qb.andWhere(
+      'task.deadlineDate IS NULL',
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * OVERDUE
+   * ==========================================================
+   *
+   * Overdue means:
+   *
+   * deadline exists
+   * deadline is before today
+   * task is not Completed / Finished / Archived
+   */
+
+  if (
+    query.overdueOnly ===
+    'true'
+  ) {
+    qb.andWhere(
+      'task.deadlineDate IS NOT NULL',
+    );
+
+
+    qb.andWhere(
+      'task.deadlineDate < CURRENT_DATE',
+    );
+
+
+    qb.andWhere(
+      'task.status NOT IN (:...doneStatuses)',
+      {
+        doneStatuses: [
+          TaskStatus.COMPLETED,
+          TaskStatus.FINISHED,
+          TaskStatus.ARCHIVED,
+        ],
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * START DATE
+   * ==========================================================
+   */
+
+  if (
+    query.startDateFrom
+  ) {
+    qb.andWhere(
+      'task.startDate >= :startDateFrom',
+      {
+        startDateFrom:
+          query.startDateFrom,
+      },
+    );
+  }
+
+
+  if (
+    query.startDateTo
+  ) {
+    qb.andWhere(
+      'task.startDate <= :startDateTo',
+      {
+        startDateTo:
+          query.startDateTo,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * CREATED DATE
+   * ==========================================================
+   */
+
+  if (
+    query.createdDateFrom
+  ) {
+    qb.andWhere(
+      'task.createdAt >= :createdDateFrom',
+      {
+        createdDateFrom:
+          query.createdDateFrom,
+      },
+    );
+  }
+
+
+  /*
+   * Include the entire "to" date.
+   *
+   * Example:
+   *
+   * 2026-08-16 means:
+   *
+   * createdAt < 2026-08-17 00:00
+   */
+  if (
+    query.createdDateTo
+  ) {
+    qb.andWhere(
+      `task.createdAt < (
+        :createdDateTo::date +
+        INTERVAL '1 day'
+      )`,
+      {
+        createdDateTo:
+          query.createdDateTo,
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * SORT
+   * ==========================================================
+   */
+
+  const sortColumns: Record<
+    string,
+    string
+  > = {
+    createdAt:
+      'task.createdAt',
+
+    deadline:
+      'task.deadlineDate',
+
+    startDate:
+      'task.startDate',
+
+    /*
+     * English title is used for DB ordering.
+     *
+     * The display still follows the currently selected frontend
+     * language.
+     */
+    title:
+      'task.titleEn',
+
+    status:
+      'task.status',
+
+    taskType:
+      'task.taskType',
+  };
+
+
+  const sortColumn =
+    sortColumns[
+      query.sortBy ??
+        'createdAt'
+    ] ??
+    'task.createdAt';
+
+
+  const sortDirection =
+    query.sortDir ===
+    'asc'
+      ? 'ASC'
+      : 'DESC';
+
+
+  /*
+   * Date fields with null values should appear at the end instead
+   * of pushing "No deadline" Tasks ahead of real deadlines.
+   */
+  const nulls =
+    query.sortBy ===
+      'deadline' ||
+    query.sortBy ===
+      'startDate'
+      ? 'NULLS LAST'
+      : undefined;
+
+
+  qb.orderBy(
+    sortColumn,
+    sortDirection,
+    nulls,
+  );
+
+
+  /*
+   * Stable secondary sorting.
+   */
+  if (
+    sortColumn !==
+    'task.createdAt'
+  ) {
+    qb.addOrderBy(
+      'task.createdAt',
+      'DESC',
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
+
+  qb
+    .skip(
+      (
+        page -
+        1
+      ) *
+      limit,
+    )
+    .take(
+      limit,
+    );
+
+
+  /*
+   * ==========================================================
+   * EXECUTE
+   * ==========================================================
+   */
+
+  const [
+    items,
+    total,
+  ] =
+    await qb.getManyAndCount();
+
+
+  /*
+   * ==========================================================
+   * RATINGS
+   * ==========================================================
+   *
+   * Keep your existing batched rating lookup.
+   */
+
+  if (
+    items.length >
+    0
+  ) {
+    const ratings =
+      await this.taskRepo.manager
+        .createQueryBuilder(
+          TaskRatingEntity,
+          'rating',
+        )
+        .where(
+          'rating.taskId IN (:...taskIds)',
+          {
+            taskIds:
+              items.map(
+                (
+                  task,
+                ) =>
+                  task.id,
+              ),
+          },
+        )
+        .getMany();
+
+
+    const ratingsByTaskId =
+      new Map<
+        string,
+        TaskRatingEntity[]
+      >();
+
+
+    for (
+      const rating
+      of ratings
+    ) {
+      const list =
+        ratingsByTaskId.get(
+          rating.taskId,
+        ) ??
+        [];
+
+
+      list.push(
+        rating,
+      );
+
+
+      ratingsByTaskId.set(
+        rating.taskId,
+        list,
+      );
+    }
+
+
+    for (
+      const task
+      of items
+    ) {
+      task.ratings =
+        ratingsByTaskId.get(
+          task.id,
+        ) ??
+        [];
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * RESPONSE
+   * ==========================================================
+   */
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+  };
+}
 
   /*
    * ==========================================================

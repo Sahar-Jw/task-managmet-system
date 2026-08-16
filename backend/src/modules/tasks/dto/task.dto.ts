@@ -293,58 +293,179 @@ export class DecideTaskApprovalDto {
  */
 
 export class QueryTasksDto extends PaginationQueryDto {
+  /*
+   * ==========================================================
+   * CLASSIFICATION
+   * ==========================================================
+   */
+
   @IsOptional()
   @IsString()
   status?: string;
+
 
   @IsOptional()
   @IsBooleanString()
   excludeArchived?: string;
 
-  @IsOptional()
-  @IsUUID()
-  branchId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  projectId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  departmentId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  createdById?: string;
-
-  @IsOptional()
-  @IsUUID()
-  assignedToId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  assigneeId?: string;
 
   @IsOptional()
   @IsString()
   taskType?: string;
 
+
   @IsOptional()
   @IsString()
   priority?: string;
 
-  @IsOptional()
-  @IsDateString()
-  dueDateFrom?: string;
+
+  /*
+   * ==========================================================
+   * ORGANIZATION
+   * ==========================================================
+   */
 
   @IsOptional()
-  @IsDateString()
-  dueDateTo?: string;
+  @IsUUID()
+  branchId?: string;
+
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
+
+
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string;
+
+
+  /*
+   * ==========================================================
+   * PEOPLE
+   * ==========================================================
+   */
+
+  @IsOptional()
+  @IsUUID()
+  createdById?: string;
+
+
+  /*
+   * Current assignee pointer.
+   *
+   * This works with the unified Assignment workflow because
+   * Task.assignedToId is synchronized by TaskAssignmentsService.
+   */
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
+
+
+  /*
+   * Assignment-history assignee.
+   *
+   * Kept for existing API compatibility.
+   */
+  @IsOptional()
+  @IsUUID()
+  assigneeId?: string;
+
+
+  /*
+   * ==========================================================
+   * SEARCH
+   * ==========================================================
+   */
 
   @IsOptional()
   @IsString()
   @MaxLength(200)
   search?: string;
+
+
+  /*
+   * ==========================================================
+   * DEADLINE
+   * ==========================================================
+   */
+
+  @IsOptional()
+  @IsDateString()
+  dueDateFrom?: string;
+
+
+  @IsOptional()
+  @IsDateString()
+  dueDateTo?: string;
+
+
+  @IsOptional()
+  @IsBooleanString()
+  hasDeadline?: string;
+
+
+  @IsOptional()
+  @IsBooleanString()
+  overdueOnly?: string;
+
+
+  /*
+   * ==========================================================
+   * START DATE
+   * ==========================================================
+   */
+
+  @IsOptional()
+  @IsDateString()
+  startDateFrom?: string;
+
+
+  @IsOptional()
+  @IsDateString()
+  startDateTo?: string;
+
+
+  /*
+   * ==========================================================
+   * CREATED DATE
+   * ==========================================================
+   */
+
+  @IsOptional()
+  @IsDateString()
+  createdDateFrom?: string;
+
+
+  @IsOptional()
+  @IsDateString()
+  createdDateTo?: string;
+
+
+  /*
+   * ==========================================================
+   * SORTING
+   * ==========================================================
+   */
+
+  @IsOptional()
+  @IsIn([
+    'createdAt',
+    'deadline',
+    'startDate',
+    'title',
+    'status',
+    'taskType',
+  ])
+  sortBy?: string;
+
+
+  @IsOptional()
+  @IsIn([
+    'asc',
+    'desc',
+  ])
+  sortDir?: string;
 }
 
 /*

@@ -57,19 +57,31 @@ export interface BrandingSettings {
 
 export interface User {
   id: string;
+
   fullName: string;
   email: string;
+
   phone?: string;
   avatarUrl?: string;
+
   role: Role;
   roleId?: string;
-  // Kept as plain reference ids (not relations) for org membership.
-  // null/undefined for Admins — they don't belong to a Department.
+
   departmentId?: string | null;
   branchId?: string;
+
   isActive: boolean;
+
   locale?: string;
   timezone?: string;
+
+  createdAt: string;
+  updatedAt?: string;
+
+  archivedAt?: string | null;
+
+  failedLoginAttempts?: number;
+  lockedUntil?: string | null;
 }
 
 // Project is a standalone lookup entity: no relation to Branch or any

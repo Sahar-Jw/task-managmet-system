@@ -572,6 +572,21 @@ function NewTaskContent() {
       assignmentUserId:
         '',
 
+
+      /*
+       * ======================================================
+       * ATTACHMENT DOWNLOAD PERMISSION
+       * ======================================================
+       *
+       * Preview is always available to the assigned user.
+       *
+       * This controls DOWNLOAD only.
+       * ======================================================
+       */
+      assigneeCanDownloadAttachments:
+        true,
+
+
       needsApproval:
         false,
 
@@ -1116,7 +1131,7 @@ function NewTaskContent() {
     /*
      * Subtasks must stay in the Parent's organization.
      *
-     * This matches the backend validation we added.
+     * This matches the backend validation.
      */
     setForm(
       (
@@ -1190,7 +1205,9 @@ function NewTaskContent() {
                   existing.name ===
                     file.name &&
                   existing.size ===
-                    file.size,
+                    file.size &&
+                  existing.lastModified ===
+                    file.lastModified,
               ),
           );
 
@@ -1784,6 +1801,58 @@ function NewTaskContent() {
 
       /*
        * ======================================================
+       * ATTACHMENT DOWNLOAD PERMISSION
+       * ======================================================
+       *
+       * Save this BEFORE creating the assignment and before
+       * uploading the selected attachments.
+       *
+       * Assigned users may always preview.
+       * This setting controls download only.
+       * ======================================================
+       */
+
+      try {
+        await TasksApi.updateAttachmentPermissions(
+          task.id,
+          form.assigneeCanDownloadAttachments,
+        );
+      } catch (
+        permissionError
+      ) {
+        console.error(
+          'Task created but attachment permission could not be saved:',
+
+          permissionError,
+        );
+
+
+        window.alert(
+          permissionError instanceof
+            ApiError
+            ? (
+                isArabic
+                  ? `تم إنشاء المهمة، لكن تعذر حفظ صلاحية تنزيل المرفقات: ${permissionError.message}`
+                  : `Task was created, but attachment download permission could not be saved: ${permissionError.message}`
+              )
+            : (
+                isArabic
+                  ? 'تم إنشاء المهمة، لكن تعذر حفظ صلاحية تنزيل المرفقات.'
+                  : 'Task was created, but attachment download permission could not be saved.'
+              ),
+        );
+
+
+        router.push(
+          `/tasks/${task.id}`,
+        );
+
+        return;
+      }
+
+
+      /*
+       * ======================================================
        * ASSIGNMENT
        * ======================================================
        */
@@ -1858,6 +1927,22 @@ function NewTaskContent() {
             'Task created but attachments failed:',
 
             attachmentError,
+          );
+
+
+          window.alert(
+            attachmentError instanceof
+              ApiError
+              ? (
+                  isArabic
+                    ? `تم إنشاء المهمة، لكن تعذر رفع بعض المرفقات: ${attachmentError.message}`
+                    : `Task was created, but the attachments could not be uploaded: ${attachmentError.message}`
+                )
+              : (
+                  isArabic
+                    ? 'تم إنشاء المهمة، لكن تعذر رفع المرفقات. يمكنك رفعها من تفاصيل المهمة.'
+                    : 'Task was created, but the attachments could not be uploaded. You can upload them from Task Details.'
+                ),
           );
         }
       }
@@ -2202,238 +2287,394 @@ function NewTaskContent() {
             <section
               className="
                 card
-                p-6
+                overflow-hidden
               "
             >
-              <SectionHeader
-                title={
-                  isArabic
-                    ? 'المرفقات'
-                    : 'Attachments'
-                }
-                description={
-                  isArabic
-                    ? 'أضف الملفات المطلوبة للمهمة.'
-                    : 'Add any files needed for this task.'
-                }
-              />
-
-
-              <label
-                className={`
-                  mt-5
-                  flex
-                  cursor-pointer
-                  flex-col
-                  items-center
-                  justify-center
-                  rounded-xl
-                  border-2
-                  border-dashed
-                  px-6
-                  py-10
-                  text-center
-                  transition
-                  ${
-                    dragOver
-                      ? 'border-brand-500 bg-brand-50'
-                      : 'border-slate-300 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/30'
-                  }
-                `}
-                onDragOver={(
-                  event,
-                ) => {
-                  event.preventDefault();
-
-                  setDragOver(
-                    true,
-                  );
-                }}
-                onDragLeave={() =>
-                  setDragOver(
-                    false,
-                  )
-                }
-                onDrop={(
-                  event,
-                ) => {
-                  event.preventDefault();
-
-                  setDragOver(
-                    false,
-                  );
-
-
-                  if (
-                    event.dataTransfer.files.length
-                  ) {
-                    addFiles(
-                      event.dataTransfer.files,
-                    );
-                  }
-                }}
+              <div
+                className="
+                  border-b
+                  border-slate-100
+                  p-6
+                "
               >
-                <div
-                  className="
+                <SectionHeader
+                  title={
+                    isArabic
+                      ? 'المرفقات'
+                      : 'Attachments'
+                  }
+                  description={
+                    isArabic
+                      ? 'أضف الملفات المطلوبة للمهمة.'
+                      : 'Add any files needed for this task.'
+                  }
+                />
+              </div>
+
+
+              {/*
+               * ===============================================
+               * ASSIGNEE DOWNLOAD PERMISSION
+               * ===============================================
+               */}
+
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-5
+                  border-b
+                  border-slate-100
+                  bg-slate-50/50
+                  px-6
+                  py-5
+                "
+              >
+                <div>
+                  <div
+                    className="
+                      text-sm
+                      font-semibold
+                      text-slate-800
+                    "
+                  >
+                    {isArabic
+                      ? 'السماح للمكلف بتنزيل المرفقات'
+                      : 'Allow assignee to download attachments'}
+                  </div>
+
+                  <p
+                    className="
+                      mt-1
+                      text-xs
+                      leading-5
+                      text-slate-400
+                    "
+                  >
+                    {isArabic
+                      ? 'يمكن للمكلف معاينة المرفقات دائماً. هذا الخيار يتحكم بالتنزيل فقط.'
+                      : 'The assignee can always preview attachments. This option controls downloading only.'}
+                  </p>
+                </div>
+
+
+                <ToggleSwitch
+                  checked={
+                    form.assigneeCanDownloadAttachments
+                  }
+                  label={
+                    isArabic
+                      ? 'السماح للمكلف بتنزيل المرفقات'
+                      : 'Allow assignee attachment downloads'
+                  }
+                  onChange={(
+                    checked,
+                  ) =>
+                    set(
+                      'assigneeCanDownloadAttachments',
+
+                      checked,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div
+                className="
+                  p-6
+                "
+              >
+                <label
+                  className={`
                     flex
-                    h-11
-                    w-11
+                    cursor-pointer
+                    flex-col
                     items-center
                     justify-center
                     rounded-xl
-                    bg-white
-                    text-xl
-                    text-brand-600
-                    shadow-sm
-                  "
-                >
-                  ↑
-                </div>
-
-
-                <div
-                  className="
-                    mt-3
-                    text-sm
-                    font-semibold
-                    text-slate-700
-                  "
-                >
-                  {isArabic
-                    ? 'اسحب الملفات هنا أو اضغط للاختيار'
-                    : 'Drop files here or click to browse'}
-                </div>
-
-
-                <input
-                  type="file"
-                  multiple
-                  accept={
-                    ATTACHMENT_ACCEPT
-                  }
-                  className="hidden"
-                  onChange={(
+                    border-2
+                    border-dashed
+                    px-6
+                    py-10
+                    text-center
+                    transition
+                    ${
+                      dragOver
+                        ? 'border-brand-500 bg-brand-50'
+                        : 'border-slate-300 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/30'
+                    }
+                  `}
+                  onDragOver={(
                     event,
                   ) => {
+                    event.preventDefault();
+
+                    setDragOver(
+                      true,
+                    );
+                  }}
+                  onDragLeave={() =>
+                    setDragOver(
+                      false,
+                    )
+                  }
+                  onDrop={(
+                    event,
+                  ) => {
+                    event.preventDefault();
+
+                    setDragOver(
+                      false,
+                    );
+
+
                     if (
-                      event.target.files?.length
+                      event.dataTransfer.files.length
                     ) {
                       addFiles(
-                        event.target.files,
+                        event.dataTransfer.files,
                       );
                     }
-
-
-                    event.target.value =
-                      '';
                   }}
-                />
-              </label>
-
-
-              {files.length >
-                0 && (
-                <div
-                  className="
-                    mt-4
-                    overflow-hidden
-                    rounded-xl
-                    border
-                    border-slate-200
-                  "
                 >
-                  {files.map(
-                    (
-                      file,
-                      index,
-                    ) => (
-                      <div
-                        key={`${file.name}-${index}`}
-                        className="
-                          flex
-                          items-center
-                          gap-3
-                          border-b
-                          border-slate-100
-                          px-4
-                          py-3
-                          last:border-0
-                        "
-                      >
-                        <span
-                          className="
-                            badge
-                            bg-slate-100
-                            text-slate-600
-                          "
-                        >
-                          {getFileTypeLabel(
-                            file.type,
-
-                            file.name,
-                          )}
-                        </span>
+                  <div
+                    className="
+                      flex
+                      h-11
+                      w-11
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-white
+                      text-xl
+                      text-brand-600
+                      shadow-sm
+                    "
+                  >
+                    ↑
+                  </div>
 
 
+                  <div
+                    className="
+                      mt-3
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                    "
+                  >
+                    {isArabic
+                      ? 'اسحب الملفات هنا أو اضغط للاختيار'
+                      : 'Drop files here or click to browse'}
+                  </div>
+
+
+                  <div
+                    className="
+                      mt-1
+                      text-xs
+                      text-slate-400
+                    "
+                  >
+                    {isArabic
+                      ? 'صور، PDF، Word، Excel، PowerPoint، TXT، CSV و ZIP'
+                      : 'Images, PDF, Word, Excel, PowerPoint, TXT, CSV and ZIP'}
+                  </div>
+
+
+                  <input
+                    type="file"
+                    multiple
+                    accept={
+                      ATTACHMENT_ACCEPT
+                    }
+                    className="hidden"
+                    onChange={(
+                      event,
+                    ) => {
+                      if (
+                        event.target.files?.length
+                      ) {
+                        addFiles(
+                          event.target.files,
+                        );
+                      }
+
+
+                      /*
+                       * Allows selecting the same file again
+                       * after it has been removed from the list.
+                       */
+                      event.target.value =
+                        '';
+                    }}
+                  />
+                </label>
+
+
+                {/*
+                 * =============================================
+                 * SELECTED FILE ROWS
+                 * =============================================
+                 *
+                 * Every selected file gets its own row,
+                 * regardless of file type.
+                 * =============================================
+                 */}
+
+                {files.length >
+                  0 && (
+                  <div
+                    className="
+                      mt-4
+                      overflow-hidden
+                      rounded-xl
+                      border
+                      border-slate-200
+                    "
+                  >
+                    {files.map(
+                      (
+                        file,
+                        index,
+                      ) => (
                         <div
-                          className="
-                            min-w-0
-                            flex-1
-                          "
-                        >
-                          <div
-                            className="
-                              truncate
-                              text-sm
-                              font-medium
-                              text-slate-700
-                            "
-                          >
-                            {
-                              file.name
-                            }
-                          </div>
-
-                          <div
-                            className="
-                              text-xs
-                              text-slate-400
-                            "
-                          >
-                            {formatFileSize(
-                              file.size,
-                            )}
-                          </div>
-                        </div>
-
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            removeFile(
-                              index,
-                            )
-                          }
+                          key={`${file.name}-${file.size}-${file.lastModified}`}
                           className="
                             flex
-                            h-8
-                            w-8
                             items-center
-                            justify-center
-                            rounded-lg
-                            text-red-500
-                            transition
-                            hover:bg-red-50
-                            hover:text-red-700
+                            gap-3
+                            border-b
+                            border-slate-100
+                            bg-white
+                            px-4
+                            py-3
+                            last:border-0
                           "
                         >
-                          ✕
-                        </button>
-                      </div>
-                    ),
-                  )}
-                </div>
-              )}
+                          <span
+                            className="
+                              badge
+                              shrink-0
+                              bg-slate-100
+                              text-slate-600
+                            "
+                          >
+                            {getFileTypeLabel(
+                              file.type,
+
+                              file.name,
+                            )}
+                          </span>
+
+
+                          <div
+                            className="
+                              min-w-0
+                              flex-1
+                            "
+                          >
+                            <div
+                              className="
+                                truncate
+                                text-sm
+                                font-medium
+                                text-slate-700
+                              "
+                              title={
+                                file.name
+                              }
+                            >
+                              {
+                                file.name
+                              }
+                            </div>
+
+                            <div
+                              className="
+                                mt-0.5
+                                text-xs
+                                text-slate-400
+                              "
+                            >
+                              {formatFileSize(
+                                file.size,
+                              )}
+                            </div>
+                          </div>
+
+
+                          <button
+                            type="button"
+                            disabled={
+                              submitting
+                            }
+                            onClick={() =>
+                              removeFile(
+                                index,
+                              )
+                            }
+                            title={
+                              isArabic
+                                ? 'إزالة الملف'
+                                : 'Remove file'
+                            }
+                            className="
+                              flex
+                              h-8
+                              w-8
+                              shrink-0
+                              items-center
+                              justify-center
+                              rounded-lg
+                              text-red-500
+                              transition
+                              hover:bg-red-50
+                              hover:text-red-700
+                              disabled:cursor-not-allowed
+                              disabled:opacity-40
+                            "
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                )}
+
+
+                {files.length >
+                  0 && (
+                  <div
+                    className="
+                      mt-3
+                      text-xs
+                      text-slate-400
+                    "
+                  >
+                    <span
+                      className="
+                        font-semibold
+                        text-slate-600
+                      "
+                    >
+                      {files.length}
+                    </span>{' '}
+
+                    {isArabic
+                      ? 'ملف محدد'
+                      : (
+                          files.length ===
+                          1
+                            ? 'file selected'
+                            : 'files selected'
+                        )}
+                  </div>
+                )}
+              </div>
             </section>
 
 
@@ -3738,7 +3979,7 @@ function NewTaskContent() {
               gap-5
               p-6
               sm:grid-cols-2
-              lg:grid-cols-5
+              lg:grid-cols-6
             "
           >
             <div>
@@ -3862,6 +4103,60 @@ function NewTaskContent() {
                       ? 'بدون موعد'
                       : 'No deadline'
                   )}
+              </div>
+            </div>
+
+
+            <div>
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'المرفقات'
+                  : 'Attachments'}
+              </div>
+
+              <div
+                className="
+                  mt-2
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
+              >
+                {files.length}{' '}
+
+                {isArabic
+                  ? 'ملف'
+                  : (
+                      files.length ===
+                      1
+                        ? 'file'
+                        : 'files'
+                    )}
+              </div>
+
+              <div
+                className="
+                  mt-1
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {form.assigneeCanDownloadAttachments
+                  ? (
+                      isArabic
+                        ? 'التنزيل مسموح للمكلف'
+                        : 'Assignee downloads allowed'
+                    )
+                  : (
+                      isArabic
+                        ? 'معاينة فقط للمكلف'
+                        : 'Assignee preview only'
+                    )}
               </div>
             </div>
 

@@ -166,6 +166,17 @@ export class TaskAttachmentsService {
     );
 
 
+    if (
+      !files ||
+      files.length ===
+        0
+    ) {
+      throw new BadRequestException(
+        'At least one file is required',
+      );
+    }
+
+
     const attachments:
       TaskAttachmentEntity[] =
       [];
@@ -268,6 +279,17 @@ export class TaskAttachmentsService {
     );
 
 
+    if (
+      !files ||
+      files.length ===
+        0
+    ) {
+      throw new BadRequestException(
+        'At least one file is required',
+      );
+    }
+
+
     const attachments:
       TaskAttachmentEntity[] =
       [];
@@ -295,6 +317,14 @@ export class TaskAttachmentsService {
    * ==========================================================
    * UPLOAD PERMISSION
    * ==========================================================
+   *
+   * Keep the existing behavior:
+   *
+   * - Task creator may upload
+   * - Admin may upload
+   *
+   * Delete permission is stricter and handled separately.
+   * ==========================================================
    */
 
   private assertCanUpload(
@@ -309,10 +339,14 @@ export class TaskAttachmentsService {
       RoleName.ADMIN;
 
 
+    const isCreator =
+      task.createdById ===
+      actor.id;
+
+
     if (
       !isAdmin &&
-      task.createdById !==
-        actor.id
+      !isCreator
     ) {
       throw new ForbiddenException(
         'Only the Task creator or Admin may add attachments',
@@ -327,27 +361,43 @@ export class TaskAttachmentsService {
    * ==========================================================
    *
    * IMAGE
-   * -----
+   * ==========================================================
    *
-   * Save image under:
+   * Multer:
    *
-   * backend/storage/attachments/YYYY/MM/
+   * memoryStorage()
    *
-   * DB:
+   * Then:
    *
-   * file_url = /storage/attachments/YYYY/MM/file.jpg
-   * file_data = NULL
+   * file.buffer
+   *     ↓
+   * backend/storage/attachments/YYYY/MM/random.ext
+   *
+   * Database:
+   *
+   * storage_type = IMAGE
+   * file_url      = /storage/attachments/YYYY/MM/random.ext
+   * file_data     = NULL
    *
    *
-   * NON-IMAGE
-   * ---------
+   * DOCUMENT
+   * ==========================================================
    *
-   * Do not write to disk.
+   * Multer:
    *
-   * DB:
+   * memoryStorage()
    *
-   * file_url = NULL
-   * file_data = actual bytes
+   * Then:
+   *
+   * file.buffer
+   *     ↓
+   * MySQL task_attachments.file_data LONGBLOB
+   *
+   * Database:
+   *
+   * storage_type = DATABASE
+   * file_url      = NULL
+   * file_data     = bytes
    * ==========================================================
    */
 
@@ -372,8 +422,13 @@ export class TaskAttachmentsService {
       params;
 
 
+    /*
+     * With memoryStorage() this MUST exist.
+     */
     if (
-      !file.buffer
+      !file.buffer ||
+      file.buffer.length ===
+        0
     ) {
       throw new BadRequestException(
         'Uploaded file data is missing',
@@ -382,12 +437,14 @@ export class TaskAttachmentsService {
 
 
     const isImage =
-      file.mimetype.startsWith(
-        'image/',
-      );
+      file.mimetype
+        .toLowerCase()
+        .startsWith(
+          'image/',
+        );
 
 
-    let imagePath:
+    let writtenImagePath:
       string | null =
       null;
 
@@ -395,9 +452,10 @@ export class TaskAttachmentsService {
     try {
       /*
        * ======================================================
-       * IMAGE
+       * IMAGE -> STORAGE FOLDER
        * ======================================================
        */
+
       if (
         isImage
       ) {
@@ -413,15 +471,20 @@ export class TaskAttachmentsService {
           );
 
 
-        imagePath =
+        writtenImagePath =
           join(
             directory,
             storedName,
           );
 
 
+        /*
+         * Write image buffer to:
+         *
+         * storage/attachments/YYYY/MM/
+         */
         await writeFile(
-          imagePath,
+          writtenImagePath,
           file.buffer,
         );
 
@@ -451,7 +514,7 @@ export class TaskAttachmentsService {
 
             fileUrl:
               storedFileUrl(
-                imagePath,
+                writtenImagePath,
               ),
 
             fileData:
@@ -477,7 +540,7 @@ export class TaskAttachmentsService {
 
       /*
        * ======================================================
-       * DATABASE DOCUMENT
+       * NON-IMAGE -> MYSQL
        * ======================================================
        */
 
@@ -507,6 +570,9 @@ export class TaskAttachmentsService {
           fileUrl:
             null,
 
+          /*
+           * Actual PDF/DOCX/XLSX/etc bytes.
+           */
           fileData:
             file.buffer,
         });
@@ -519,7 +585,10 @@ export class TaskAttachmentsService {
 
 
       /*
-       * Never return binary data in normal API responses.
+       * fileData is select:false on the Entity.
+       *
+       * Also make sure we never accidentally return the newly
+       * inserted binary buffer in a normal API response.
        */
       saved.fileData =
         undefined;
@@ -536,14 +605,14 @@ export class TaskAttachmentsService {
       error
     ) {
       /*
-       * If an image was physically written but the DB insert failed,
-       * don't leave an orphan file behind.
+       * If we wrote an image to disk and then the DB insert
+       * failed, remove the orphan image.
        */
       if (
-        imagePath
+        writtenImagePath
       ) {
         await unlink(
-          imagePath,
+          writtenImagePath,
         ).catch(
           () =>
             undefined,
@@ -558,10 +627,10 @@ export class TaskAttachmentsService {
 
   /*
    * ==========================================================
-   * AUDIT
+   * AUDIT UPLOAD
    * ==========================================================
    *
-   * Never write the BLOB into audit_logs.
+   * Never store fileData inside audit_logs.
    * ==========================================================
    */
 
@@ -571,7 +640,7 @@ export class TaskAttachmentsService {
 
     actor:
       UserEntity,
-  ) {
+  ): Promise<void> {
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -625,13 +694,18 @@ export class TaskAttachmentsService {
    * FIND ONE
    * ==========================================================
    *
-   * includeData=false:
+   * Normal API:
    *
-   * normal metadata query.
+   * includeData = false
    *
-   * includeData=true:
+   * file_data is NOT selected.
    *
-   * explicitly selects file_data for the download endpoint.
+   *
+   * Preview/download:
+   *
+   * includeData = true
+   *
+   * file_data is explicitly selected.
    * ==========================================================
    */
 
@@ -642,7 +716,7 @@ export class TaskAttachmentsService {
     includeData =
       false,
   ): Promise<TaskAttachmentEntity> {
-    const qb =
+    const query =
       this.attachmentRepo
         .createQueryBuilder(
           'attachment',
@@ -670,18 +744,19 @@ export class TaskAttachmentsService {
     if (
       includeData
     ) {
-      qb.addSelect(
+      query.addSelect(
         'attachment.fileData',
       );
     }
 
 
     const attachment =
-      await qb.getOne();
+      await query.getOne();
 
 
     if (
-      !attachment
+      !attachment ||
+      attachment.deletedAt
     ) {
       throw new NotFoundException(
         'Attachment not found',
@@ -725,6 +800,9 @@ export class TaskAttachmentsService {
     actor:
       UserEntity,
   ): Promise<boolean> {
+    /*
+     * Current direct assignee.
+     */
     if (
       task.assignedToId ===
       actor.id
@@ -733,6 +811,9 @@ export class TaskAttachmentsService {
     }
 
 
+    /*
+     * Assignment history/current Assignment records.
+     */
     return this.assignmentRepo.exist({
       where: {
         taskId:
@@ -747,7 +828,26 @@ export class TaskAttachmentsService {
 
   /*
    * ==========================================================
-   * ACCESS
+   * PREVIEW / DOWNLOAD ACCESS
+   * ==========================================================
+   *
+   * OWNER
+   * -----
+   * Preview: yes
+   * Download: yes
+   *
+   * ADMIN
+   * -----
+   * Preview: yes
+   * Download: yes
+   *
+   * ASSIGNEE
+   * --------
+   * Preview: ALWAYS yes
+   *
+   * Download:
+   *
+   * task.assigneeCanDownloadAttachments === true
    * ==========================================================
    */
 
@@ -767,19 +867,28 @@ export class TaskAttachmentsService {
       );
 
 
+    if (
+      !task
+    ) {
+      throw new NotFoundException(
+        'The Task for this Attachment no longer exists',
+      );
+    }
+
+
     const isAdmin =
       actor.role.name ===
       RoleName.ADMIN;
 
 
     const isCreator =
-      Boolean(
-        task &&
-        task.createdById ===
-          actor.id,
-      );
+      task.createdById ===
+      actor.id;
 
 
+    /*
+     * Owner/Admin always have file access.
+     */
     if (
       isAdmin ||
       isCreator
@@ -789,12 +898,9 @@ export class TaskAttachmentsService {
 
 
     const isAssignee =
-      Boolean(
-        task &&
-        await this.isAssigneeOf(
-          task,
-          actor,
-        ),
+      await this.isAssigneeOf(
+        task,
+        actor,
       );
 
 
@@ -807,9 +913,25 @@ export class TaskAttachmentsService {
     }
 
 
+    /*
+     * ASSIGNEE PREVIEW
+     *
+     * download === false
+     *
+     * Always allowed.
+     */
     if (
-      download &&
-      !task!.assigneeCanDownloadAttachments
+      !download
+    ) {
+      return;
+    }
+
+
+    /*
+     * ASSIGNEE DOWNLOAD
+     */
+    if (
+      !task.assigneeCanDownloadAttachments
     ) {
       throw new ForbiddenException(
         'The Task creator has disabled attachment downloads for assignees',
@@ -821,6 +943,13 @@ export class TaskAttachmentsService {
   /*
    * ==========================================================
    * DELETE
+   * ==========================================================
+   *
+   * IMPORTANT:
+   *
+   * ONLY THE TASK OWNER / CREATOR MAY DELETE.
+   *
+   * Being an Admin by itself is NOT enough.
    * ==========================================================
    */
 
@@ -843,31 +972,34 @@ export class TaskAttachmentsService {
       );
 
 
-    const isAdmin =
-      actor.role.name ===
-      RoleName.ADMIN;
+    if (
+      !task
+    ) {
+      throw new NotFoundException(
+        'The Task for this Attachment no longer exists',
+      );
+    }
 
 
     const isCreator =
-      Boolean(
-        task &&
-        task.createdById ===
-          actor.id,
-      );
+      task.createdById ===
+      actor.id;
 
 
+    /*
+     * OWNER ONLY.
+     */
     if (
-      !isAdmin &&
       !isCreator
     ) {
       throw new ForbiddenException(
-        'Only the Task creator or Admin may delete this Attachment',
+        'Only the Task owner may delete this Attachment',
       );
     }
 
 
     if (
-      task?.archivedAt
+      task.archivedAt
     ) {
       throw new BadRequestException(
         'Cannot delete an Attachment on an archived Task',
@@ -875,21 +1007,33 @@ export class TaskAttachmentsService {
     }
 
 
+    const oldValue = {
+      fileName:
+        attachment.fileName,
+
+      fileUrl:
+        attachment.fileUrl,
+
+      mimeType:
+        attachment.mimeType,
+
+      fileSize:
+        attachment.fileSize,
+
+      storageType:
+        attachment.storageType,
+    };
+
+
     /*
-     * Soft-delete DB record.
+     * ========================================================
+     * IMAGE
+     * ========================================================
+     *
+     * Delete physical image.
+     * ========================================================
      */
-    attachment.deletedAt =
-      new Date();
 
-
-    await this.attachmentRepo.save(
-      attachment,
-    );
-
-
-    /*
-     * Only images have physical files.
-     */
     if (
       attachment.storageType ===
         AttachmentStorageType.IMAGE &&
@@ -914,6 +1058,27 @@ export class TaskAttachmentsService {
     }
 
 
+    /*
+     * ========================================================
+     * SOFT DELETE DATABASE ROW
+     * ========================================================
+     *
+     * For DATABASE attachments the blob remains in the soft-
+     * deleted row for audit/history consistency.
+     *
+     * It is no longer accessible through findOne().
+     * ========================================================
+     */
+
+    attachment.deletedAt =
+      new Date();
+
+
+    await this.attachmentRepo.save(
+      attachment,
+    );
+
+
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -927,16 +1092,18 @@ export class TaskAttachmentsService {
       action:
         AuditAction.DELETE,
 
+      oldValue,
+
       newValue: {
-        fileName:
-          attachment.fileName,
+        deletedAt:
+          attachment.deletedAt,
 
         storageType:
           attachment.storageType,
       },
 
       reason:
-        'Attachment deleted',
+        'Attachment deleted by Task owner',
     });
   }
 }

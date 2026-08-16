@@ -2,22 +2,46 @@
 
 
 import {
+  useEffect,
+  useMemo,
   useState,
 } from 'react';
+
+import {
+  createPortal,
+} from 'react-dom';
 
 import {
   useLocale,
 } from 'next-intl';
 
+import * as XLSX
+  from 'xlsx';
+
+import * as mammoth
+  from 'mammoth';
+
+import DOMPurify
+  from 'dompurify';
+
 import {
   AttachmentsApi,
+  TasksApi,
 } from '@/lib/endpoints';
 
 import {
   ApiError,
   downloadFile,
+  fetchFileAsBlob,
   fetchFileAsObjectUrl,
 } from '@/lib/api';
+
+import {
+  ATTACHMENT_ACCEPT,
+  formatFileSize,
+  getFileKind,
+  getFileTypeLabel,
+} from '@/lib/file-kind';
 
 import type {
   Task,
@@ -28,170 +52,212 @@ import type {
 
 /*
  * ============================================================
+ * TYPES
+ * ============================================================
+ */
+
+type PreviewMode =
+  | 'image'
+  | 'pdf'
+  | 'text'
+  | 'excel'
+  | 'docx'
+  | 'unsupported';
+
+
+interface PreviewState {
+  attachment:
+    TaskAttachment;
+
+  mode:
+    PreviewMode;
+
+  objectUrl?:
+    string;
+
+  html?:
+    string;
+
+  text?:
+    string;
+
+  sheetNames?:
+    string[];
+
+  activeSheet?:
+    string;
+
+  workbookHtml?:
+    Record<
+      string,
+      string
+    >;
+}
+
+
+/*
+ * ============================================================
+ * TOGGLE
+ * ============================================================
+ */
+
+function ToggleSwitch({
+  checked,
+  disabled,
+  onChange,
+  label,
+}: {
+  checked:
+    boolean;
+
+  disabled?:
+    boolean;
+
+  onChange:
+    (
+      value:
+        boolean,
+    ) => void;
+
+  label:
+    string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-label={
+        label
+      }
+      aria-checked={
+        checked
+      }
+      disabled={
+        disabled
+      }
+      onClick={() =>
+        onChange(
+          !checked,
+        )
+      }
+      className={`
+        relative
+        inline-flex
+        h-7
+        w-12
+        shrink-0
+        items-center
+        rounded-full
+        transition-all
+        duration-200
+        focus:outline-none
+        focus:ring-2
+        focus:ring-brand-200
+        focus:ring-offset-2
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+        ${
+          checked
+            ? 'bg-brand-600'
+            : 'bg-slate-200'
+        }
+      `}
+    >
+      <span
+        className={`
+          inline-block
+          h-5
+          w-5
+          rounded-full
+          bg-white
+          shadow-sm
+          transition-transform
+          duration-200
+          ${
+            checked
+              ? 'translate-x-6'
+              : 'translate-x-1'
+          }
+        `}
+      />
+    </button>
+  );
+}
+
+
+/*
+ * ============================================================
  * HELPERS
  * ============================================================
  */
 
-function fileSizeLabel(
-  value:
-    number,
-) {
-  const bytes =
-    Number(
-      value,
-    );
-
-
-  if (
-    !Number.isFinite(
-      bytes,
-    ) ||
-    bytes <=
-      0
-  ) {
-    return '0 B';
-  }
-
-
-  if (
-    bytes <
-    1024
-  ) {
-    return `${bytes} B`;
-  }
-
-
-  if (
-    bytes <
-    1024 *
-      1024
-  ) {
-    return `${(
-      bytes /
-      1024
-    ).toFixed(
-      1,
-    )} KB`;
-  }
-
-
-  if (
-    bytes <
-    1024 *
-      1024 *
-      1024
-  ) {
-    return `${(
-      bytes /
-      (
-        1024 *
-        1024
-      )
-    ).toFixed(
-      1,
-    )} MB`;
-  }
-
-
-  return `${(
-    bytes /
-    (
-      1024 *
-      1024 *
-      1024
-    )
-  ).toFixed(
-    1,
-  )} GB`;
-}
-
-
 function extensionOf(
-  name:
+  fileName:
     string,
 ) {
   const pieces =
-    name.split(
-      '.',
-    );
+    fileName
+      .toLowerCase()
+      .split(
+        '.',
+      );
 
 
-  if (
-    pieces.length <
-    2
-  ) {
-    return '';
-  }
-
-
-  return pieces[
-    pieces.length -
+  return pieces.length >
     1
-  ].toLowerCase();
+    ? pieces[
+        pieces.length -
+        1
+      ]
+    : '';
 }
 
 
 function fileIcon(
-  attachment:
-    TaskAttachment,
+  mimeType:
+    string,
+
+  fileName:
+    string,
 ) {
+  const kind =
+    getFileKind(
+      mimeType,
+      fileName,
+    );
+
+
+  switch (
+    kind
+  ) {
+    case 'image':
+      return '🖼️';
+
+    case 'pdf':
+      return '📕';
+
+    case 'docx':
+      return '📘';
+
+    case 'excel':
+      return '📊';
+
+    default:
+      break;
+  }
+
+
   const extension =
     extensionOf(
-      attachment.fileName,
+      fileName,
     );
 
 
   if (
-    attachment.mimeType.startsWith(
-      'image/',
-    )
-  ) {
-    return '🖼️';
-  }
-
-
-  if (
-    attachment.mimeType ===
-      'application/pdf' ||
     extension ===
-      'pdf'
-  ) {
-    return '📕';
-  }
-
-
-  if (
-    [
-      'doc',
-      'docx',
-    ].includes(
-      extension,
-    )
-  ) {
-    return '📘';
-  }
-
-
-  if (
-    [
-      'xls',
-      'xlsx',
-      'csv',
-    ].includes(
-      extension,
-    )
-  ) {
-    return '📊';
-  }
-
-
-  if (
-    [
-      'ppt',
-      'pptx',
-    ].includes(
-      extension,
-    )
+      'ppt' ||
+    extension ===
+      'pptx'
   ) {
     return '📙';
   }
@@ -217,38 +283,135 @@ function fileIcon(
 }
 
 
-function canBrowserPreview(
+function getPreviewMode(
   attachment:
     TaskAttachment,
-) {
-  return (
-    attachment.mimeType.startsWith(
+): PreviewMode {
+  const mime =
+    attachment.mimeType
+      .toLowerCase();
+
+
+  const extension =
+    extensionOf(
+      attachment.fileName,
+    );
+
+
+  if (
+    mime.startsWith(
       'image/',
-    ) ||
-    attachment.mimeType ===
-      'application/pdf' ||
-    attachment.mimeType.startsWith(
-      'text/',
     )
-  );
+  ) {
+    return 'image';
+  }
+
+
+  if (
+    mime ===
+      'application/pdf' ||
+    extension ===
+      'pdf'
+  ) {
+    return 'pdf';
+  }
+
+
+  if (
+    extension ===
+      'xlsx' ||
+    extension ===
+      'xls' ||
+    mime ===
+      'application/vnd.ms-excel' ||
+    mime ===
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  ) {
+    return 'excel';
+  }
+
+
+  if (
+    extension ===
+      'docx' ||
+    mime ===
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ) {
+    return 'docx';
+  }
+
+
+  if (
+    mime.startsWith(
+      'text/',
+    ) ||
+    extension ===
+      'txt' ||
+    extension ===
+      'csv'
+  ) {
+    return 'text';
+  }
+
+
+  return 'unsupported';
 }
 
 
 /*
  * ============================================================
- * PROPS
+ * MODAL PORTAL
+ * ============================================================
+ *
+ * Rendering into document.body avoids the modal being clipped
+ * or constrained by transformed / sticky / fixed ancestors in
+ * the normal Task Details layout.
  * ============================================================
  */
 
-interface Props {
-  task:
-    Task;
+function ModalPortal({
+  children,
+}: {
+  children:
+    React.ReactNode;
+}) {
+  const [
+    mounted,
+    setMounted,
+  ] =
+    useState(
+      false,
+    );
 
-  user:
-    User | null;
 
-  onChanged:
-    () => Promise<void> | void;
+  useEffect(
+    () => {
+      setMounted(
+        true,
+      );
+
+
+      return () => {
+        setMounted(
+          false,
+        );
+      };
+    },
+    [],
+  );
+
+
+  if (
+    !mounted
+  ) {
+    return null;
+  }
+
+
+  return createPortal(
+    children,
+    document.body,
+  );
 }
 
 
@@ -262,7 +425,18 @@ export default function TaskAttachmentsPanel({
   task,
   user,
   onChanged,
-}: Props) {
+}: {
+  task:
+    Task;
+
+  user:
+    User | null;
+
+  onChanged:
+    () =>
+      Promise<void> |
+      void;
+}) {
   const locale =
     useLocale();
 
@@ -297,6 +471,33 @@ export default function TaskAttachmentsPanel({
 
 
   const [
+    previewBusy,
+    setPreviewBusy,
+  ] =
+    useState(
+      false,
+    );
+
+
+  const [
+    permissionBusy,
+    setPermissionBusy,
+  ] =
+    useState(
+      false,
+    );
+
+
+  const [
+    deleteBusy,
+    setDeleteBusy,
+  ] =
+    useState(
+      false,
+    );
+
+
+  const [
     error,
     setError,
   ] =
@@ -314,46 +515,63 @@ export default function TaskAttachmentsPanel({
     preview,
     setPreview,
   ] =
-    useState<{
-      attachment:
-        TaskAttachment;
+    useState<
+      PreviewState | null
+    >(
+      null,
+    );
 
-      url:
-        string;
-    } | null>(
+
+  const [
+    deleteTarget,
+    setDeleteTarget,
+  ] =
+    useState<
+      TaskAttachment | null
+    >(
       null,
     );
 
 
   /*
    * ==========================================================
-   * ATTACHMENTS
+   * MODAL PAGE LOCK
    * ==========================================================
    */
 
-  const attachments =
-    (
-      task.attachments ??
-      []
-    )
-      .filter(
-        (
-          attachment,
-        ) =>
-          !attachment.deletedAt,
-      )
-      .sort(
-        (
-          a,
-          b,
-        ) =>
-          new Date(
-            b.createdAt,
-          ).getTime() -
-          new Date(
-            a.createdAt,
-          ).getTime(),
-      );
+  const modalOpen =
+    Boolean(
+      preview ||
+      deleteTarget,
+    );
+
+
+  useEffect(
+    () => {
+      if (
+        !modalOpen
+      ) {
+        return;
+      }
+
+
+      const previousOverflow =
+        document.body.style.overflow;
+
+
+      document.body.style.overflow =
+        'hidden';
+
+
+      return () => {
+        document.body.style.overflow =
+          previousOverflow;
+      };
+    },
+    [
+      modalOpen,
+    ],
+  );
 
 
   /*
@@ -367,22 +585,22 @@ export default function TaskAttachmentsPanel({
     'ADMIN';
 
 
-  const isCreator =
-    user?.id ===
-    task.createdById;
+  const isOwner =
+    Boolean(
+      user &&
+      user.id ===
+        task.createdById,
+    );
 
 
   /*
-   * Backend currently permits upload/delete to:
-   *
-   * Admin
-   * Task creator
+   * Backend allows owner/admin upload.
    */
-  const canManage =
+  const canUpload =
     Boolean(
       (
-        isAdmin ||
-        isCreator
+        isOwner ||
+        isAdmin
       ) &&
       task.status !==
         'Archived',
@@ -390,17 +608,151 @@ export default function TaskAttachmentsPanel({
 
 
   /*
-   * Admin + creator can always download.
+   * User requirement:
    *
-   * For assignees this uses the permission configured on Task.
-   * Backend remains the final authority.
+   * only Task owner may delete.
+   */
+  const canDelete =
+    Boolean(
+      isOwner &&
+      task.status !==
+        'Archived',
+    );
+
+
+  /*
+   * Only owner controls assignee download permission.
+   */
+  const canChangeDownloadPermission =
+    Boolean(
+      isOwner &&
+      task.status !==
+        'Archived',
+    );
+
+
+  /*
+   * Owner/Admin:
+   *
+   * always download.
+   *
+   * Assignee:
+   *
+   * according to the Task toggle.
    */
   const canDownload =
     Boolean(
+      isOwner ||
       isAdmin ||
-      isCreator ||
       task.assigneeCanDownloadAttachments,
     );
+
+
+  /*
+   * ==========================================================
+   * ATTACHMENTS
+   * ==========================================================
+   */
+
+  const attachments =
+    useMemo(
+      () =>
+        (
+          task.attachments ??
+          []
+        )
+          .filter(
+            (
+              attachment,
+            ) =>
+              !attachment.deletedAt,
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              new Date(
+                b.createdAt,
+              ).getTime() -
+              new Date(
+                a.createdAt,
+              ).getTime(),
+          ),
+
+      [
+        task.attachments,
+      ],
+    );
+
+
+  /*
+   * ==========================================================
+   * PENDING FILES
+   * ==========================================================
+   */
+
+  function addSelectedFiles(
+    incoming:
+      FileList |
+      File[],
+  ) {
+    const incomingFiles =
+      Array.from(
+        incoming,
+      );
+
+
+    setSelectedFiles(
+      (
+        current,
+      ) => {
+        const unique =
+          incomingFiles.filter(
+            (
+              file,
+            ) =>
+              !current.some(
+                (
+                  existing,
+                ) =>
+                  existing.name ===
+                    file.name &&
+                  existing.size ===
+                    file.size &&
+                  existing.lastModified ===
+                    file.lastModified,
+              ),
+          );
+
+
+        return [
+          ...current,
+          ...unique,
+        ];
+      },
+    );
+  }
+
+
+  function removeSelectedFile(
+    index:
+      number,
+  ) {
+    setSelectedFiles(
+      (
+        current,
+      ) =>
+        current.filter(
+          (
+            _file,
+            currentIndex,
+          ) =>
+            currentIndex !==
+            index,
+        ),
+    );
+  }
 
 
   /*
@@ -412,7 +764,7 @@ export default function TaskAttachmentsPanel({
   async function upload() {
     if (
       selectedFiles.length ===
-      0 ||
+        0 ||
       busy
     ) {
       return;
@@ -471,55 +823,54 @@ export default function TaskAttachmentsPanel({
 
   /*
    * ==========================================================
-   * PREVIEW
+   * DOWNLOAD PERMISSION
    * ==========================================================
    */
 
-  async function previewAttachment(
-    attachment:
-      TaskAttachment,
+  async function updateDownloadPermission(
+    value:
+      boolean,
   ) {
     if (
-      !canBrowserPreview(
-        attachment,
-      )
+      !canChangeDownloadPermission ||
+      permissionBusy
     ) {
       return;
     }
 
 
-    setBusy(
+    setPermissionBusy(
       true,
     );
 
     setError('');
 
+    setNotice('');
+
 
     try {
-      const url =
-        await fetchFileAsObjectUrl(
-          AttachmentsApi.previewPath(
-            attachment.id,
-          ),
-        );
+      await TasksApi.updateAttachmentPermissions(
+        task.id,
+        value,
+      );
 
 
-      /*
-       * Release previous Blob URL before replacing it.
-       */
-      if (
-        preview?.url
-      ) {
-        URL.revokeObjectURL(
-          preview.url,
-        );
-      }
+      setNotice(
+        value
+          ? (
+              isArabic
+                ? 'يمكن للمكلف الآن تنزيل المرفقات.'
+                : 'Assignees can now download attachments.'
+            )
+          : (
+              isArabic
+                ? 'تم تعطيل التنزيل للمكلف. المعاينة ما زالت متاحة.'
+                : 'Assignee downloads are disabled. Preview remains available.'
+            ),
+      );
 
 
-      setPreview({
-        attachment,
-        url,
-      });
+      await onChanged();
     } catch (
       err
     ) {
@@ -529,30 +880,447 @@ export default function TaskAttachmentsPanel({
           ? err.message
           : (
               isArabic
-                ? 'تعذر معاينة الملف.'
-                : 'Could not preview this file.'
+                ? 'تعذر تحديث صلاحية التنزيل.'
+                : 'Could not update download permission.'
             ),
       );
     } finally {
-      setBusy(
+      setPermissionBusy(
         false,
       );
     }
   }
 
 
+  /*
+   * ==========================================================
+   * CLOSE PREVIEW
+   * ==========================================================
+   */
+
   function closePreview() {
-    if (
-      preview?.url
-    ) {
-      URL.revokeObjectURL(
-        preview.url,
+    setPreview(
+      (
+        current,
+      ) => {
+        if (
+          current?.objectUrl
+        ) {
+          URL.revokeObjectURL(
+            current.objectUrl,
+          );
+        }
+
+
+        return null;
+      },
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * IMAGE PREVIEW
+   * ==========================================================
+   */
+
+  async function previewImage(
+    attachment:
+      TaskAttachment,
+  ) {
+    const objectUrl =
+      await fetchFileAsObjectUrl(
+        AttachmentsApi.previewPath(
+          attachment.id,
+        ),
       );
+
+
+    setPreview({
+      attachment,
+      mode:
+        'image',
+      objectUrl,
+    });
+  }
+
+
+  /*
+   * ==========================================================
+   * PDF PREVIEW
+   * ==========================================================
+   */
+
+  async function previewPdf(
+    attachment:
+      TaskAttachment,
+  ) {
+    const objectUrl =
+      await fetchFileAsObjectUrl(
+        AttachmentsApi.previewPath(
+          attachment.id,
+        ),
+      );
+
+
+    setPreview({
+      attachment,
+      mode:
+        'pdf',
+      objectUrl,
+    });
+  }
+
+
+  /*
+   * ==========================================================
+   * TEXT PREVIEW
+   * ==========================================================
+   */
+
+  async function previewText(
+    attachment:
+      TaskAttachment,
+  ) {
+    const blob =
+      await fetchFileAsBlob(
+        AttachmentsApi.previewPath(
+          attachment.id,
+        ),
+      );
+
+
+    const text =
+      await blob.text();
+
+
+    setPreview({
+      attachment,
+      mode:
+        'text',
+      text,
+    });
+  }
+
+
+  /*
+   * ==========================================================
+   * EXCEL PREVIEW
+   * ==========================================================
+   *
+   * Restores real spreadsheet preview.
+   *
+   * Reads XLS/XLSX bytes and generates an HTML table for each
+   * worksheet.
+   * ==========================================================
+   */
+
+  async function previewExcel(
+    attachment:
+      TaskAttachment,
+  ) {
+    const blob =
+      await fetchFileAsBlob(
+        AttachmentsApi.previewPath(
+          attachment.id,
+        ),
+      );
+
+
+    const arrayBuffer =
+      await blob.arrayBuffer();
+
+
+    const workbook =
+      XLSX.read(
+        arrayBuffer,
+        {
+          cellFormula:
+            true,
+        },
+      );
+
+
+    const workbookHtml:
+      Record<
+        string,
+        string
+      > =
+      {};
+
+
+    workbook.SheetNames.forEach(
+      (
+        sheetName,
+      ) => {
+        const worksheet =
+          workbook.Sheets[
+            sheetName
+          ];
+
+
+        const rawHtml =
+          XLSX.utils.sheet_to_html(
+            worksheet,
+            {
+              id:
+                `attachment-sheet-${sheetName.replace(
+                  /[^a-zA-Z0-9_-]/g,
+                  '-',
+                )}`,
+            },
+          );
+
+
+        workbookHtml[
+          sheetName
+        ] =
+          DOMPurify.sanitize(
+            rawHtml,
+          );
+      },
+    );
+
+
+    const firstSheet =
+      workbook.SheetNames[
+        0
+      ];
+
+
+    setPreview({
+      attachment,
+
+      mode:
+        'excel',
+
+      sheetNames:
+        workbook.SheetNames,
+
+      activeSheet:
+        firstSheet,
+
+      workbookHtml,
+    });
+  }
+
+
+  /*
+   * ==========================================================
+   * DOCX PREVIEW
+   * ==========================================================
+   *
+   * Restores Word DOCX preview using Mammoth.
+   *
+   * Old .DOC is not the DOCX ZIP/XML format and is not handled
+   * by Mammoth here.
+   * ==========================================================
+   */
+
+  async function previewDocx(
+    attachment:
+      TaskAttachment,
+  ) {
+    const blob =
+      await fetchFileAsBlob(
+        AttachmentsApi.previewPath(
+          attachment.id,
+        ),
+      );
+
+
+    const arrayBuffer =
+      await blob.arrayBuffer();
+
+
+    const result =
+      await mammoth.convertToHtml(
+        {
+          arrayBuffer,
+        },
+        {
+          convertImage:
+            mammoth.images.dataUri,
+        },
+      );
+
+
+    const safeHtml =
+      DOMPurify.sanitize(
+        result.value,
+        {
+          USE_PROFILES: {
+            html:
+              true,
+          },
+        },
+      );
+
+
+    setPreview({
+      attachment,
+      mode:
+        'docx',
+      html:
+        safeHtml,
+    });
+  }
+
+
+  /*
+   * ==========================================================
+   * OPEN PREVIEW
+   * ==========================================================
+   */
+
+  async function previewAttachment(
+    attachment:
+      TaskAttachment,
+  ) {
+    if (
+      previewBusy
+    ) {
+      return;
     }
 
 
+    setError('');
+
+    closePreview();
+
+
+    const mode =
+      getPreviewMode(
+        attachment,
+      );
+
+
+    /*
+     * Unsupported formats still get a proper preview modal,
+     * but without silently downloading.
+     */
+    if (
+      mode ===
+      'unsupported'
+    ) {
+      setPreview({
+        attachment,
+        mode:
+          'unsupported',
+      });
+
+
+      return;
+    }
+
+
+    setPreviewBusy(
+      true,
+    );
+
+
+    try {
+      switch (
+        mode
+      ) {
+        case 'image':
+          await previewImage(
+            attachment,
+          );
+
+          break;
+
+
+        case 'pdf':
+          await previewPdf(
+            attachment,
+          );
+
+          break;
+
+
+        case 'text':
+          await previewText(
+            attachment,
+          );
+
+          break;
+
+
+        case 'excel':
+          await previewExcel(
+            attachment,
+          );
+
+          break;
+
+
+        case 'docx':
+          await previewDocx(
+            attachment,
+          );
+
+          break;
+
+
+        default:
+          setPreview({
+            attachment,
+            mode:
+              'unsupported',
+          });
+      }
+    } catch (
+      err
+    ) {
+      setError(
+        err instanceof
+          ApiError
+          ? err.message
+          : (
+              isArabic
+                ? 'تعذر إنشاء معاينة لهذا الملف.'
+                : 'Could not generate a preview for this file.'
+            ),
+      );
+    } finally {
+      setPreviewBusy(
+        false,
+      );
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * EXCEL SHEET CHANGE
+   * ==========================================================
+   */
+
+  function changeExcelSheet(
+    sheetName:
+      string,
+  ) {
     setPreview(
-      null,
+      (
+        current,
+      ) => {
+        if (
+          !current ||
+          current.mode !==
+            'excel'
+        ) {
+          return current;
+        }
+
+
+        return {
+          ...current,
+
+          activeSheet:
+            sheetName,
+        };
+      },
     );
   }
 
@@ -567,6 +1335,13 @@ export default function TaskAttachmentsPanel({
     attachment:
       TaskAttachment,
   ) {
+    if (
+      !canDownload
+    ) {
+      return;
+    }
+
+
     setBusy(
       true,
     );
@@ -605,37 +1380,55 @@ export default function TaskAttachmentsPanel({
 
   /*
    * ==========================================================
-   * REMOVE
+   * DELETE MODAL
    * ==========================================================
    */
 
-  async function remove(
+  function requestDelete(
     attachment:
       TaskAttachment,
   ) {
     if (
-      busy
+      !canDelete
     ) {
       return;
     }
 
 
-    const confirmed =
-      window.confirm(
-        isArabic
-          ? `هل تريد حذف "${attachment.fileName}"؟`
-          : `Delete "${attachment.fileName}"?`,
-      );
+    setDeleteTarget(
+      attachment,
+    );
+  }
 
 
+  function cancelDelete() {
     if (
-      !confirmed
+      deleteBusy
     ) {
       return;
     }
 
 
-    setBusy(
+    setDeleteTarget(
+      null,
+    );
+  }
+
+
+  async function confirmDelete() {
+    if (
+      !deleteTarget ||
+      deleteBusy
+    ) {
+      return;
+    }
+
+
+    const attachment =
+      deleteTarget;
+
+
+    setDeleteBusy(
       true,
     );
 
@@ -645,9 +1438,6 @@ export default function TaskAttachmentsPanel({
 
 
     try {
-      /*
-       * If currently previewing this attachment, close first.
-       */
       if (
         preview?.attachment.id ===
         attachment.id
@@ -658,6 +1448,11 @@ export default function TaskAttachmentsPanel({
 
       await AttachmentsApi.remove(
         attachment.id,
+      );
+
+
+      setDeleteTarget(
+        null,
       );
 
 
@@ -683,11 +1478,29 @@ export default function TaskAttachmentsPanel({
             ),
       );
     } finally {
-      setBusy(
+      setDeleteBusy(
         false,
       );
     }
   }
+
+
+  /*
+   * ==========================================================
+   * EXCEL HTML
+   * ==========================================================
+   */
+
+  const activeExcelHtml =
+    preview?.mode ===
+      'excel' &&
+    preview.activeSheet &&
+    preview.workbookHtml
+      ? preview.workbookHtml[
+          preview.activeSheet
+        ] ||
+        ''
+      : '';
 
 
   /*
@@ -727,9 +1540,9 @@ export default function TaskAttachmentsPanel({
               flex
               flex-col
               gap-4
-              sm:flex-row
-              sm:items-center
-              sm:justify-between
+              lg:flex-row
+              lg:items-center
+              lg:justify-between
             "
           >
             <div>
@@ -745,11 +1558,11 @@ export default function TaskAttachmentsPanel({
                   : 'Attachments'}
               </h2>
 
+
               <p
                 className="
                   mt-1
                   text-sm
-                  leading-6
                   text-slate-500
                 "
               >
@@ -774,7 +1587,75 @@ export default function TaskAttachmentsPanel({
             </div>
 
 
-            
+            {/*
+             * ================================================
+             * DOWNLOAD TOGGLE
+             * ================================================
+             */}
+
+            {canChangeDownloadPermission && (
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-white
+                  px-4
+                  py-3
+                "
+              >
+                <div>
+                  <div
+                    className="
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                    "
+                  >
+                    {isArabic
+                      ? 'السماح للمكلف بالتنزيل'
+                      : 'Allow assignee downloads'}
+                  </div>
+
+
+                  <div
+                    className="
+                      mt-0.5
+                      max-w-sm
+                      text-xs
+                      leading-5
+                      text-slate-400
+                    "
+                  >
+                    {isArabic
+                      ? 'المعاينة متاحة دائماً للمكلف. هذا الخيار يتحكم بالتنزيل فقط.'
+                      : 'Assignees can always preview. This controls downloading only.'}
+                  </div>
+                </div>
+
+
+                <ToggleSwitch
+                  checked={
+                    task.assigneeCanDownloadAttachments
+                  }
+                  disabled={
+                    permissionBusy
+                  }
+                  label={
+                    isArabic
+                      ? 'السماح بتنزيل المرفقات'
+                      : 'Allow attachment downloads'
+                  }
+                  onChange={
+                    updateDownloadPermission
+                  }
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -785,12 +1666,6 @@ export default function TaskAttachmentsPanel({
             sm:p-6
           "
         >
-          {/*
-           * ==================================================
-           * MESSAGES
-           * ==================================================
-           */}
-
           {error && (
             <div
               className="
@@ -835,10 +1710,10 @@ export default function TaskAttachmentsPanel({
            * ==================================================
            */}
 
-          {canManage && (
+          {canUpload && (
             <div
               className="
-                mb-5
+                mb-6
                 rounded-xl
                 border
                 border-dashed
@@ -853,7 +1728,7 @@ export default function TaskAttachmentsPanel({
                   cursor-pointer
                 "
               >
-                <span
+                <div
                   className="
                     text-sm
                     font-semibold
@@ -863,25 +1738,32 @@ export default function TaskAttachmentsPanel({
                   {isArabic
                     ? 'إضافة مرفقات'
                     : 'Add attachments'}
-                </span>
+                </div>
 
-                <span
+
+                <div
                   className="
                     mt-1
-                    block
                     text-xs
                     leading-5
                     text-slate-400
                   "
                 >
                   {isArabic
-                    ? 'يمكن رفع الصور وPDF وWord وExcel وPowerPoint وTXT وCSV وZIP.'
+                    ? 'صور، PDF، Word، Excel، PowerPoint، TXT، CSV وZIP.'
                     : 'Images, PDF, Word, Excel, PowerPoint, TXT, CSV and ZIP are supported.'}
-                </span>
+                </div>
+
 
                 <input
                   type="file"
                   multiple
+                  accept={
+                    ATTACHMENT_ACCEPT
+                  }
+                  disabled={
+                    busy
+                  }
                   className="
                     mt-3
                     block
@@ -904,70 +1786,170 @@ export default function TaskAttachmentsPanel({
                     file:text-xs
                     file:font-semibold
                     file:text-brand-700
-                    hover:file:bg-brand-100
                   "
-                  accept="
-                    image/*,
-                    application/pdf,
-                    .doc,
-                    .docx,
-                    .xls,
-                    .xlsx,
-                    .ppt,
-                    .pptx,
-                    .txt,
-                    .csv,
-                    .zip
-                  "
-                  disabled={
-                    busy
-                  }
                   onChange={(
                     event,
                   ) => {
-                    setSelectedFiles(
-                      Array.from(
-                        event.target.files ??
-                        [],
-                      ),
-                    );
+                    if (
+                      event.target.files
+                    ) {
+                      addSelectedFiles(
+                        event.target.files,
+                      );
+                    }
+
+
+                    event.target.value =
+                      '';
                   }}
                 />
               </label>
 
 
+              {/*
+               * ==============================================
+               * PENDING FILE ROWS
+               * ==============================================
+               */}
+
               {selectedFiles.length >
                 0 && (
                 <div
                   className="
-                    mt-3
-                    rounded-lg
+                    mt-4
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    border-slate-200
                     bg-white
-                    px-3
-                    py-2
-                    text-xs
-                    text-slate-500
                   "
                 >
-                  <strong>
-                    {selectedFiles.length}
-                  </strong>{' '}
+                  {selectedFiles.map(
+                    (
+                      file,
+                      index,
+                    ) => (
+                      <div
+                        key={`${file.name}-${file.size}-${file.lastModified}`}
+                        className="
+                          flex
+                          items-center
+                          gap-3
+                          border-b
+                          border-slate-100
+                          px-4
+                          py-3
+                          last:border-0
+                        "
+                      >
+                        <div
+                          className="
+                            flex
+                            h-10
+                            w-10
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-lg
+                            bg-slate-50
+                            text-lg
+                          "
+                        >
+                          {fileIcon(
+                            file.type,
+                            file.name,
+                          )}
+                        </div>
 
-                  {isArabic
-                    ? 'ملف محدد'
-                    : (
-                        selectedFiles.length ===
-                        1
-                          ? 'file selected'
-                          : 'files selected'
-                      )}
+
+                        <span
+                          className="
+                            rounded-full
+                            bg-slate-100
+                            px-2.5
+                            py-1
+                            text-[10px]
+                            font-semibold
+                            text-slate-600
+                          "
+                        >
+                          {getFileTypeLabel(
+                            file.type,
+                            file.name,
+                          )}
+                        </span>
+
+
+                        <div
+                          className="
+                            min-w-0
+                            flex-1
+                          "
+                        >
+                          <div
+                            className="
+                              truncate
+                              text-sm
+                              font-medium
+                              text-slate-700
+                            "
+                          >
+                            {file.name}
+                          </div>
+
+
+                          <div
+                            className="
+                              mt-0.5
+                              text-xs
+                              text-slate-400
+                            "
+                          >
+                            {formatFileSize(
+                              file.size,
+                            )}
+                          </div>
+                        </div>
+
+
+                        <button
+                          type="button"
+                          disabled={
+                            busy
+                          }
+                          onClick={() =>
+                            removeSelectedFile(
+                              index,
+                            )
+                          }
+                          className="
+                            rounded-lg
+                            border
+                            border-red-100
+                            px-3
+                            py-2
+                            text-xs
+                            font-semibold
+                            text-red-600
+                            transition
+                            hover:bg-red-50
+                            disabled:opacity-50
+                          "
+                        >
+                          {isArabic
+                            ? 'إزالة'
+                            : 'Remove'}
+                        </button>
+                      </div>
+                    ),
+                  )}
                 </div>
               )}
 
 
               <div
                 className="
-                  mt-3
+                  mt-4
                   flex
                   justify-end
                 "
@@ -992,8 +1974,8 @@ export default function TaskAttachmentsPanel({
                       )
                     : (
                         isArabic
-                          ? 'رفع الملفات'
-                          : 'Upload files'
+                          ? `رفع الملفات (${selectedFiles.length})`
+                          : `Upload files (${selectedFiles.length})`
                       )}
                 </button>
               </div>
@@ -1003,7 +1985,7 @@ export default function TaskAttachmentsPanel({
 
           {/*
            * ==================================================
-           * LIST
+           * EXISTING FILES
            * ==================================================
            */}
 
@@ -1016,26 +1998,18 @@ export default function TaskAttachmentsPanel({
                 border-dashed
                 border-slate-200
                 bg-slate-50/40
-                px-5
-                py-10
+                py-12
                 text-center
               "
             >
               <div
                 className="
-                  mx-auto
-                  flex
-                  h-12
-                  w-12
-                  items-center
-                  justify-center
-                  rounded-2xl
-                  bg-slate-100
-                  text-xl
+                  text-2xl
                 "
               >
                 📎
               </div>
+
 
               <div
                 className="
@@ -1049,336 +2023,240 @@ export default function TaskAttachmentsPanel({
                   ? 'لا توجد مرفقات'
                   : 'No attachments'}
               </div>
-
-              <p
-                className="
-                  mt-1
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {canManage
-                  ? (
-                      isArabic
-                        ? 'استخدم أداة الرفع أعلاه لإضافة الملفات.'
-                        : 'Use the upload area above to add files.'
-                    )
-                  : (
-                      isArabic
-                        ? 'لم تتم إضافة ملفات لهذه المهمة.'
-                        : 'No files have been added to this task.'
-                    )}
-              </p>
             </div>
           ) : (
             <div
               className="
-                space-y-3
+                overflow-hidden
+                rounded-xl
+                border
+                border-slate-200
               "
             >
               {attachments.map(
                 (
                   attachment,
-                ) => {
-                  const previewable =
-                    canBrowserPreview(
-                      attachment,
-                    );
-
-
-                  const image =
-                    attachment.storageType ===
-                      'IMAGE';
-
-
-                  return (
-                    <article
-                      key={
-                        attachment.id
-                      }
+                ) => (
+                  <div
+                    key={
+                      attachment.id
+                    }
+                    className="
+                      flex
+                      flex-col
+                      gap-3
+                      border-b
+                      border-slate-100
+                      bg-white
+                      px-4
+                      py-4
+                      last:border-0
+                      sm:flex-row
+                      sm:items-center
+                    "
+                  >
+                    <div
                       className="
-                        group
-                        rounded-xl
-                        border
-                        border-slate-200
-                        bg-white
-                        p-4
-                        transition
-                        hover:border-slate-300
-                        hover:shadow-sm
+                        flex
+                        h-10
+                        w-10
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-lg
+                        bg-slate-50
+                        text-lg
+                      "
+                    >
+                      {fileIcon(
+                        attachment.mimeType,
+                        attachment.fileName,
+                      )}
+                    </div>
+
+
+                    <span
+                      className="
+                        w-fit
+                        rounded-full
+                        bg-slate-100
+                        px-2.5
+                        py-1
+                        text-[10px]
+                        font-semibold
+                        text-slate-600
+                      "
+                    >
+                      {getFileTypeLabel(
+                        attachment.mimeType,
+                        attachment.fileName,
+                      )}
+                    </span>
+
+
+                    <div
+                      className="
+                        min-w-0
+                        flex-1
                       "
                     >
                       <div
                         className="
-                          flex
-                          flex-col
-                          gap-4
-                          sm:flex-row
-                          sm:items-center
+                          truncate
+                          text-sm
+                          font-semibold
+                          text-slate-800
                         "
                       >
-                        {/*
-                         * ICON
-                         */}
-
-                        <div
-                          className="
-                            flex
-                            h-12
-                            w-12
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-xl
-                            bg-slate-50
-                            text-xl
-                          "
-                        >
-                          {fileIcon(
-                            attachment,
-                          )}
-                        </div>
-
-
-                        {/*
-                         * INFO
-                         */}
-
-                        <div
-                          className="
-                            min-w-0
-                            flex-1
-                          "
-                        >
-                          <div
-                            className="
-                              truncate
-                              text-sm
-                              font-semibold
-                              text-slate-800
-                            "
-                            title={
-                              attachment.fileName
-                            }
-                          >
-                            {
-                              attachment.fileName
-                            }
-                          </div>
-
-
-                          <div
-                            className="
-                              mt-1
-                              flex
-                              flex-wrap
-                              items-center
-                              gap-2
-                              text-xs
-                              text-slate-400
-                            "
-                          >
-                            <span>
-                              {fileSizeLabel(
-                                attachment.fileSize,
-                              )}
-                            </span>
-
-                            <span>
-                              •
-                            </span>
-
-                            <span>
-                              {image
-                                ? (
-                                    isArabic
-                                      ? 'صورة'
-                                      : 'Image'
-                                  )
-                                : (
-                                    isArabic
-                                      ? 'مستند'
-                                      : 'Document'
-                                  )}
-                            </span>
-
-                            <span>
-                              •
-                            </span>
-
-                            <span
-                              className={`
-                                rounded-full
-                                px-2
-                                py-0.5
-                                text-[10px]
-                                font-semibold
-                                ${
-                                  image
-                                    ? 'bg-blue-50 text-blue-600'
-                                    : 'bg-violet-50 text-violet-600'
-                                }
-                              `}
-                            >
-                              {image
-                                ? (
-                                    isArabic
-                                      ? 'التخزين'
-                                      : 'STORAGE'
-                                  )
-                                : (
-                                    isArabic
-                                      ? 'قاعدة البيانات'
-                                      : 'DATABASE'
-                                  )}
-                            </span>
-
-                            <span>
-                              {new Date(
-                                attachment.createdAt,
-                              ).toLocaleString(
-                                locale,
-                              )}
-                            </span>
-                          </div>
-                        </div>
-
-
-                        {/*
-                         * ACTIONS
-                         */}
-
-                        <div
-                          className="
-                            flex
-                            shrink-0
-                            flex-wrap
-                            gap-2
-                          "
-                        >
-                          {previewable && (
-                            <button
-                              type="button"
-                              className="
-                                rounded-lg
-                                border
-                                border-slate-200
-                                bg-white
-                                px-3
-                                py-2
-                                text-xs
-                                font-semibold
-                                text-slate-600
-                                transition
-                                hover:border-brand-200
-                                hover:bg-brand-50
-                                hover:text-brand-700
-                              "
-                              disabled={
-                                busy
-                              }
-                              onClick={() =>
-                                previewAttachment(
-                                  attachment,
-                                )
-                              }
-                            >
-                              {isArabic
-                                ? 'معاينة'
-                                : 'Preview'}
-                            </button>
-                          )}
-
-
-                          <button
-                            type="button"
-                            className="
-                              rounded-lg
-                              border
-                              border-slate-200
-                              bg-white
-                              px-3
-                              py-2
-                              text-xs
-                              font-semibold
-                              text-slate-600
-                              transition
-                              hover:border-brand-200
-                              hover:bg-brand-50
-                              hover:text-brand-700
-                              disabled:cursor-not-allowed
-                              disabled:opacity-40
-                            "
-                            disabled={
-                              busy ||
-                              !canDownload
-                            }
-                            title={
-                              !canDownload
-                                ? (
-                                    isArabic
-                                      ? 'قام منشئ المهمة بتعطيل تنزيل المرفقات للمكلف.'
-                                      : 'The task creator disabled attachment downloads for assignees.'
-                                  )
-                                : undefined
-                            }
-                            onClick={() =>
-                              download(
-                                attachment,
-                              )
-                            }
-                          >
-                            {isArabic
-                              ? 'تنزيل'
-                              : 'Download'}
-                          </button>
-
-
-                          {canManage && (
-                            <button
-                              type="button"
-                              className="
-                                rounded-lg
-                                border
-                                border-red-200
-                                bg-white
-                                px-3
-                                py-2
-                                text-xs
-                                font-semibold
-                                text-red-600
-                                transition
-                                hover:bg-red-50
-                              "
-                              disabled={
-                                busy
-                              }
-                              onClick={() =>
-                                remove(
-                                  attachment,
-                                )
-                              }
-                            >
-                              {isArabic
-                                ? 'حذف'
-                                : 'Delete'}
-                            </button>
-                          )}
-                        </div>
+                        {
+                          attachment.fileName
+                        }
                       </div>
-                    </article>
-                  );
-                },
+
+
+                      <div
+                        className="
+                          mt-1
+                          text-xs
+                          text-slate-400
+                        "
+                      >
+                        {formatFileSize(
+                          Number(
+                            attachment.fileSize,
+                          ),
+                        )}
+                      </div>
+                    </div>
+
+
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        items-center
+                        gap-2
+                      "
+                    >
+                      <button
+                        type="button"
+                        disabled={
+                          busy ||
+                          previewBusy
+                        }
+                        onClick={() =>
+                          previewAttachment(
+                            attachment,
+                          )
+                        }
+                        className="
+                          rounded-lg
+                          border
+                          border-slate-200
+                          bg-white
+                          px-3
+                          py-2
+                          text-xs
+                          font-semibold
+                          text-slate-600
+                          transition
+                          hover:bg-slate-50
+                          disabled:opacity-50
+                        "
+                      >
+                        {previewBusy
+                          ? (
+                              isArabic
+                                ? 'جاري التحميل…'
+                                : 'Loading…'
+                            )
+                          : (
+                              isArabic
+                                ? 'معاينة'
+                                : 'Preview'
+                            )}
+                      </button>
+
+
+                      <button
+                        type="button"
+                        disabled={
+                          busy ||
+                          !canDownload
+                        }
+                        title={
+                          !canDownload
+                            ? (
+                                isArabic
+                                  ? 'قام مالك المهمة بتعطيل التنزيل.'
+                                  : 'The Task owner disabled downloading.'
+                              )
+                            : undefined
+                        }
+                        onClick={() =>
+                          download(
+                            attachment,
+                          )
+                        }
+                        className="
+                          rounded-lg
+                          border
+                          border-slate-200
+                          bg-white
+                          px-3
+                          py-2
+                          text-xs
+                          font-semibold
+                          text-slate-600
+                          transition
+                          hover:bg-slate-50
+                          disabled:cursor-not-allowed
+                          disabled:opacity-40
+                        "
+                      >
+                        {isArabic
+                          ? 'تنزيل'
+                          : 'Download'}
+                      </button>
+
+
+                      {canDelete && (
+                        <button
+                          type="button"
+                          disabled={
+                            busy
+                          }
+                          onClick={() =>
+                            requestDelete(
+                              attachment,
+                            )
+                          }
+                          className="
+                            rounded-lg
+                            border
+                            border-red-200
+                            bg-white
+                            px-3
+                            py-2
+                            text-xs
+                            font-semibold
+                            text-red-600
+                            transition
+                            hover:bg-red-50
+                          "
+                        >
+                          {isArabic
+                            ? 'حذف'
+                            : 'Delete'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ),
               )}
             </div>
           )}
 
-
-          {/*
-           * ==================================================
-           * DOWNLOAD PERMISSION MESSAGE
-           * ==================================================
-           */}
 
           {!canDownload &&
             attachments.length >
@@ -1398,8 +2276,8 @@ export default function TaskAttachmentsPanel({
               "
             >
               {isArabic
-                ? 'يمكنك معاينة المرفقات، لكن منشئ المهمة عطّل تنزيل المرفقات للمكلفين.'
-                : 'You may preview attachments, but the task creator has disabled downloads for assignees.'}
+                ? 'يمكنك معاينة المرفقات، لكن مالك المهمة عطّل التنزيل.'
+                : 'You can preview attachments, but the Task owner has disabled downloading.'}
             </div>
           )}
         </div>
@@ -1410,86 +2288,753 @@ export default function TaskAttachmentsPanel({
        * ======================================================
        * PREVIEW MODAL
        * ======================================================
+       *
+       * PORTALLED TO BODY.
+       *
+       * This is what fixes the gray background not covering
+       * Navbar / entire viewport.
+       * ======================================================
        */}
 
       {preview && (
-        <div
-          className="
-            fixed
-            inset-0
-            z-[100]
-            flex
-            items-center
-            justify-center
-            bg-slate-950/70
-            p-4
-            backdrop-blur-sm
-          "
-          onMouseDown={(
-            event,
-          ) => {
-            if (
-              event.currentTarget ===
-              event.target
-            ) {
-              closePreview();
-            }
-          }}
-        >
+        <ModalPortal>
           <div
             className="
+              fixed
+              inset-0
+              z-[99999]
               flex
-              max-h-[92vh]
-              w-full
-              max-w-5xl
-              flex-col
+              h-[100dvh]
+              w-screen
+              items-center
+              justify-center
               overflow-hidden
-              rounded-2xl
-              bg-white
-              shadow-2xl
+              bg-slate-950/70
+              p-4
+              backdrop-blur-sm
             "
+            onMouseDown={(
+              event,
+            ) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                closePreview();
+              }
+            }}
           >
             <div
               className="
                 flex
-                items-center
-                justify-between
-                gap-4
-                border-b
+                h-[min(88dvh,900px)]
+                w-full
+                max-w-6xl
+                flex-col
+                overflow-hidden
+                rounded-2xl
+                border
                 border-slate-200
-                px-4
-                py-3
-                sm:px-5
+                bg-white
+                shadow-2xl
               "
             >
+              {/*
+               * ===============================================
+               * HEADER
+               * ===============================================
+               */}
+
               <div
                 className="
-                  min-w-0
+                  flex
+                  shrink-0
+                  items-center
+                  justify-between
+                  gap-4
+                  border-b
+                  border-slate-200
+                  bg-white
+                  px-5
+                  py-4
                 "
               >
                 <div
                   className="
-                    truncate
-                    text-sm
-                    font-semibold
-                    text-slate-800
+                    min-w-0
                   "
                 >
-                  {
-                    preview.attachment.fileName
-                  }
+                  <div
+                    className="
+                      truncate
+                      text-sm
+                      font-semibold
+                      text-slate-800
+                    "
+                  >
+                    {
+                      preview.attachment.fileName
+                    }
+                  </div>
+
+
+                  <div
+                    className="
+                      mt-1
+                      text-xs
+                      text-slate-400
+                    "
+                  >
+                    {getFileTypeLabel(
+                      preview.attachment.mimeType,
+                      preview.attachment.fileName,
+                    )}
+
+                    {' · '}
+
+                    {formatFileSize(
+                      Number(
+                        preview.attachment.fileSize,
+                      ),
+                    )}
+                  </div>
                 </div>
+
 
                 <div
                   className="
-                    mt-0.5
-                    text-xs
-                    text-slate-400
+                    flex
+                    shrink-0
+                    items-center
+                    gap-2
                   "
                 >
-                  {fileSizeLabel(
-                    preview.attachment.fileSize,
+                  {canDownload && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={() =>
+                        download(
+                          preview.attachment,
+                        )
+                      }
+                    >
+                      {isArabic
+                        ? 'تنزيل'
+                        : 'Download'}
+                    </button>
                   )}
+
+
+                  <button
+                    type="button"
+                    aria-label="Close preview"
+                    onClick={
+                      closePreview
+                    }
+                    className="
+                      flex
+                      h-10
+                      w-10
+                      items-center
+                      justify-center
+                      rounded-lg
+                      text-xl
+                      text-slate-400
+                      transition
+                      hover:bg-slate-100
+                      hover:text-slate-700
+                    "
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+
+              {/*
+               * ===============================================
+               * IMAGE
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'image' &&
+                preview.objectUrl && (
+                <div
+                  className="
+                    flex
+                    min-h-0
+                    flex-1
+                    items-center
+                    justify-center
+                    overflow-auto
+                    bg-slate-100
+                    p-5
+                  "
+                >
+                  <img
+                    src={
+                      preview.objectUrl
+                    }
+                    alt={
+                      preview.attachment.fileName
+                    }
+                    className="
+                      max-h-full
+                      max-w-full
+                      rounded-xl
+                      object-contain
+                      shadow-sm
+                    "
+                  />
+                </div>
+              )}
+
+
+              {/*
+               * ===============================================
+               * PDF
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'pdf' &&
+                preview.objectUrl && (
+                <iframe
+                  src={
+                    preview.objectUrl
+                  }
+                  title={
+                    preview.attachment.fileName
+                  }
+                  className="
+                    min-h-0
+                    w-full
+                    flex-1
+                    border-0
+                    bg-white
+                  "
+                />
+              )}
+
+
+              {/*
+               * ===============================================
+               * TEXT
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'text' && (
+                <div
+                  className="
+                    min-h-0
+                    flex-1
+                    overflow-auto
+                    bg-slate-50
+                    p-6
+                  "
+                >
+                  <pre
+                    className="
+                      whitespace-pre-wrap
+                      break-words
+                      rounded-xl
+                      border
+                      border-slate-200
+                      bg-white
+                      p-5
+                      font-mono
+                      text-sm
+                      leading-6
+                      text-slate-700
+                    "
+                  >
+                    {preview.text}
+                  </pre>
+                </div>
+              )}
+
+
+              {/*
+               * ===============================================
+               * EXCEL
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'excel' && (
+                <div
+                  className="
+                    flex
+                    min-h-0
+                    flex-1
+                    flex-col
+                    bg-slate-50
+                  "
+                >
+                  {/*
+                   * SHEET TABS
+                   */}
+
+                  {preview.sheetNames &&
+                    preview.sheetNames.length >
+                      0 && (
+                    <div
+                      className="
+                        flex
+                        shrink-0
+                        gap-2
+                        overflow-x-auto
+                        border-b
+                        border-slate-200
+                        bg-white
+                        px-4
+                        py-3
+                      "
+                    >
+                      {preview.sheetNames.map(
+                        (
+                          sheetName,
+                        ) => (
+                          <button
+                            key={
+                              sheetName
+                            }
+                            type="button"
+                            onClick={() =>
+                              changeExcelSheet(
+                                sheetName,
+                              )
+                            }
+                            className={`
+                              shrink-0
+                              rounded-lg
+                              px-3
+                              py-2
+                              text-xs
+                              font-semibold
+                              transition
+                              ${
+                                preview.activeSheet ===
+                                sheetName
+                                  ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
+                                  : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                              }
+                            `}
+                          >
+                            {
+                              sheetName
+                            }
+                          </button>
+                        ),
+                      )}
+                    </div>
+                  )}
+
+
+                  <div
+                    className="
+                      min-h-0
+                      flex-1
+                      overflow-auto
+                      p-5
+                    "
+                  >
+                    <div
+                      className="
+                        min-w-max
+                        overflow-hidden
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-white
+                        shadow-sm
+
+                        [&_table]:border-collapse
+                        [&_table]:text-sm
+
+                        [&_td]:whitespace-nowrap
+                        [&_td]:border
+                        [&_td]:border-slate-200
+                        [&_td]:px-3
+                        [&_td]:py-2
+
+                        [&_th]:whitespace-nowrap
+                        [&_th]:border
+                        [&_th]:border-slate-200
+                        [&_th]:bg-slate-50
+                        [&_th]:px-3
+                        [&_th]:py-2
+                        [&_th]:font-semibold
+                        [&_th]:text-slate-700
+                      "
+                      dangerouslySetInnerHTML={{
+                        __html:
+                          activeExcelHtml,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+
+              {/*
+               * ===============================================
+               * DOCX
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'docx' && (
+                <div
+                  className="
+                    min-h-0
+                    flex-1
+                    overflow-auto
+                    bg-slate-100
+                    p-5
+                    sm:p-8
+                  "
+                >
+                  <article
+                    className="
+                      mx-auto
+                      min-h-full
+                      max-w-[850px]
+                      rounded-xl
+                      bg-white
+                      p-8
+                      shadow-sm
+
+                      [&_h1]:mb-5
+                      [&_h1]:mt-7
+                      [&_h1]:text-2xl
+                      [&_h1]:font-bold
+
+                      [&_h2]:mb-4
+                      [&_h2]:mt-6
+                      [&_h2]:text-xl
+                      [&_h2]:font-semibold
+
+                      [&_h3]:mb-3
+                      [&_h3]:mt-5
+                      [&_h3]:text-lg
+                      [&_h3]:font-semibold
+
+                      [&_p]:my-3
+                      [&_p]:leading-7
+                      [&_p]:text-slate-700
+
+                      [&_ul]:my-4
+                      [&_ul]:list-disc
+                      [&_ul]:ps-6
+
+                      [&_ol]:my-4
+                      [&_ol]:list-decimal
+                      [&_ol]:ps-6
+
+                      [&_li]:my-1
+
+                      [&_table]:my-5
+                      [&_table]:w-full
+                      [&_table]:border-collapse
+
+                      [&_td]:border
+                      [&_td]:border-slate-200
+                      [&_td]:p-2
+
+                      [&_th]:border
+                      [&_th]:border-slate-200
+                      [&_th]:bg-slate-50
+                      [&_th]:p-2
+
+                      [&_img]:my-4
+                      [&_img]:max-w-full
+                    "
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        preview.html ||
+                        '',
+                    }}
+                  />
+                </div>
+              )}
+
+
+              {/*
+               * ===============================================
+               * UNSUPPORTED
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'unsupported' && (
+                <div
+                  className="
+                    flex
+                    min-h-0
+                    flex-1
+                    items-center
+                    justify-center
+                    bg-slate-50
+                    p-8
+                  "
+                >
+                  <div
+                    className="
+                      max-w-md
+                      text-center
+                    "
+                  >
+                    <div
+                      className="
+                        mx-auto
+                        flex
+                        h-16
+                        w-16
+                        items-center
+                        justify-center
+                        rounded-2xl
+                        bg-white
+                        text-3xl
+                        shadow-sm
+                      "
+                    >
+                      {fileIcon(
+                        preview.attachment.mimeType,
+                        preview.attachment.fileName,
+                      )}
+                    </div>
+
+
+                    <h3
+                      className="
+                        mt-5
+                        break-all
+                        text-base
+                        font-semibold
+                        text-slate-800
+                      "
+                    >
+                      {
+                        preview.attachment.fileName
+                      }
+                    </h3>
+
+
+                    <p
+                      className="
+                        mt-2
+                        text-sm
+                        leading-6
+                        text-slate-500
+                      "
+                    >
+                      {isArabic
+                        ? 'هذا النوع من الملفات لا يحتوي حالياً على عارض داخل التطبيق.'
+                        : 'This file type does not currently have an in-app renderer.'}
+                    </p>
+
+
+                    {canDownload && (
+                      <button
+                        type="button"
+                        className="
+                          btn-primary
+                          mt-5
+                        "
+                        onClick={() =>
+                          download(
+                            preview.attachment,
+                          )
+                        }
+                      >
+                        {isArabic
+                          ? 'تنزيل الملف'
+                          : 'Download file'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+
+      {/*
+       * ======================================================
+       * DELETE CONFIRMATION MODAL
+       * ======================================================
+       *
+       * Replaces window.confirm().
+       * ======================================================
+       */}
+
+      {deleteTarget && (
+        <ModalPortal>
+          <div
+            className="
+              fixed
+              inset-0
+              z-[100000]
+              flex
+              h-[100dvh]
+              w-screen
+              items-center
+              justify-center
+              bg-slate-950/60
+              p-4
+              backdrop-blur-sm
+            "
+            onMouseDown={(
+              event,
+            ) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                cancelDelete();
+              }
+            }}
+          >
+            <div
+              className="
+                w-full
+                max-w-md
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-2xl
+              "
+            >
+              <div
+                className="
+                  p-6
+                "
+              >
+                <div
+                  className="
+                    flex
+                    h-12
+                    w-12
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-red-50
+                    text-xl
+                  "
+                >
+                  🗑️
+                </div>
+
+
+                <h2
+                  className="
+                    mt-4
+                    text-lg
+                    font-semibold
+                    text-slate-900
+                  "
+                >
+                  {isArabic
+                    ? 'حذف المرفق؟'
+                    : 'Delete attachment?'}
+                </h2>
+
+
+                <p
+                  className="
+                    mt-2
+                    text-sm
+                    leading-6
+                    text-slate-500
+                  "
+                >
+                  {isArabic
+                    ? 'سيتم حذف هذا المرفق من المهمة.'
+                    : 'This attachment will be removed from the task.'}
+                </p>
+
+
+                <div
+                  className="
+                    mt-4
+                    flex
+                    items-center
+                    gap-3
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-slate-50
+                    p-3
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      h-10
+                      w-10
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-lg
+                      bg-white
+                      text-lg
+                    "
+                  >
+                    {fileIcon(
+                      deleteTarget.mimeType,
+                      deleteTarget.fileName,
+                    )}
+                  </div>
+
+
+                  <div
+                    className="
+                      min-w-0
+                    "
+                  >
+                    <div
+                      className="
+                        truncate
+                        text-sm
+                        font-semibold
+                        text-slate-700
+                      "
+                    >
+                      {
+                        deleteTarget.fileName
+                      }
+                    </div>
+
+
+                    <div
+                      className="
+                        mt-0.5
+                        text-xs
+                        text-slate-400
+                      "
+                    >
+                      {getFileTypeLabel(
+                        deleteTarget.mimeType,
+                        deleteTarget.fileName,
+                      )}
+
+                      {' · '}
+
+                      {formatFileSize(
+                        Number(
+                          deleteTarget.fileSize,
+                        ),
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -1497,104 +3042,68 @@ export default function TaskAttachmentsPanel({
               <div
                 className="
                   flex
-                  shrink-0
-                  items-center
+                  justify-end
                   gap-2
+                  border-t
+                  border-slate-100
+                  bg-slate-50/70
+                  p-4
                 "
               >
-                {canDownload && (
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={() =>
-                      download(
-                        preview.attachment,
-                      )
-                    }
-                  >
-                    {isArabic
-                      ? 'تنزيل'
-                      : 'Download'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={
+                    deleteBusy
+                  }
+                  onClick={
+                    cancelDelete
+                  }
+                >
+                  {isArabic
+                    ? 'إلغاء'
+                    : 'Cancel'}
+                </button>
 
 
                 <button
                   type="button"
-                  className="
-                    flex
-                    h-9
-                    w-9
-                    items-center
-                    justify-center
-                    rounded-lg
-                    text-xl
-                    text-slate-500
-                    transition
-                    hover:bg-slate-100
-                    hover:text-slate-800
-                  "
-                  onClick={
-                    closePreview
+                  disabled={
+                    deleteBusy
                   }
-                  aria-label="Close preview"
+                  onClick={
+                    confirmDelete
+                  }
+                  className="
+                    rounded-lg
+                    bg-red-600
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    text-white
+                    transition
+                    hover:bg-red-700
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
                 >
-                  ×
+                  {deleteBusy
+                    ? (
+                        isArabic
+                          ? 'جاري الحذف…'
+                          : 'Deleting…'
+                      )
+                    : (
+                        isArabic
+                          ? 'حذف المرفق'
+                          : 'Delete attachment'
+                      )}
                 </button>
               </div>
             </div>
-
-
-            <div
-              className="
-                flex
-                min-h-[400px]
-                flex-1
-                items-center
-                justify-center
-                overflow-auto
-                bg-slate-100
-                p-3
-              "
-            >
-              {preview.attachment.mimeType.startsWith(
-                'image/',
-              ) ? (
-                <img
-                  src={
-                    preview.url
-                  }
-                  alt={
-                    preview.attachment.fileName
-                  }
-                  className="
-                    max-h-[75vh]
-                    max-w-full
-                    rounded-lg
-                    object-contain
-                    shadow-sm
-                  "
-                />
-              ) : (
-                <iframe
-                  src={
-                    preview.url
-                  }
-                  title={
-                    preview.attachment.fileName
-                  }
-                  className="
-                    h-[75vh]
-                    w-full
-                    rounded-lg
-                    border-0
-                    bg-white
-                  "
-                />
-              )}
-            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </>
   );

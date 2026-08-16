@@ -147,3 +147,16 @@ input:-webkit-autofill:active {
 .theme-page-background {
   background-color: var(--theme-page-background);
 }
+@keyframes global-loading-bar {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  50% {
+    transform: translateX(150%);
+  }
+
+  100% {
+    transform: translateX(320%);
+  }
+}

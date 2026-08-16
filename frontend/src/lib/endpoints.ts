@@ -11,6 +11,7 @@ import type {
   SettingType,
   SettingValueType,
   Task,
+  TaskAssignment,
   TaskAttachment,
   TaskComment,
   TaskRating,

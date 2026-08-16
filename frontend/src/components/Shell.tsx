@@ -1,28 +1,80 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
-import { AuthProvider } from '@/lib/auth-context';
-import { NotificationsProvider } from '@/lib/notifications-context';
-import { ListLabelsProvider } from '@/lib/list-labels-context';
-import Navbar from '@/components/Navbar';
-import { BrandingProvider } from '@/lib/branding-context';
+import {
+  usePathname,
+} from 'next/navigation';
 
-export default function Shell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isPublicPage = pathname === '/' || pathname === '/login' || pathname === '/register';
+import {
+  AuthProvider,
+} from '@/lib/auth-context';
+
+import {
+  NotificationsProvider,
+} from '@/lib/notifications-context';
+
+import {
+  ListLabelsProvider,
+} from '@/lib/list-labels-context';
+
+import {
+  BrandingProvider,
+} from '@/lib/branding-context';
+
+
+
+import Navbar from '@/components/Navbar';
+import { LoadingProvider } from './loading-context';
+
+
+export default function Shell({
+  children,
+}: {
+  children:
+    React.ReactNode;
+}) {
+  const pathname =
+    usePathname();
+
+
+  const isPublicPage =
+    pathname ===
+      '/' ||
+    pathname ===
+      '/login' ||
+    pathname ===
+      '/register';
+
 
   return (
-    // Branding (logo/name/favicon/metadata) is public and needed on every
-    // page — including the login screen — so it sits outside AuthProvider.
-    <BrandingProvider>
-      <AuthProvider>
-        <ListLabelsProvider>
-          <NotificationsProvider>
-            {!isPublicPage && <Navbar />}
-            <main className={isPublicPage ? '' : 'mx-auto max-w-6xl px-4 py-6'}>{children}</main>
-          </NotificationsProvider>
-        </ListLabelsProvider>
-      </AuthProvider>
-    </BrandingProvider>
+    <LoadingProvider>
+      <BrandingProvider>
+        <AuthProvider>
+          <ListLabelsProvider>
+            <NotificationsProvider>
+              {!isPublicPage && (
+                <Navbar />
+              )}
+
+
+              <main
+                className={
+                  isPublicPage
+                    ? ''
+                    : `
+                      mx-auto
+                      max-w-6xl
+                      px-4
+                      pb-6
+                      pt-[92px]
+                    `
+                }
+              >
+                {children}
+              </main>
+            </NotificationsProvider>
+          </ListLabelsProvider>
+        </AuthProvider>
+      </BrandingProvider>
+    </LoadingProvider>
   );
 }

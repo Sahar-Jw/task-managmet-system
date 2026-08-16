@@ -510,40 +510,47 @@ export default function SubtasksPanel({
    * ==========================================================
    */
 
-  function openModal() {
-    setError('');
-    setSuccess('');
+ function openModal() {
+  setError('');
+  setSuccess('');
 
+  /*
+   * Normal users can default the Subtask assignment to themselves.
+   *
+   * Admins cannot be Task assignees, so for Admin the Subtask
+   * must default to Unassigned.
+   */
+  const defaultAssigneeId =
+    user &&
+    user.role.name !== 'ADMIN'
+      ? user.id
+      : '';
 
-    setForm({
-      title:
-        '',
+  setForm({
+    title: '',
 
-      description:
-        '',
+    description: '',
 
-      priority:
-        task.priority ||
-        'Medium',
+    priority:
+      task.priority ||
+      'Medium',
 
-      assigneeId:
-        user?.id ||
-        '',
+    assigneeId:
+      defaultAssigneeId,
 
-      startDate:
-        task.startDate ||
-        '',
+    startDate:
+      task.startDate ||
+      '',
 
-      deadlineDate:
-        task.deadlineDate ||
-        '',
-    });
+    deadlineDate:
+      task.deadlineDate ||
+      '',
+  });
 
-
-    setModalOpen(
-      true,
-    );
-  }
+  setModalOpen(
+    true,
+  );
+}
 
 
   function closeModal() {
@@ -1631,19 +1638,25 @@ export default function SubtasksPanel({
 
 
                   <p className="mt-1 text-xs text-slate-400">
-                    {form.assigneeId ===
-                    user?.id
-                      ? (
-                          isArabic
-                            ? 'سيتم قبول التكليف لك تلقائياً.'
-                            : 'Your own assignment will be accepted automatically.'
+                    {!form.assigneeId
+                        ? (
+                            isArabic
+                            ? 'يمكن ترك المهمة الفرعية بدون تكليف حالياً.'
+                            : 'The subtask can be left unassigned for now.'
                         )
-                      : (
-                          isArabic
-                            ? 'المستخدم الآخر سيحتاج إلى قبول أو رفض التكليف.'
-                            : 'Another user will need to accept or reject the assignment.'
-                        )}
-                  </p>
+                        : form.assigneeId ===
+                            user?.id
+                        ? (
+                            isArabic
+                                ? 'سيتم قبول التكليف لك تلقائياً.'
+                                : 'Your own assignment will be accepted automatically.'
+                            )
+                        : (
+                            isArabic
+                                ? 'المستخدم الآخر سيحتاج إلى قبول أو رفض التكليف.'
+                                : 'The selected user will need to accept or reject the assignment.'
+                            )}
+                    </p>
                 </div>
               </div>
 

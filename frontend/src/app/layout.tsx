@@ -26,7 +26,7 @@ export default async function RootLayout({
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider>
-            <Shell>{children}</Shell>
+            <Shell >{children}</Shell>
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

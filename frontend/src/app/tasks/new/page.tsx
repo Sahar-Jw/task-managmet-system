@@ -51,6 +51,13 @@ import type {
   User,
 } from '@/lib/types';
 
+
+/*
+ * ============================================================
+ * COLORS
+ * ============================================================
+ */
+
 const COLORS = [
   {
     label: 'Blue',
@@ -78,51 +85,91 @@ const COLORS = [
   },
 ];
 
+
+/*
+ * ============================================================
+ * QUICK ADD
+ * ============================================================
+ */
+
 type QuickAddType =
   | 'task_type'
   | 'task_priority'
   | 'department'
   | 'branch';
 
+
 type QuickAddState = {
   open: boolean;
-  type: QuickAddType | null;
+
+  type:
+    QuickAddType | null;
 
   label: string;
+
   code: string;
+
   address: string;
 
   saving: boolean;
+
   error: string;
 };
 
-const EMPTY_QUICK_ADD: QuickAddState = {
+
+const EMPTY_QUICK_ADD:
+  QuickAddState = {
   open: false,
+
   type: null,
 
   label: '',
+
   code: '',
+
   address: '',
 
   saving: false,
+
   error: '',
 };
+
+
+/*
+ * ============================================================
+ * SHARED UI
+ * ============================================================
+ */
 
 function SectionHeader({
   title,
   description,
 }: {
   title: string;
+
   description?: string;
 }) {
   return (
     <div>
-      <h2 className="text-base font-semibold text-slate-800">
+      <h2
+        className="
+          text-base
+          font-semibold
+          text-slate-900
+        "
+      >
         {title}
       </h2>
 
       {description && (
-        <p className="mt-1 text-sm text-slate-500">
+        <p
+          className="
+            mt-1
+            text-sm
+            leading-6
+            text-slate-500
+          "
+        >
           {description}
         </p>
       )}
@@ -130,24 +177,55 @@ function SectionHeader({
   );
 }
 
+
 function FieldLabel({
   children,
   optional,
   action,
+  isArabic,
 }: {
-  children: React.ReactNode;
-  optional?: boolean;
-  action?: React.ReactNode;
+  children:
+    React.ReactNode;
+
+  optional?:
+    boolean;
+
+  action?:
+    React.ReactNode;
+
+  isArabic?:
+    boolean;
 }) {
   return (
-    <div className="mb-1.5 flex items-center justify-between gap-3">
-      <label className="text-sm font-medium text-slate-700">
+    <div
+      className="
+        mb-1.5
+        flex
+        items-center
+        justify-between
+        gap-3
+      "
+    >
+      <label
+        className="
+          text-sm
+          font-medium
+          text-slate-700
+        "
+      >
         {children}
 
         {optional && (
-          <span className="ml-1 font-normal text-slate-400">
-            {' '}
-            (optional)
+          <span
+            className="
+              ms-1
+              font-normal
+              text-slate-400
+            "
+          >
+            {isArabic
+              ? '(اختياري)'
+              : '(optional)'}
           </span>
         )}
       </label>
@@ -157,196 +235,396 @@ function FieldLabel({
   );
 }
 
+
 function AddButton({
   onClick,
+  isArabic,
 }: {
-  onClick: () => void;
+  onClick:
+    () => void;
+
+  isArabic:
+    boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:text-brand-900"
+      onClick={
+        onClick
+      }
+      className="
+        inline-flex
+        items-center
+        gap-1
+        rounded-lg
+        px-2
+        py-1
+        text-xs
+        font-semibold
+        text-brand-700
+        transition
+        hover:bg-brand-50
+        hover:text-brand-900
+      "
     >
-      + Add
+      +{' '}
+      {isArabic
+        ? 'إضافة'
+        : 'Add'}
     </button>
   );
 }
 
-function SummaryRow({
+
+/*
+ * ============================================================
+ * TOGGLE SWITCH
+ * ============================================================
+ *
+ * All boolean options on this page use this component.
+ * No native checkboxes.
+ * ============================================================
+ */
+
+function ToggleSwitch({
+  checked,
+  onChange,
+  disabled = false,
   label,
-  children,
 }: {
-  label: string;
-  children: React.ReactNode;
+  checked:
+    boolean;
+
+  onChange:
+    (
+      value:
+        boolean,
+    ) => void;
+
+  disabled?:
+    boolean;
+
+  label:
+    string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-5 py-2.5">
-      <span className="text-sm text-slate-500">
-        {label}
-      </span>
-
-      <div className="text-right text-sm font-medium text-slate-700">
-        {children}
-      </div>
-    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-label={
+        label
+      }
+      aria-checked={
+        checked
+      }
+      disabled={
+        disabled
+      }
+      onClick={() =>
+        onChange(
+          !checked,
+        )
+      }
+      className={`
+        relative
+        inline-flex
+        h-7
+        w-12
+        shrink-0
+        items-center
+        rounded-full
+        transition-all
+        duration-200
+        focus:outline-none
+        focus:ring-2
+        focus:ring-brand-200
+        focus:ring-offset-2
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+        ${
+          checked
+            ? 'bg-brand-600'
+            : 'bg-slate-200'
+        }
+      `}
+    >
+      <span
+        className={`
+          inline-block
+          h-5
+          w-5
+          rounded-full
+          bg-white
+          shadow-sm
+          transition-transform
+          duration-200
+          ${
+            checked
+              ? 'translate-x-6'
+              : 'translate-x-1'
+          }
+        `}
+      />
+    </button>
   );
 }
+
+
+/*
+ * ============================================================
+ * MAIN
+ * ============================================================
+ */
 
 function NewTaskContent() {
   const router =
     useRouter();
 
+
   const {
     user,
-  } = useAuth();
+  } =
+    useAuth();
+
 
   const locale =
     useLocale();
 
+
   const isArabic =
-    locale === 'ar';
+    locale ===
+    'ar';
+
 
   const isAdmin =
     user?.role.name ===
     'ADMIN';
 
+
+  /*
+   * ==========================================================
+   * LOOKUP DATA
+   * ==========================================================
+   */
+
   const [
     branches,
     setBranches,
-  ] = useState<Branch[]>(
-    [],
-  );
+  ] =
+    useState<Branch[]>(
+      [],
+    );
+
 
   const [
     departments,
     setDepartments,
-  ] = useState<Department[]>(
-    [],
-  );
+  ] =
+    useState<
+      Department[]
+    >(
+      [],
+    );
+
 
   const [
     projects,
     setProjects,
-  ] = useState<Project[]>(
-    [],
-  );
+  ] =
+    useState<Project[]>(
+      [],
+    );
+
 
   const [
     users,
     setUsers,
-  ] = useState<User[]>(
-    [],
-  );
+  ] =
+    useState<User[]>(
+      [],
+    );
+
 
   const [
     tasks,
     setTasks,
-  ] = useState<Task[]>(
-    [],
-  );
+  ] =
+    useState<Task[]>(
+      [],
+    );
+
 
   const [
     taskTypes,
     setTaskTypes,
-  ] = useState<Setting[]>(
-    [],
-  );
+  ] =
+    useState<Setting[]>(
+      [],
+    );
+
 
   const [
     priorities,
     setPriorities,
-  ] = useState<Setting[]>(
-    [],
-  );
+  ] =
+    useState<Setting[]>(
+      [],
+    );
+
+
+  /*
+   * ==========================================================
+   * PAGE STATE
+   * ==========================================================
+   */
 
   const [
     error,
     setError,
-  ] = useState('');
+  ] =
+    useState('');
+
 
   const [
     peopleError,
     setPeopleError,
-  ] = useState('');
+  ] =
+    useState('');
+
 
   const [
     submitting,
     setSubmitting,
-  ] = useState(false);
+  ] =
+    useState(
+      false,
+    );
+
 
   const [
     files,
     setFiles,
-  ] = useState<File[]>(
-    [],
-  );
+  ] =
+    useState<File[]>(
+      [],
+    );
+
 
   const [
     dragOver,
     setDragOver,
-  ] = useState(false);
+  ] =
+    useState(
+      false,
+    );
+
 
   const [
     quickAdd,
     setQuickAdd,
-  ] = useState<QuickAddState>(
-    EMPTY_QUICK_ADD,
-  );
+  ] =
+    useState<QuickAddState>(
+      EMPTY_QUICK_ADD,
+    );
+
+
+  /*
+   * ==========================================================
+   * FORM
+   * ==========================================================
+   */
 
   const [
     form,
     setForm,
-  ] = useState({
-    title: '',
-    description: '',
+  ] =
+    useState({
+      title:
+        '',
 
-    taskType: '',
-    priority: '',
-    color:
-      COLORS[0].value,
+      description:
+        '',
 
-    branchId: '',
-    departmentId: '',
-    projectId: '',
+      taskType:
+        '',
 
-    parentTaskId: '',
+      priority:
+        '',
 
-    /*
-     * IMPORTANT:
-     *
-     * This is only the user selected for the Assignment workflow.
-     *
-     * It is NOT sent as Task.assignedToId during Task creation.
-     */
-    assignmentUserId: '',
+      color:
+        COLORS[0].value,
 
-    needsApproval: false,
-    approverId: '',
+      branchId:
+        '',
 
-    needsBudget: false,
-    budgetMin: '',
-    budgetMax: '',
-    budgetCurrency: 'SAR',
+      departmentId:
+        '',
 
-    startDate: '',
-    deadlineDate: '',
-  });
+      projectId:
+        '',
+
+      parentTaskId:
+        '',
+
+      /*
+       * Assignment is intentionally separate from Task creation.
+       */
+      assignmentUserId:
+        '',
+
+      needsApproval:
+        false,
+
+      approverId:
+        '',
+
+      needsBudget:
+        false,
+
+      budgetMin:
+        '',
+
+      budgetMax:
+        '',
+
+      budgetCurrency:
+        'SAR',
+
+      startDate:
+        '',
+
+      deadlineDate:
+        '',
+    });
+
 
   function set<
     K extends keyof typeof form
   >(
-    key: K,
-    value: (typeof form)[K],
+    key:
+      K,
+
+    value:
+      (typeof form)[K],
   ) {
     setForm(
-      (current) => ({
+      (
+        current,
+      ) => ({
         ...current,
+
         [key]:
           value,
       }),
     );
   }
+
+
+  /*
+   * ==========================================================
+   * LOAD LOOKUPS
+   * ==========================================================
+   */
 
   async function loadBranches() {
     try {
@@ -356,6 +634,7 @@ function NewTaskContent() {
     } catch {}
   }
 
+
   async function loadDepartments() {
     try {
       setDepartments(
@@ -363,6 +642,7 @@ function NewTaskContent() {
       );
     } catch {}
   }
+
 
   async function loadTaskTypes() {
     try {
@@ -375,6 +655,7 @@ function NewTaskContent() {
     } catch {}
   }
 
+
   async function loadPriorities() {
     try {
       setPriorities(
@@ -386,18 +667,28 @@ function NewTaskContent() {
     } catch {}
   }
 
+
   useEffect(() => {
     loadBranches();
+
     loadDepartments();
+
     loadTaskTypes();
+
     loadPriorities();
 
+
     ProjectsApi.list({
-      limit: '100',
-      excludeArchived: 'true',
+      limit:
+        '100',
+
+      excludeArchived:
+        'true',
     })
       .then(
-        (result) =>
+        (
+          result,
+        ) =>
           setProjects(
             result.items,
           ),
@@ -406,46 +697,60 @@ function NewTaskContent() {
         () => {},
       );
 
-    /*
-     * No isActive query parameter.
-     * We filter inactive users below.
-     */
+
     UsersApi.list({
-      limit: '100',
+      limit:
+        '100',
     })
       .then(
-        (result) => {
+        (
+          result,
+        ) => {
           setUsers(
             result.items,
           );
 
-          setPeopleError('');
+          setPeopleError(
+            '',
+          );
         },
       )
       .catch(
-        (err) => {
+        (
+          err,
+        ) => {
           setPeopleError(
-            err instanceof ApiError
+            err instanceof
+              ApiError
               ? err.message
-              : 'Could not load the user directory.',
+              : isArabic
+                ? 'تعذر تحميل المستخدمين.'
+                : 'Could not load the user directory.',
           );
         },
       );
 
+
     const tasksRequest =
       isAdmin
         ? TasksApi.list({
-            limit: '100',
+            limit:
+              '100',
+
             excludeArchived:
               'true',
           })
         : TasksApi.mine({
-            limit: '100',
+            limit:
+              '100',
           });
+
 
     tasksRequest
       .then(
-        (result) =>
+        (
+          result,
+        ) =>
           setTasks(
             result.items,
           ),
@@ -457,6 +762,13 @@ function NewTaskContent() {
     isAdmin,
   ]);
 
+
+  /*
+   * ==========================================================
+   * DEFAULT TYPE
+   * ==========================================================
+   */
+
   useEffect(() => {
     if (
       !form.taskType &&
@@ -465,13 +777,17 @@ function NewTaskContent() {
     ) {
       const normal =
         taskTypes.find(
-          (item) =>
+          (
+            item,
+          ) =>
             item.key ===
             'General',
         );
 
+
       set(
         'taskType',
+
         normal?.key ||
           taskTypes[0]
             .key ||
@@ -482,6 +798,13 @@ function NewTaskContent() {
     taskTypes,
   ]);
 
+
+  /*
+   * ==========================================================
+   * DEFAULT PRIORITY
+   * ==========================================================
+   */
+
   useEffect(() => {
     if (
       !form.priority &&
@@ -490,13 +813,17 @@ function NewTaskContent() {
     ) {
       const normal =
         priorities.find(
-          (item) =>
+          (
+            item,
+          ) =>
             item.key ===
             'Medium',
         );
 
+
       set(
         'priority',
+
         normal?.key ||
           priorities[0]
             .key ||
@@ -507,45 +834,62 @@ function NewTaskContent() {
     priorities,
   ]);
 
+
+  /*
+   * ==========================================================
+   * LANGUAGE-SPECIFIC OPTIONS
+   * ==========================================================
+   */
+
   const visibleTaskTypes =
     useMemo(
       () =>
         taskTypes.filter(
-          (item) =>
+          (
+            item,
+          ) =>
             Boolean(
               isArabic
                 ? item.codeAr?.trim()
                 : item.codeEn?.trim(),
             ),
         ),
+
       [
         taskTypes,
         isArabic,
       ],
     );
 
+
   const visiblePriorities =
     useMemo(
       () =>
         priorities.filter(
-          (item) =>
+          (
+            item,
+          ) =>
             Boolean(
               isArabic
                 ? item.codeAr?.trim()
                 : item.codeEn?.trim(),
             ),
         ),
+
       [
         priorities,
         isArabic,
       ],
     );
 
+
   const visibleDepartments =
     useMemo(
       () =>
         departments.filter(
-          (item) =>
+          (
+            item,
+          ) =>
             item.isActive !==
               false &&
             Boolean(
@@ -554,17 +898,21 @@ function NewTaskContent() {
                 : item.codeEn?.trim(),
             ),
         ),
+
       [
         departments,
         isArabic,
       ],
     );
 
+
   const visibleBranches =
     useMemo(
       () =>
         branches.filter(
-          (item) =>
+          (
+            item,
+          ) =>
             item.isActive !==
               false &&
             Boolean(
@@ -573,18 +921,28 @@ function NewTaskContent() {
                 : item.codeEn?.trim(),
             ),
         ),
+
       [
         branches,
         isArabic,
       ],
     );
 
+
+  /*
+   * ==========================================================
+   * USERS
+   * ==========================================================
+   */
+
   const activeUsers =
     useMemo(
       () =>
         users
           .filter(
-            (item) =>
+            (
+              item,
+            ) =>
               item.isActive,
           )
           .sort(
@@ -596,32 +954,76 @@ function NewTaskContent() {
                 b.fullName,
               ),
           ),
+
       [
         users,
       ],
     );
 
+
   /*
-   * Admin cannot be Task assignee.
+   * Admins cannot be task assignees.
    */
   const assignableUsers =
     activeUsers.filter(
-      (item) =>
+      (
+        item,
+      ) =>
         item.role.name !==
         'ADMIN',
     );
 
+
   /*
-   * Approvers can be Admin or normal User.
-   *
-   * The selected assignment user cannot approve their own Task.
+   * Admins ARE allowed to approve.
    */
   const approvers =
     activeUsers.filter(
-      (item) =>
+      (
+        item,
+      ) =>
         item.id !==
         form.assignmentUserId,
     );
+
+
+  /*
+   * ==========================================================
+   * MAIN TASKS ONLY FOR PARENT OPTIONS
+   * ==========================================================
+   *
+   * Prevent creating Sub-subtasks from this page.
+   * ==========================================================
+   */
+
+  const parentTaskOptions =
+    useMemo(
+      () =>
+        tasks.filter(
+          (
+            item,
+          ) =>
+            !item.parentTaskId &&
+            ![
+              'Completed',
+              'Finished',
+              'Archived',
+            ].includes(
+              item.status,
+            ),
+        ),
+
+      [
+        tasks,
+      ],
+    );
+
+
+  /*
+   * ==========================================================
+   * APPROVER / ASSIGNEE CONFLICT
+   * ==========================================================
+   */
 
   useEffect(() => {
     if (
@@ -638,6 +1040,13 @@ function NewTaskContent() {
     form.assignmentUserId,
   ]);
 
+
+  /*
+   * ==========================================================
+   * LABEL
+   * ==========================================================
+   */
+
   function settingLabel(
     item:
       | Setting
@@ -646,6 +1055,7 @@ function NewTaskContent() {
     if (!item) {
       return '—';
     }
+
 
     return (
       isArabic
@@ -660,26 +1070,130 @@ function NewTaskContent() {
     ) || '—';
   }
 
+
+  /*
+   * ==========================================================
+   * PARENT TASK
+   * ==========================================================
+   */
+
+  function handleParentTaskChange(
+    parentTaskId:
+      string,
+  ) {
+    if (
+      !parentTaskId
+    ) {
+      set(
+        'parentTaskId',
+        '',
+      );
+
+      return;
+    }
+
+
+    const parent =
+      parentTaskOptions.find(
+        (
+          item,
+        ) =>
+          item.id ===
+          parentTaskId,
+      );
+
+
+    if (!parent) {
+      set(
+        'parentTaskId',
+        parentTaskId,
+      );
+
+      return;
+    }
+
+
+    /*
+     * Subtasks must stay in the Parent's organization.
+     *
+     * This matches the backend validation we added.
+     */
+    setForm(
+      (
+        current,
+      ) => ({
+        ...current,
+
+        parentTaskId:
+          parent.id,
+
+        departmentId:
+          parent.departmentId ||
+          '',
+
+        branchId:
+          parent.branchId ||
+          '',
+
+        projectId:
+          parent.projectId ||
+          '',
+
+        startDate:
+          parent.startDate ||
+          current.startDate,
+
+        deadlineDate:
+          parent.deadlineDate ||
+          current.deadlineDate,
+      }),
+    );
+  }
+
+
+  const selectedParent =
+    parentTaskOptions.find(
+      (
+        item,
+      ) =>
+        item.id ===
+        form.parentTaskId,
+    );
+
+
+  /*
+   * ==========================================================
+   * FILES
+   * ==========================================================
+   */
+
   function addFiles(
     incoming:
       | FileList
       | File[],
   ) {
     setFiles(
-      (current) => {
+      (
+        current,
+      ) => {
         const next =
           Array.from(
             incoming,
           ).filter(
-            (file) =>
+            (
+              file,
+            ) =>
               !current.some(
-                (existing) =>
+                (
+                  existing,
+                ) =>
                   existing.name ===
                     file.name &&
                   existing.size ===
                     file.size,
               ),
           );
+
 
         return [
           ...current,
@@ -689,11 +1203,15 @@ function NewTaskContent() {
     );
   }
 
+
   function removeFile(
-    index: number,
+    index:
+      number,
   ) {
     setFiles(
-      (current) =>
+      (
+        current,
+      ) =>
         current.filter(
           (
             _,
@@ -705,15 +1223,27 @@ function NewTaskContent() {
     );
   }
 
+
+  /*
+   * ==========================================================
+   * QUICK ADD
+   * ==========================================================
+   */
+
   function openQuickAdd(
-    type: QuickAddType,
+    type:
+      QuickAddType,
   ) {
     setQuickAdd({
       ...EMPTY_QUICK_ADD,
-      open: true,
+
+      open:
+        true,
+
       type,
     });
   }
+
 
   function closeQuickAdd() {
     if (
@@ -722,10 +1252,12 @@ function NewTaskContent() {
       return;
     }
 
+
     setQuickAdd(
       EMPTY_QUICK_ADD,
     );
   }
+
 
   function quickAddTitle() {
     switch (
@@ -756,6 +1288,7 @@ function NewTaskContent() {
     }
   }
 
+
   async function saveQuickAdd() {
     if (
       !quickAdd.type
@@ -763,13 +1296,18 @@ function NewTaskContent() {
       return;
     }
 
+
     const label =
       quickAdd.label.trim();
 
+
     if (!label) {
       setQuickAdd(
-        (current) => ({
+        (
+          current,
+        ) => ({
           ...current,
+
           error:
             isArabic
               ? 'يرجى إدخال الاسم.'
@@ -780,15 +1318,29 @@ function NewTaskContent() {
       return;
     }
 
+
     setQuickAdd(
-      (current) => ({
+      (
+        current,
+      ) => ({
         ...current,
-        saving: true,
-        error: '',
+
+        saving:
+          true,
+
+        error:
+          '',
       }),
     );
 
+
     try {
+      /*
+       * ======================================================
+       * TYPE / PRIORITY
+       * ======================================================
+       */
+
       if (
         quickAdd.type ===
           'task_type' ||
@@ -811,6 +1363,7 @@ function NewTaskContent() {
                 }),
           });
 
+
         if (
           quickAdd.type ===
           'task_type'
@@ -819,6 +1372,7 @@ function NewTaskContent() {
 
           set(
             'taskType',
+
             created.key ||
               '',
           );
@@ -827,11 +1381,19 @@ function NewTaskContent() {
 
           set(
             'priority',
+
             created.key ||
               '',
           );
         }
       }
+
+
+      /*
+       * ======================================================
+       * DEPARTMENT
+       * ======================================================
+       */
 
       if (
         quickAdd.type ===
@@ -840,6 +1402,7 @@ function NewTaskContent() {
         const code =
           quickAdd.code.trim() ||
           label;
+
 
         const created =
           await DepartmentsApi.create({
@@ -850,24 +1413,36 @@ function NewTaskContent() {
               ? {
                   codeAr:
                     code,
+
                   valueAr:
                     label,
                 }
               : {
                   codeEn:
                     code,
+
                   valueEn:
                     label,
                 }),
           });
 
+
         await loadDepartments();
+
 
         set(
           'departmentId',
+
           created.id,
         );
       }
+
+
+      /*
+       * ======================================================
+       * BRANCH
+       * ======================================================
+       */
 
       if (
         quickAdd.type ===
@@ -876,6 +1451,7 @@ function NewTaskContent() {
         const code =
           quickAdd.code.trim() ||
           label;
+
 
         const created =
           await BranchesApi.create({
@@ -886,12 +1462,14 @@ function NewTaskContent() {
               ? {
                   codeAr:
                     code,
+
                   valueAr:
                     label,
                 }
               : {
                   codeEn:
                     code,
+
                   valueEn:
                     label,
                 }),
@@ -901,13 +1479,17 @@ function NewTaskContent() {
               undefined,
           });
 
+
         await loadBranches();
+
 
         set(
           'branchId',
+
           created.id,
         );
       }
+
 
       setQuickAdd(
         EMPTY_QUICK_ADD,
@@ -916,19 +1498,32 @@ function NewTaskContent() {
       err
     ) {
       setQuickAdd(
-        (current) => ({
+        (
+          current,
+        ) => ({
           ...current,
 
-          saving: false,
+          saving:
+            false,
 
           error:
-            err instanceof ApiError
+            err instanceof
+              ApiError
               ? err.message
-              : 'Could not add the item.',
+              : isArabic
+                ? 'تعذر إضافة العنصر.'
+                : 'Could not add the item.',
         }),
       );
     }
   }
+
+
+  /*
+   * ==========================================================
+   * VALIDATION
+   * ==========================================================
+   */
 
   function validate() {
     if (
@@ -939,23 +1534,33 @@ function NewTaskContent() {
         : 'Please enter a task title.';
     }
 
+
     if (
       !form.taskType
     ) {
-      return 'Please choose a task type.';
+      return isArabic
+        ? 'يرجى اختيار نوع المهمة.'
+        : 'Please choose a task type.';
     }
+
 
     if (
       !form.priority
     ) {
-      return 'Please choose an importance level.';
+      return isArabic
+        ? 'يرجى اختيار الأهمية.'
+        : 'Please choose an importance level.';
     }
+
 
     if (
       !form.departmentId
     ) {
-      return 'Please choose a department.';
+      return isArabic
+        ? 'يرجى اختيار القسم.'
+        : 'Please choose a department.';
     }
+
 
     if (
       form.startDate &&
@@ -963,15 +1568,45 @@ function NewTaskContent() {
       form.deadlineDate <
         form.startDate
     ) {
-      return 'Deadline cannot be before the start date.';
+      return isArabic
+        ? 'الموعد النهائي لا يمكن أن يكون قبل تاريخ البدء.'
+        : 'Deadline cannot be before the start date.';
     }
+
+
+    if (
+      selectedParent?.startDate &&
+      form.startDate &&
+      form.startDate <
+        selectedParent.startDate
+    ) {
+      return isArabic
+        ? 'المهمة الفرعية لا يمكن أن تبدأ قبل المهمة الرئيسية.'
+        : 'A subtask cannot start before its parent task.';
+    }
+
+
+    if (
+      selectedParent?.deadlineDate &&
+      form.deadlineDate &&
+      form.deadlineDate >
+        selectedParent.deadlineDate
+    ) {
+      return isArabic
+        ? 'موعد المهمة الفرعية لا يمكن أن يتجاوز موعد المهمة الرئيسية.'
+        : 'A subtask deadline cannot exceed its parent task deadline.';
+    }
+
 
     if (
       form.needsApproval &&
       !form.approverId
     ) {
-      return 'Please choose an approver.';
+      return isArabic
+        ? 'يرجى اختيار الموافق.'
+        : 'Please choose an approver.';
     }
+
 
     if (
       form.needsApproval &&
@@ -979,8 +1614,11 @@ function NewTaskContent() {
       form.approverId ===
         form.assignmentUserId
     ) {
-      return 'The assignee and approver cannot be the same person.';
+      return isArabic
+        ? 'المكلف والموافق لا يمكن أن يكونا نفس المستخدم.'
+        : 'The assignee and approver cannot be the same person.';
     }
+
 
     if (
       form.needsBudget &&
@@ -989,8 +1627,11 @@ function NewTaskContent() {
         !form.budgetMax
       )
     ) {
-      return 'Enter both minimum and maximum budget values.';
+      return isArabic
+        ? 'أدخل الحد الأدنى والأعلى للميزانية.'
+        : 'Enter both minimum and maximum budget values.';
     }
+
 
     if (
       form.needsBudget &&
@@ -1001,11 +1642,21 @@ function NewTaskContent() {
           form.budgetMax,
         )
     ) {
-      return 'Budget minimum cannot exceed maximum.';
+      return isArabic
+        ? 'الحد الأدنى للميزانية لا يمكن أن يتجاوز الحد الأعلى.'
+        : 'Budget minimum cannot exceed maximum.';
     }
+
 
     return '';
   }
+
+
+  /*
+   * ==========================================================
+   * SUBMIT
+   * ==========================================================
+   */
 
   async function handleSubmit(
     event:
@@ -1013,37 +1664,47 @@ function NewTaskContent() {
   ) {
     event.preventDefault();
 
+
     setError('');
+
 
     const validation =
       validate();
 
-    if (validation) {
+
+    if (
+      validation
+    ) {
       setError(
         validation,
       );
 
+
       window.scrollTo({
-        top: 0,
+        top:
+          0,
+
         behavior:
           'smooth',
       });
 
+
       return;
     }
+
 
     setSubmitting(
       true,
     );
 
+
     try {
       /*
-       * IMPORTANT:
-       *
-       * assignedToId is NOT used here.
-       *
-       * Assignment is created below using AssignmentsApi.
+       * ======================================================
+       * CREATE TASK
+       * ======================================================
        */
+
       const task =
         await TasksApi.create({
           titleAr:
@@ -1120,43 +1781,50 @@ function NewTaskContent() {
             undefined,
         });
 
+
       /*
-       * Unified assignment workflow.
-       *
-       * The Task already exists, so now create the Assignment:
-       *
-       * PendingAcceptance -> Accept / Reject -> Reassign.
+       * ======================================================
+       * ASSIGNMENT
+       * ======================================================
        */
+
       if (
         form.assignmentUserId
       ) {
         try {
           await AssignmentsApi.assign(
             task.id,
+
             form.assignmentUserId,
+
             form.deadlineDate ||
               undefined,
           );
         } catch (
           assignmentError
         ) {
-          /*
-           * Do NOT create the Task again.
-           *
-           * Take the user to Task Details where assignment can
-           * be retried safely.
-           */
           console.error(
             'Task created but assignment failed:',
+
             assignmentError,
           );
+
 
           window.alert(
             assignmentError instanceof
               ApiError
-              ? `Task was created, but the assignment could not be created: ${assignmentError.message}`
-              : 'Task was created, but the assignment could not be created. You can assign the Task from Task Details.',
+              ? (
+                  isArabic
+                    ? `تم إنشاء المهمة، لكن تعذر التكليف: ${assignmentError.message}`
+                    : `Task was created, but the assignment could not be created: ${assignmentError.message}`
+                )
+              : (
+                  isArabic
+                    ? 'تم إنشاء المهمة، لكن تعذر التكليف. يمكنك التكليف من تفاصيل المهمة.'
+                    : 'Task was created, but the assignment could not be created. You can assign it from Task Details.'
+                ),
           );
+
 
           router.push(
             `/tasks/${task.id}`,
@@ -1166,6 +1834,13 @@ function NewTaskContent() {
         }
       }
 
+
+      /*
+       * ======================================================
+       * ATTACHMENTS
+       * ======================================================
+       */
+
       if (
         files.length >
         0
@@ -1173,6 +1848,7 @@ function NewTaskContent() {
         try {
           await AttachmentsApi.uploadToTask(
             task.id,
+
             files,
           );
         } catch (
@@ -1180,10 +1856,12 @@ function NewTaskContent() {
         ) {
           console.error(
             'Task created but attachments failed:',
+
             attachmentError,
           );
         }
       }
+
 
       router.push(
         `/tasks/${task.id}`,
@@ -1192,10 +1870,14 @@ function NewTaskContent() {
       err
     ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
-          : 'Could not create the task.',
+          : isArabic
+            ? 'تعذر إنشاء المهمة.'
+            : 'Could not create the task.',
       );
+
 
       setSubmitting(
         false,
@@ -1203,60 +1885,146 @@ function NewTaskContent() {
     }
   }
 
+
+  /*
+   * ==========================================================
+   * SUMMARY
+   * ==========================================================
+   */
+
   const selectedAssignee =
     assignableUsers.find(
-      (item) =>
+      (
+        item,
+      ) =>
         item.id ===
         form.assignmentUserId,
     );
 
+
   const selectedApprover =
     approvers.find(
-      (item) =>
+      (
+        item,
+      ) =>
         item.id ===
         form.approverId,
     );
 
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
+
   return (
     <div
-      className="mx-auto max-w-7xl pb-16"
+      className="
+        mx-auto
+        max-w-7xl
+        pb-16
+      "
       dir={
         isArabic
           ? 'rtl'
           : 'ltr'
       }
     >
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      {/*
+       * ======================================================
+       * HEADER
+       * ======================================================
+       */}
+
+      <div
+        className="
+          mb-6
+          flex
+          flex-col
+          gap-4
+          sm:flex-row
+          sm:items-end
+          sm:justify-between
+        "
+      >
         <div>
           <button
             type="button"
             onClick={() =>
               router.back()
             }
-            className="mb-3 text-sm text-slate-500 hover:text-brand-700"
+            className="
+              mb-3
+              inline-flex
+              items-center
+              gap-2
+              text-sm
+              text-slate-500
+              transition
+              hover:text-brand-700
+            "
           >
-            ←{' '}
+            {isArabic
+              ? '→'
+              : '←'}
+
             {isArabic
               ? 'رجوع'
               : 'Back'}
           </button>
 
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+
+          <h1
+            className="
+              text-2xl
+              font-semibold
+              tracking-tight
+              text-slate-900
+            "
+          >
             {isArabic
               ? 'مهمة جديدة'
               : 'New Task'}
           </h1>
 
-          <p className="mt-1 text-sm text-slate-500">
+
+          <p
+            className="
+              mt-1
+              text-sm
+              text-slate-500
+            "
+          >
             {isArabic
               ? 'أنشئ المهمة وحدد تفاصيلها وسير العمل.'
               : 'Create the task and configure its workflow.'}
           </p>
         </div>
 
-        <div className="rounded-full border border-slate-200 bg-white px-3 py-1.5">
-          <span className="mr-2 text-xs text-slate-400">
-            Initial status
+
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            rounded-full
+            border
+            border-slate-200
+            bg-white
+            px-3
+            py-1.5
+          "
+        >
+          <span
+            className="
+              text-xs
+              text-slate-400
+            "
+          >
+            {isArabic
+              ? 'الحالة الأولية'
+              : 'Initial status'}
           </span>
 
           <StatusBadge
@@ -1266,39 +2034,104 @@ function NewTaskContent() {
         </div>
       </div>
 
+
+      {/*
+       * ======================================================
+       * ERROR
+       * ======================================================
+       */}
+
       {error && (
-        <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div
+          className="
+            mb-5
+            rounded-xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-3
+            text-sm
+            text-red-700
+          "
+        >
           {error}
         </div>
       )}
+
 
       <form
         onSubmit={
           handleSubmit
         }
       >
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-6">
-            <section className="card p-6">
+        <div
+          className="
+            grid
+            gap-6
+            xl:grid-cols-[minmax(0,1fr)_380px]
+          "
+        >
+          {/*
+           * ==================================================
+           * LEFT
+           * ==================================================
+           */}
+
+          <div
+            className="
+              space-y-6
+            "
+          >
+            {/*
+             * =================================================
+             * DETAILS
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-6
+              "
+            >
               <SectionHeader
                 title={
                   isArabic
                     ? 'تفاصيل المهمة'
                     : 'Task Details'
                 }
-                description="Add the main information for the task."
+                description={
+                  isArabic
+                    ? 'أدخل المعلومات الأساسية للمهمة.'
+                    : 'Add the main information for the task.'
+                }
               />
 
-              <div className="mt-6 space-y-5">
+
+              <div
+                className="
+                  mt-6
+                  space-y-5
+                "
+              >
                 <div>
-                  <FieldLabel>
+                  <FieldLabel
+                    isArabic={
+                      isArabic
+                    }
+                  >
                     {isArabic
                       ? 'عنوان المهمة'
                       : 'Task title'}
                   </FieldLabel>
 
+
                   <input
-                    className="input text-base"
+                    className="
+                      input
+                      text-base
+                    "
                     required
                     autoFocus
                     maxLength={
@@ -1312,26 +2145,36 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'title',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   />
                 </div>
 
+
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
                     {isArabic
                       ? 'الوصف'
                       : 'Description'}
                   </FieldLabel>
 
+
                   <textarea
-                    className="input min-h-[140px]"
-                    rows={5}
+                    className="
+                      input
+                      min-h-[140px]
+                      resize-y
+                    "
+                    rows={
+                      5
+                    }
                     value={
                       form.description
                     }
@@ -1340,9 +2183,8 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'description',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   />
@@ -1350,21 +2192,54 @@ function NewTaskContent() {
               </div>
             </section>
 
-            <section className="card p-6">
+
+            {/*
+             * =================================================
+             * ATTACHMENTS
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-6
+              "
+            >
               <SectionHeader
                 title={
                   isArabic
                     ? 'المرفقات'
                     : 'Attachments'
                 }
+                description={
+                  isArabic
+                    ? 'أضف الملفات المطلوبة للمهمة.'
+                    : 'Add any files needed for this task.'
+                }
               />
 
+
               <label
-                className={`mt-5 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center ${
-                  dragOver
-                    ? 'border-brand-500 bg-brand-50'
-                    : 'border-slate-300 bg-slate-50/60'
-                }`}
+                className={`
+                  mt-5
+                  flex
+                  cursor-pointer
+                  flex-col
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border-2
+                  border-dashed
+                  px-6
+                  py-10
+                  text-center
+                  transition
+                  ${
+                    dragOver
+                      ? 'border-brand-500 bg-brand-50'
+                      : 'border-slate-300 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/30'
+                  }
+                `}
                 onDragOver={(
                   event,
                 ) => {
@@ -1374,11 +2249,10 @@ function NewTaskContent() {
                     true,
                   );
                 }}
-                onDragLeave={
-                  () =>
-                    setDragOver(
-                      false,
-                    )
+                onDragLeave={() =>
+                  setDragOver(
+                    false,
+                  )
                 }
                 onDrop={(
                   event,
@@ -1389,23 +2263,47 @@ function NewTaskContent() {
                     false,
                   );
 
+
                   if (
-                    event
-                      .dataTransfer
-                      .files
-                      .length
+                    event.dataTransfer.files.length
                   ) {
                     addFiles(
-                      event
-                        .dataTransfer
-                        .files,
+                      event.dataTransfer.files,
                     );
                   }
                 }}
               >
-                <div className="text-sm font-medium text-slate-700">
-                  Drop files here or click to browse
+                <div
+                  className="
+                    flex
+                    h-11
+                    w-11
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-white
+                    text-xl
+                    text-brand-600
+                    shadow-sm
+                  "
+                >
+                  ↑
                 </div>
+
+
+                <div
+                  className="
+                    mt-3
+                    text-sm
+                    font-semibold
+                    text-slate-700
+                  "
+                >
+                  {isArabic
+                    ? 'اسحب الملفات هنا أو اضغط للاختيار'
+                    : 'Drop files here or click to browse'}
+                </div>
+
 
                 <input
                   type="file"
@@ -1418,17 +2316,13 @@ function NewTaskContent() {
                     event,
                   ) => {
                     if (
-                      event
-                        .target
-                        .files
-                        ?.length
+                      event.target.files?.length
                     ) {
                       addFiles(
-                        event
-                          .target
-                          .files,
+                        event.target.files,
                       );
                     }
+
 
                     event.target.value =
                       '';
@@ -1436,9 +2330,18 @@ function NewTaskContent() {
                 />
               </label>
 
+
               {files.length >
                 0 && (
-                <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                <div
+                  className="
+                    mt-4
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    border-slate-200
+                  "
+                >
                   {files.map(
                     (
                       file,
@@ -1446,28 +2349,63 @@ function NewTaskContent() {
                     ) => (
                       <div
                         key={`${file.name}-${index}`}
-                        className="flex items-center gap-3 border-b border-slate-100 px-4 py-3 last:border-0"
+                        className="
+                          flex
+                          items-center
+                          gap-3
+                          border-b
+                          border-slate-100
+                          px-4
+                          py-3
+                          last:border-0
+                        "
                       >
-                        <span className="badge bg-slate-100 text-slate-600">
+                        <span
+                          className="
+                            badge
+                            bg-slate-100
+                            text-slate-600
+                          "
+                        >
                           {getFileTypeLabel(
                             file.type,
+
                             file.name,
                           )}
                         </span>
 
-                        <div className="min-w-0 flex-1">
-                          <div className="truncate text-sm font-medium text-slate-700">
+
+                        <div
+                          className="
+                            min-w-0
+                            flex-1
+                          "
+                        >
+                          <div
+                            className="
+                              truncate
+                              text-sm
+                              font-medium
+                              text-slate-700
+                            "
+                          >
                             {
                               file.name
                             }
                           </div>
 
-                          <div className="text-xs text-slate-400">
+                          <div
+                            className="
+                              text-xs
+                              text-slate-400
+                            "
+                          >
                             {formatFileSize(
                               file.size,
                             )}
                           </div>
                         </div>
+
 
                         <button
                           type="button"
@@ -1476,7 +2414,18 @@ function NewTaskContent() {
                               index,
                             )
                           }
-                          className="text-red-500"
+                          className="
+                            flex
+                            h-8
+                            w-8
+                            items-center
+                            justify-center
+                            rounded-lg
+                            text-red-500
+                            transition
+                            hover:bg-red-50
+                            hover:text-red-700
+                          "
                         >
                           ✕
                         </button>
@@ -1487,120 +2436,279 @@ function NewTaskContent() {
               )}
             </section>
 
-            <section className="card p-6">
-              <div className="flex items-start justify-between">
+
+            {/*
+             * =================================================
+             * BUDGET — TOGGLE
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                overflow-hidden
+              "
+            >
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-5
+                  p-6
+                "
+              >
                 <SectionHeader
                   title={
                     isArabic
                       ? 'الميزانية'
                       : 'Budget'
                   }
-                  description="Enable only when this task needs a budget."
+                  description={
+                    isArabic
+                      ? 'فعّل هذا الخيار فقط إذا كانت المهمة تحتاج إلى ميزانية.'
+                      : 'Enable only when this task needs a budget.'
+                  }
                 />
 
-                <input
-                  type="checkbox"
+
+                <ToggleSwitch
                   checked={
                     form.needsBudget
                   }
+                  label={
+                    isArabic
+                      ? 'تفعيل الميزانية'
+                      : 'Enable budget'
+                  }
                   onChange={(
-                    event,
-                  ) =>
+                    checked,
+                  ) => {
                     set(
                       'needsBudget',
-                      event
-                        .target
-                        .checked,
-                    )
-                  }
+
+                      checked,
+                    );
+
+
+                    if (
+                      !checked
+                    ) {
+                      set(
+                        'budgetMin',
+                        '',
+                      );
+
+                      set(
+                        'budgetMax',
+                        '',
+                      );
+
+                      set(
+                        'budgetCurrency',
+                        'SAR',
+                      );
+                    }
+                  }}
                 />
               </div>
 
+
               {form.needsBudget && (
-                <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                  <input
-                    type="number"
-                    className="input"
-                    placeholder="Minimum"
-                    value={
-                      form.budgetMin
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'budgetMin',
-                        event
-                          .target
-                          .value,
-                      )
-                    }
-                  />
+                <div
+                  className="
+                    border-t
+                    border-slate-100
+                    bg-slate-50/50
+                    p-6
+                  "
+                >
+                  <div
+                    className="
+                      grid
+                      gap-4
+                      sm:grid-cols-3
+                    "
+                  >
+                    <div>
+                      <FieldLabel
+                        isArabic={
+                          isArabic
+                        }
+                      >
+                        {isArabic
+                          ? 'الحد الأدنى'
+                          : 'Minimum'}
+                      </FieldLabel>
 
-                  <input
-                    type="number"
-                    className="input"
-                    placeholder="Maximum"
-                    value={
-                      form.budgetMax
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'budgetMax',
-                        event
-                          .target
-                          .value,
-                      )
-                    }
-                  />
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="input"
+                        value={
+                          form.budgetMin
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          set(
+                            'budgetMin',
 
-                  <input
-                    className="input"
-                    value={
-                      form.budgetCurrency
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'budgetCurrency',
-                        event
-                          .target
-                          .value
-                          .toUpperCase(),
-                      )
-                    }
-                  />
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </div>
+
+
+                    <div>
+                      <FieldLabel
+                        isArabic={
+                          isArabic
+                        }
+                      >
+                        {isArabic
+                          ? 'الحد الأعلى'
+                          : 'Maximum'}
+                      </FieldLabel>
+
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="input"
+                        value={
+                          form.budgetMax
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          set(
+                            'budgetMax',
+
+                            event.target.value,
+                          )
+                        }
+                      />
+                    </div>
+
+
+                    <div>
+                      <FieldLabel
+                        isArabic={
+                          isArabic
+                        }
+                      >
+                        {isArabic
+                          ? 'العملة'
+                          : 'Currency'}
+                      </FieldLabel>
+
+                      <select
+                        className="input"
+                        value={
+                          form.budgetCurrency
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          set(
+                            'budgetCurrency',
+
+                            event.target.value,
+                          )
+                        }
+                      >
+                        <option value="SAR">
+                          SAR
+                        </option>
+
+                        <option value="USD">
+                          USD
+                        </option>
+
+                        <option value="EUR">
+                          EUR
+                        </option>
+
+                        <option value="AED">
+                          AED
+                        </option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
             </section>
           </div>
 
-          <aside className="space-y-6">
-            <section className="card p-5">
+
+          {/*
+           * ==================================================
+           * SIDEBAR
+           * ==================================================
+           */}
+
+          <aside
+            className="
+              space-y-6
+            "
+          >
+            {/*
+             * =================================================
+             * CLASSIFICATION
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-5
+              "
+            >
               <SectionHeader
-                title="Classification"
+                title={
+                  isArabic
+                    ? 'التصنيف'
+                    : 'Classification'
+                }
               />
 
-              <div className="mt-5 space-y-4">
+
+              <div
+                className="
+                  mt-5
+                  space-y-4
+                "
+              >
                 <div>
                   <FieldLabel
+                    isArabic={
+                      isArabic
+                    }
                     action={
-                      isAdmin ? (
-                        <AddButton
-                          onClick={() =>
-                            openQuickAdd(
-                              'task_type',
-                            )
-                          }
-                        />
-                      ) : undefined
+                      isAdmin
+                        ? (
+                            <AddButton
+                              isArabic={
+                                isArabic
+                              }
+                              onClick={() =>
+                                openQuickAdd(
+                                  'task_type',
+                                )
+                              }
+                            />
+                          )
+                        : undefined
                     }
                   >
-                    Task type
+                    {isArabic
+                      ? 'نوع المهمة'
+                      : 'Task type'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
@@ -1613,15 +2721,17 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'taskType',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      Select…
+                      {isArabic
+                        ? 'اختر…'
+                        : 'Select…'}
                     </option>
+
 
                     {visibleTaskTypes.map(
                       (
@@ -1644,22 +2754,34 @@ function NewTaskContent() {
                   </select>
                 </div>
 
+
                 <div>
                   <FieldLabel
+                    isArabic={
+                      isArabic
+                    }
                     action={
-                      isAdmin ? (
-                        <AddButton
-                          onClick={() =>
-                            openQuickAdd(
-                              'task_priority',
-                            )
-                          }
-                        />
-                      ) : undefined
+                      isAdmin
+                        ? (
+                            <AddButton
+                              isArabic={
+                                isArabic
+                              }
+                              onClick={() =>
+                                openQuickAdd(
+                                  'task_priority',
+                                )
+                              }
+                            />
+                          )
+                        : undefined
                     }
                   >
-                    Importance
+                    {isArabic
+                      ? 'الأهمية'
+                      : 'Importance'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
@@ -1672,12 +2794,18 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'priority',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
+                    <option value="">
+                      {isArabic
+                        ? 'اختر…'
+                        : 'Select…'}
+                    </option>
+
+
                     {visiblePriorities.map(
                       (
                         item,
@@ -1699,12 +2827,26 @@ function NewTaskContent() {
                   </select>
                 </div>
 
+
                 <div>
-                  <FieldLabel>
-                    Task color
+                  <FieldLabel
+                    isArabic={
+                      isArabic
+                    }
+                  >
+                    {isArabic
+                      ? 'لون المهمة'
+                      : 'Task color'}
                   </FieldLabel>
 
-                  <div className="grid grid-cols-6 gap-2">
+
+                  <div
+                    className="
+                      grid
+                      grid-cols-6
+                      gap-2
+                    "
+                  >
                     {COLORS.map(
                       (
                         color,
@@ -1714,23 +2856,52 @@ function NewTaskContent() {
                             color.value
                           }
                           type="button"
+                          title={
+                            color.label
+                          }
                           onClick={() =>
                             set(
                               'color',
+
                               color.value,
                             )
                           }
-                          className={`h-9 rounded-lg border-2 ${
-                            form.color ===
-                            color.value
-                              ? 'border-slate-800'
-                              : 'border-transparent'
-                          }`}
+                          className={`
+                            relative
+                            h-9
+                            rounded-lg
+                            border-2
+                            transition
+                            ${
+                              form.color ===
+                              color.value
+                                ? 'scale-105 border-slate-800 shadow-sm'
+                                : 'border-transparent hover:scale-105'
+                            }
+                          `}
                           style={{
                             backgroundColor:
                               color.value,
                           }}
-                        />
+                        >
+                          {form.color ===
+                            color.value && (
+                            <span
+                              className="
+                                absolute
+                                inset-0
+                                flex
+                                items-center
+                                justify-center
+                                text-sm
+                                font-bold
+                                text-white
+                              "
+                            >
+                              ✓
+                            </span>
+                          )}
+                        </button>
                       ),
                     )}
                   </div>
@@ -1738,32 +2909,93 @@ function NewTaskContent() {
               </div>
             </section>
 
-            <section className="card p-5">
+
+            {/*
+             * =================================================
+             * ORGANIZATION
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-5
+              "
+            >
               <SectionHeader
-                title="Organization"
+                title={
+                  isArabic
+                    ? 'التنظيم'
+                    : 'Organization'
+                }
               />
 
-              <div className="mt-5 space-y-4">
+
+              {selectedParent && (
+                <div
+                  className="
+                    mt-4
+                    rounded-xl
+                    border
+                    border-brand-100
+                    bg-brand-50/50
+                    px-3
+                    py-3
+                    text-xs
+                    leading-5
+                    text-brand-700
+                  "
+                >
+                  {isArabic
+                    ? 'هذه مهمة فرعية، لذلك القسم والفرع والمشروع موروثة من المهمة الرئيسية.'
+                    : 'This is a subtask, so Department, Branch and Project are inherited from the parent task.'}
+                </div>
+              )}
+
+
+              <div
+                className="
+                  mt-5
+                  space-y-4
+                "
+              >
                 <div>
                   <FieldLabel
+                    isArabic={
+                      isArabic
+                    }
                     action={
-                      isAdmin ? (
-                        <AddButton
-                          onClick={() =>
-                            openQuickAdd(
-                              'department',
-                            )
-                          }
-                        />
-                      ) : undefined
+                      isAdmin &&
+                      !selectedParent
+                        ? (
+                            <AddButton
+                              isArabic={
+                                isArabic
+                              }
+                              onClick={() =>
+                                openQuickAdd(
+                                  'department',
+                                )
+                              }
+                            />
+                          )
+                        : undefined
                     }
                   >
-                    Department
+                    {isArabic
+                      ? 'القسم'
+                      : 'Department'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
                     required
+                    disabled={
+                      Boolean(
+                        selectedParent,
+                      )
+                    }
                     value={
                       form.departmentId
                     }
@@ -1772,15 +3004,17 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'departmentId',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      Select…
+                      {isArabic
+                        ? 'اختر…'
+                        : 'Select…'}
                     </option>
+
 
                     {visibleDepartments.map(
                       (
@@ -1803,26 +3037,44 @@ function NewTaskContent() {
                   </select>
                 </div>
 
+
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                     action={
-                      isAdmin ? (
-                        <AddButton
-                          onClick={() =>
-                            openQuickAdd(
-                              'branch',
-                            )
-                          }
-                        />
-                      ) : undefined
+                      isAdmin &&
+                      !selectedParent
+                        ? (
+                            <AddButton
+                              isArabic={
+                                isArabic
+                              }
+                              onClick={() =>
+                                openQuickAdd(
+                                  'branch',
+                                )
+                              }
+                            />
+                          )
+                        : undefined
                     }
                   >
-                    Branch
+                    {isArabic
+                      ? 'الفرع'
+                      : 'Branch'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
+                    disabled={
+                      Boolean(
+                        selectedParent,
+                      )
+                    }
                     value={
                       form.branchId
                     }
@@ -1831,15 +3083,17 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'branchId',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      No branch
+                      {isArabic
+                        ? 'بدون فرع'
+                        : 'No branch'}
                     </option>
+
 
                     {visibleBranches.map(
                       (
@@ -1862,15 +3116,27 @@ function NewTaskContent() {
                   </select>
                 </div>
 
+
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Project
+                    {isArabic
+                      ? 'المشروع'
+                      : 'Project'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
+                    disabled={
+                      Boolean(
+                        selectedParent,
+                      )
+                    }
                     value={
                       form.projectId
                     }
@@ -1879,15 +3145,17 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'projectId',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      No project
+                      {isArabic
+                        ? 'بدون مشروع'
+                        : 'No project'}
                     </option>
+
 
                     {projects.map(
                       (
@@ -1912,25 +3180,67 @@ function NewTaskContent() {
               </div>
             </section>
 
-            <section className="card p-5">
+
+            {/*
+             * =================================================
+             * PEOPLE
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-5
+              "
+            >
               <SectionHeader
-                title="People"
-                description="You can assign now or leave it unassigned and assign later from Task Details."
+                title={
+                  isArabic
+                    ? 'الأشخاص'
+                    : 'People'
+                }
+                description={
+                  isArabic
+                    ? 'يمكنك التكليف الآن أو ترك المهمة بدون تكليف.'
+                    : 'Assign now or leave the task unassigned and assign it later from Task Details.'
+                }
               />
 
+
               {peopleError && (
-                <div className="mt-4 rounded-lg bg-red-50 p-3 text-xs text-red-600">
+                <div
+                  className="
+                    mt-4
+                    rounded-lg
+                    bg-red-50
+                    p-3
+                    text-xs
+                    text-red-600
+                  "
+                >
                   {peopleError}
                 </div>
               )}
 
-              <div className="mt-5 space-y-4">
+
+              <div
+                className="
+                  mt-5
+                  space-y-4
+                "
+              >
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Assign to
+                    {isArabic
+                      ? 'تكليف إلى'
+                      : 'Assign to'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
@@ -1942,15 +3252,17 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'assignmentUserId',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      Leave unassigned
+                      {isArabic
+                        ? 'بدون تكليف حالياً'
+                        : 'Leave unassigned'}
                     </option>
+
 
                     {assignableUsers.map(
                       (
@@ -1972,48 +3284,113 @@ function NewTaskContent() {
                     )}
                   </select>
 
-                  {form.assignmentUserId && (
-                    <p className="mt-2 text-xs text-slate-500">
-                      This user will receive the task as{' '}
-                      <strong>
-                        Pending Acceptance
-                      </strong>
-                      . They can accept or reject it.
+
+                  {form.assignmentUserId ? (
+                    <p
+                      className="
+                        mt-2
+                        text-xs
+                        leading-5
+                        text-slate-500
+                      "
+                    >
+                      {isArabic
+                        ? 'سيستلم المستخدم المهمة بحالة انتظار القبول ويمكنه قبولها أو رفضها.'
+                        : 'This user will receive the task as Pending Acceptance and can accept or reject it.'}
+                    </p>
+                  ) : (
+                    <p
+                      className="
+                        mt-2
+                        text-xs
+                        text-slate-400
+                      "
+                    >
+                      {isArabic
+                        ? 'يمكن تكليف المهمة لاحقاً من صفحة تفاصيل المهمة.'
+                        : 'You can assign the task later from Task Details.'}
                     </p>
                   )}
                 </div>
 
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex items-start justify-between gap-4">
+
+                {/*
+                 * ===============================================
+                 * APPROVAL — TOGGLE
+                 * ===============================================
+                 */}
+
+                <div
+                  className={`
+                    overflow-hidden
+                    rounded-xl
+                    border
+                    transition
+                    ${
+                      form.needsApproval
+                        ? 'border-brand-200 bg-brand-50/20'
+                        : 'border-slate-200 bg-white'
+                    }
+                  `}
+                >
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-4
+                      p-4
+                    "
+                  >
                     <div>
-                      <div className="text-sm font-medium text-slate-700">
-                        Needs approval
+                      <div
+                        className="
+                          text-sm
+                          font-semibold
+                          text-slate-800
+                        "
+                      >
+                        {isArabic
+                          ? 'تحتاج موافقة'
+                          : 'Needs approval'}
                       </div>
 
-                      <p className="mt-1 text-xs text-slate-400">
-                        Require another user to approve final completion.
+                      <p
+                        className="
+                          mt-1
+                          text-xs
+                          leading-5
+                          text-slate-400
+                        "
+                      >
+                        {isArabic
+                          ? 'يتطلب إكمال المهمة موافقة مستخدم آخر.'
+                          : 'Require another user to approve final completion.'}
                       </p>
                     </div>
 
-                    <input
-                      type="checkbox"
+
+                    <ToggleSwitch
                       checked={
                         form.needsApproval
                       }
+                      label={
+                        isArabic
+                          ? 'تفعيل الموافقة'
+                          : 'Require approval'
+                      }
                       onChange={(
-                        event,
+                        checked,
                       ) => {
                         set(
                           'needsApproval',
-                          event
-                            .target
-                            .checked,
+
+                          checked,
                         );
 
+
                         if (
-                          !event
-                            .target
-                            .checked
+                          !checked
                         ) {
                           set(
                             'approverId',
@@ -2024,8 +3401,27 @@ function NewTaskContent() {
                     />
                   </div>
 
+
                   {form.needsApproval && (
-                    <div className="mt-4">
+                    <div
+                      className="
+                        border-t
+                        border-brand-100
+                        bg-white
+                        p-4
+                      "
+                    >
+                      <FieldLabel
+                        isArabic={
+                          isArabic
+                        }
+                      >
+                        {isArabic
+                          ? 'الموافق'
+                          : 'Approver'}
+                      </FieldLabel>
+
+
                       <select
                         className="input"
                         required
@@ -2037,15 +3433,17 @@ function NewTaskContent() {
                         ) =>
                           set(
                             'approverId',
-                            event
-                              .target
-                              .value,
+
+                            event.target.value,
                           )
                         }
                       >
                         <option value="">
-                          Select approver…
+                          {isArabic
+                            ? 'اختر الموافق…'
+                            : 'Select approver…'}
                         </option>
+
 
                         {approvers.map(
                           (
@@ -2062,20 +3460,51 @@ function NewTaskContent() {
                               {
                                 item.fullName
                               }
+
+                              {item.role.name ===
+                              'ADMIN'
+                                ? ' — Admin'
+                                : ''}
                             </option>
                           ),
                         )}
                       </select>
+
+
+                      <p
+                        className="
+                          mt-2
+                          text-xs
+                          text-slate-400
+                        "
+                      >
+                        {isArabic
+                          ? 'المكلف بالمهمة لا يمكن أن يكون هو الموافق على نفس المهمة.'
+                          : 'The task assignee cannot also approve the same task.'}
+                      </p>
                     </div>
                   )}
                 </div>
 
+
+                {/*
+                 * ===============================================
+                 * PARENT TASK
+                 * ===============================================
+                 */}
+
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Parent task
+                    {isArabic
+                      ? 'المهمة الرئيسية'
+                      : 'Parent task'}
                   </FieldLabel>
+
 
                   <select
                     className="input"
@@ -2085,19 +3514,19 @@ function NewTaskContent() {
                     onChange={(
                       event,
                     ) =>
-                      set(
-                        'parentTaskId',
-                        event
-                          .target
-                          .value,
+                      handleParentTaskChange(
+                        event.target.value,
                       )
                     }
                   >
                     <option value="">
-                      Standalone task
+                      {isArabic
+                        ? 'مهمة مستقلة'
+                        : 'Standalone task'}
                     </option>
 
-                    {tasks.map(
+
+                    {parentTaskOptions.map(
                       (
                         item,
                       ) => (
@@ -2118,26 +3547,83 @@ function NewTaskContent() {
                       ),
                     )}
                   </select>
+
+
+                  {selectedParent && (
+                    <div
+                      className="
+                        mt-2
+                        rounded-lg
+                        bg-brand-50
+                        px-3
+                        py-2
+                        text-xs
+                        leading-5
+                        text-brand-700
+                      "
+                    >
+                      {isArabic
+                        ? 'سيتم إنشاء هذه المهمة كمهمة فرعية ضمن المهمة الرئيسية المحددة.'
+                        : 'This task will be created as a subtask of the selected parent.'}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
 
-            <section className="card p-5">
+
+            {/*
+             * =================================================
+             * SCHEDULE
+             * =================================================
+             */}
+
+            <section
+              className="
+                card
+                p-5
+              "
+            >
               <SectionHeader
-                title="Schedule"
+                title={
+                  isArabic
+                    ? 'الجدول الزمني'
+                    : 'Schedule'
+                }
               />
 
-              <div className="mt-5 space-y-4">
+
+              <div
+                className="
+                  mt-5
+                  space-y-4
+                "
+              >
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Start date
+                    {isArabic
+                      ? 'تاريخ البدء'
+                      : 'Start date'}
                   </FieldLabel>
+
 
                   <input
                     type="date"
                     className="input"
+                    min={
+                      selectedParent?.startDate ||
+                      undefined
+                    }
+                    max={
+                      form.deadlineDate ||
+                      selectedParent?.deadlineDate ||
+                      undefined
+                    }
                     value={
                       form.startDate
                     }
@@ -2146,26 +3632,37 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'startDate',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   />
                 </div>
 
+
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Deadline
+                    {isArabic
+                      ? 'الموعد النهائي'
+                      : 'Deadline'}
                   </FieldLabel>
+
 
                   <input
                     type="date"
                     className="input"
                     min={
                       form.startDate ||
+                      selectedParent?.startDate ||
+                      undefined
+                    }
+                    max={
+                      selectedParent?.deadlineDate ||
                       undefined
                     }
                     value={
@@ -2176,32 +3673,91 @@ function NewTaskContent() {
                     ) =>
                       set(
                         'deadlineDate',
-                        event
-                          .target
-                          .value,
+
+                        event.target.value,
                       )
                     }
                   />
+
+
+                  {selectedParent?.deadlineDate && (
+                    <p
+                      className="
+                        mt-2
+                        text-xs
+                        text-slate-400
+                      "
+                    >
+                      {isArabic
+                        ? `يجب ألا يتجاوز موعد المهمة الرئيسية: ${selectedParent.deadlineDate}`
+                        : `Must not exceed parent deadline: ${selectedParent.deadlineDate}`}
+                    </p>
+                  )}
                 </div>
               </div>
             </section>
           </aside>
         </div>
 
-        <section className="card mt-6 overflow-hidden">
-          <div className="border-b border-slate-100 bg-slate-50 px-6 py-4">
+
+        {/*
+         * ====================================================
+         * SUMMARY
+         * ====================================================
+         */}
+
+        <section
+          className="
+            card
+            mt-6
+            overflow-hidden
+          "
+        >
+          <div
+            className="
+              border-b
+              border-slate-100
+              bg-slate-50
+              px-6
+              py-4
+            "
+          >
             <SectionHeader
-              title="Task Summary"
+              title={
+                isArabic
+                  ? 'ملخص المهمة'
+                  : 'Task Summary'
+              }
             />
           </div>
 
-          <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-4">
+
+          <div
+            className="
+              grid
+              gap-5
+              p-6
+              sm:grid-cols-2
+              lg:grid-cols-5
+            "
+          >
             <div>
-              <div className="text-xs text-slate-400">
-                Task status
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'الحالة'
+                  : 'Task status'}
               </div>
 
-              <div className="mt-2">
+              <div
+                className="
+                  mt-2
+                "
+              >
                 <StatusBadge
                   value="Pending"
                   listType="task_status"
@@ -2209,45 +3765,168 @@ function NewTaskContent() {
               </div>
             </div>
 
+
             <div>
-              <div className="text-xs text-slate-400">
-                Assignment
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'التكليف'
+                  : 'Assignment'}
               </div>
 
-              <div className="mt-2 text-sm font-medium text-slate-700">
+              <div
+                className="
+                  mt-2
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
+              >
                 {selectedAssignee
-                  ? `${selectedAssignee.fullName} · Pending Acceptance`
-                  : 'Unassigned'}
+                  ? (
+                      isArabic
+                        ? `${selectedAssignee.fullName} · بانتظار القبول`
+                        : `${selectedAssignee.fullName} · Pending Acceptance`
+                    )
+                  : (
+                      isArabic
+                        ? 'غير مسندة'
+                        : 'Unassigned'
+                    )}
               </div>
             </div>
 
+
             <div>
-              <div className="text-xs text-slate-400">
-                Approval
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'الموافقة'
+                  : 'Approval'}
               </div>
 
-              <div className="mt-2 text-sm font-medium text-slate-700">
+              <div
+                className="
+                  mt-2
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
+              >
                 {form.needsApproval
-                  ? `Required · ${selectedApprover?.fullName || 'No approver'}`
-                  : 'Not required'}
+                  ? (
+                      isArabic
+                        ? `مطلوبة · ${selectedApprover?.fullName || 'لم يتم الاختيار'}`
+                        : `Required · ${selectedApprover?.fullName || 'No approver'}`
+                    )
+                  : (
+                      isArabic
+                        ? 'غير مطلوبة'
+                        : 'Not required'
+                    )}
               </div>
             </div>
 
+
             <div>
-              <div className="text-xs text-slate-400">
-                Deadline
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'الموعد النهائي'
+                  : 'Deadline'}
               </div>
 
-              <div className="mt-2 text-sm font-medium text-slate-700">
+              <div
+                className="
+                  mt-2
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
+              >
                 {form.deadlineDate ||
-                  'No deadline'}
+                  (
+                    isArabic
+                      ? 'بدون موعد'
+                      : 'No deadline'
+                  )}
+              </div>
+            </div>
+
+
+            <div>
+              <div
+                className="
+                  text-xs
+                  text-slate-400
+                "
+              >
+                {isArabic
+                  ? 'الميزانية'
+                  : 'Budget'}
+              </div>
+
+              <div
+                className="
+                  mt-2
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
+              >
+                {form.needsBudget
+                  ? `${form.budgetMin || '—'} – ${form.budgetMax || '—'} ${form.budgetCurrency}`
+                  : (
+                      isArabic
+                        ? 'غير مطلوبة'
+                        : 'Not required'
+                    )}
               </div>
             </div>
           </div>
         </section>
 
-        <div className="sticky bottom-4 z-20 mt-6">
-          <div className="flex justify-end gap-2 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-lg backdrop-blur">
+
+        {/*
+         * ====================================================
+         * ACTION BAR
+         * ====================================================
+         */}
+
+        <div
+          className="
+            sticky
+            bottom-4
+            z-20
+            mt-6
+          "
+        >
+          <div
+            className="
+              flex
+              justify-end
+              gap-2
+              rounded-xl
+              border
+              border-slate-200
+              bg-white/95
+              p-4
+              shadow-lg
+              backdrop-blur
+            "
+          >
             <button
               type="button"
               className="btn-secondary"
@@ -2258,8 +3937,11 @@ function NewTaskContent() {
                 router.back()
               }
             >
-              Cancel
+              {isArabic
+                ? 'إلغاء'
+                : 'Cancel'}
             </button>
+
 
             <button
               type="submit"
@@ -2269,16 +3951,41 @@ function NewTaskContent() {
               }
             >
               {submitting
-                ? 'Creating…'
-                : 'Create Task'}
+                ? (
+                    isArabic
+                      ? 'جاري الإنشاء…'
+                      : 'Creating…'
+                  )
+                : (
+                    isArabic
+                      ? 'إنشاء المهمة'
+                      : 'Create Task'
+                  )}
             </button>
           </div>
         </div>
       </form>
 
+
+      {/*
+       * ======================================================
+       * QUICK ADD MODAL
+       * ======================================================
+       */}
+
       {quickAdd.open && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+          className="
+            fixed
+            inset-0
+            z-[150]
+            flex
+            items-center
+            justify-center
+            bg-slate-950/40
+            p-4
+            backdrop-blur-sm
+          "
           onMouseDown={(
             event,
           ) => {
@@ -2290,25 +3997,105 @@ function NewTaskContent() {
             }
           }}
         >
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-            <div className="border-b border-slate-100 p-6">
-              <h2 className="text-lg font-semibold">
-                {quickAddTitle()}
-              </h2>
+          <div
+            className="
+              w-full
+              max-w-md
+              overflow-hidden
+              rounded-2xl
+              bg-white
+              shadow-2xl
+            "
+          >
+            <div
+              className="
+                border-b
+                border-slate-100
+                p-6
+              "
+            >
+              <div
+                className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                "
+              >
+                <div>
+                  <h2
+                    className="
+                      text-lg
+                      font-semibold
+                      text-slate-900
+                    "
+                  >
+                    {quickAddTitle()}
+                  </h2>
 
-              <p className="mt-1 text-sm text-slate-500">
-                Saved only in the currently selected language.
-              </p>
+                  <p
+                    className="
+                      mt-1
+                      text-sm
+                      leading-6
+                      text-slate-500
+                    "
+                  >
+                    {isArabic
+                      ? 'سيتم الحفظ باللغة المحددة حالياً فقط.'
+                      : 'Saved only in the currently selected language.'}
+                  </p>
+                </div>
+
+
+                <button
+                  type="button"
+                  disabled={
+                    quickAdd.saving
+                  }
+                  onClick={
+                    closeQuickAdd
+                  }
+                  className="
+                    flex
+                    h-8
+                    w-8
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-slate-400
+                    transition
+                    hover:bg-slate-100
+                    hover:text-slate-700
+                  "
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-4 p-6">
+
+            <div
+              className="
+                space-y-4
+                p-6
+              "
+            >
               <div>
-                <FieldLabel>
-                  Name
+                <FieldLabel
+                  isArabic={
+                    isArabic
+                  }
+                >
+                  {isArabic
+                    ? 'الاسم'
+                    : 'Name'}
                 </FieldLabel>
+
 
                 <input
                   className="input"
+                  autoFocus
                   value={
                     quickAdd.label
                   }
@@ -2322,14 +4109,13 @@ function NewTaskContent() {
                         ...current,
 
                         label:
-                          event
-                            .target
-                            .value,
+                          event.target.value,
                       }),
                     )
                   }
                 />
               </div>
+
 
               {(
                 quickAdd.type ===
@@ -2340,9 +4126,15 @@ function NewTaskContent() {
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Code
+                    {isArabic
+                      ? 'الرمز'
+                      : 'Code'}
                   </FieldLabel>
+
 
                   <input
                     className="input"
@@ -2359,9 +4151,7 @@ function NewTaskContent() {
                           ...current,
 
                           code:
-                            event
-                              .target
-                              .value,
+                            event.target.value,
                         }),
                       )
                     }
@@ -2369,14 +4159,21 @@ function NewTaskContent() {
                 </div>
               )}
 
+
               {quickAdd.type ===
                 'branch' && (
                 <div>
                   <FieldLabel
                     optional
+                    isArabic={
+                      isArabic
+                    }
                   >
-                    Address
+                    {isArabic
+                      ? 'العنوان'
+                      : 'Address'}
                   </FieldLabel>
+
 
                   <input
                     className="input"
@@ -2393,9 +4190,7 @@ function NewTaskContent() {
                           ...current,
 
                           address:
-                            event
-                              .target
-                              .value,
+                            event.target.value,
                         }),
                       )
                     }
@@ -2403,39 +4198,77 @@ function NewTaskContent() {
                 </div>
               )}
 
+
               {quickAdd.error && (
-                <p className="text-sm text-red-600">
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-red-200
+                    bg-red-50
+                    px-4
+                    py-3
+                    text-sm
+                    text-red-600
+                  "
+                >
                   {
                     quickAdd.error
                   }
-                </p>
+                </div>
               )}
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 p-4">
+
+            <div
+              className="
+                flex
+                justify-end
+                gap-2
+                border-t
+                border-slate-100
+                bg-slate-50/70
+                p-4
+              "
+            >
               <button
                 type="button"
                 className="btn-secondary"
+                disabled={
+                  quickAdd.saving
+                }
                 onClick={
                   closeQuickAdd
                 }
               >
-                Cancel
+                {isArabic
+                  ? 'إلغاء'
+                  : 'Cancel'}
               </button>
+
 
               <button
                 type="button"
                 className="btn-primary"
                 disabled={
-                  quickAdd.saving
+                  quickAdd.saving ||
+                  !quickAdd.label.trim()
                 }
                 onClick={
                   saveQuickAdd
                 }
               >
                 {quickAdd.saving
-                  ? 'Adding…'
-                  : 'Add'}
+                  ? (
+                      isArabic
+                        ? 'جاري الإضافة…'
+                        : 'Adding…'
+                    )
+                  : (
+                      isArabic
+                        ? 'إضافة'
+                        : 'Add'
+                    )}
               </button>
             </div>
           </div>
@@ -2444,6 +4277,13 @@ function NewTaskContent() {
     </div>
   );
 }
+
+
+/*
+ * ============================================================
+ * PAGE
+ * ============================================================
+ */
 
 export default function NewTaskPage() {
   return (

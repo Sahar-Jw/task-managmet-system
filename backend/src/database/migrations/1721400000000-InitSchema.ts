@@ -23,7 +23,7 @@ export class InitSchema1721400000000 implements MigrationInterface {
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         "name" varchar(50) NOT NULL UNIQUE,
         "description" varchar(255),
-        "permissions" jsonb NOT NULL DEFAULT '{}',
+        "permissions" json NOT NULL DEFAULT '{}',
         "created_at" timestamptz NOT NULL DEFAULT now(),
         "updated_at" timestamptz NOT NULL DEFAULT now()
       )
@@ -250,7 +250,7 @@ export class InitSchema1721400000000 implements MigrationInterface {
         "type" notification_type_enum NOT NULL,
         "title" varchar(200) NOT NULL,
         "message" text NOT NULL,
-        "metadata" jsonb,
+        "metadata" json,
         "is_read" boolean NOT NULL DEFAULT false,
         "read_at" timestamptz,
         "created_at" timestamptz NOT NULL DEFAULT now()
@@ -266,8 +266,8 @@ export class InitSchema1721400000000 implements MigrationInterface {
         "entity_type" varchar(50) NOT NULL,
         "entity_id" uuid NOT NULL,
         "action" audit_action_enum NOT NULL,
-        "old_value" jsonb,
-        "new_value" jsonb,
+        "old_value" json,
+        "new_value" json,
         "reason" text,
         "ip_address" varchar(45),
         "created_at" timestamptz NOT NULL DEFAULT now()

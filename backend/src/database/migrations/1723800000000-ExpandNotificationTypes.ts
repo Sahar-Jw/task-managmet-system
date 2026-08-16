@@ -65,7 +65,7 @@ export class ExpandNotificationTypes1723800000000
     _queryRunner: QueryRunner,
   ): Promise<void> {
     /*
-     * PostgreSQL cannot safely remove individual enum values.
+     * mysql cannot safely remove individual enum values.
      *
      * Leaving this intentionally empty avoids destroying
      * notification data during a rollback.

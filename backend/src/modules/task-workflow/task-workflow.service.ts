@@ -239,38 +239,60 @@ export class TaskWorkflowService {
    * ==========================================================
    */
 
-  private async getEntity():
-    Promise<TaskWorkflowConfigEntity> {
-    let config =
-      await this.repo.findOne({
-        order: {
-          createdAt:
-            'ASC',
-        },
-      });
+ private async getEntity():
+  Promise<TaskWorkflowConfigEntity> {
+  /*
+   * TypeORM findOne() requires a WHERE condition.
+   *
+   * Since this table is designed as a singleton configuration,
+   * use find() with take: 1 instead.
+   */
+  const existing =
+    await this.repo.find({
+      order: {
+        createdAt:
+          'ASC',
+      },
+
+      take:
+        1,
+    });
 
 
-    if (
-      config
-    ) {
-      return config;
-    }
-
-
-    config =
-      this.repo.create({
-        mode:
-          TaskWorkflowMode.ALL_AVAILABLE,
-
-        actions:
-          DEFAULT_ACTIONS,
-      });
-
-
-    return this.repo.save(
-      config,
-    );
+  if (
+    existing.length >
+    0
+  ) {
+    return existing[0];
   }
+
+
+  /*
+   * Defensive fallback.
+   *
+   * The migration already inserts the default configuration,
+   * but if the row was ever manually deleted, recreate it.
+   */
+  const config =
+    this.repo.create({
+      mode:
+        TaskWorkflowMode.ALL_AVAILABLE,
+
+      actions:
+        DEFAULT_ACTIONS.map(
+          (
+            action,
+          ) => ({
+            ...action,
+          }),
+        ),
+    });
+
+
+  return this.repo.save(
+    config,
+  );
+}
 
 
   /*

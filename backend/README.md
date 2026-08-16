@@ -1,14 +1,14 @@
 # Enterprise Task & Project Management System — Backend
 
-NestJS + TypeORM + PostgreSQL implementation of the SRS (`SRS_Task_Project_Management_System.pdf`).
-This has been built, compiled, migrated against a real PostgreSQL instance, and
+NestJS + TypeORM + mysql implementation of the SRS (`SRS_Task_Project_Management_System.pdf`).
+This has been built, compiled, migrated against a real mysql instance, and
 exercised end-to-end (login, RBAC, task lifecycle, audit trail) during development.
 
 ## Stack
 
 - **Framework:** NestJS 10 (modular architecture, Guards, Interceptors, Filters)
 - **ORM:** TypeORM 0.3 with versioned migrations (no `synchronize` in production)
-- **Database:** PostgreSQL 16
+- **Database:** mysql 16
 - **Auth:** JWT access tokens (15m) + rotating refresh tokens in an HttpOnly/Secure cookie
 - **Docs:** OpenAPI/Swagger, auto-generated from decorators
 
@@ -54,7 +54,7 @@ the layer where they belong:
   `SelfOrAdminGuard` (ownership checks — BR-012, BR-071).
 - **Audit trail** — every state-changing service call writes through
   `AuditLogsService.record()`, the only write path into `audit_logs`. The
-  table is additionally protected by a PostgreSQL trigger that rejects any
+  table is additionally protected by a mysql trigger that rejects any
   `UPDATE`/`DELETE` at the database level (BR-076, NFR-AUD-02).
 
 Non-functional requirements are addressed via: Helmet security headers,

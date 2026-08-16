@@ -41,17 +41,54 @@ import { TaskWorkflowModule } from './modules/task-workflow/task-workflow.module
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USERNAME'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_NAME'),
-        autoLoadEntities: true,
-        synchronize: config.get<boolean>('DB_SYNCHRONIZE'),
-        logging: config.get<boolean>('DB_LOGGING'),
-      }),
+      useFactory: (
+  config:
+    ConfigService,
+) => ({
+  type:
+    'mysql' as const,
+
+  host:
+    config.get<string>(
+      'DB_HOST',
+    ),
+
+  port:
+    config.get<number>(
+      'DB_PORT',
+    ),
+
+  username:
+    config.get<string>(
+      'DB_USERNAME',
+    ),
+
+  password:
+    config.get<string>(
+      'DB_PASSWORD',
+    ),
+
+  database:
+    config.get<string>(
+      'DB_NAME',
+    ),
+
+  charset:
+    'utf8mb4',
+
+  autoLoadEntities:
+    true,   
+
+  synchronize:
+    config.get<boolean>(
+      'DB_SYNCHRONIZE',
+    ),
+
+  logging:
+    config.get<boolean>(
+      'DB_LOGGING',
+    ),
+}),
     }),
 
     ThrottlerModule.forRoot([

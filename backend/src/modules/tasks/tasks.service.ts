@@ -144,7 +144,8 @@ const ALLOWED_TRANSITIONS:
     TaskStatus.ARCHIVED,
   ],
 
-  [TaskStatus.ARCHIVED]: [],
+  [TaskStatus.ARCHIVED]:
+    [],
 };
 
 
@@ -243,9 +244,6 @@ export class TasksService {
     private readonly projectsService:
       ProjectsService,
 
-    /*
-     * Admin-configurable Task Workflow.
-     */
     private readonly taskWorkflowService:
       TaskWorkflowService,
   ) {}
@@ -590,9 +588,6 @@ export class TasksService {
       UserEntity,
   ):
     Promise<void> {
-    /*
-     * One level only.
-     */
     if (
       parentTask.parentTaskId
     ) {
@@ -602,9 +597,6 @@ export class TasksService {
     }
 
 
-    /*
-     * No children under closed Parent Tasks.
-     */
     if (
       parentTask.archivedAt ||
       [
@@ -622,9 +614,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Admin.
-     */
     if (
       actor.role.name ===
       RoleName.ADMIN
@@ -633,9 +622,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Creator.
-     */
     if (
       parentTask.createdById ===
       actor.id
@@ -644,9 +630,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Accepted Parent assignee.
-     */
     const acceptedAssignment =
       await this.assignmentRepo.findOne({
         where: {
@@ -750,10 +733,6 @@ export class TasksService {
       20;
 
 
-    /*
-     * Validate date filters.
-     */
-
     if (
       query.dueDateFrom &&
       query.dueDateTo &&
@@ -790,10 +769,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Base query.
-     */
-
     const qb =
       this.taskRepo
         .createQueryBuilder(
@@ -820,10 +795,6 @@ export class TasksService {
           'createdBy',
         );
 
-
-    /*
-     * Status.
-     */
 
     if (
       query.status
@@ -854,10 +825,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Classification.
-     */
-
     if (
       query.taskType
     ) {
@@ -883,10 +850,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * Organization.
-     */
 
     if (
       query.branchId
@@ -926,10 +889,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * People.
-     */
 
     if (
       query.createdById
@@ -975,10 +934,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Search.
-     */
-
     if (
       query.search?.trim()
     ) {
@@ -988,13 +943,13 @@ export class TasksService {
 
       qb.andWhere(
         `(
-          task.titleEn ILIKE :search
-          OR task.titleAr ILIKE :search
-          OR task.descriptionEn ILIKE :search
-          OR task.descriptionAr ILIKE :search
-          OR createdBy.fullName ILIKE :search
-          OR assignedTo.fullName ILIKE :search
-          OR project.name ILIKE :search
+          task.titleEn LIKE :search
+          OR task.titleAr LIKE :search
+          OR task.descriptionEn LIKE :search
+          OR task.descriptionAr LIKE :search
+          OR createdBy.fullName LIKE :search
+          OR assignedTo.fullName LIKE :search
+          OR project.name LIKE :search
         )`,
         {
           search,
@@ -1002,10 +957,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * Deadline.
-     */
 
     if (
       query.dueDateFrom
@@ -1053,10 +1004,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Overdue.
-     */
-
     if (
       query.overdueOnly ===
       'true'
@@ -1081,10 +1028,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * Start date.
-     */
 
     if (
       query.startDateFrom
@@ -1111,10 +1054,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * Created date.
-     */
 
     if (
       query.createdDateFrom
@@ -1144,10 +1083,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * Sort.
-     */
 
     const sortColumns:
       Record<
@@ -1216,10 +1151,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Pagination.
-     */
-
     qb
       .skip(
         (
@@ -1239,10 +1170,6 @@ export class TasksService {
     ] =
       await qb.getManyAndCount();
 
-
-    /*
-     * Ratings.
-     */
 
     if (
       items.length >
@@ -1446,7 +1373,7 @@ export class TasksService {
       query.search
     ) {
       idQb.andWhere(
-        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
+        '(task.titleEn LIKE :search OR task.titleAr LIKE :search OR task.descriptionEn LIKE :search OR task.descriptionAr LIKE :search)',
         {
           search:
             `%${query.search}%`,
@@ -1689,6 +1616,12 @@ export class TasksService {
    * ==========================================================
    * ASSIGNED BY ME
    * ==========================================================
+   *
+   * NEW:
+   *
+   * - optional current-assignee filter
+   * - default newest-created first
+   * ==========================================================
    */
 
   async findAssignedByMe(
@@ -1728,6 +1661,10 @@ export class TasksService {
         .addSelect(
           'task.priority',
           'priority',
+        )
+        .addSelect(
+          'task.createdAt',
+          'createdAt',
         )
         .addSelect(
           'AVG(rating.score)',
@@ -1805,11 +1742,33 @@ export class TasksService {
     }
 
 
+    /*
+     * NEW:
+     *
+     * Filter by the Task's CURRENT assignee.
+     *
+     * We intentionally use task.assignedToId instead of old
+     * assignment history so reassigned Tasks appear under the
+     * correct current User.
+     */
+    if (
+      query.assigneeId
+    ) {
+      idQb.andWhere(
+        'task.assignedToId = :assigneeId',
+        {
+          assigneeId:
+            query.assigneeId,
+        },
+      );
+    }
+
+
     if (
       query.search
     ) {
       idQb.andWhere(
-        '(task.titleEn ILIKE :search OR task.titleAr ILIKE :search OR task.descriptionEn ILIKE :search OR task.descriptionAr ILIKE :search)',
+        '(task.titleEn LIKE :search OR task.titleAr LIKE :search OR task.descriptionEn LIKE :search OR task.descriptionAr LIKE :search)',
         {
           search:
             `%${query.search}%`,
@@ -1883,20 +1842,37 @@ export class TasksService {
     }
 
 
+    /*
+     * Assigned By Me defaults to:
+     *
+     * Created DESC
+     *
+     * so newly-created tasks are always at the top.
+     */
+    const effectiveSortBy =
+      query.sortBy ??
+      'createdAt';
+
+
+    const effectiveSortDir =
+      query.sortDir ??
+      'desc';
+
+
     const dir =
-      query.sortDir ===
+      effectiveSortDir ===
       'asc'
         ? 'ASC'
         : 'DESC';
 
 
     switch (
-      query.sortBy
+      effectiveSortBy
     ) {
       case 'priority':
         idQb.orderBy(
           `CASE task.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`,
-          query.sortDir ===
+          effectiveSortDir ===
           'desc'
             ? 'DESC'
             : 'ASC',
@@ -1910,30 +1886,30 @@ export class TasksService {
         );
         break;
 
+      case 'deadline':
+        idQb.orderBy(
+          'task.deadlineDate',
+          dir,
+          'NULLS LAST',
+        );
+        break;
+
       case 'createdAt':
+      default:
         idQb.orderBy(
           'task.createdAt',
           dir,
         );
         break;
-
-      case 'deadline':
-      default:
-        idQb.orderBy(
-          'task.deadlineDate',
-          query.sortDir ===
-          'desc'
-            ? 'DESC'
-            : 'ASC',
-          'NULLS LAST',
-        );
-        break;
     }
 
 
+    /*
+     * Deterministic tie-breaker.
+     */
     idQb.addOrderBy(
       'task.id',
-      'ASC',
+      'DESC',
     );
 
 
@@ -2121,9 +2097,6 @@ export class TasksService {
       UserEntity,
   ):
     Promise<TaskEntity> {
-    /*
-     * Department.
-     */
     await this.assertActiveSettingById(
       SettingType.DEPARTMENT,
       dto.departmentId,
@@ -2131,9 +2104,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Branch.
-     */
     if (
       dto.branchId
     ) {
@@ -2145,9 +2115,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Project.
-     */
     if (
       dto.projectId
     ) {
@@ -2157,20 +2124,11 @@ export class TasksService {
     }
 
 
-    /*
-     * Dates.
-     */
     this.assertValidDateRange(
       dto.startDate,
       dto.deadlineDate,
     );
 
-
-    /*
-     * ========================================================
-     * PARENT TASK / SUBTASK
-     * ========================================================
-     */
 
     if (
       dto.parentTaskId
@@ -2199,9 +2157,6 @@ export class TasksService {
       );
 
 
-      /*
-       * Organizational context must match Parent.
-       */
       if (
         dto.departmentId !==
         parentTask.departmentId
@@ -2244,9 +2199,6 @@ export class TasksService {
       }
 
 
-      /*
-       * Child dates must fit inside Parent dates.
-       */
       if (
         dto.startDate &&
         parentTask.startDate &&
@@ -2272,9 +2224,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Assignee.
-     */
     if (
       dto.assignedToId
     ) {
@@ -2284,9 +2233,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Approval.
-     */
     const needsApproval =
       Boolean(
         dto.needsApproval,
@@ -2322,9 +2268,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Budget.
-     */
     const needsBudget =
       Boolean(
         dto.needsBudget,
@@ -2338,9 +2281,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Dynamic lists.
-     */
     if (
       dto.taskType
     ) {
@@ -2359,9 +2299,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Save.
-     */
     const task =
       await this.taskRepo.save(
         this.taskRepo.create({
@@ -2686,9 +2623,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Parent.
-     */
     if (
       effectiveParentId
     ) {
@@ -2749,9 +2683,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Approval.
-     */
     const enablingApproval =
       dto.needsApproval ===
         true &&
@@ -2802,9 +2733,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Budget.
-     */
     this.assertBudgetComplete(
       effectiveNeedsBudget,
       effectiveBudgetMin,
@@ -2853,9 +2781,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Approval state.
-     */
     if (
       dto.needsApproval ===
       false
@@ -2912,9 +2837,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Budget state.
-     */
     if (
       dto.needsBudget ===
       false
@@ -3176,9 +3098,6 @@ export class TasksService {
       );
 
 
-    /*
-     * Permission.
-     */
     await this.assertCanChangeStatus(
       task,
       actor,
@@ -3194,25 +3113,12 @@ export class TasksService {
     }
 
 
-    /*
-     * Dynamic Status list still validates the target.
-     */
     await this.assertValidListValue(
       SettingType.TASK_STATUS,
       dto.status,
       'Status',
     );
 
-
-    /*
-     * ========================================================
-     * REOPEN
-     * ========================================================
-     *
-     * Reopen remains an Admin/system action rather than a
-     * configurable normal Workflow action.
-     * ========================================================
-     */
 
     if (
       dto.status ===
@@ -3226,9 +3132,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Finished is terminal for normal users.
-     */
     if (
       task.status ===
         TaskStatus.FINISHED &&
@@ -3245,17 +3148,6 @@ export class TasksService {
       }
     }
 
-
-    /*
-     * ========================================================
-     * BUILT-IN TRANSITION VALIDATION
-     * ========================================================
-     *
-     * Admin Workflow configuration NEVER replaces these rules.
-     *
-     * This is the underlying safe state machine.
-     * ========================================================
-     */
 
     const fromIsBuiltIn =
       (
@@ -3314,23 +3206,6 @@ export class TasksService {
     }
 
 
-    /*
-     * ========================================================
-     * ADMIN-CONFIGURED WORKFLOW
-     * ========================================================
-     *
-     * The base state machine above says whether a transition is
-     * technically legal.
-     *
-     * TaskWorkflowService then checks:
-     *
-     * - is the Admin action enabled?
-     * - in Guided mode, is this the next configured action?
-     *
-     * It cannot make an illegal base transition legal.
-     * ========================================================
-     */
-
     const configuredAllowedTargets =
       fromIsBuiltIn
         ? (
@@ -3350,12 +3225,6 @@ export class TasksService {
     );
 
 
-    /*
-     * ========================================================
-     * PARENT TASK WORK BREAKDOWN
-     * ========================================================
-     */
-
     if (
       [
         TaskStatus.PENDING_APPROVAL,
@@ -3371,12 +3240,6 @@ export class TasksService {
       );
     }
 
-
-    /*
-     * ========================================================
-     * ENTERING PENDING APPROVAL
-     * ========================================================
-     */
 
     if (
       dto.status ===
@@ -3416,33 +3279,18 @@ export class TasksService {
     }
 
 
-    /*
-     * ========================================================
-     * COMPLETED
-     * ========================================================
-     */
-
     if (
       dto.status ===
-      TaskStatus.COMPLETED
+        TaskStatus.COMPLETED &&
+      task.needsApproval &&
+      task.approvalStatus !==
+        ApprovalStatus.APPROVED
     ) {
-      if (
-        task.needsApproval &&
-        task.approvalStatus !==
-          ApprovalStatus.APPROVED
-      ) {
-        throw new ConflictException(
-          'This Task requires approval; route it through PendingApproval and have the approver decide first',
-        );
-      }
+      throw new ConflictException(
+        'This Task requires approval; route it through PendingApproval and have the approver decide first',
+      );
     }
 
-
-    /*
-     * ========================================================
-     * FINISHED
-     * ========================================================
-     */
 
     if (
       dto.status ===
@@ -3463,12 +3311,6 @@ export class TasksService {
         task.approvalStatus,
     };
 
-
-    /*
-     * ========================================================
-     * ARCHIVE
-     * ========================================================
-     */
 
     if (
       dto.status ===
@@ -3576,9 +3418,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Approver or Admin.
-     */
     if (
       actor.role.name !==
         RoleName.ADMIN &&
@@ -3591,9 +3430,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Must actually be awaiting approval.
-     */
     if (
       task.status !==
       TaskStatus.PENDING_APPROVAL
@@ -3614,9 +3450,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Defensive subtask check.
-     */
     if (
       dto.approve
     ) {
@@ -3658,9 +3491,6 @@ export class TasksService {
       task.rejectionReason =
         dto.rejectionReason;
 
-      /*
-       * Rejected work returns to In Progress.
-       */
       task.status =
         TaskStatus.IN_PROGRESS;
 
@@ -3903,12 +3733,6 @@ export class TasksService {
       task.projectId;
 
 
-    /*
-     * ========================================================
-     * HARD DELETE
-     * ========================================================
-     */
-
     if (
       hardDelete
     ) {
@@ -4007,12 +3831,6 @@ export class TasksService {
       return;
     }
 
-
-    /*
-     * ========================================================
-     * ARCHIVE
-     * ========================================================
-     */
 
     if (
       actor.role.name !==

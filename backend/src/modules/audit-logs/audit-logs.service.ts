@@ -547,20 +547,20 @@ export class AuditLogsService {
 
       qb.andWhere(
         `(
-          log.entityType ILIKE :search
+          log.entityType LIKE :search
 
           OR CAST(
             log.entityId
             AS TEXT
-          ) ILIKE :search
+          ) LIKE :search
 
-          OR log.reason ILIKE :search
+          OR log.reason LIKE :search
 
-          OR actor.fullName ILIKE :search
+          OR actor.fullName LIKE :search
 
-          OR actor.email ILIKE :search
+          OR actor.email LIKE :search
 
-          OR log.ipAddress ILIKE :search
+          OR log.ipAddress LIKE :search
         )`,
         {
           search,

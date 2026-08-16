@@ -19,7 +19,7 @@ export class TaskWorkflowConfig1723900000000
       CREATE TABLE "task_workflow_config" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "mode" varchar(30) NOT NULL DEFAULT 'all_available',
-        "actions" jsonb NOT NULL,
+        "actions" json NOT NULL,
         "updated_by" uuid,
         "created_at" timestamptz NOT NULL DEFAULT now(),
         "updated_at" timestamptz NOT NULL DEFAULT now(),
@@ -62,7 +62,7 @@ export class TaskWorkflowConfig1723900000000
             "enabled": true,
             "order": 5
           }
-        ]'::jsonb
+        ]'::json
       )
     `);
   }

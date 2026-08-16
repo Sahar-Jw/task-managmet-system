@@ -37,14 +37,9 @@ import type {
 } from '@/lib/types';
 
 
-/*
- * ============================================================
- * TYPES
- * ============================================================
- */
-
 interface SubtasksPanelProps {
-  task: Task;
+  task:
+    Task;
 
   onChanged:
     () => Promise<void>;
@@ -72,12 +67,6 @@ type SubtaskForm = {
 };
 
 
-/*
- * ============================================================
- * HELPERS
- * ============================================================
- */
-
 const CLOSED_STATUSES = [
   'Completed',
   'Finished',
@@ -86,7 +75,8 @@ const CLOSED_STATUSES = [
 
 
 function isClosed(
-  task: Task,
+  task:
+    Task,
 ) {
   return CLOSED_STATUSES.includes(
     task.status,
@@ -101,7 +91,9 @@ function formatDate(
   locale?:
     string,
 ) {
-  if (!value) {
+  if (
+    !value
+  ) {
     return '—';
   }
 
@@ -124,11 +116,15 @@ function formatDate(
 }
 
 
-/*
- * ============================================================
- * COMPONENT
- * ============================================================
- */
+function getToday() {
+  return new Date()
+    .toISOString()
+    .slice(
+      0,
+      10,
+    );
+}
+
 
 export default function SubtasksPanel({
   task,
@@ -148,12 +144,6 @@ export default function SubtasksPanel({
     locale ===
     'ar';
 
-
-  /*
-   * ==========================================================
-   * STATE
-   * ==========================================================
-   */
 
   const [
     modalOpen,
@@ -223,21 +213,19 @@ export default function SubtasksPanel({
     error,
     setError,
   ] =
-    useState('');
+    useState(
+      '',
+    );
 
 
   const [
     success,
     setSuccess,
   ] =
-    useState('');
+    useState(
+      '',
+    );
 
-
-  /*
-   * ==========================================================
-   * LOOKUPS
-   * ==========================================================
-   */
 
   useEffect(() => {
     UsersApi.list({
@@ -247,11 +235,10 @@ export default function SubtasksPanel({
       .then(
         (
           result,
-        ) => {
+        ) =>
           setUsers(
             result.items,
-          );
-        },
+          ),
       )
       .catch(
         () => {},
@@ -271,14 +258,9 @@ export default function SubtasksPanel({
   }, []);
 
 
-  /*
-   * ==========================================================
-   * LANGUAGE
-   * ==========================================================
-   */
-
   function taskTitle(
-    value: Task,
+    value:
+      Task,
   ) {
     return isArabic
       ? value.titleAr ||
@@ -304,7 +286,13 @@ export default function SubtasksPanel({
 
   /*
    * ==========================================================
-   * CHILDREN
+   * SUBTASK ORDER
+   * ==========================================================
+   *
+   * Open work stays first.
+   *
+   * Inside the same group, older-created steps remain above
+   * newer-created steps so the timeline reads naturally.
    * ==========================================================
    */
 
@@ -321,9 +309,6 @@ export default function SubtasksPanel({
             a,
             b,
           ) => {
-            /*
-             * Open work first.
-             */
             const aClosed =
               isClosed(
                 a,
@@ -345,41 +330,17 @@ export default function SubtasksPanel({
             }
 
 
-            /*
-             * Then deadline.
-             */
-            if (
-              a.deadlineDate &&
-              b.deadlineDate
-            ) {
-              return a.deadlineDate.localeCompare(
-                b.deadlineDate,
-              );
-            }
-
-
-            if (
-              a.deadlineDate
-            ) {
-              return -1;
-            }
-
-
-            if (
-              b.deadlineDate
-            ) {
-              return 1;
-            }
-
-
-            return new Date(
-              a.createdAt,
-            ).getTime() -
+            return (
+              new Date(
+                a.createdAt,
+              ).getTime() -
               new Date(
                 b.createdAt,
-              ).getTime();
+              ).getTime()
+            );
           },
         ),
+
       [
         task.subTasks,
       ],
@@ -410,12 +371,6 @@ export default function SubtasksPanel({
       : 0;
 
 
-  /*
-   * ==========================================================
-   * PERMISSIONS
-   * ==========================================================
-   */
-
   const isAdmin =
     user?.role.name ===
     'ADMIN';
@@ -426,10 +381,6 @@ export default function SubtasksPanel({
     user?.id;
 
 
-  /*
-   * The assigned User may split the Parent only AFTER accepting
-   * the assignment.
-   */
   const hasAcceptedAssignment =
     Boolean(
       task.assignments?.some(
@@ -444,11 +395,6 @@ export default function SubtasksPanel({
     );
 
 
-  /*
-   * One-level hierarchy only.
-   *
-   * A Sub-task cannot create another Sub-task.
-   */
   const isSubtask =
     Boolean(
       task.parentTaskId,
@@ -471,12 +417,6 @@ export default function SubtasksPanel({
     );
 
 
-  /*
-   * ==========================================================
-   * USERS
-   * ==========================================================
-   */
-
   const assignableUsers =
     useMemo(
       () =>
@@ -498,59 +438,59 @@ export default function SubtasksPanel({
                 b.fullName,
               ),
           ),
+
       [
         users,
       ],
     );
 
 
-  /*
-   * ==========================================================
-   * MODAL
-   * ==========================================================
-   */
-
- function openModal() {
-  setError('');
-  setSuccess('');
-
-  /*
-   * Normal users can default the Subtask assignment to themselves.
-   *
-   * Admins cannot be Task assignees, so for Admin the Subtask
-   * must default to Unassigned.
-   */
-  const defaultAssigneeId =
-    user &&
-    user.role.name !== 'ADMIN'
-      ? user.id
-      : '';
-
-  setForm({
-    title: '',
-
-    description: '',
-
-    priority:
-      task.priority ||
-      'Medium',
-
-    assigneeId:
-      defaultAssigneeId,
-
-    startDate:
-      task.startDate ||
+  function openModal() {
+    setError(
       '',
+    );
 
-    deadlineDate:
-      task.deadlineDate ||
+    setSuccess(
       '',
-  });
+    );
 
-  setModalOpen(
-    true,
-  );
-}
+
+    const defaultAssigneeId =
+      user &&
+      user.role.name !==
+        'ADMIN'
+        ? user.id
+        : '';
+
+
+    setForm({
+      title:
+        '',
+
+      description:
+        '',
+
+      priority:
+        task.priority ||
+        'Medium',
+
+      assigneeId:
+        defaultAssigneeId,
+
+      startDate:
+        task.startDate ||
+        '',
+
+      deadlineDate:
+        task.deadlineDate ||
+        '',
+    });
+
+
+    setModalOpen(
+      true,
+    );
+  }
 
 
   function closeModal() {
@@ -565,15 +505,11 @@ export default function SubtasksPanel({
       false,
     );
 
-    setError('');
+    setError(
+      '',
+    );
   }
 
-
-  /*
-   * ==========================================================
-   * CREATE SUBTASK
-   * ==========================================================
-   */
 
   async function createSubtask(
     event:
@@ -660,8 +596,13 @@ export default function SubtasksPanel({
       true,
     );
 
-    setError('');
-    setSuccess('');
+    setError(
+      '',
+    );
+
+    setSuccess(
+      '',
+    );
 
 
     let createdTask:
@@ -670,17 +611,6 @@ export default function SubtasksPanel({
 
 
     try {
-      /*
-       * ======================================================
-       * CREATE CHILD TASK
-       * ======================================================
-       *
-       * Organization is inherited from the Parent.
-       *
-       * This prevents a Sub-task from accidentally appearing
-       * under a different Project / Department / Branch.
-       */
-
       createdTask =
         await TasksApi.create({
           titleAr:
@@ -718,13 +648,6 @@ export default function SubtasksPanel({
           parentTaskId:
             task.id,
 
-          /*
-           * Keep the first version simple.
-           *
-           * Approval and Budget still exist on real Task records
-           * and can be expanded later if you decide Sub-tasks
-           * also need those workflows.
-           */
           needsApproval:
             false,
 
@@ -741,12 +664,6 @@ export default function SubtasksPanel({
         });
 
 
-      /*
-       * ======================================================
-       * OPTIONAL ASSIGNMENT
-       * ======================================================
-       */
-
       if (
         form.assigneeId
       ) {
@@ -756,13 +673,10 @@ export default function SubtasksPanel({
             form.assigneeId,
             form.deadlineDate ||
               undefined,
-          ) as TaskAssignment;
+          ) as
+            TaskAssignment;
 
 
-        /*
-         * If I create a Step for myself, don't make me accept
-         * my own assignment manually.
-         */
         if (
           form.assigneeId ===
             user?.id &&
@@ -791,10 +705,6 @@ export default function SubtasksPanel({
     } catch (
       err
     ) {
-      /*
-       * If Task creation worked but Assignment creation failed,
-       * DO NOT create another Task.
-       */
       if (
         createdTask
       ) {
@@ -838,7 +748,7 @@ export default function SubtasksPanel({
 
   /*
    * ==========================================================
-   * CHILD VIEW
+   * CHILD TASK VIEW
    * ==========================================================
    */
 
@@ -854,13 +764,12 @@ export default function SubtasksPanel({
             </div>
 
 
-            <div className="min-w-0">
+            <div>
               <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
                 {isArabic
                   ? 'مهمة فرعية'
                   : 'Subtask'}
               </div>
-
 
               <h2 className="mt-1 text-base font-semibold text-slate-900">
                 {isArabic
@@ -885,7 +794,6 @@ export default function SubtasksPanel({
                     : 'Parent task'}
                 </div>
 
-
                 <div className="mt-1 truncate text-sm font-semibold text-slate-800 group-hover:text-brand-700">
                   {taskTitle(
                     task.parentTask,
@@ -893,8 +801,7 @@ export default function SubtasksPanel({
                 </div>
               </div>
 
-
-              <span className="shrink-0 text-brand-600">
+              <span className="text-brand-600">
                 {isArabic
                   ? '←'
                   : '→'}
@@ -922,35 +829,25 @@ export default function SubtasksPanel({
   return (
     <>
       <section className="card overflow-hidden">
-        {/*
-         * ====================================================
-         * HEADER
-         * ====================================================
-         */}
-
         <div className="border-b border-slate-100 bg-slate-50/60 p-5 sm:p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-lg font-semibold text-brand-700">
-                  ⑂
-                </div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-lg font-semibold text-brand-700">
+                ⑂
+              </div>
 
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">
+                  {isArabic
+                    ? 'تقسيم العمل'
+                    : 'Work breakdown'}
+                </h2>
 
-                <div>
-                  <h2 className="text-base font-semibold text-slate-900">
-                    {isArabic
-                      ? 'تقسيم العمل'
-                      : 'Work breakdown'}
-                  </h2>
-
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    {isArabic
-                      ? 'قسّم المهمة إلى خطوات أصغر وتابع تقدمها.'
-                      : 'Break this task into smaller steps and track their progress.'}
-                  </p>
-                </div>
+                <p className="mt-1 text-sm text-slate-500">
+                  {isArabic
+                    ? 'قسّم المهمة إلى خطوات أصغر وتابع تقدمها بالتسلسل.'
+                    : 'Break this task into smaller steps and follow them as a visual sequence.'}
+                </p>
               </div>
             </div>
 
@@ -973,12 +870,6 @@ export default function SubtasksPanel({
           </div>
         </div>
 
-
-        {/*
-         * ====================================================
-         * PROGRESS
-         * ====================================================
-         */}
 
         <div className="border-b border-slate-100 px-5 py-5 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-3">
@@ -1011,8 +902,8 @@ export default function SubtasksPanel({
                       )
                     : (
                         isArabic
-                          ? 'جميع الخطوات مكتملة — المهمة الرئيسية جاهزة للإنهاء.'
-                          : 'All steps are complete — the parent task is ready to finish.'
+                          ? 'جميع الخطوات مكتملة.'
+                          : 'All steps are complete.'
                       )}
                 </div>
               )}
@@ -1043,19 +934,12 @@ export default function SubtasksPanel({
         </div>
 
 
-        {/*
-         * ====================================================
-         * SUBTASK LIST
-         * ====================================================
-         */}
-
         {subtasks.length ===
         0 ? (
           <div className="px-6 py-10 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-xl text-slate-400">
-              ⑂
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-xl text-slate-400">
+              ○
             </div>
-
 
             <h3 className="mt-3 text-sm font-semibold text-slate-700">
               {isArabic
@@ -1063,18 +947,17 @@ export default function SubtasksPanel({
                 : 'No subtasks yet'}
             </h3>
 
-
             <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-400">
               {canCreateSubtask
                 ? (
                     isArabic
-                      ? 'ابدأ بتقسيم هذه المهمة إلى خطوات عمل أصغر.'
-                      : 'Break this task into smaller pieces of work when you are ready.'
+                      ? 'ابدأ بتقسيم المهمة إلى خطوات أصغر.'
+                      : 'Start by breaking this task into smaller steps.'
                   )
                 : (
                     isArabic
-                      ? 'يمكن للمسؤول أو منشئ المهمة أو المستخدم الذي قبل المهمة تقسيمها.'
-                      : 'The Admin, task creator, or user who accepted this task can create subtasks.'
+                      ? 'لا تملك صلاحية تقسيم هذه المهمة.'
+                      : 'You do not currently have permission to split this task.'
                   )}
             </p>
 
@@ -1096,197 +979,275 @@ export default function SubtasksPanel({
             )}
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {subtasks.map(
-              (
-                child,
-                index,
-              ) => {
-                const childClosed =
-                  isClosed(
+          /*
+           * ====================================================
+           * VERTICAL SUBTASK TIMELINE
+           * ====================================================
+           */
+
+          <div className="px-5 py-6 sm:px-6">
+            <div className="relative">
+              {/*
+               * Vertical connector.
+               */}
+              <div
+                className={`
+                  absolute
+                  top-7
+                  bottom-7
+                  w-[2px]
+                  bg-slate-200
+                  ${
+                    isArabic
+                      ? 'right-[18px]'
+                      : 'left-[18px]'
+                  }
+                `}
+              />
+
+
+              <div className="space-y-5">
+                {subtasks.map(
+                  (
                     child,
-                  );
+                    index,
+                  ) => {
+                    const childClosed =
+                      isClosed(
+                        child,
+                      );
 
 
-                const childOverdue =
-                  Boolean(
-                    child.deadlineDate &&
-                    child.deadlineDate <
-                      new Date()
-                        .toISOString()
-                        .slice(
-                          0,
-                          10,
-                        ) &&
-                    !childClosed,
-                  );
+                    const childOverdue =
+                      Boolean(
+                        child.deadlineDate &&
+                        child.deadlineDate <
+                          getToday() &&
+                        !childClosed,
+                      );
 
 
-                return (
-                  <Link
-                    key={
-                      child.id
-                    }
-                    href={`/tasks/${child.id}`}
-                    className="group flex flex-col gap-4 px-5 py-4 transition hover:bg-slate-50/70 sm:px-6 lg:flex-row lg:items-center"
-                  >
-                    {/*
-                     * STEP NUMBER / COMPLETE
-                     */}
+                    const childInProgress =
+                      [
+                        'InProgress',
+                        'PendingApproval',
+                      ].includes(
+                        child.status,
+                      );
 
-                    <div
-                      className={`
-                        flex
-                        h-9
-                        w-9
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-xl
-                        text-xs
-                        font-bold
-                        ${
-                          childClosed
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : 'bg-slate-100 text-slate-500'
+
+                    const nodeClass =
+                      childClosed
+                        ? 'border-emerald-500 bg-emerald-500 text-white'
+                        : childOverdue
+                          ? 'border-red-500 bg-red-500 text-white'
+                          : childInProgress
+                            ? 'border-brand-600 bg-brand-600 text-white'
+                            : 'border-slate-300 bg-white text-slate-500';
+
+
+                    return (
+                      <div
+                        key={
+                          child.id
                         }
-                      `}
-                    >
-                      {childClosed
-                        ? '✓'
-                        : index + 1}
-                    </div>
-
-
-                    {/*
-                     * TITLE
-                     */}
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3
+                        className="relative flex items-start gap-4"
+                      >
+                        {/*
+                         * NODE
+                         */}
+                        <div
                           className={`
-                            truncate
-                            text-sm
-                            font-semibold
-                            transition
-                            group-hover:text-brand-700
-                            ${
-                              childClosed
-                                ? 'text-slate-500'
-                                : 'text-slate-850'
-                            }
+                            relative
+                            z-10
+                            mt-5
+                            flex
+                            h-9
+                            w-9
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-full
+                            border-2
+                            text-xs
+                            font-bold
+                            shadow-sm
+                            ${nodeClass}
                           `}
                         >
-                          {taskTitle(
-                            child,
-                          )}
-                        </h3>
+                          {childClosed
+                            ? '✓'
+                            : index +
+                              1}
+                        </div>
 
 
-                        {childOverdue && (
-                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
-                            {isArabic
-                              ? 'متأخرة'
-                              : 'Overdue'}
-                          </span>
-                        )}
+                        {/*
+                         * CARD
+                         */}
+                        <Link
+                          href={`/tasks/${child.id}`}
+                          className="
+                            group
+                            relative
+                            min-w-0
+                            flex-1
+                            overflow-hidden
+                            rounded-2xl
+                            border
+                            border-slate-200
+                            bg-white
+                            p-4
+                            transition-all
+                            duration-200
+                            hover:-translate-y-0.5
+                            hover:border-brand-200
+                            hover:shadow-md
+                            sm:p-5
+                          "
+                        >
+                          {/*
+                           * Small connector from node to card.
+                           */}
+                          <span
+                            className={`
+                              absolute
+                              top-[36px]
+                              h-[2px]
+                              w-4
+                              bg-slate-200
+                              ${
+                                isArabic
+                                  ? '-right-4'
+                                  : '-left-4'
+                              }
+                            `}
+                          />
+
+
+                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">
+                                  {isArabic
+                                    ? `الخطوة ${index + 1}`
+                                    : `Step ${index + 1}`}
+                                </span>
+
+
+                                {childOverdue && (
+                                  <span className="rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
+                                    {isArabic
+                                      ? 'متأخرة'
+                                      : 'Overdue'}
+                                  </span>
+                                )}
+                              </div>
+
+
+                              <h3
+                                className={`
+                                  mt-1.5
+                                  truncate
+                                  text-sm
+                                  font-semibold
+                                  transition
+                                  group-hover:text-brand-700
+                                  ${
+                                    childClosed
+                                      ? 'text-slate-500'
+                                      : 'text-slate-900'
+                                  }
+                                `}
+                              >
+                                {taskTitle(
+                                  child,
+                                )}
+                              </h3>
+
+
+                              <div className="mt-3 flex flex-wrap items-center gap-2">
+                                <StatusBadge
+                                  value={
+                                    child.status
+                                  }
+                                  listType="task_status"
+                                />
+
+                                <StatusBadge
+                                  value={
+                                    child.priority
+                                  }
+                                  listType="task_priority"
+                                />
+                              </div>
+                            </div>
+
+
+                            <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:min-w-[310px]">
+                              <div>
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                  {isArabic
+                                    ? 'المكلف'
+                                    : 'Assigned to'}
+                                </div>
+
+                                <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                                  {child.assignedTo
+                                    ?.fullName ||
+                                    (
+                                      isArabic
+                                        ? 'غير مسندة'
+                                        : 'Unassigned'
+                                    )}
+                                </div>
+                              </div>
+
+
+                              <div>
+                                <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                  {isArabic
+                                    ? 'الموعد'
+                                    : 'Deadline'}
+                                </div>
+
+                                <div
+                                  className={`
+                                    mt-1
+                                    text-xs
+                                    font-medium
+                                    ${
+                                      childOverdue
+                                        ? 'text-red-600'
+                                        : 'text-slate-700'
+                                    }
+                                  `}
+                                >
+                                  {formatDate(
+                                    child.deadlineDate,
+                                    locale,
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+
+                            <span className="shrink-0 text-slate-300 transition group-hover:text-brand-500">
+                              {isArabic
+                                ? '←'
+                                : '→'}
+                            </span>
+                          </div>
+                        </Link>
                       </div>
-
-
-                      <div className="mt-1 flex flex-wrap items-center gap-2">
-                        <StatusBadge
-                          value={
-                            child.status
-                          }
-                          listType="task_status"
-                        />
-
-
-                        <StatusBadge
-                          value={
-                            child.priority
-                          }
-                          listType="task_priority"
-                        />
-                      </div>
-                    </div>
-
-
-                    {/*
-                     * ASSIGNEE
-                     */}
-
-                    <div className="min-w-[150px]">
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                        {isArabic
-                          ? 'المكلف'
-                          : 'Assigned to'}
-                      </div>
-
-
-                      <div className="mt-1 truncate text-xs font-medium text-slate-700">
-                        {child.assignedTo
-                          ?.fullName ||
-                          (
-                            isArabic
-                              ? 'غير مسندة'
-                              : 'Unassigned'
-                          )}
-                      </div>
-                    </div>
-
-
-                    {/*
-                     * DEADLINE
-                     */}
-
-                    <div className="min-w-[130px]">
-                      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                        {isArabic
-                          ? 'الموعد'
-                          : 'Deadline'}
-                      </div>
-
-
-                      <div
-                        className={`
-                          mt-1
-                          text-xs
-                          font-medium
-                          ${
-                            childOverdue
-                              ? 'text-red-600'
-                              : 'text-slate-700'
-                          }
-                        `}
-                      >
-                        {formatDate(
-                          child.deadlineDate,
-                          locale,
-                        )}
-                      </div>
-                    </div>
-
-
-                    <span className="shrink-0 text-slate-300 transition group-hover:text-brand-500">
-                      {isArabic
-                        ? '←'
-                        : '→'}
-                    </span>
-                  </Link>
-                );
-              },
-            )}
+                    );
+                  },
+                )}
+              </div>
+            </div>
           </div>
         )}
 
-
-        {/*
-         * ====================================================
-         * FOOTER INFO
-         * ====================================================
-         */}
 
         {openCount >
           0 && (
@@ -1301,9 +1262,7 @@ export default function SubtasksPanel({
 
       {success && (
         <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {
-            success
-          }
+          {success}
         </div>
       )}
 
@@ -1311,16 +1270,14 @@ export default function SubtasksPanel({
       {error &&
         !modalOpen && (
         <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {
-            error
-          }
+          {error}
         </div>
       )}
 
 
       {/*
        * ======================================================
-       * CREATE MODAL
+       * CREATE SUBTASK MODAL
        * ======================================================
        */}
 
@@ -1344,10 +1301,6 @@ export default function SubtasksPanel({
             }
             className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
           >
-            {/*
-             * HEADER
-             */}
-
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
@@ -1356,13 +1309,11 @@ export default function SubtasksPanel({
                     : 'Work breakdown'}
                 </div>
 
-
                 <h2 className="mt-1 text-xl font-semibold text-slate-900">
                   {isArabic
                     ? 'إضافة مهمة فرعية'
                     : 'Add subtask'}
                 </h2>
-
 
                 <p className="mt-1 text-sm text-slate-500">
                   {isArabic
@@ -1388,17 +1339,12 @@ export default function SubtasksPanel({
 
 
             <div className="space-y-5 p-5 sm:p-6">
-              {/*
-               * PARENT
-               */}
-
               <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
                   {isArabic
                     ? 'المهمة الرئيسية'
                     : 'Parent task'}
                 </div>
-
 
                 <div className="mt-1 text-sm font-semibold text-brand-900">
                   {taskTitle(
@@ -1408,17 +1354,12 @@ export default function SubtasksPanel({
               </div>
 
 
-              {/*
-               * TITLE
-               */}
-
               <div>
                 <label className="label">
                   {isArabic
                     ? 'عنوان المهمة الفرعية'
                     : 'Subtask title'}
                 </label>
-
 
                 <input
                   required
@@ -1444,18 +1385,9 @@ export default function SubtasksPanel({
                       }),
                     )
                   }
-                  placeholder={
-                    isArabic
-                      ? 'مثال: جمع بيانات الأقسام'
-                      : 'e.g. Collect department data'
-                  }
                 />
               </div>
 
-
-              {/*
-               * DESCRIPTION
-               */}
 
               <div>
                 <label className="label">
@@ -1469,7 +1401,6 @@ export default function SubtasksPanel({
                       : '(optional)'}
                   </span>
                 </label>
-
 
                 <textarea
                   rows={
@@ -1498,17 +1429,12 @@ export default function SubtasksPanel({
 
 
               <div className="grid gap-4 sm:grid-cols-2">
-                {/*
-                 * PRIORITY
-                 */}
-
                 <div>
                   <label className="label">
                     {isArabic
                       ? 'الأهمية'
                       : 'Importance'}
                   </label>
-
 
                   <select
                     required
@@ -1561,10 +1487,6 @@ export default function SubtasksPanel({
                   </select>
                 </div>
 
-
-                {/*
-                 * ASSIGNEE
-                 */}
 
                 <div>
                   <label className="label">
@@ -1619,9 +1541,7 @@ export default function SubtasksPanel({
                             item.id
                           }
                         >
-                          {
-                            item.fullName
-                          }
+                          {item.fullName}
 
                           {item.id ===
                           user?.id
@@ -1639,31 +1559,27 @@ export default function SubtasksPanel({
 
                   <p className="mt-1 text-xs text-slate-400">
                     {!form.assigneeId
-                        ? (
-                            isArabic
+                      ? (
+                          isArabic
                             ? 'يمكن ترك المهمة الفرعية بدون تكليف حالياً.'
                             : 'The subtask can be left unassigned for now.'
                         )
-                        : form.assigneeId ===
-                            user?.id
+                      : form.assigneeId ===
+                          user?.id
                         ? (
                             isArabic
-                                ? 'سيتم قبول التكليف لك تلقائياً.'
-                                : 'Your own assignment will be accepted automatically.'
-                            )
+                              ? 'سيتم قبول التكليف لك تلقائياً.'
+                              : 'Your own assignment will be accepted automatically.'
+                          )
                         : (
                             isArabic
-                                ? 'المستخدم الآخر سيحتاج إلى قبول أو رفض التكليف.'
-                                : 'The selected user will need to accept or reject the assignment.'
-                            )}
-                    </p>
+                              ? 'المستخدم الآخر سيحتاج إلى قبول أو رفض التكليف.'
+                              : 'The selected user will need to accept or reject the assignment.'
+                          )}
+                  </p>
                 </div>
               </div>
 
-
-              {/*
-               * DATES
-               */}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -1678,7 +1594,6 @@ export default function SubtasksPanel({
                         : '(optional)'}
                     </span>
                   </label>
-
 
                   <input
                     type="date"
@@ -1726,7 +1641,6 @@ export default function SubtasksPanel({
                     </span>
                   </label>
 
-
                   <input
                     type="date"
                     className="input"
@@ -1758,7 +1672,6 @@ export default function SubtasksPanel({
                     }
                   />
 
-
                   {task.deadlineDate && (
                     <p className="mt-1 text-xs text-slate-400">
                       {isArabic
@@ -1776,10 +1689,6 @@ export default function SubtasksPanel({
               </div>
 
 
-              {/*
-               * INHERITED INFO
-               */}
-
               <div className="rounded-xl bg-slate-50 p-4">
                 <div className="text-xs font-semibold text-slate-700">
                   {isArabic
@@ -1787,28 +1696,21 @@ export default function SubtasksPanel({
                     : 'Inherited from parent'}
                 </div>
 
-
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   {isArabic
                     ? 'المشروع والقسم والفرع ونوع المهمة سيتم أخذها تلقائياً من المهمة الرئيسية.'
-                    : 'Project, Department, Branch and Task Type are inherited automatically so this step stays inside the same work context.'}
+                    : 'Project, Department, Branch and Task Type are inherited automatically.'}
                 </p>
               </div>
 
 
               {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  {
-                    error
-                  }
+                  {error}
                 </div>
               )}
             </div>
 
-
-            {/*
-             * FOOTER
-             */}
 
             <div className="sticky bottom-0 flex justify-end gap-2 border-t border-slate-100 bg-slate-50/95 px-5 py-4 backdrop-blur sm:px-6">
               <button
@@ -1825,7 +1727,6 @@ export default function SubtasksPanel({
                   ? 'إلغاء'
                   : 'Cancel'}
               </button>
-
 
               <button
                 type="submit"

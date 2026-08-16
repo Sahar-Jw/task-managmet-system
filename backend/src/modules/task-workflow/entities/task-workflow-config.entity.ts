@@ -44,7 +44,7 @@ export class TaskWorkflowConfigEntity
 
   @Column({
     type:
-      'jsonb',
+      'json',
   })
   actions!:
     TaskWorkflowStoredAction[];

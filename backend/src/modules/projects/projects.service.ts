@@ -332,9 +332,9 @@ export class ProjectsService {
     ) {
       qb.andWhere(
         `(
-          project.name ILIKE :search
-          OR project.description ILIKE :search
-          OR owner.fullName ILIKE :search
+          project.name LIKE :search
+          OR project.description LIKE :search
+          OR owner.fullName LIKE :search
         )`,
         {
           search:
@@ -352,7 +352,7 @@ export class ProjectsService {
       query.name
     ) {
       qb.andWhere(
-        'project.name ILIKE :name',
+        'project.name LIKE :name',
         {
           name:
             `%${query.name}%`,
@@ -365,7 +365,7 @@ export class ProjectsService {
       query.description
     ) {
       qb.andWhere(
-        'project.description ILIKE :description',
+        'project.description LIKE :description',
         {
           description:
             `%${query.description}%`,

@@ -39,10 +39,10 @@ export class AuditLogEntity {
   @Column({ type: 'enum', enum: AuditAction, enumName: 'audit_action_enum' })
   action!: AuditAction;
 
-  @Column({ name: 'old_value', type: 'jsonb', nullable: true })
+  @Column({ name: 'old_value', type: 'json', nullable: true })
   oldValue?: Record<string, any>;
 
-  @Column({ name: 'new_value', type: 'jsonb', nullable: true })
+  @Column({ name: 'new_value', type: 'json', nullable: true })
   newValue?: Record<string, any>;
 
   @Column({ type: 'text', nullable: true })

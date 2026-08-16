@@ -27,6 +27,10 @@ import {
 } from '@/lib/list-labels-context';
 
 import {
+  useAuth,
+} from '@/lib/auth-context';
+
+import {
   ApiError,
 } from '@/lib/api';
 
@@ -34,20 +38,16 @@ import {
   ProjectsApi,
   SettingsApi,
   TasksApi,
+  UsersApi,
 } from '@/lib/endpoints';
 
 import type {
   Project,
   Setting,
   Task,
+  User,
 } from '@/lib/types';
 
-
-/*
- * ============================================================
- * CONFIG
- * ============================================================
- */
 
 const PAGE_SIZE =
   12;
@@ -84,15 +84,11 @@ type SortDir =
   | 'desc';
 
 
-/*
- * ============================================================
- * HELPERS
- * ============================================================
- */
-
 function avgRating(
-  task: Task,
-): number | null {
+  task:
+    Task,
+):
+  number | null {
   if (
     !task.ratings ||
     task.ratings.length ===
@@ -102,7 +98,7 @@ function avgRating(
   }
 
 
-  const total =
+  return (
     task.ratings.reduce(
       (
         sum,
@@ -111,11 +107,7 @@ function avgRating(
         sum +
         rating.score,
       0,
-    );
-
-
-  return (
-    total /
+    ) /
     task.ratings.length
   );
 }
@@ -125,8 +117,11 @@ function Stars({
   value,
   showEmpty = false,
 }: {
-  value: number | null;
-  showEmpty?: boolean;
+  value:
+    number | null;
+
+  showEmpty?:
+    boolean;
 }) {
   if (
     value ===
@@ -174,7 +169,8 @@ function Stars({
 
 
 function isDone(
-  task: Task,
+  task:
+    Task,
 ) {
   return [
     'Completed',
@@ -187,7 +183,8 @@ function isDone(
 
 
 function isOverdue(
-  task: Task,
+  task:
+    Task,
 ) {
   if (
     !task.deadlineDate ||
@@ -199,24 +196,21 @@ function isOverdue(
   }
 
 
-  const today =
+  return (
+    task.deadlineDate <
     new Date()
       .toISOString()
       .slice(
         0,
         10,
-      );
-
-
-  return (
-    task.deadlineDate <
-    today
+      )
   );
 }
 
 
 function isDueSoon(
-  task: Task,
+  task:
+    Task,
 ) {
   if (
     !task.deadlineDate ||
@@ -230,6 +224,7 @@ function isDueSoon(
 
   const today =
     new Date();
+
 
   today.setHours(
     0,
@@ -245,13 +240,11 @@ function isDueSoon(
     );
 
 
-  const difference =
-    deadline.getTime() -
-    today.getTime();
-
-
   const days =
-    difference /
+    (
+      deadline.getTime() -
+      today.getTime()
+    ) /
     (
       1000 *
       60 *
@@ -261,17 +254,24 @@ function isDueSoon(
 
 
   return (
-    days >= 0 &&
-    days <= 7
+    days >=
+      0 &&
+    days <=
+      7
   );
 }
 
 
 function formatDate(
-  value?: string | null,
-  locale?: string,
+  value?:
+    string | null,
+
+  locale?:
+    string,
 ) {
-  if (!value) {
+  if (
+    !value
+  ) {
     return '—';
   }
 
@@ -291,32 +291,35 @@ function formatDate(
   return date.toLocaleDateString(
     locale,
     {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      year:
+        'numeric',
+
+      month:
+        'short',
+
+      day:
+        'numeric',
     },
   );
 }
 
-
-/*
- * ============================================================
- * VIEW TOGGLE
- * ============================================================
- */
 
 function ViewToggle({
   value,
   onChange,
   isArabic,
 }: {
-  value: ViewMode;
+  value:
+    ViewMode;
 
-  onChange: (
-    value: ViewMode,
-  ) => void;
+  onChange:
+    (
+      value:
+        ViewMode,
+    ) => void;
 
-  isArabic: boolean;
+  isArabic:
+    boolean;
 }) {
   return (
     <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
@@ -421,18 +424,15 @@ function ViewToggle({
 }
 
 
-/*
- * ============================================================
- * EMPTY STATE
- * ============================================================
- */
-
 function EmptyState({
   tab,
   isArabic,
 }: {
-  tab: Tab;
-  isArabic: boolean;
+  tab:
+    Tab;
+
+  isArabic:
+    boolean;
 }) {
   return (
     <div className="flex min-h-[300px] flex-col items-center justify-center px-6 py-12 text-center">
@@ -481,12 +481,6 @@ function EmptyState({
 }
 
 
-/*
- * ============================================================
- * MY TASKS
- * ============================================================
- */
-
 function MyTasksContent() {
   const searchParams =
     useSearchParams();
@@ -502,274 +496,309 @@ function MyTasksContent() {
 
 
   const {
+    user,
+  } =
+    useAuth();
+
+
+  const {
     getLabel,
-  } = useListLabels();
+  } =
+    useListLabels();
 
-
-  /*
-   * ==========================================================
-   * TAB / VIEW
-   * ==========================================================
-   */
 
   const [
     tab,
     setTab,
-  ] = useState<Tab>(
-    'assignedToMe',
-  );
+  ] =
+    useState<Tab>(
+      'assignedToMe',
+    );
 
 
   const [
     viewMode,
     setViewMode,
-  ] = useState<ViewMode>(
-    'cards',
-  );
+  ] =
+    useState<ViewMode>(
+      'cards',
+    );
 
 
   const [
     showFilters,
     setShowFilters,
-  ] = useState(false);
+  ] =
+    useState(
+      false,
+    );
 
-
-  /*
-   * ==========================================================
-   * FILTERS
-   * ==========================================================
-   */
 
   const [
     search,
     setSearch,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
 
   const [
     debouncedSearch,
     setDebouncedSearch,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
 
   const [
     status,
     setStatus,
-  ] = useState(
-    searchParams.get(
-      'status',
-    ) ||
-    '',
-  );
+  ] =
+    useState(
+      searchParams.get(
+        'status',
+      ) ||
+      '',
+    );
 
 
   const [
     taskType,
     setTaskType,
-  ] = useState(
-    searchParams.get(
-      'taskType',
-    ) ||
-    '',
-  );
+  ] =
+    useState(
+      searchParams.get(
+        'taskType',
+      ) ||
+      '',
+    );
 
 
   const [
     priority,
     setPriority,
-  ] = useState(
-    searchParams.get(
-      'priority',
-    ) ||
-    '',
-  );
+  ] =
+    useState(
+      searchParams.get(
+        'priority',
+      ) ||
+      '',
+    );
 
 
   const [
     projectId,
     setProjectId,
-  ] = useState(
-    searchParams.get(
-      'projectId',
-    ) ||
-    '',
-  );
+  ] =
+    useState(
+      searchParams.get(
+        'projectId',
+      ) ||
+      '',
+    );
+
+
+  /*
+   * NEW ASSIGNEE FILTER
+   */
+  const [
+    assigneeId,
+    setAssigneeId,
+  ] =
+    useState(
+      '',
+    );
 
 
   const [
     minRating,
     setMinRating,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
 
   const [
     upcomingOnly,
     setUpcomingOnly,
-  ] = useState(false);
+  ] =
+    useState(
+      false,
+    );
 
 
   const [
     deadlineFrom,
     setDeadlineFrom,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
 
   const [
     deadlineTo,
     setDeadlineTo,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
-
-  /*
-   * ==========================================================
-   * SORTING
-   * ==========================================================
-   */
 
   const [
     sortBy,
     setSortBy,
-  ] = useState<SortBy>(
-    'deadline',
-  );
+  ] =
+    useState<SortBy>(
+      'deadline',
+    );
 
 
   const [
     sortDir,
     setSortDir,
-  ] = useState<SortDir>(
-    'asc',
-  );
+  ] =
+    useState<SortDir>(
+      'asc',
+    );
 
-
-  /*
-   * ==========================================================
-   * LOOKUPS
-   * ==========================================================
-   */
 
   const [
     taskStatuses,
     setTaskStatuses,
-  ] = useState<
-    Setting[]
-  >([]);
+  ] =
+    useState<Setting[]>(
+      [],
+    );
 
 
   const [
     taskTypes,
     setTaskTypes,
-  ] = useState<
-    Setting[]
-  >([]);
+  ] =
+    useState<Setting[]>(
+      [],
+    );
 
 
   const [
     taskPriorities,
     setTaskPriorities,
-  ] = useState<
-    Setting[]
-  >([]);
+  ] =
+    useState<Setting[]>(
+      [],
+    );
 
 
   const [
     projects,
     setProjects,
-  ] = useState<
-    Project[]
-  >([]);
+  ] =
+    useState<Project[]>(
+      [],
+    );
 
 
-  /*
-   * ==========================================================
-   * TASK DATA
-   * ==========================================================
-   */
+  const [
+    users,
+    setUsers,
+  ] =
+    useState<User[]>(
+      [],
+    );
+
 
   const [
     tasks,
     setTasks,
-  ] = useState<
-    Task[]
-  >([]);
+  ] =
+    useState<Task[]>(
+      [],
+    );
 
 
   const [
     total,
     setTotal,
-  ] = useState(
-    0,
-  );
+  ] =
+    useState(
+      0,
+    );
 
 
   const [
     page,
     setPage,
-  ] = useState(
-    1,
-  );
+  ] =
+    useState(
+      1,
+    );
 
 
   const [
     loading,
     setLoading,
-  ] = useState(
-    true,
-  );
+  ] =
+    useState(
+      true,
+    );
 
 
   const [
     error,
     setError,
-  ] = useState('');
+  ] =
+    useState(
+      '',
+    );
 
-
-  /*
-   * ==========================================================
-   * ACTION STATE
-   * ==========================================================
-   */
 
   const [
     actingOnId,
     setActingOnId,
-  ] = useState<
-    string | null
-  >(null);
+  ] =
+    useState<
+      string | null
+    >(
+      null,
+    );
 
 
   const [
     rowError,
     setRowError,
-  ] = useState<{
-    id: string;
-    message: string;
-  } | null>(
-    null,
-  );
+  ] =
+    useState<{
+      id:
+        string;
+
+      message:
+        string;
+    } | null>(
+      null,
+    );
 
 
   const [
     finishModalTask,
     setFinishModalTask,
-  ] = useState<
-    Task | null
-  >(null);
+  ] =
+    useState<Task | null>(
+      null,
+    );
 
 
   const [
     archiveModalTask,
     setArchiveModalTask,
-  ] = useState<
-    Task | null
-  >(null);
+  ] =
+    useState<Task | null>(
+      null,
+    );
 
-
-  /*
-   * ==========================================================
-   * SAVED VIEW
-   * ==========================================================
-   */
 
   useEffect(() => {
     const stored =
@@ -792,7 +821,8 @@ function MyTasksContent() {
 
 
   function changeViewMode(
-    value: ViewMode,
+    value:
+      ViewMode,
   ) {
     setViewMode(
       value,
@@ -808,7 +838,61 @@ function MyTasksContent() {
 
   /*
    * ==========================================================
-   * LOAD SETTINGS
+   * TAB DEFAULT SORTING
+   * ==========================================================
+   */
+
+  function changeTab(
+    nextTab:
+      Tab,
+  ) {
+    setTab(
+      nextTab,
+    );
+
+
+    setPage(
+      1,
+    );
+
+
+    setAssigneeId(
+      '',
+    );
+
+
+    if (
+      nextTab ===
+      'assignedByMe'
+    ) {
+      /*
+       * NEWEST TASKS FIRST.
+       */
+      setSortBy(
+        'createdAt',
+      );
+
+      setSortDir(
+        'desc',
+      );
+    } else {
+      /*
+       * Assigned To Me keeps the useful deadline-first default.
+       */
+      setSortBy(
+        'deadline',
+      );
+
+      setSortDir(
+        'asc',
+      );
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * LOOKUPS
    * ==========================================================
    */
 
@@ -850,7 +934,9 @@ function MyTasksContent() {
 
 
     ProjectsApi.list({
-      limit: '100',
+      limit:
+        '100',
+
       excludeArchived:
         'true',
     })
@@ -865,14 +951,61 @@ function MyTasksContent() {
       .catch(
         () => {},
       );
+
+
+    /*
+     * NEW:
+     *
+     * User directory for Assigned By Me filter.
+     */
+    UsersApi.list({
+      limit:
+        '100',
+    })
+      .then(
+        (
+          response,
+        ) =>
+          setUsers(
+            response.items,
+          ),
+      )
+      .catch(
+        () => {},
+      );
   }, []);
 
 
-  /*
-   * ==========================================================
-   * CURRENT LANGUAGE SETTINGS
-   * ==========================================================
-   */
+  const assignableUsers =
+    useMemo(
+      () =>
+        users
+          .filter(
+            (
+              item,
+            ) =>
+              item.isActive &&
+              item.role.name !==
+                'ADMIN' &&
+              item.id !==
+                user?.id,
+          )
+          .sort(
+            (
+              a,
+              b,
+            ) =>
+              a.fullName.localeCompare(
+                b.fullName,
+              ),
+          ),
+
+      [
+        users,
+        user?.id,
+      ],
+    );
+
 
   const visibleStatuses =
     useMemo(
@@ -883,13 +1016,14 @@ function MyTasksContent() {
           ) =>
             Boolean(
               setting.key &&
-                (
-                  isArabic
-                    ? setting.codeAr
-                    : setting.codeEn
-                ),
+              (
+                isArabic
+                  ? setting.codeAr
+                  : setting.codeEn
+              ),
             ),
         ),
+
       [
         taskStatuses,
         isArabic,
@@ -906,13 +1040,14 @@ function MyTasksContent() {
           ) =>
             Boolean(
               setting.key &&
-                (
-                  isArabic
-                    ? setting.codeAr
-                    : setting.codeEn
-                ),
+              (
+                isArabic
+                  ? setting.codeAr
+                  : setting.codeEn
+              ),
             ),
         ),
+
       [
         taskTypes,
         isArabic,
@@ -929,13 +1064,14 @@ function MyTasksContent() {
           ) =>
             Boolean(
               setting.key &&
-                (
-                  isArabic
-                    ? setting.codeAr
-                    : setting.codeEn
-                ),
+              (
+                isArabic
+                  ? setting.codeAr
+                  : setting.codeEn
+              ),
             ),
         ),
+
       [
         taskPriorities,
         isArabic,
@@ -943,14 +1079,9 @@ function MyTasksContent() {
     );
 
 
-  /*
-   * ==========================================================
-   * TASK LANGUAGE
-   * ==========================================================
-   */
-
   function taskTitle(
-    task: Task,
+    task:
+      Task,
   ) {
     return isArabic
       ? task.titleAr ||
@@ -961,7 +1092,8 @@ function MyTasksContent() {
 
 
   function taskDescription(
-    task: Task,
+    task:
+      Task,
   ) {
     return isArabic
       ? task.descriptionAr ||
@@ -970,12 +1102,6 @@ function MyTasksContent() {
           task.descriptionAr;
   }
 
-
-  /*
-   * ==========================================================
-   * SEARCH DEBOUNCE
-   * ==========================================================
-   */
 
   useEffect(() => {
     const timer =
@@ -1011,14 +1137,17 @@ function MyTasksContent() {
           true,
         );
 
-        setError('');
+        setError(
+          '',
+        );
 
 
         try {
-          const params: Record<
-            string,
-            string
-          > = {
+          const params:
+            Record<
+              string,
+              string
+            > = {
             limit:
               String(
                 PAGE_SIZE,
@@ -1107,6 +1236,21 @@ function MyTasksContent() {
           }
 
 
+          /*
+           * NEW:
+           *
+           * Only Assigned By Me understands this filter.
+           */
+          if (
+            tab ===
+              'assignedByMe' &&
+            assigneeId
+          ) {
+            params.assigneeId =
+              assigneeId;
+          }
+
+
           const response =
             tab ===
             'assignedToMe'
@@ -1130,7 +1274,8 @@ function MyTasksContent() {
           err
         ) {
           setError(
-            err instanceof ApiError
+            err instanceof
+              ApiError
               ? err.message
               : isArabic
                 ? 'تعذر تحميل المهام.'
@@ -1142,6 +1287,7 @@ function MyTasksContent() {
           );
         }
       },
+
       [
         tab,
         page,
@@ -1151,6 +1297,7 @@ function MyTasksContent() {
         taskType,
         priority,
         projectId,
+        assigneeId,
         minRating,
         upcomingOnly,
         debouncedSearch,
@@ -1168,10 +1315,6 @@ function MyTasksContent() {
   ]);
 
 
-  /*
-   * Reset pagination whenever filtering/sorting/tab changes.
-   */
-
   useEffect(() => {
     setPage(
       1,
@@ -1182,6 +1325,7 @@ function MyTasksContent() {
     taskType,
     priority,
     projectId,
+    assigneeId,
     minRating,
     upcomingOnly,
     debouncedSearch,
@@ -1192,12 +1336,6 @@ function MyTasksContent() {
   ]);
 
 
-  /*
-   * ==========================================================
-   * FILTER HELPERS
-   * ==========================================================
-   */
-
   const hasFilters =
     Boolean(
       search ||
@@ -1205,6 +1343,11 @@ function MyTasksContent() {
       taskType ||
       priority ||
       projectId ||
+      (
+        tab ===
+          'assignedByMe' &&
+        assigneeId
+      ) ||
       minRating ||
       upcomingOnly ||
       deadlineFrom ||
@@ -1235,6 +1378,12 @@ function MyTasksContent() {
       ),
 
       Boolean(
+        tab ===
+          'assignedByMe' &&
+        assigneeId,
+      ),
+
+      Boolean(
         minRating,
       ),
 
@@ -1250,38 +1399,59 @@ function MyTasksContent() {
 
 
   function clearFilters() {
-    setSearch('');
-    setStatus('');
-    setTaskType('');
-    setPriority('');
-    setProjectId('');
-    setMinRating('');
+    setSearch(
+      '',
+    );
+
+    setStatus(
+      '',
+    );
+
+    setTaskType(
+      '',
+    );
+
+    setPriority(
+      '',
+    );
+
+    setProjectId(
+      '',
+    );
+
+    setAssigneeId(
+      '',
+    );
+
+    setMinRating(
+      '',
+    );
+
     setUpcomingOnly(
       false,
     );
-    setDeadlineFrom('');
-    setDeadlineTo('');
+
+    setDeadlineFrom(
+      '',
+    );
+
+    setDeadlineTo(
+      '',
+    );
   }
 
 
-  /*
-   * ==========================================================
-   * ACTIONS
-   * ==========================================================
-   */
-
   async function archiveTask(
-    task: Task,
+    task:
+      Task,
   ) {
     setArchiveModalTask(
       null,
     );
 
-
     setActingOnId(
       task.id,
     );
-
 
     setRowError(
       null,
@@ -1293,7 +1463,6 @@ function MyTasksContent() {
         task.id,
       );
 
-
       await reload();
     } catch (
       err
@@ -1303,7 +1472,8 @@ function MyTasksContent() {
           task.id,
 
         message:
-          err instanceof ApiError
+          err instanceof
+            ApiError
             ? err.message
             : isArabic
               ? 'تعذر أرشفة المهمة.'
@@ -1318,18 +1488,19 @@ function MyTasksContent() {
 
 
   async function finishTask(
-    task: Task,
-    reason: string,
+    task:
+      Task,
+
+    reason:
+      string,
   ) {
     setFinishModalTask(
       null,
     );
 
-
     setActingOnId(
       task.id,
     );
-
 
     setRowError(
       null,
@@ -1343,7 +1514,6 @@ function MyTasksContent() {
         reason,
       );
 
-
       await reload();
     } catch (
       err
@@ -1353,7 +1523,8 @@ function MyTasksContent() {
           task.id,
 
         message:
-          err instanceof ApiError
+          err instanceof
+            ApiError
             ? err.message
             : isArabic
               ? 'تعذر إنهاء المهمة.'
@@ -1367,12 +1538,6 @@ function MyTasksContent() {
   }
 
 
-  /*
-   * ==========================================================
-   * PAGINATION
-   * ==========================================================
-   */
-
   const totalPages =
     Math.max(
       Math.ceil(
@@ -1383,26 +1548,17 @@ function MyTasksContent() {
     );
 
 
-  /*
-   * ==========================================================
-   * TASK ACTIONS
-   * ==========================================================
-   */
-
   function TaskActions({
     task,
   }: {
-    task: Task;
+    task:
+      Task;
   }) {
     const busy =
       actingOnId ===
       task.id;
 
 
-    /*
-     * Assigned-to-me Tasks are controlled by the Task's own
-     * workflow from Task Details.
-     */
     if (
       tab ===
       'assignedToMe'
@@ -1425,9 +1581,6 @@ function MyTasksContent() {
     }
 
 
-    /*
-     * Creator actions.
-     */
     const canFinish =
       task.status !==
         'Archived' &&
@@ -1467,6 +1620,7 @@ function MyTasksContent() {
               event,
             ) => {
               event.preventDefault();
+
               event.stopPropagation();
 
               setFinishModalTask(
@@ -1492,6 +1646,7 @@ function MyTasksContent() {
               event,
             ) => {
               event.preventDefault();
+
               event.stopPropagation();
 
               setArchiveModalTask(
@@ -1510,12 +1665,6 @@ function MyTasksContent() {
   }
 
 
-  /*
-   * ==========================================================
-   * RENDER
-   * ==========================================================
-   */
-
   return (
     <div
       className="mx-auto max-w-[1600px] pb-12"
@@ -1525,12 +1674,6 @@ function MyTasksContent() {
           : 'ltr'
       }
     >
-      {/*
-       * ======================================================
-       * HEADER
-       * ======================================================
-       */}
-
       <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
         <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
 
@@ -1554,12 +1697,16 @@ function MyTasksContent() {
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               {tab ===
               'assignedToMe'
-                ? isArabic
-                  ? 'تابع المهام المسندة إليك والمواعيد والحالات التي تحتاج إلى انتباهك.'
-                  : 'Track work assigned to you, upcoming deadlines and tasks that need your attention.'
-                : isArabic
-                  ? 'تابع المهام التي أنشأتها وكلّفت بها مستخدمين آخرين.'
-                  : 'Track tasks you created and assigned to other users.'}
+                ? (
+                    isArabic
+                      ? 'تابع المهام المسندة إليك والمواعيد والحالات التي تحتاج إلى انتباهك.'
+                      : 'Track work assigned to you, upcoming deadlines and tasks that need your attention.'
+                  )
+                : (
+                    isArabic
+                      ? 'تابع المهام التي أنشأتها وكلّفت بها مستخدمين آخرين. الأحدث يظهر أولاً.'
+                      : 'Track tasks you created and assigned to other users. Newest tasks appear first.'
+                  )}
             </p>
           </div>
 
@@ -1577,12 +1724,12 @@ function MyTasksContent() {
               }
             />
 
-
             <Link
               href="/tasks/new"
               className="btn-primary"
             >
               +{' '}
+
               {isArabic
                 ? 'مهمة جديدة'
                 : 'New task'}
@@ -1592,17 +1739,11 @@ function MyTasksContent() {
       </section>
 
 
-      {/*
-       * ======================================================
-       * TABS
-       * ======================================================
-       */}
-
       <div className="mt-5 inline-flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
         <button
           type="button"
           onClick={() =>
-            setTab(
+            changeTab(
               'assignedToMe',
             )
           }
@@ -1622,7 +1763,7 @@ function MyTasksContent() {
         <button
           type="button"
           onClick={() =>
-            setTab(
+            changeTab(
               'assignedByMe',
             )
           }
@@ -1640,18 +1781,8 @@ function MyTasksContent() {
       </div>
 
 
-      {/*
-       * ======================================================
-       * FILTER BAR
-       * ======================================================
-       */}
-
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
-          {/*
-           * SEARCH
-           */}
-
           <div className="relative min-w-0 flex-1">
             <svg
               viewBox="0 0 24 24"
@@ -1704,11 +1835,53 @@ function MyTasksContent() {
 
 
           {/*
-           * STATUS
+           * ASSIGNED USER — ONLY ASSIGNED BY ME
            */}
 
+          {tab ===
+            'assignedByMe' && (
+            <select
+              className="input xl:w-[210px]"
+              value={
+                assigneeId
+              }
+              onChange={(
+                event,
+              ) =>
+                setAssigneeId(
+                  event.target.value,
+                )
+              }
+            >
+              <option value="">
+                {isArabic
+                  ? 'كل المستخدمين'
+                  : 'All assigned users'}
+              </option>
+
+
+              {assignableUsers.map(
+                (
+                  item,
+                ) => (
+                  <option
+                    key={
+                      item.id
+                    }
+                    value={
+                      item.id
+                    }
+                  >
+                    {item.fullName}
+                  </option>
+                ),
+              )}
+            </select>
+          )}
+
+
           <select
-            className="input xl:w-[190px]"
+            className="input xl:w-[180px]"
             value={
               status
             }
@@ -1725,7 +1898,6 @@ function MyTasksContent() {
                 ? 'كل الحالات'
                 : 'All statuses'}
             </option>
-
 
             {visibleStatuses.map(
               (
@@ -1748,12 +1920,8 @@ function MyTasksContent() {
           </select>
 
 
-          {/*
-           * PRIORITY
-           */}
-
           <select
-            className="input xl:w-[180px]"
+            className="input xl:w-[170px]"
             value={
               priority
             }
@@ -1770,7 +1938,6 @@ function MyTasksContent() {
                 ? 'كل الأهميات'
                 : 'All importance'}
             </option>
-
 
             {visiblePriorities.map(
               (
@@ -1793,12 +1960,8 @@ function MyTasksContent() {
           </select>
 
 
-          {/*
-           * SORT
-           */}
-
           <select
-            className="input xl:w-[180px]"
+            className="input xl:w-[175px]"
             value={
               sortBy
             }
@@ -1811,16 +1974,16 @@ function MyTasksContent() {
               )
             }
           >
-            <option value="deadline">
-              {isArabic
-                ? 'الموعد النهائي'
-                : 'Deadline'}
-            </option>
-
             <option value="createdAt">
               {isArabic
                 ? 'تاريخ الإنشاء'
                 : 'Created'}
+            </option>
+
+            <option value="deadline">
+              {isArabic
+                ? 'الموعد النهائي'
+                : 'Deadline'}
             </option>
 
             <option value="priority">
@@ -1855,18 +2018,20 @@ function MyTasksContent() {
             {sortDir ===
             'asc'
               ? '↑'
-              : '↓'}
+              : '↓'}{' '}
 
-            <span className="ml-1">
-              {sortDir ===
-              'asc'
-                ? isArabic
-                  ? 'تصاعدي'
-                  : 'Ascending'
-                : isArabic
-                  ? 'تنازلي'
-                  : 'Descending'}
-            </span>
+            {sortDir ===
+            'asc'
+              ? (
+                  isArabic
+                    ? 'تصاعدي'
+                    : 'Ascending'
+                )
+              : (
+                  isArabic
+                    ? 'تنازلي'
+                    : 'Descending'
+                )}
           </button>
 
 
@@ -1882,41 +2047,19 @@ function MyTasksContent() {
               )
             }
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              className="mr-1.5 h-4 w-4"
-            >
-              <path
-                d="M4 6h16M7 12h10M10 18h4"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-
             {isArabic
               ? 'التصفية'
               : 'Filters'}
 
-
             {filterCount >
               0 && (
               <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
-                {
-                  filterCount
-                }
+                {filterCount}
               </span>
             )}
           </button>
         </div>
 
-
-        {/*
-         * ====================================================
-         * ADVANCED FILTERS
-         * ====================================================
-         */}
 
         {showFilters && (
           <div className="mt-4 border-t border-slate-100 pt-4">
@@ -1946,7 +2089,6 @@ function MyTasksContent() {
                       ? 'كل الأنواع'
                       : 'All types'}
                   </option>
-
 
                   {visibleTypes.map(
                     (
@@ -1996,7 +2138,6 @@ function MyTasksContent() {
                       : 'All projects'}
                   </option>
 
-
                   {projects.map(
                     (
                       project,
@@ -2009,9 +2150,7 @@ function MyTasksContent() {
                           project.id
                         }
                       >
-                        {
-                          project.name
-                        }
+                        {project.name}
                       </option>
                     ),
                   )}
@@ -2044,7 +2183,6 @@ function MyTasksContent() {
                       ? 'أي تقييم'
                       : 'Any rating'}
                   </option>
-
 
                   {RATINGS.map(
                     (
@@ -2174,18 +2312,10 @@ function MyTasksContent() {
       </section>
 
 
-      {/*
-       * ======================================================
-       * RESULT BAR
-       * ======================================================
-       */}
-
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div className="text-sm text-slate-500">
           <span className="font-semibold text-slate-800">
-            {
-              total
-            }
+            {total}
           </span>{' '}
 
           {isArabic
@@ -2195,6 +2325,20 @@ function MyTasksContent() {
               ? 'task'
               : 'tasks'}
         </div>
+
+
+        {tab ===
+          'assignedByMe' &&
+          sortBy ===
+            'createdAt' &&
+          sortDir ===
+            'desc' && (
+          <span className="rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+            {isArabic
+              ? 'الأحدث أولاً'
+              : 'Newest first'}
+          </span>
+        )}
 
 
         {hasFilters && (
@@ -2213,26 +2357,12 @@ function MyTasksContent() {
       </div>
 
 
-      {/*
-       * ======================================================
-       * GENERAL ERROR
-       * ======================================================
-       */}
-
       {error && (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {
-            error
-          }
+          {error}
         </div>
       )}
 
-
-      {/*
-       * ======================================================
-       * LOADING
-       * ======================================================
-       */}
 
       {loading ? (
         viewMode ===
@@ -2294,12 +2424,6 @@ function MyTasksContent() {
         </div>
       ) : viewMode ===
         'cards' ? (
-        /*
-         * ====================================================
-         * CARD VIEW
-         * ====================================================
-         */
-
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {tasks.map(
             (
@@ -2344,10 +2468,6 @@ function MyTasksContent() {
                       : undefined
                   }
                 >
-                  {/*
-                   * FULL CARD CLICKABLE
-                   */}
-
                   <Link
                     href={`/tasks/${task.id}`}
                     className="absolute inset-0 z-10"
@@ -2389,12 +2509,12 @@ function MyTasksContent() {
 
                       {!overdue &&
                         dueSoon && (
-                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
-                            {isArabic
-                              ? 'موعد قريب'
-                              : 'Due soon'}
-                          </span>
-                        )}
+                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
+                          {isArabic
+                            ? 'موعد قريب'
+                            : 'Due soon'}
+                        </span>
+                      )}
                     </div>
 
 
@@ -2430,12 +2550,16 @@ function MyTasksContent() {
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                           {tab ===
                           'assignedToMe'
-                            ? isArabic
-                              ? 'أنشأها'
-                              : 'Created by'
-                            : isArabic
-                              ? 'المكلف'
-                              : 'Assigned to'}
+                            ? (
+                                isArabic
+                                  ? 'أنشأها'
+                                  : 'Created by'
+                              )
+                            : (
+                                isArabic
+                                  ? 'المكلف'
+                                  : 'Assigned to'
+                              )}
                         </div>
 
                         <div className="mt-1 truncate text-xs font-medium text-slate-700">
@@ -2497,13 +2621,13 @@ function MyTasksContent() {
                       <div>
                         <div className="text-slate-400">
                           {isArabic
-                            ? 'تاريخ البدء'
-                            : 'Start date'}
+                            ? 'تاريخ الإنشاء'
+                            : 'Created'}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
                           {formatDate(
-                            task.startDate,
+                            task.createdAt,
                             locale,
                           )}
                         </div>
@@ -2514,22 +2638,11 @@ function MyTasksContent() {
 
                   <div className="relative z-20 mt-auto border-t border-slate-100 bg-slate-50/50 px-5 py-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(
-                            task.createdAt,
-                          ).toLocaleDateString(
-                            locale,
-                          )}
-                        </span>
-
-                        <Stars
-                          value={
-                            rating
-                          }
-                        />
-                      </div>
-
+                      <Stars
+                        value={
+                          rating
+                        }
+                      />
 
                       <TaskActions
                         task={
@@ -2542,9 +2655,7 @@ function MyTasksContent() {
                     {rowError?.id ===
                       task.id && (
                       <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
-                        {
-                          rowError.message
-                        }
+                        {rowError.message}
                       </div>
                     )}
                   </div>
@@ -2554,14 +2665,8 @@ function MyTasksContent() {
           )}
         </div>
       ) : (
-        /*
-         * ====================================================
-         * LIST VIEW
-         * ====================================================
-         */
-
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="hidden grid-cols-[minmax(280px,1fr)_140px_170px_170px_160px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+          <div className="hidden grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
               {isArabic
                 ? 'المهمة'
@@ -2577,12 +2682,16 @@ function MyTasksContent() {
             <div>
               {tab ===
               'assignedToMe'
-                ? isArabic
-                  ? 'أنشأها'
-                  : 'Created by'
-                : isArabic
-                  ? 'المكلف'
-                  : 'Assigned to'}
+                ? (
+                    isArabic
+                      ? 'أنشأها'
+                      : 'Created by'
+                  )
+                : (
+                    isArabic
+                      ? 'المكلف'
+                      : 'Assigned to'
+                  )}
             </div>
 
             <div>
@@ -2593,8 +2702,8 @@ function MyTasksContent() {
 
             <div>
               {isArabic
-                ? 'الموعد'
-                : 'Deadline'}
+                ? 'الإنشاء'
+                : 'Created'}
             </div>
 
             <div />
@@ -2611,12 +2720,10 @@ function MyTasksContent() {
                     task,
                   );
 
-
                 const dueSoon =
                   isDueSoon(
                     task,
                   );
-
 
                 const rating =
                   avgRating(
@@ -2631,10 +2738,6 @@ function MyTasksContent() {
                     }
                     className="group relative px-5 py-4 transition hover:bg-slate-50/70"
                   >
-                    {/*
-                     * ENTIRE ROW CLICKABLE
-                     */}
-
                     <Link
                       href={`/tasks/${task.id}`}
                       className="absolute inset-0 z-10"
@@ -2646,11 +2749,7 @@ function MyTasksContent() {
                     />
 
 
-                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_160px_auto] xl:items-center">
-                      {/*
-                       * TASK
-                       */}
-
+                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] xl:items-center">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           {task.color && (
@@ -2662,7 +2761,6 @@ function MyTasksContent() {
                               }}
                             />
                           )}
-
 
                           <h2 className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-brand-700">
                             {taskTitle(
@@ -2682,12 +2780,12 @@ function MyTasksContent() {
 
                           {!overdue &&
                             dueSoon && (
-                              <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
-                                {isArabic
-                                  ? 'قريب'
-                                  : 'Soon'}
-                              </span>
-                            )}
+                            <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
+                              {isArabic
+                                ? 'قريب'
+                                : 'Soon'}
+                            </span>
+                          )}
                         </div>
 
 
@@ -2715,10 +2813,6 @@ function MyTasksContent() {
                       </div>
 
 
-                      {/*
-                       * STATUS
-                       */}
-
                       <div>
                         <StatusBadge
                           value={
@@ -2729,75 +2823,55 @@ function MyTasksContent() {
                       </div>
 
 
-                      {/*
-                       * PERSON
-                       */}
-
-                      <div className="min-w-0">
-                        <div className="truncate text-xs font-medium text-slate-700">
-                          {tab ===
-                          'assignedToMe'
-                            ? task.createdBy
-                                ?.fullName ||
-                              '—'
-                            : task.assignedTo
-                                ?.fullName ||
-                              (
-                                isArabic
-                                  ? 'غير مسندة'
-                                  : 'Unassigned'
-                              )}
-                        </div>
+                      <div className="truncate text-xs font-medium text-slate-700">
+                        {tab ===
+                        'assignedToMe'
+                          ? task.createdBy
+                              ?.fullName ||
+                            '—'
+                          : task.assignedTo
+                              ?.fullName ||
+                            (
+                              isArabic
+                                ? 'غير مسندة'
+                                : 'Unassigned'
+                            )}
                       </div>
 
 
-                      {/*
-                       * PROJECT
-                       */}
-
-                      <div className="min-w-0">
-                        <div className="truncate text-xs font-medium text-slate-700">
-                          {task.project
-                            ?.name ||
-                            '—'}
-                        </div>
+                      <div className="truncate text-xs font-medium text-slate-700">
+                        {task.project
+                          ?.name ||
+                          '—'}
                       </div>
 
-
-                      {/*
-                       * DEADLINE
-                       */}
 
                       <div>
+                        <div className="text-xs font-medium text-slate-700">
+                          {formatDate(
+                            task.createdAt,
+                            locale,
+                          )}
+                        </div>
+
                         <div
-                          className={`text-xs font-medium ${
+                          className={`mt-1 text-[10px] ${
                             overdue
                               ? 'text-red-600'
-                              : 'text-slate-700'
+                              : 'text-slate-400'
                           }`}
                         >
+                          {isArabic
+                            ? 'الموعد'
+                            : 'Due'}{' '}
+
                           {formatDate(
                             task.deadlineDate,
                             locale,
                           )}
                         </div>
-
-                        <div className="mt-1 text-[10px] text-slate-400">
-                          {isArabic
-                            ? 'البدء'
-                            : 'Start'}{' '}
-
-                          {formatDate(
-                            task.startDate,
-                            locale,
-                          )}
-                        </div>
                       </div>
 
-
-                      {/*
-                       * ACTIONS
-                       */}
 
                       <div className="relative z-20 flex justify-start xl:justify-end">
                         <TaskActions
@@ -2812,9 +2886,7 @@ function MyTasksContent() {
                     {rowError?.id ===
                       task.id && (
                       <div className="relative z-20 mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
-                        {
-                          rowError.message
-                        }
+                        {rowError.message}
                       </div>
                     )}
                   </article>
@@ -2826,41 +2898,29 @@ function MyTasksContent() {
       )}
 
 
-      {/*
-       * ======================================================
-       * PAGINATION
-       * ======================================================
-       */}
-
       {!loading &&
         !error && (
-          <Pagination
-            page={
-              page
-            }
-            totalPages={
-              totalPages
-            }
-            total={
-              total
-            }
-            onPageChange={
-              setPage
-            }
-            itemLabel={
-              isArabic
-                ? 'مهام'
-                : 'tasks'
-            }
-          />
-        )}
+        <Pagination
+          page={
+            page
+          }
+          totalPages={
+            totalPages
+          }
+          total={
+            total
+          }
+          onPageChange={
+            setPage
+          }
+          itemLabel={
+            isArabic
+              ? 'مهام'
+              : 'tasks'
+          }
+        />
+      )}
 
-
-      {/*
-       * ======================================================
-       * FINISH REASON MODAL
-       * ======================================================
-       */}
 
       <ReasonModal
         open={
@@ -2874,13 +2934,15 @@ function MyTasksContent() {
         }
         description={
           finishModalTask
-            ? isArabic
-              ? `وضح سبب إنهاء "${taskTitle(
-                  finishModalTask,
-                )}".`
-              : `Explain why "${taskTitle(
-                  finishModalTask,
-                )}" is being finished.`
+            ? (
+                isArabic
+                  ? `وضح سبب إنهاء "${taskTitle(
+                      finishModalTask,
+                    )}".`
+                  : `Explain why "${taskTitle(
+                      finishModalTask,
+                    )}" is being finished.`
+              )
             : ''
         }
         minLength={
@@ -2910,12 +2972,6 @@ function MyTasksContent() {
         }}
       />
 
-
-      {/*
-       * ======================================================
-       * ARCHIVE CONFIRMATION
-       * ======================================================
-       */}
 
       {archiveModalTask && (
         <div
@@ -3008,12 +3064,16 @@ function MyTasksContent() {
               >
                 {actingOnId ===
                 archiveModalTask.id
-                  ? isArabic
-                    ? 'جاري الأرشفة…'
-                    : 'Archiving…'
-                  : isArabic
-                    ? 'أرشفة المهمة'
-                    : 'Archive task'}
+                  ? (
+                      isArabic
+                        ? 'جاري الأرشفة…'
+                        : 'Archiving…'
+                    )
+                  : (
+                      isArabic
+                        ? 'أرشفة المهمة'
+                        : 'Archive task'
+                    )}
               </button>
             </div>
           </div>
@@ -3023,12 +3083,6 @@ function MyTasksContent() {
   );
 }
 
-
-/*
- * ============================================================
- * PAGE
- * ============================================================
- */
 
 export default function MyTasksPage() {
   return (

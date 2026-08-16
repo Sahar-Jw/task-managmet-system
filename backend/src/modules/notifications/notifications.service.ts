@@ -316,9 +316,9 @@ export class NotificationsService {
 
 
     /*
-     * PostgreSQL JSONB ->> operator.
+     * mysql JSON ->> operator.
      *
-     * The entity currently stores metadata as JSONB, which lets
+     * The entity currently stores metadata as JSON, which lets
      * us safely check the dedupe key without adding another DB
      * column.
      */

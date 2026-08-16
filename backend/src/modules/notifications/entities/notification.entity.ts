@@ -36,7 +36,7 @@ export class NotificationEntity {
   @Column({ type: 'text' })
   message!: string;
 
-  @Column({ type: 'jsonb', nullable: true })
+  @Column({ type: 'json', nullable: true })
   metadata?: Record<string, any>;
 
   @Column({ name: 'is_read', type: 'boolean', default: false })

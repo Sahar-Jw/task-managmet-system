@@ -181,9 +181,9 @@ export class UsersService {
 
     qb.andWhere(
       `(
-        user.fullName ILIKE :search
-        OR user.email ILIKE :search
-        OR user.phone ILIKE :search
+        user.fullName LIKE :search
+        OR user.email LIKE :search
+        OR user.phone LIKE :search
       )`,
       {
         search,

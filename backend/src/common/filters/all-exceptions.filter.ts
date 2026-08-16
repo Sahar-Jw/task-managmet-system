@@ -7,7 +7,10 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-
+import {
+  localizeMessages,
+  resolveRequestLocale,
+} from './http-exception.filter';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -17,13 +20,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+    const locale = resolveRequestLocale(request);
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
+
+      let message: string | string[];
+      let error: string;
+
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+        error = exception.name;
+      } else {
+        const body = exceptionResponse as Record<string, any>;
+        message = body.message ?? exception.message;
+        error = body.error ?? exception.name;
+      }
+
+      const localized = localizeMessages(message, locale, status);
+
       response.status(status).json({
         statusCode: status,
-        error: exception.name,
-        message: exception.message,
+        code: localized.code,
+        error,
+        message: localized.message,
+        locale,
         path: request.originalUrl,
         timestamp: new Date().toISOString(),
       });
@@ -31,12 +53,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     const stack = exception instanceof Error ? exception.stack : String(exception);
-    this.logger.error(`Unhandled exception on ${request.method} ${request.originalUrl}`, stack);
+    this.logger.error(
+      `Unhandled exception on ${request.method} ${request.originalUrl}`,
+      stack,
+    );
+
+    const localized = localizeMessages(
+      'An unexpected error occurred. Please try again later.',
+      locale,
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
 
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      error: 'Internal Server Error',
-      message: 'An unexpected error occurred. Please try again later.',
+      code: localized.code,
+      error: locale === 'ar' ? 'خطأ داخلي في الخادم' : 'Internal Server Error',
+      message: localized.message,
+      locale,
       path: request.originalUrl,
       timestamp: new Date().toISOString(),
     });

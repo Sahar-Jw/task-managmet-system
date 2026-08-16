@@ -5,6 +5,8 @@ import {
   useState,
 } from 'react';
 
+import Link from 'next/link';
+
 import {
   useParams,
   useRouter,
@@ -17,6 +19,7 @@ import {
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import ReasonModal from '@/components/ReasonModal';
+import SubtasksPanel from '@/components/SubtasksPanel';
 
 import {
   useAuth,
@@ -47,10 +50,6 @@ import type {
  * ============================================================
  */
 
-/*
- * A Pending Acceptance assignment can only be reassigned
- * after this many days without an Accept / Reject response.
- */
 const REASSIGN_AFTER_DAYS =
   14;
 
@@ -61,10 +60,11 @@ const REASSIGN_AFTER_DAYS =
  * ============================================================
  */
 
-const NEXT_STATUS_OPTIONS: Record<
-  string,
-  string[]
-> = {
+const NEXT_STATUS_OPTIONS:
+  Record<
+    string,
+    string[]
+  > = {
   Pending: [
     'InProgress',
     'Finished',
@@ -102,7 +102,7 @@ const NEXT_STATUS_OPTIONS: Record<
 
 /*
  * ============================================================
- * SMALL COMPONENTS
+ * HELPERS
  * ============================================================
  */
 
@@ -115,12 +115,25 @@ function SectionTitle({
 }) {
   return (
     <div>
-      <h2 className="text-base font-semibold text-slate-800">
+      <h2
+        className="
+          text-base
+          font-semibold
+          text-slate-900
+        "
+      >
         {title}
       </h2>
 
       {description && (
-        <p className="mt-1 text-sm text-slate-500">
+        <p
+          className="
+            mt-1
+            text-sm
+            leading-6
+            text-slate-500
+          "
+        >
           {description}
         </p>
       )}
@@ -137,12 +150,34 @@ function InfoRow({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-5 py-3">
-      <span className="text-sm text-slate-500">
+    <div
+      className="
+        flex
+        items-start
+        justify-between
+        gap-5
+        py-3
+      "
+    >
+      <span
+        className="
+          text-sm
+          text-slate-500
+        "
+      >
         {label}
       </span>
 
-      <div className="max-w-[65%] text-right text-sm font-medium text-slate-700">
+      <div
+        className="
+          max-w-[65%]
+          break-words
+          text-end
+          text-sm
+          font-medium
+          text-slate-700
+        "
+      >
         {children}
       </div>
     </div>
@@ -150,14 +185,9 @@ function InfoRow({
 }
 
 
-/*
- * ============================================================
- * ASSIGNMENT HELPERS
- * ============================================================
- */
-
 function assignmentAgeInDays(
-  assignment: TaskAssignment,
+  assignment:
+    TaskAssignment,
 ) {
   return (
     Date.now() -
@@ -165,20 +195,22 @@ function assignmentAgeInDays(
       assignment.createdAt,
     ).getTime()
   ) /
-  (
-    1000 *
-    60 *
-    60 *
-    24
-  );
+    (
+      1000 *
+      60 *
+      60 *
+      24
+    );
 }
 
 
 function assignmentDaysRemaining(
-  assignment: TaskAssignment,
+  assignment:
+    TaskAssignment,
 ) {
   return Math.max(
     0,
+
     Math.ceil(
       REASSIGN_AFTER_DAYS -
       assignmentAgeInDays(
@@ -190,7 +222,8 @@ function assignmentDaysRemaining(
 
 
 function formatAssignmentDate(
-  date?: string | null,
+  date?:
+    string | null,
 ) {
   if (!date) {
     return '—';
@@ -199,6 +232,63 @@ function formatAssignmentDate(
   return new Date(
     date,
   ).toLocaleString();
+}
+
+
+function formatDate(
+  date:
+    string | null | undefined,
+
+  locale:
+    string,
+) {
+  if (!date) {
+    return '—';
+  }
+
+  const parsed =
+    new Date(
+      date.length === 10
+        ? `${date}T00:00:00`
+        : date,
+    );
+
+  if (
+    Number.isNaN(
+      parsed.getTime(),
+    )
+  ) {
+    return date;
+  }
+
+  return parsed.toLocaleDateString(
+    locale,
+    {
+      year:
+        'numeric',
+
+      month:
+        'short',
+
+      day:
+        'numeric',
+    },
+  );
+}
+
+
+function languageTaskTitle(
+  task:
+    Task,
+
+  isArabic:
+    boolean,
+) {
+  return isArabic
+    ? task.titleAr ||
+        task.titleEn
+    : task.titleEn ||
+        task.titleAr;
 }
 
 
@@ -211,22 +301,29 @@ function formatAssignmentDate(
 function TaskDetailContent() {
   const {
     id,
-  } = useParams<{
-    id: string;
-  }>();
+  } =
+    useParams<{
+      id: string;
+    }>();
+
 
   const router =
     useRouter();
 
+
   const {
     user,
-  } = useAuth();
+  } =
+    useAuth();
+
 
   const locale =
     useLocale();
 
+
   const isArabic =
-    locale === 'ar';
+    locale ===
+    'ar';
 
 
   /*
@@ -238,23 +335,28 @@ function TaskDetailContent() {
   const [
     task,
     setTask,
-  ] = useState<Task | null>(
-    null,
-  );
+  ] =
+    useState<Task | null>(
+      null,
+    );
+
 
   const [
     comments,
     setComments,
-  ] = useState<
-    TaskComment[]
-  >([]);
+  ] =
+    useState<
+      TaskComment[]
+    >([]);
+
 
   const [
     users,
     setUsers,
-  ] = useState<User[]>(
-    [],
-  );
+  ] =
+    useState<User[]>(
+      [],
+    );
 
 
   /*
@@ -266,17 +368,24 @@ function TaskDetailContent() {
   const [
     loading,
     setLoading,
-  ] = useState(true);
+  ] =
+    useState(
+      true,
+    );
+
 
   const [
     error,
     setError,
-  ] = useState('');
+  ] =
+    useState('');
+
 
   const [
     notice,
     setNotice,
-  ] = useState('');
+  ] =
+    useState('');
 
 
   /*
@@ -288,17 +397,24 @@ function TaskDetailContent() {
   const [
     assignmentUserId,
     setAssignmentUserId,
-  ] = useState('');
+  ] =
+    useState('');
+
 
   const [
     reassignUserId,
     setReassignUserId,
-  ] = useState('');
+  ] =
+    useState('');
+
 
   const [
     assignmentBusy,
     setAssignmentBusy,
-  ] = useState(false);
+  ] =
+    useState(
+      false,
+    );
 
 
   /*
@@ -310,7 +426,17 @@ function TaskDetailContent() {
   const [
     newComment,
     setNewComment,
-  ] = useState('');
+  ] =
+    useState('');
+
+
+  const [
+    commentBusy,
+    setCommentBusy,
+  ] =
+    useState(
+      false,
+    );
 
 
   /*
@@ -322,24 +448,27 @@ function TaskDetailContent() {
   const [
     reasonModal,
     setReasonModal,
-  ] = useState<{
-    title: string;
-    description?: string;
-    minLength: number;
-    confirmLabel?: string;
-    danger?: boolean;
+  ] =
+    useState<{
+      title: string;
+      description?: string;
+      minLength: number;
+      confirmLabel?: string;
+      danger?: boolean;
 
-    onConfirm: (
-      reason: string,
-    ) => void;
-  } | null>(
-    null,
-  );
+      onConfirm:
+        (
+          reason:
+            string,
+        ) => void;
+    } | null>(
+      null,
+    );
 
 
   /*
    * ==========================================================
-   * LOAD TASK
+   * LOAD
    * ==========================================================
    */
 
@@ -347,6 +476,8 @@ function TaskDetailContent() {
     setLoading(
       true,
     );
+
+    setError('');
 
     try {
       const [
@@ -374,9 +505,12 @@ function TaskDetailContent() {
       err
     ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
-          : 'Could not load this task.',
+          : isArabic
+            ? 'تعذر تحميل المهمة.'
+            : 'Could not load this task.',
       );
     } finally {
       setLoading(
@@ -386,43 +520,93 @@ function TaskDetailContent() {
   }
 
 
-  useEffect(() => {
-    load();
+  /*
+   * Refresh without returning whole page to loading state.
+   *
+   * Used when a Sub-task is created.
+   */
+  async function refreshTask() {
+    try {
+      const result =
+        await TasksApi.get(
+          id,
+        );
 
-    /*
-     * Do not send isActive in the request.
-     * We filter inactive users below.
-     */
-    UsersApi.list({
-      limit: '100',
-    })
-      .then(
-        (result) => {
-          setUsers(
-            result.items,
-          );
-        },
-      )
-      .catch(
-        () => {},
+      setTask(
+        result,
       );
+    } catch (
+      err
+    ) {
+      setError(
+        err instanceof
+          ApiError
+          ? err.message
+          : isArabic
+            ? 'تعذر تحديث المهمة.'
+            : 'Could not refresh the task.',
+      );
+    }
+  }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    id,
-  ]);
+
+  async function refreshComments() {
+    try {
+      const result =
+        await CommentsApi.list(
+          id,
+        );
+
+      setComments(
+        result,
+      );
+    } catch {
+      // Keep current comments if refresh fails.
+    }
+  }
+
+
+  useEffect(
+    () => {
+      load();
+
+      UsersApi.list({
+        limit:
+          '100',
+      })
+        .then(
+          (
+            result,
+          ) => {
+            setUsers(
+              result.items,
+            );
+          },
+        )
+        .catch(
+          () => {},
+        );
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [
+      id,
+    ],
+  );
 
 
   /*
    * ==========================================================
-   * FEEDBACK WRAPPER
+   * FEEDBACK
    * ==========================================================
    */
 
   async function withFeedback(
     action:
       () => Promise<unknown>,
-    success?: string,
+
+    success?:
+      string,
   ) {
     setError('');
     setNotice('');
@@ -430,7 +614,9 @@ function TaskDetailContent() {
     try {
       await action();
 
-      if (success) {
+      if (
+        success
+      ) {
         setNotice(
           success,
         );
@@ -441,9 +627,12 @@ function TaskDetailContent() {
       err
     ) {
       setError(
-        err instanceof ApiError
+        err instanceof
+          ApiError
           ? err.message
-          : 'Something went wrong.',
+          : isArabic
+            ? 'حدث خطأ.'
+            : 'Something went wrong.',
       );
     }
   }
@@ -451,32 +640,140 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
-   * LOADING / NOT FOUND
+   * LOADING
    * ==========================================================
    */
 
-  if (loading) {
+  if (
+    loading
+  ) {
     return (
-      <div className="card p-10 text-center">
-        <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-slate-200 border-t-brand-500" />
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          pb-16
+        "
+      >
+        <div
+          className="
+            rounded-2xl
+            border
+            border-slate-200
+            bg-white
+            p-10
+            text-center
+          "
+        >
+          <div
+            className="
+              mx-auto
+              h-8
+              w-8
+              animate-spin
+              rounded-full
+              border-2
+              border-slate-200
+              border-t-brand-500
+            "
+          />
 
-        <p className="mt-3 text-sm text-slate-500">
-          {isArabic
-            ? 'جاري تحميل المهمة…'
-            : 'Loading task…'}
-        </p>
+          <p
+            className="
+              mt-4
+              text-sm
+              text-slate-500
+            "
+          >
+            {isArabic
+              ? 'جاري تحميل المهمة…'
+              : 'Loading task…'}
+          </p>
+        </div>
       </div>
     );
   }
 
 
-  if (!task) {
+  /*
+   * ==========================================================
+   * NOT FOUND
+   * ==========================================================
+   */
+
+  if (
+    !task
+  ) {
     return (
-      <div className="card p-8 text-center text-red-600">
-        {error ||
-          (isArabic
-            ? 'المهمة غير موجودة.'
-            : 'Task not found.')}
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          pb-16
+        "
+      >
+        <div
+          className="
+            rounded-2xl
+            border
+            border-red-200
+            bg-white
+            p-10
+            text-center
+          "
+        >
+          <div
+            className="
+              mx-auto
+              flex
+              h-12
+              w-12
+              items-center
+              justify-center
+              rounded-2xl
+              bg-red-50
+              text-xl
+              text-red-600
+            "
+          >
+            !
+          </div>
+
+          <h1
+            className="
+              mt-4
+              text-lg
+              font-semibold
+              text-slate-900
+            "
+          >
+            {isArabic
+              ? 'المهمة غير موجودة'
+              : 'Task not found'}
+          </h1>
+
+          <p
+            className="
+              mt-2
+              text-sm
+              text-red-600
+            "
+          >
+            {error}
+          </p>
+
+          <button
+            type="button"
+            className="btn-secondary mt-5"
+            onClick={() =>
+              router.back()
+            }
+          >
+            {isArabic
+              ? 'رجوع'
+              : 'Go back'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -492,9 +789,11 @@ function TaskDetailContent() {
     user?.role.name ===
     'ADMIN';
 
+
   const isCreator =
     task.createdById ===
     user?.id;
+
 
   const isApprover =
     task.approverId ===
@@ -510,7 +809,9 @@ function TaskDetailContent() {
   const assignableUsers =
     users
       .filter(
-        (item) =>
+        (
+          item,
+        ) =>
           item.isActive &&
           item.role.name !==
             'ADMIN',
@@ -528,14 +829,16 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
-   * ASSIGNMENT DATA
+   * ASSIGNMENTS
    * ==========================================================
    */
 
   const assignments =
     [
-      ...(task.assignments ||
-        []),
+      ...(
+        task.assignments ||
+        []
+      ),
     ].sort(
       (
         a,
@@ -550,14 +853,11 @@ function TaskDetailContent() {
     );
 
 
-  /*
-   * Current active assignment.
-   *
-   * Accepted and PendingAcceptance are considered active.
-   */
   const currentAssignment =
     assignments.find(
-      (assignment) =>
+      (
+        assignment,
+      ) =>
         assignment.status ===
           'PendingAcceptance' ||
         assignment.status ===
@@ -565,23 +865,21 @@ function TaskDetailContent() {
     );
 
 
-  /*
-   * Most recent rejected assignment.
-   */
   const latestRejectedAssignment =
     assignments.find(
-      (assignment) =>
+      (
+        assignment,
+      ) =>
         assignment.status ===
         'Rejected',
     );
 
 
-  /*
-   * Pending assignment that has received no response for 14 days.
-   */
   const stalePendingAssignment =
     assignments.find(
-      (assignment) =>
+      (
+        assignment,
+      ) =>
         assignment.status ===
           'PendingAcceptance' &&
         assignmentAgeInDays(
@@ -591,12 +889,11 @@ function TaskDetailContent() {
     );
 
 
-  /*
-   * Assignment waiting for the currently logged in user.
-   */
   const myPendingAssignment =
     assignments.find(
-      (assignment) =>
+      (
+        assignment,
+      ) =>
         assignment.assigneeId ===
           user?.id &&
         assignment.status ===
@@ -604,8 +901,20 @@ function TaskDetailContent() {
     );
 
 
+  const myAcceptedAssignment =
+    assignments.find(
+      (
+        assignment,
+      ) =>
+        assignment.assigneeId ===
+          user?.id &&
+        assignment.status ===
+          'Accepted',
+    );
+
+
   /*
-   * Creator/Admin can manage assignment workflow.
+   * Creator/Admin manage assignment.
    */
   const canManageAssignment =
     (
@@ -616,11 +925,6 @@ function TaskDetailContent() {
       'Archived';
 
 
-  /*
-   * New assignment is allowed only when the Task does not
-   * have an active assignment and there is no rejected
-   * assignment waiting to be reassigned.
-   */
   const canAssignNew =
     canManageAssignment &&
     !currentAssignment &&
@@ -629,18 +933,17 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
-   * REASSIGNMENT RULE
+   * REASSIGNMENT
    * ==========================================================
    *
-   * Reassignment is allowed only:
+   * Reassign only when:
    *
-   * 1. after rejection
-   *
+   * - rejected
    * OR
+   * - unanswered for 14 days
    *
-   * 2. after PendingAcceptance has been unanswered for 14 days
-   *
-   * Accepted assignments cannot be reassigned.
+   * Never after accepted.
+   * ==========================================================
    */
 
   const assignmentToReassign =
@@ -657,16 +960,15 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
-   * CURRENT LANGUAGE
+   * LANGUAGE
    * ==========================================================
    */
 
   const title =
-    isArabic
-      ? task.titleAr ||
-        task.titleEn
-      : task.titleEn ||
-        task.titleAr;
+    languageTaskTitle(
+      task,
+      isArabic,
+    );
 
 
   const description =
@@ -713,6 +1015,56 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
+   * SUBTASKS
+   * ==========================================================
+   */
+
+  const subtasks =
+    task.subTasks ||
+    [];
+
+
+  const closedSubtaskCount =
+    subtasks.filter(
+      (
+        child,
+      ) =>
+        [
+          'Completed',
+          'Finished',
+          'Archived',
+        ].includes(
+          child.status,
+        ),
+    ).length;
+
+
+  const openSubtaskCount =
+    subtasks.length -
+    closedSubtaskCount;
+
+
+  const subtaskProgress =
+    subtasks.length >
+    0
+      ? Math.round(
+          (
+            closedSubtaskCount /
+            subtasks.length
+          ) *
+            100,
+        )
+      : 0;
+
+
+  const isSubtask =
+    Boolean(
+      task.parentTaskId,
+    );
+
+
+  /*
+   * ==========================================================
    * APPROVAL
    * ==========================================================
    */
@@ -743,7 +1095,7 @@ function TaskDetailContent() {
 
 
   /*
-   * Pending assignment must be accepted before InProgress.
+   * Cannot start until assignment accepted.
    */
   if (
     currentAssignment?.status ===
@@ -751,7 +1103,9 @@ function TaskDetailContent() {
   ) {
     nextStatuses =
       nextStatuses.filter(
-        (status) =>
+        (
+          status,
+        ) =>
           status !==
           'InProgress',
       );
@@ -759,8 +1113,7 @@ function TaskDetailContent() {
 
 
   /*
-   * Approval-required Task cannot jump directly
-   * from InProgress to Completed.
+   * Approval task cannot bypass approval.
    */
   if (
     task.needsApproval &&
@@ -771,9 +1124,43 @@ function TaskDetailContent() {
   ) {
     nextStatuses =
       nextStatuses.filter(
-        (status) =>
+        (
+          status,
+        ) =>
           status !==
           'Completed',
+      );
+  }
+
+
+  /*
+   * ==========================================================
+   * OPEN SUBTASK GUARD
+   * ==========================================================
+   *
+   * Backend already protects this.
+   *
+   * Frontend also hides impossible workflow actions so the User
+   * doesn't click an action that we already know will fail.
+   * ==========================================================
+   */
+
+  if (
+    openSubtaskCount >
+    0
+  ) {
+    nextStatuses =
+      nextStatuses.filter(
+        (
+          status,
+        ) =>
+          ![
+            'PendingApproval',
+            'Completed',
+            'Finished',
+          ].includes(
+            status,
+          ),
       );
   }
 
@@ -804,14 +1191,13 @@ function TaskDetailContent() {
             task.deadlineDate ||
               undefined,
           ),
+
         isArabic
           ? 'تم إرسال التكليف وينتظر قبول المستخدم.'
           : 'Assignment sent. Waiting for the user to accept.',
       );
 
-      setAssignmentUserId(
-        '',
-      );
+      setAssignmentUserId('');
     } finally {
       setAssignmentBusy(
         false,
@@ -847,16 +1233,71 @@ function TaskDetailContent() {
             task.deadlineDate ||
               undefined,
           ),
+
         isArabic
           ? 'تم إعادة التكليف وينتظر قبول المستخدم الجديد.'
           : 'Task reassigned. Waiting for the new user to accept.',
       );
 
-      setReassignUserId(
-        '',
-      );
+      setReassignUserId('');
     } finally {
       setAssignmentBusy(
+        false,
+      );
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * COMMENT
+   * ==========================================================
+   */
+
+  async function submitComment(
+    event:
+      React.FormEvent,
+  ) {
+    event.preventDefault();
+
+    const content =
+      newComment.trim();
+
+    if (
+      !content ||
+      commentBusy
+    ) {
+      return;
+    }
+
+    setCommentBusy(
+      true,
+    );
+
+    setError('');
+
+    try {
+      await CommentsApi.add(
+        task.id,
+        content,
+      );
+
+      setNewComment('');
+
+      await refreshComments();
+    } catch (
+      err
+    ) {
+      setError(
+        err instanceof
+          ApiError
+          ? err.message
+          : isArabic
+            ? 'تعذر إضافة التعليق.'
+            : 'Could not add comment.',
+      );
+    } finally {
+      setCommentBusy(
         false,
       );
     }
@@ -871,7 +1312,11 @@ function TaskDetailContent() {
 
   return (
     <div
-      className="mx-auto max-w-7xl pb-16"
+      className="
+        mx-auto
+        max-w-[1450px]
+        pb-16
+      "
       dir={
         isArabic
           ? 'rtl'
@@ -889,9 +1334,31 @@ function TaskDetailContent() {
         onClick={() =>
           router.back()
         }
-        className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-brand-700"
+        className="
+          mb-4
+          inline-flex
+          items-center
+          gap-2
+          rounded-lg
+          px-1
+          py-1
+          text-sm
+          font-medium
+          text-slate-500
+          transition
+          hover:text-brand-700
+        "
       >
-        ←{' '}
+        <span
+          className={
+            isArabic
+              ? 'rotate-180'
+              : ''
+          }
+        >
+          ←
+        </span>
+
         {isArabic
           ? 'رجوع'
           : 'Back'}
@@ -900,12 +1367,107 @@ function TaskDetailContent() {
 
       {/*
        * ======================================================
-       * HEADER
+       * PARENT BREADCRUMB
        * ======================================================
        */}
 
-      <div
-        className="card overflow-hidden"
+      {isSubtask &&
+        task.parentTask && (
+        <Link
+          href={`/tasks/${task.parentTask.id}`}
+          className="
+            mb-4
+            flex
+            items-center
+            gap-3
+            rounded-xl
+            border
+            border-brand-100
+            bg-brand-50/50
+            px-4
+            py-3
+            transition
+            hover:border-brand-200
+            hover:bg-brand-50
+          "
+        >
+          <div
+            className="
+              flex
+              h-8
+              w-8
+              shrink-0
+              items-center
+              justify-center
+              rounded-lg
+              bg-brand-100
+              text-brand-700
+            "
+          >
+            ↳
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div
+              className="
+                text-[10px]
+                font-semibold
+                uppercase
+                tracking-[.1em]
+                text-brand-600
+              "
+            >
+              {isArabic
+                ? 'جزء من المهمة الرئيسية'
+                : 'Part of parent task'}
+            </div>
+
+            <div
+              className="
+                mt-0.5
+                truncate
+                text-sm
+                font-semibold
+                text-brand-900
+              "
+            >
+              {languageTaskTitle(
+                task.parentTask,
+                isArabic,
+              )}
+            </div>
+          </div>
+
+          <span
+            className="
+              shrink-0
+              text-brand-600
+            "
+          >
+            {isArabic
+              ? '←'
+              : '→'}
+          </span>
+        </Link>
+      )}
+
+
+      {/*
+       * ======================================================
+       * HERO HEADER
+       * ======================================================
+       */}
+
+      <section
+        className="
+          relative
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          shadow-[0_1px_2px_rgba(15,23,42,0.03)]
+        "
         style={
           task.color
             ? {
@@ -915,10 +1477,72 @@ function TaskDetailContent() {
             : undefined
         }
       >
-        <div className="p-6">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+        <div
+          className="
+            pointer-events-none
+            absolute
+            -right-28
+            -top-28
+            h-64
+            w-64
+            rounded-full
+            bg-brand-50
+            blur-3xl
+          "
+        />
+
+        <div
+          className="
+            relative
+            p-5
+            sm:p-6
+            lg:p-7
+          "
+        >
+          <div
+            className="
+              flex
+              flex-col
+              gap-6
+              lg:flex-row
+              lg:items-start
+              lg:justify-between
+            "
+          >
+            <div
+              className="
+                min-w-0
+                flex-1
+              "
+            >
+              <div
+                className="
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-2
+                "
+              >
+                {isSubtask && (
+                  <span
+                    className="
+                      rounded-full
+                      bg-brand-50
+                      px-2.5
+                      py-1
+                      text-[10px]
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-brand-700
+                    "
+                  >
+                    {isArabic
+                      ? 'مهمة فرعية'
+                      : 'Subtask'}
+                  </span>
+                )}
+
                 <StatusBadge
                   value={
                     task.status
@@ -941,27 +1565,84 @@ function TaskDetailContent() {
                 />
 
                 {overdue && (
-                  <span className="badge bg-red-100 text-red-700">
+                  <span
+                    className="
+                      rounded-full
+                      bg-red-50
+                      px-2.5
+                      py-1
+                      text-[10px]
+                      font-semibold
+                      text-red-700
+                    "
+                  >
                     {isArabic
                       ? 'متأخرة'
                       : 'Overdue'}
                   </span>
                 )}
+
+                {!isSubtask &&
+                  subtasks.length >
+                    0 && (
+                  <span
+                    className="
+                      rounded-full
+                      bg-slate-100
+                      px-2.5
+                      py-1
+                      text-[10px]
+                      font-semibold
+                      text-slate-600
+                    "
+                  >
+                    {isArabic
+                      ? `${closedSubtaskCount}/${subtasks.length} خطوات`
+                      : `${closedSubtaskCount}/${subtasks.length} steps`}
+                  </span>
+                )}
               </div>
 
 
-              <h1 className="mt-4 break-words text-2xl font-semibold tracking-tight text-slate-900">
+              <h1
+                className="
+                  mt-4
+                  max-w-4xl
+                  break-words
+                  text-2xl
+                  font-semibold
+                  tracking-[-0.03em]
+                  text-slate-950
+                  sm:text-3xl
+                "
+              >
                 {title}
               </h1>
 
 
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+              <div
+                className="
+                  mt-3
+                  flex
+                  flex-wrap
+                  items-center
+                  gap-x-5
+                  gap-y-2
+                  text-xs
+                  text-slate-400
+                "
+              >
                 <span>
                   {isArabic
                     ? 'أنشأها'
                     : 'Created by'}{' '}
 
-                  <span className="font-medium text-slate-600">
+                  <span
+                    className="
+                      font-semibold
+                      text-slate-600
+                    "
+                  >
                     {task.createdBy
                       ?.fullName ||
                       '—'}
@@ -975,11 +1656,196 @@ function TaskDetailContent() {
                     locale,
                   )}
                 </span>
+
+                {task.project?.name && (
+                  <span>
+                    {isArabic
+                      ? 'المشروع:'
+                      : 'Project:'}{' '}
+
+                    <span
+                      className="
+                        font-semibold
+                        text-slate-600
+                      "
+                    >
+                      {
+                        task.project.name
+                      }
+                    </span>
+                  </span>
+                )}
               </div>
+            </div>
+
+
+            {/*
+             * ==================================================
+             * HEADER STATUS SUMMARY
+             * ==================================================
+             */}
+
+            <div
+              className="
+                grid
+                min-w-[260px]
+                grid-cols-2
+                gap-2
+                lg:max-w-[330px]
+              "
+            >
+              <div
+                className="
+                  rounded-xl
+                  border
+                  border-slate-100
+                  bg-slate-50/80
+                  p-3
+                "
+              >
+                <div
+                  className="
+                    text-[10px]
+                    font-semibold
+                    uppercase
+                    tracking-wide
+                    text-slate-400
+                  "
+                >
+                  {isArabic
+                    ? 'المكلف'
+                    : 'Assignee'}
+                </div>
+
+                <div
+                  className="
+                    mt-1
+                    truncate
+                    text-xs
+                    font-semibold
+                    text-slate-700
+                  "
+                >
+                  {currentAssignment
+                    ?.assignee
+                    ?.fullName ||
+                    (isArabic
+                      ? 'غير مسندة'
+                      : 'Unassigned')}
+                </div>
+              </div>
+
+
+              <div
+                className="
+                  rounded-xl
+                  border
+                  border-slate-100
+                  bg-slate-50/80
+                  p-3
+                "
+              >
+                <div
+                  className="
+                    text-[10px]
+                    font-semibold
+                    uppercase
+                    tracking-wide
+                    text-slate-400
+                  "
+                >
+                  {isArabic
+                    ? 'الموعد'
+                    : 'Deadline'}
+                </div>
+
+                <div
+                  className={`
+                    mt-1
+                    text-xs
+                    font-semibold
+                    ${
+                      overdue
+                        ? 'text-red-600'
+                        : 'text-slate-700'
+                    }
+                  `}
+                >
+                  {formatDate(
+                    task.deadlineDate,
+                    locale,
+                  )}
+                </div>
+              </div>
+
+
+              {!isSubtask &&
+                subtasks.length >
+                  0 && (
+                <div
+                  className="
+                    col-span-2
+                    rounded-xl
+                    border
+                    border-slate-100
+                    bg-slate-50/80
+                    p-3
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      text-[10px]
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      text-slate-400
+                    "
+                  >
+                    <span>
+                      {isArabic
+                        ? 'تقدم الخطوات'
+                        : 'Step progress'}
+                    </span>
+
+                    <span
+                      className="
+                        text-brand-700
+                      "
+                    >
+                      {subtaskProgress}%
+                    </span>
+                  </div>
+
+                  <div
+                    className="
+                      mt-2
+                      h-1.5
+                      overflow-hidden
+                      rounded-full
+                      bg-slate-200
+                    "
+                  >
+                    <div
+                      className="
+                        h-full
+                        rounded-full
+                        bg-brand-500
+                      "
+                      style={{
+                        width:
+                          `${subtaskProgress}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
 
       {/*
@@ -989,14 +1855,38 @@ function TaskDetailContent() {
        */}
 
       {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div
+          className="
+            mt-4
+            rounded-xl
+            border
+            border-red-200
+            bg-red-50
+            px-4
+            py-3
+            text-sm
+            text-red-700
+          "
+        >
           {error}
         </div>
       )}
 
 
       {notice && (
-        <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+        <div
+          className="
+            mt-4
+            rounded-xl
+            border
+            border-emerald-200
+            bg-emerald-50
+            px-4
+            py-3
+            text-sm
+            text-emerald-700
+          "
+        >
           {notice}
         </div>
       )}
@@ -1008,23 +1898,42 @@ function TaskDetailContent() {
        * ======================================================
        */}
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-
+      <div
+        className="
+          mt-6
+          grid
+          gap-6
+          xl:grid-cols-[minmax(0,1fr)_380px]
+        "
+      >
         {/*
          * ====================================================
          * LEFT
          * ====================================================
          */}
 
-        <main className="space-y-6">
-
+        <main
+          className="
+            min-w-0
+            space-y-6
+          "
+        >
           {/*
            * ==================================================
            * DESCRIPTION
            * ==================================================
            */}
 
-          <section className="card p-6">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+              sm:p-6
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -1034,17 +1943,51 @@ function TaskDetailContent() {
             />
 
             {description ? (
-              <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-700">
+              <p
+                className="
+                  mt-4
+                  whitespace-pre-wrap
+                  text-sm
+                  leading-7
+                  text-slate-700
+                "
+              >
                 {description}
               </p>
             ) : (
-              <p className="mt-4 text-sm text-slate-400">
+              <div
+                className="
+                  mt-4
+                  rounded-xl
+                  bg-slate-50
+                  px-4
+                  py-5
+                  text-sm
+                  text-slate-400
+                "
+              >
                 {isArabic
                   ? 'لا يوجد وصف.'
                   : 'No description was provided.'}
-              </p>
+              </div>
             )}
           </section>
+
+
+          {/*
+           * ==================================================
+           * WORK BREAKDOWN / SUBTASKS
+           * ==================================================
+           */}
+
+          <SubtasksPanel
+            task={
+              task
+            }
+            onChanged={
+              refreshTask
+            }
+          />
 
 
           {/*
@@ -1053,8 +1996,24 @@ function TaskDetailContent() {
            * ==================================================
            */}
 
-          <section className="card overflow-hidden">
-            <div className="border-b border-slate-100 bg-slate-50/60 p-6">
+          <section
+            className="
+              overflow-hidden
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+            "
+          >
+            <div
+              className="
+                border-b
+                border-slate-100
+                bg-slate-50/60
+                p-5
+                sm:p-6
+              "
+            >
               <SectionTitle
                 title={
                   isArabic
@@ -1070,44 +2029,126 @@ function TaskDetailContent() {
             </div>
 
 
-            <div className="p-6">
-
+            <div
+              className="
+                p-5
+                sm:p-6
+              "
+            >
               {/*
-               * ==============================================
-               * CURRENT ACTIVE ASSIGNMENT
-               * ==============================================
+               * =================================================
+               * CURRENT ASSIGNMENT
+               * =================================================
                */}
 
               {currentAssignment ? (
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <div className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                        {isArabic
-                          ? 'المستخدم الحالي'
-                          : 'Current assignee'}
-                      </div>
-
-                      <div className="mt-1 font-semibold text-slate-800">
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-white
+                    p-4
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      flex-col
+                      gap-4
+                      sm:flex-row
+                      sm:items-center
+                      sm:justify-between
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-3
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          h-11
+                          w-11
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-xl
+                          bg-brand-50
+                          text-sm
+                          font-bold
+                          text-brand-700
+                        "
+                      >
                         {currentAssignment
                           .assignee
-                          ?.fullName ||
-                          'Unknown user'}
+                          ?.fullName
+                          ?.charAt(
+                            0,
+                          )
+                          .toUpperCase() ||
+                          '?'}
                       </div>
 
-                      <div className="mt-2">
-                        <StatusBadge
-                          value={
-                            currentAssignment.status
-                          }
-                        />
+                      <div>
+                        <div
+                          className="
+                            text-[10px]
+                            font-semibold
+                            uppercase
+                            tracking-wide
+                            text-slate-400
+                          "
+                        >
+                          {isArabic
+                            ? 'المستخدم الحالي'
+                            : 'Current assignee'}
+                        </div>
+
+                        <div
+                          className="
+                            mt-1
+                            font-semibold
+                            text-slate-800
+                          "
+                        >
+                          {currentAssignment
+                            .assignee
+                            ?.fullName ||
+                            'Unknown user'}
+                        </div>
+
+                        <div
+                          className="
+                            mt-2
+                          "
+                        >
+                          <StatusBadge
+                            value={
+                              currentAssignment.status
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
 
 
                     {currentAssignment.status ===
                       'PendingAcceptance' && (
-                      <div className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                      <div
+                        className="
+                          rounded-xl
+                          bg-amber-50
+                          px-3
+                          py-2
+                          text-xs
+                          font-semibold
+                          text-amber-700
+                        "
+                      >
                         {isArabic
                           ? 'بانتظار الرد'
                           : 'Waiting for response'}
@@ -1117,7 +2158,19 @@ function TaskDetailContent() {
 
                     {currentAssignment.status ===
                       'Accepted' && (
-                      <div className="rounded-lg bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
+                      <div
+                        className="
+                          rounded-xl
+                          bg-emerald-50
+                          px-3
+                          py-2
+                          text-xs
+                          font-semibold
+                          text-emerald-700
+                        "
+                      >
+                        ✓{' '}
+
                         {isArabic
                           ? 'تم قبول التكليف'
                           : 'Assignment accepted'}
@@ -1128,21 +2181,49 @@ function TaskDetailContent() {
 
                   {currentAssignment.status ===
                     'PendingAcceptance' && (
-                    <div className="mt-4 border-t border-slate-100 pt-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div
+                      className="
+                        mt-4
+                        border-t
+                        border-slate-100
+                        pt-4
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          flex-wrap
+                          items-center
+                          justify-between
+                          gap-4
+                        "
+                      >
                         <div>
-                          <div className="text-xs text-slate-400">
+                          <div
+                            className="
+                              text-xs
+                              text-slate-400
+                            "
+                          >
                             {isArabic
                               ? 'تم التكليف منذ'
                               : 'Assignment age'}
                           </div>
 
-                          <div className="mt-1 text-sm font-medium text-slate-700">
+                          <div
+                            className="
+                              mt-1
+                              text-sm
+                              font-semibold
+                              text-slate-700
+                            "
+                          >
                             {Math.floor(
                               assignmentAgeInDays(
                                 currentAssignment,
                               ),
                             )}{' '}
+
                             {isArabic
                               ? 'يوم'
                               : 'day(s)'}
@@ -1151,17 +2232,34 @@ function TaskDetailContent() {
 
 
                         {!stalePendingAssignment && (
-                          <div className="text-right">
-                            <div className="text-xs text-slate-400">
+                          <div
+                            className="
+                              text-end
+                            "
+                          >
+                            <div
+                              className="
+                                text-xs
+                                text-slate-400
+                              "
+                            >
                               {isArabic
                                 ? 'إعادة التكليف متاحة بعد'
                                 : 'Reassignment available in'}
                             </div>
 
-                            <div className="mt-1 text-sm font-semibold text-amber-700">
+                            <div
+                              className="
+                                mt-1
+                                text-sm
+                                font-semibold
+                                text-amber-700
+                              "
+                            >
                               {assignmentDaysRemaining(
                                 currentAssignment,
                               )}{' '}
+
                               {isArabic
                                 ? 'يوم'
                                 : 'day(s)'}
@@ -1173,14 +2271,53 @@ function TaskDetailContent() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-200 p-6 text-center">
-                  <div className="text-sm font-medium text-slate-700">
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-dashed
+                    border-slate-200
+                    bg-slate-50/40
+                    p-6
+                    text-center
+                  "
+                >
+                  <div
+                    className="
+                      mx-auto
+                      flex
+                      h-10
+                      w-10
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-slate-100
+                      text-slate-400
+                    "
+                  >
+                    ○
+                  </div>
+
+                  <div
+                    className="
+                      mt-3
+                      text-sm
+                      font-semibold
+                      text-slate-700
+                    "
+                  >
                     {isArabic
                       ? 'لا يوجد تكليف نشط'
                       : 'No active assignment'}
                   </div>
 
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div
+                    className="
+                      mt-1
+                      text-xs
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? 'لا يوجد مستخدم مسؤول عن المهمة حالياً.'
                       : 'This task currently has no active assignee.'}
@@ -1190,41 +2327,109 @@ function TaskDetailContent() {
 
 
               {/*
-               * ==============================================
-               * ASSIGNEE ACCEPT / REJECT
-               * ==============================================
+               * =================================================
+               * ACCEPT / REJECT
+               * =================================================
                */}
 
               {myPendingAssignment && (
-                <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50 p-4">
-                  <div className="font-medium text-brand-900">
-                    {isArabic
-                      ? 'تم تكليفك بهذه المهمة.'
-                      : 'This task has been assigned to you.'}
+                <div
+                  className="
+                    mt-4
+                    rounded-xl
+                    border
+                    border-brand-200
+                    bg-brand-50/60
+                    p-4
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      items-start
+                      gap-3
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        h-9
+                        w-9
+                        shrink-0
+                        items-center
+                        justify-center
+                        rounded-xl
+                        bg-brand-100
+                        font-bold
+                        text-brand-700
+                      "
+                    >
+                      !
+                    </div>
+
+                    <div>
+                      <div
+                        className="
+                          font-semibold
+                          text-brand-900
+                        "
+                      >
+                        {isArabic
+                          ? 'تم تكليفك بهذه المهمة.'
+                          : 'This task has been assigned to you.'}
+                      </div>
+
+                      <p
+                        className="
+                          mt-1
+                          text-sm
+                          leading-6
+                          text-brand-700
+                        "
+                      >
+                        {isArabic
+                          ? 'اقبل المهمة لبدء العمل أو ارفضها مع توضيح السبب.'
+                          : 'Accept it to begin work, or reject it with a reason.'}
+                      </p>
+                    </div>
                   </div>
 
-                  <p className="mt-1 text-sm text-brand-700">
-                    {isArabic
-                      ? 'اقبل المهمة لبدء العمل أو ارفضها مع توضيح السبب.'
-                      : 'Accept it to begin work, or reject it with a reason.'}
-                  </p>
 
-
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div
+                    className="
+                      mt-4
+                      flex
+                      flex-wrap
+                      gap-2
+                    "
+                  >
                     <button
                       type="button"
                       className="btn-primary"
-                      onClick={() =>
+                      disabled={
+                        assignmentBusy
+                      }
+                      onClick={() => {
+                        setAssignmentBusy(
+                          true,
+                        );
+
                         withFeedback(
                           () =>
                             AssignmentsApi.accept(
                               myPendingAssignment.id,
                             ),
+
                           isArabic
                             ? 'تم قبول التكليف.'
                             : 'Assignment accepted.',
-                        )
-                      }
+                        ).finally(
+                          () =>
+                            setAssignmentBusy(
+                              false,
+                            ),
+                        );
+                      }}
                     >
                       {isArabic
                         ? 'قبول التكليف'
@@ -1235,6 +2440,9 @@ function TaskDetailContent() {
                     <button
                       type="button"
                       className="btn-danger"
+                      disabled={
+                        assignmentBusy
+                      }
                       onClick={() =>
                         setReasonModal({
                           title:
@@ -1272,6 +2480,7 @@ function TaskDetailContent() {
                                     myPendingAssignment.id,
                                     reason,
                                   ),
+
                                 isArabic
                                   ? 'تم رفض التكليف.'
                                   : 'Assignment rejected.',
@@ -1290,38 +2499,120 @@ function TaskDetailContent() {
 
 
               {/*
-               * ==============================================
-               * WAITING — NOT YET ELIGIBLE FOR REASSIGN
-               * ==============================================
+               * =================================================
+               * ACCEPTED ASSIGNEE INFO
+               * =================================================
+               */}
+
+              {myAcceptedAssignment && (
+                <div
+                  className="
+                    mt-4
+                    rounded-xl
+                    border
+                    border-emerald-200
+                    bg-emerald-50
+                    px-4
+                    py-3
+                    text-sm
+                    text-emerald-700
+                  "
+                >
+                  <strong>
+                    {isArabic
+                      ? 'أنت مسؤول عن هذه المهمة.'
+                      : 'You are responsible for this task.'}
+                  </strong>{' '}
+
+                  {isArabic
+                    ? 'يمكنك تحديث سير العمل وتقسيم المهمة إلى خطوات عند الحاجة.'
+                    : 'You can update its workflow and break it into subtasks when needed.'}
+                </div>
+              )}
+
+
+              {/*
+               * =================================================
+               * WAITING
+               * =================================================
                */}
 
               {canManageAssignment &&
                 currentAssignment?.status ===
                   'PendingAcceptance' &&
                 !stalePendingAssignment && (
-                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                        ⏳
+                  <div
+                    className="
+                      mt-4
+                      rounded-xl
+                      border
+                      border-amber-200
+                      bg-amber-50
+                      p-4
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        items-start
+                        gap-3
+                      "
+                    >
+                      <div
+                        className="
+                          mt-0.5
+                          flex
+                          h-9
+                          w-9
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-xl
+                          bg-amber-100
+                          text-amber-700
+                        "
+                      >
+                        ◷
                       </div>
 
                       <div>
-                        <div className="text-sm font-semibold text-amber-800">
+                        <div
+                          className="
+                            text-sm
+                            font-semibold
+                            text-amber-800
+                          "
+                        >
                           {isArabic
                             ? 'بانتظار رد المستخدم'
                             : 'Waiting for assignee response'}
                         </div>
 
-                        <p className="mt-1 text-xs leading-5 text-amber-700">
+                        <p
+                          className="
+                            mt-1
+                            text-xs
+                            leading-5
+                            text-amber-700
+                          "
+                        >
                           {isArabic
-                            ? `لا يمكن إعادة تكليف هذه المهمة حالياً. يصبح الخيار متاحاً بعد ${REASSIGN_AFTER_DAYS} يوماً بدون قبول أو رفض.`
+                            ? `لا يمكن إعادة التكليف حالياً. يصبح الخيار متاحاً بعد ${REASSIGN_AFTER_DAYS} يوماً بدون قبول أو رفض.`
                             : `This assignment cannot be reassigned yet. Reassignment becomes available after ${REASSIGN_AFTER_DAYS} days without an Accept or Reject response.`}
                         </p>
 
-                        <div className="mt-2 text-xs font-semibold text-amber-800">
+                        <div
+                          className="
+                            mt-2
+                            text-xs
+                            font-semibold
+                            text-amber-800
+                          "
+                        >
                           {assignmentDaysRemaining(
                             currentAssignment,
                           )}{' '}
+
                           {isArabic
                             ? 'يوم متبقي'
                             : 'day(s) remaining'}
@@ -1333,45 +2624,81 @@ function TaskDetailContent() {
 
 
               {/*
-               * ==============================================
-               * ACCEPTED — NEVER REASSIGNABLE
-               * ==============================================
+               * =================================================
+               * ACCEPTED — NO REASSIGN
+               * =================================================
                */}
 
               {canManageAssignment &&
                 currentAssignment?.status ===
                   'Accepted' && (
-                  <div className="mt-4 rounded-xl border border-green-200 bg-green-50 p-4">
-                    <div className="text-sm font-semibold text-green-800">
+                  <div
+                    className="
+                      mt-4
+                      rounded-xl
+                      border
+                      border-emerald-200
+                      bg-emerald-50
+                      p-4
+                    "
+                  >
+                    <div
+                      className="
+                        text-sm
+                        font-semibold
+                        text-emerald-800
+                      "
+                    >
                       {isArabic
                         ? 'تم قبول المهمة'
                         : 'Assignment accepted'}
                     </div>
 
-                    <p className="mt-1 text-xs leading-5 text-green-700">
+                    <p
+                      className="
+                        mt-1
+                        text-xs
+                        leading-5
+                        text-emerald-700
+                      "
+                    >
                       {isArabic
                         ? 'لا يمكن إعادة تكليف المهمة بعد قبولها.'
-                        : 'This assignment can no longer be reassigned because the user already accepted it.'}
+                        : 'This assignment cannot be reassigned because the user has already accepted it.'}
                     </p>
                   </div>
                 )}
 
 
               {/*
-               * ==============================================
+               * =================================================
                * INITIAL ASSIGNMENT
-               * ==============================================
+               * =================================================
                */}
 
               {canAssignNew && (
-                <div className="mt-5 border-t border-slate-100 pt-5">
+                <div
+                  className="
+                    mt-5
+                    border-t
+                    border-slate-100
+                    pt-5
+                  "
+                >
                   <label className="label">
                     {isArabic
                       ? 'تكليف المهمة'
                       : 'Assign this task'}
                   </label>
 
-                  <div className="flex flex-col gap-2 sm:flex-row">
+                  <div
+                    className="
+                      flex
+                      flex-col
+                      gap-2
+                      sm:flex-row
+                    "
+                  >
                     <select
                       className="input"
                       value={
@@ -1411,10 +2738,12 @@ function TaskDetailContent() {
                       )}
                     </select>
 
-
                     <button
                       type="button"
-                      className="btn-primary shrink-0"
+                      className="
+                        btn-primary
+                        shrink-0
+                      "
                       disabled={
                         !assignmentUserId ||
                         assignmentBusy
@@ -1424,17 +2753,26 @@ function TaskDetailContent() {
                       }
                     >
                       {assignmentBusy
-                        ? isArabic
-                          ? 'جاري التكليف…'
-                          : 'Assigning…'
-                        : isArabic
-                          ? 'تكليف'
-                          : 'Assign'}
+                        ? (
+                            isArabic
+                              ? 'جاري التكليف…'
+                              : 'Assigning…'
+                          )
+                        : (
+                            isArabic
+                              ? 'تكليف'
+                              : 'Assign'
+                          )}
                     </button>
                   </div>
 
-
-                  <p className="mt-2 text-xs text-slate-400">
+                  <p
+                    className="
+                      mt-2
+                      text-xs
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? 'يجب على المستخدم قبول التكليف قبل بدء العمل.'
                       : 'The selected user must accept the assignment before work begins.'}
@@ -1444,43 +2782,104 @@ function TaskDetailContent() {
 
 
               {/*
-               * ==============================================
-               * REJECTED ASSIGNMENT
-               * ==============================================
+               * =================================================
+               * REJECTED
+               * =================================================
                */}
 
               {latestRejectedAssignment &&
                 !currentAssignment && (
-                  <div className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-700">
+                  <div
+                    className="
+                      mt-5
+                      rounded-xl
+                      border
+                      border-red-200
+                      bg-red-50
+                      p-4
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        items-start
+                        gap-3
+                      "
+                    >
+                      <div
+                        className="
+                          flex
+                          h-9
+                          w-9
+                          shrink-0
+                          items-center
+                          justify-center
+                          rounded-xl
+                          bg-red-100
+                          text-red-700
+                        "
+                      >
                         !
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-sm font-semibold text-red-800">
+                        <div
+                          className="
+                            text-sm
+                            font-semibold
+                            text-red-800
+                          "
+                        >
                           {isArabic
                             ? 'تم رفض التكليف'
                             : 'Assignment rejected'}
                         </div>
 
-                        <p className="mt-1 text-sm text-red-700">
+                        <p
+                          className="
+                            mt-1
+                            text-sm
+                            text-red-700
+                          "
+                        >
                           {latestRejectedAssignment
                             .assignee
                             ?.fullName ||
                             'User'}
                         </p>
 
-
-                        {latestRejectedAssignment.rejectionReason && (
-                          <div className="mt-3 rounded-lg bg-white/60 p-3">
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-red-500">
+                        {latestRejectedAssignment
+                          .rejectionReason && (
+                          <div
+                            className="
+                              mt-3
+                              rounded-lg
+                              bg-white/70
+                              p-3
+                            "
+                          >
+                            <div
+                              className="
+                                text-[11px]
+                                font-semibold
+                                uppercase
+                                tracking-wide
+                                text-red-500
+                              "
+                            >
                               {isArabic
                                 ? 'سبب الرفض'
                                 : 'Rejection reason'}
                             </div>
 
-                            <p className="mt-1 text-sm leading-6 text-red-700">
+                            <p
+                              className="
+                                mt-1
+                                text-sm
+                                leading-6
+                                text-red-700
+                              "
+                            >
                               {
                                 latestRejectedAssignment.rejectionReason
                               }
@@ -1494,37 +2893,50 @@ function TaskDetailContent() {
 
 
               {/*
-               * ==============================================
+               * =================================================
                * REASSIGN
-               *
-               * ONLY renders when:
-               *
-               * - previous Assignment was rejected
-               *
-               * OR
-               *
-               * - PendingAcceptance is >= 14 days old
-               * ==============================================
+               * =================================================
                */}
 
               {canReassign &&
                 assignmentToReassign && (
-                  <div className="mt-5 border-t border-slate-100 pt-5">
+                  <div
+                    className="
+                      mt-5
+                      border-t
+                      border-slate-100
+                      pt-5
+                    "
+                  >
                     <div className="mb-4">
                       <label className="label">
                         {latestRejectedAssignment
-                          ? isArabic
-                            ? 'إعادة تكليف المهمة المرفوضة'
-                            : 'Reassign rejected task'
-                          : isArabic
-                            ? 'إعادة تكليف المهمة غير المجاب عليها'
-                            : 'Reassign unanswered task'}
+                          ? (
+                              isArabic
+                                ? 'إعادة تكليف المهمة المرفوضة'
+                                : 'Reassign rejected task'
+                            )
+                          : (
+                              isArabic
+                                ? 'إعادة تكليف المهمة غير المجاب عليها'
+                                : 'Reassign unanswered task'
+                            )}
                       </label>
-
 
                       {!latestRejectedAssignment &&
                         stalePendingAssignment && (
-                          <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-700">
+                          <div
+                            className="
+                              mt-2
+                              rounded-lg
+                              bg-amber-50
+                              px-3
+                              py-2
+                              text-xs
+                              leading-5
+                              text-amber-700
+                            "
+                          >
                             {isArabic
                               ? `لم يقبل أو يرفض المستخدم هذه المهمة منذ ${Math.floor(
                                   assignmentAgeInDays(
@@ -1541,7 +2953,14 @@ function TaskDetailContent() {
                     </div>
 
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
+                    <div
+                      className="
+                        flex
+                        flex-col
+                        gap-2
+                        sm:flex-row
+                      "
+                    >
                       <select
                         className="input"
                         value={
@@ -1589,10 +3008,12 @@ function TaskDetailContent() {
                           )}
                       </select>
 
-
                       <button
                         type="button"
-                        className="btn-primary shrink-0"
+                        className="
+                          btn-primary
+                          shrink-0
+                        "
                         disabled={
                           !reassignUserId ||
                           assignmentBusy
@@ -1602,42 +3023,69 @@ function TaskDetailContent() {
                         }
                       >
                         {assignmentBusy
-                          ? isArabic
-                            ? 'جاري إعادة التكليف…'
-                            : 'Reassigning…'
-                          : isArabic
-                            ? 'إعادة تكليف'
-                            : 'Reassign'}
+                          ? (
+                              isArabic
+                                ? 'جاري إعادة التكليف…'
+                                : 'Reassigning…'
+                            )
+                          : (
+                              isArabic
+                                ? 'إعادة تكليف'
+                                : 'Reassign'
+                            )}
                       </button>
                     </div>
 
 
-                    <p className="mt-2 text-xs text-slate-400">
+                    <p
+                      className="
+                        mt-2
+                        text-xs
+                        text-slate-400
+                      "
+                    >
                       {isArabic
                         ? 'سيبقى التكليف السابق محفوظاً في السجل، وسيحصل المستخدم الجديد على تكليف جديد بانتظار القبول.'
-                        : 'The previous assignment remains in the history. The new user receives a new Pending Acceptance assignment.'}
+                        : 'The previous assignment remains in history. The new user receives a new Pending Acceptance assignment.'}
                     </p>
                   </div>
                 )}
 
 
               {/*
-               * ==============================================
-               * HISTORY
-               * ==============================================
+               * =================================================
+               * ASSIGNMENT HISTORY
+               * =================================================
                */}
 
               {assignments.length >
                 0 && (
-                <div className="mt-6 border-t border-slate-100 pt-5">
-                  <h3 className="text-sm font-semibold text-slate-800">
+                <div
+                  className="
+                    mt-6
+                    border-t
+                    border-slate-100
+                    pt-5
+                  "
+                >
+                  <h3
+                    className="
+                      text-sm
+                      font-semibold
+                      text-slate-800
+                    "
+                  >
                     {isArabic
                       ? 'سجل التكليف'
                       : 'Assignment history'}
                   </h3>
 
-
-                  <div className="mt-3 space-y-2">
+                  <div
+                    className="
+                      mt-3
+                      space-y-2
+                    "
+                  >
                     {assignments.map(
                       (
                         assignment,
@@ -1646,21 +3094,50 @@ function TaskDetailContent() {
                           key={
                             assignment.id
                           }
-                          className="rounded-xl border border-slate-100 bg-slate-50/60 px-4 py-3"
+                          className="
+                            rounded-xl
+                            border
+                            border-slate-100
+                            bg-slate-50/60
+                            px-4
+                            py-3
+                          "
                         >
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div
+                            className="
+                              flex
+                              flex-col
+                              gap-2
+                              sm:flex-row
+                              sm:items-center
+                              sm:justify-between
+                            "
+                          >
                             <div>
-                              <div className="text-sm font-medium text-slate-700">
+                              <div
+                                className="
+                                  text-sm
+                                  font-semibold
+                                  text-slate-700
+                                "
+                              >
                                 {assignment
                                   .assignee
                                   ?.fullName ||
                                   'Unknown user'}
                               </div>
 
-                              <div className="mt-1 text-xs text-slate-400">
+                              <div
+                                className="
+                                  mt-1
+                                  text-xs
+                                  text-slate-400
+                                "
+                              >
                                 {isArabic
                                   ? 'تم التكليف'
                                   : 'Assigned'}{' '}
+
                                 {formatAssignmentDate(
                                   assignment.createdAt,
                                 )}
@@ -1675,8 +3152,18 @@ function TaskDetailContent() {
                           </div>
 
 
-                          {assignment.rejectionReason && (
-                            <div className="mt-3 rounded-lg bg-red-50 p-3 text-xs text-red-600">
+                          {assignment
+                            .rejectionReason && (
+                            <div
+                              className="
+                                mt-3
+                                rounded-lg
+                                bg-red-50
+                                p-3
+                                text-xs
+                                text-red-600
+                              "
+                            >
                               <strong>
                                 {isArabic
                                   ? 'السبب:'
@@ -1690,8 +3177,15 @@ function TaskDetailContent() {
                           )}
 
 
-                          {assignment.acceptedAt && (
-                            <div className="mt-2 text-xs text-slate-400">
+                          {assignment
+                            .acceptedAt && (
+                            <div
+                              className="
+                                mt-2
+                                text-xs
+                                text-slate-400
+                              "
+                            >
                               {isArabic
                                 ? 'تم القبول:'
                                 : 'Accepted:'}{' '}
@@ -1703,8 +3197,15 @@ function TaskDetailContent() {
                           )}
 
 
-                          {assignment.rejectedAt && (
-                            <div className="mt-2 text-xs text-slate-400">
+                          {assignment
+                            .rejectedAt && (
+                            <div
+                              className="
+                                mt-2
+                                text-xs
+                                text-slate-400
+                              "
+                            >
                               {isArabic
                                 ? 'تم الرفض:'
                                 : 'Rejected:'}{' '}
@@ -1730,24 +3231,50 @@ function TaskDetailContent() {
            * ==================================================
            */}
 
-          <section className="card p-6">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+              sm:p-6
+            "
+          >
             <SectionTitle
               title={
                 isArabic
                   ? 'سير المهمة'
                   : 'Task Workflow'
               }
+              description={
+                isArabic
+                  ? 'حدّث حالة المهمة حسب تقدم العمل.'
+                  : 'Move the task through its workflow as work progresses.'
+              }
             />
 
 
             {currentAssignment?.status ===
               'PendingAcceptance' && (
-                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
-                  {isArabic
-                    ? 'المهمة تنتظر قبول المستخدم. عند القبول ستنتقل تلقائياً إلى In Progress.'
-                    : 'The task is waiting for the assigned user to accept it. Acceptance automatically moves the task to In Progress.'}
-                </div>
-              )}
+              <div
+                className="
+                  mt-4
+                  rounded-xl
+                  border
+                  border-amber-200
+                  bg-amber-50
+                  p-4
+                  text-sm
+                  leading-6
+                  text-amber-700
+                "
+              >
+                {isArabic
+                  ? 'المهمة تنتظر قبول المستخدم. عند القبول ستنتقل تلقائياً إلى In Progress.'
+                  : 'The task is waiting for the assigned user to accept it. Acceptance automatically moves the task to In Progress.'}
+              </div>
+            )}
 
 
             {task.needsApproval &&
@@ -1755,7 +3282,19 @@ function TaskDetailContent() {
                 'InProgress' &&
               task.approvalStatus !==
                 'Approved' && (
-                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-700">
+                <div
+                  className="
+                    mt-4
+                    rounded-xl
+                    border
+                    border-blue-200
+                    bg-blue-50
+                    p-4
+                    text-sm
+                    leading-6
+                    text-blue-700
+                  "
+                >
                   {isArabic
                     ? 'هذه المهمة تحتاج موافقة. عندما يصبح العمل جاهزاً انقلها إلى Pending Approval.'
                     : 'This task requires approval. When the work is ready, move it to Pending Approval.'}
@@ -1763,9 +3302,83 @@ function TaskDetailContent() {
               )}
 
 
+            {openSubtaskCount >
+              0 && (
+              <div
+                className="
+                  mt-4
+                  rounded-xl
+                  border
+                  border-violet-200
+                  bg-violet-50
+                  p-4
+                "
+              >
+                <div
+                  className="
+                    flex
+                    items-start
+                    gap-3
+                  "
+                >
+                  <div
+                    className="
+                      flex
+                      h-9
+                      w-9
+                      shrink-0
+                      items-center
+                      justify-center
+                      rounded-xl
+                      bg-violet-100
+                      font-semibold
+                      text-violet-700
+                    "
+                  >
+                    ⑂
+                  </div>
+
+                  <div>
+                    <div
+                      className="
+                        text-sm
+                        font-semibold
+                        text-violet-800
+                      "
+                    >
+                      {isArabic
+                        ? 'يوجد عمل فرعي غير مكتمل'
+                        : 'Subtasks are still open'}
+                    </div>
+
+                    <p
+                      className="
+                        mt-1
+                        text-xs
+                        leading-5
+                        text-violet-700
+                      "
+                    >
+                      {isArabic
+                        ? `يوجد ${openSubtaskCount} مهام فرعية مفتوحة. يجب إكمالها قبل إرسال المهمة للموافقة أو إكمال المهمة الرئيسية.`
+                        : `${openSubtaskCount} subtask${openSubtaskCount === 1 ? ' is' : 's are'} still open. Finish them before submitting for approval or completing the parent task.`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+
             {nextStatuses.length >
               0 ? (
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div
+                className="
+                  mt-5
+                  flex
+                  flex-wrap
+                  gap-2
+                "
+              >
                 {nextStatuses.map(
                   (
                     nextStatus,
@@ -1827,7 +3440,6 @@ function TaskDetailContent() {
                           return;
                         }
 
-
                         withFeedback(
                           () =>
                             TasksApi.changeStatus(
@@ -1837,18 +3449,70 @@ function TaskDetailContent() {
                         );
                       }}
                     >
-                      {isArabic
-                        ? `انتقال إلى ${nextStatus}`
-                        : `Move to ${nextStatus}`}
+                      {nextStatus ===
+                      'InProgress'
+                        ? (
+                            isArabic
+                              ? 'بدء العمل'
+                              : 'Start work'
+                          )
+                        : nextStatus ===
+                          'PendingApproval'
+                          ? (
+                              isArabic
+                                ? 'إرسال للموافقة'
+                                : 'Submit for approval'
+                            )
+                          : nextStatus ===
+                            'Completed'
+                            ? (
+                                isArabic
+                                  ? 'إكمال المهمة'
+                                  : 'Complete task'
+                              )
+                            : nextStatus ===
+                              'Archived'
+                              ? (
+                                  isArabic
+                                    ? 'أرشفة المهمة'
+                                    : 'Archive task'
+                                )
+                              : nextStatus ===
+                                'Finished'
+                                ? (
+                                    isArabic
+                                      ? 'إنهاء المهمة'
+                                      : 'Finish task'
+                                  )
+                                : (
+                                    isArabic
+                                      ? `انتقال إلى ${nextStatus}`
+                                      : `Move to ${nextStatus}`
+                                  )}
                     </button>
                   ),
                 )}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-slate-400">
-                {isArabic
-                  ? 'لا توجد إجراءات متاحة حالياً.'
-                  : 'No workflow actions are currently available.'}
+              <p
+                className="
+                  mt-4
+                  text-sm
+                  text-slate-400
+                "
+              >
+                {openSubtaskCount >
+                0
+                  ? (
+                      isArabic
+                        ? 'أكمل المهام الفرعية المفتوحة لإتاحة الخطوة التالية.'
+                        : 'Complete the open subtasks to unlock the next workflow action.'
+                    )
+                  : (
+                      isArabic
+                        ? 'لا توجد إجراءات متاحة حالياً.'
+                        : 'No workflow actions are currently available.'
+                    )}
               </p>
             )}
           </section>
@@ -1861,25 +3525,65 @@ function TaskDetailContent() {
            */}
 
           {task.needsApproval && (
-            <section className="card p-6">
+            <section
+              className="
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                p-5
+                sm:p-6
+              "
+            >
               <SectionTitle
                 title={
                   isArabic
                     ? 'الموافقة'
                     : 'Approval'
                 }
+                description={
+                  isArabic
+                    ? 'معلومات حالة الموافقة ومسؤول الموافقة.'
+                    : 'Approval status and decision information.'
+                }
               />
 
 
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <div className="text-xs text-slate-400">
+              <div
+                className="
+                  mt-5
+                  grid
+                  gap-3
+                  sm:grid-cols-2
+                "
+              >
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-slate-100
+                    bg-slate-50
+                    p-4
+                  "
+                >
+                  <div
+                    className="
+                      text-xs
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? 'الموافق'
                       : 'Approver'}
                   </div>
 
-                  <div className="mt-1 font-medium text-slate-700">
+                  <div
+                    className="
+                      mt-1
+                      font-semibold
+                      text-slate-700
+                    "
+                  >
                     {task.approver
                       ?.fullName ||
                       '—'}
@@ -1887,8 +3591,21 @@ function TaskDetailContent() {
                 </div>
 
 
-                <div className="rounded-xl bg-slate-50 p-4">
-                  <div className="text-xs text-slate-400">
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-slate-100
+                    bg-slate-50
+                    p-4
+                  "
+                >
+                  <div
+                    className="
+                      text-xs
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? 'حالة الموافقة'
                       : 'Approval status'}
@@ -1908,14 +3625,38 @@ function TaskDetailContent() {
               {task.approvalStatus ===
                 'Rejected' &&
                 task.rejectionReason && (
-                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
-                    <div className="text-xs font-semibold uppercase text-red-500">
+                  <div
+                    className="
+                      mt-4
+                      rounded-xl
+                      border
+                      border-red-200
+                      bg-red-50
+                      p-4
+                    "
+                  >
+                    <div
+                      className="
+                        text-xs
+                        font-semibold
+                        uppercase
+                        tracking-wide
+                        text-red-500
+                      "
+                    >
                       {isArabic
                         ? 'سبب الرفض'
                         : 'Rejection reason'}
                     </div>
 
-                    <p className="mt-2 text-sm text-red-700">
+                    <p
+                      className="
+                        mt-2
+                        text-sm
+                        leading-6
+                        text-red-700
+                      "
+                    >
                       {
                         task.rejectionReason
                       }
@@ -1924,85 +3665,119 @@ function TaskDetailContent() {
                 )}
 
 
-              {canDecideApproval && (
-                <div className="mt-5 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={() =>
-                      withFeedback(
-                        () =>
-                          TasksApi.decideApproval(
-                            task.id,
+              {canDecideApproval &&
+                openSubtaskCount >
+                  0 && (
+                  <div
+                    className="
+                      mt-4
+                      rounded-xl
+                      border
+                      border-amber-200
+                      bg-amber-50
+                      px-4
+                      py-3
+                      text-sm
+                      text-amber-700
+                    "
+                  >
+                    {isArabic
+                      ? 'لا يمكن الموافقة النهائية بينما توجد مهام فرعية مفتوحة.'
+                      : 'Final approval is blocked while there are open subtasks.'}
+                  </div>
+                )}
+
+
+              {canDecideApproval &&
+                openSubtaskCount ===
+                  0 && (
+                  <div
+                    className="
+                      mt-5
+                      flex
+                      flex-wrap
+                      gap-2
+                    "
+                  >
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() =>
+                        withFeedback(
+                          () =>
+                            TasksApi.decideApproval(
+                              task.id,
+                              true,
+                            ),
+
+                          isArabic
+                            ? 'تمت الموافقة على المهمة.'
+                            : 'Task approved.',
+                        )
+                      }
+                    >
+                      {isArabic
+                        ? 'موافقة'
+                        : 'Approve'}
+                    </button>
+
+
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      onClick={() =>
+                        setReasonModal({
+                          title:
+                            isArabic
+                              ? 'رفض الموافقة'
+                              : 'Reject approval',
+
+                          description:
+                            isArabic
+                              ? 'وضح سبب رفض المهمة.'
+                              : 'Explain why the task is being rejected.',
+
+                          minLength:
+                            5,
+
+                          confirmLabel:
+                            isArabic
+                              ? 'رفض'
+                              : 'Reject',
+
+                          danger:
                             true,
-                          ),
-                        isArabic
-                          ? 'تمت الموافقة على المهمة.'
-                          : 'Task approved.',
-                      )
-                    }
-                  >
-                    {isArabic
-                      ? 'موافقة'
-                      : 'Approve'}
-                  </button>
 
+                          onConfirm:
+                            (
+                              reason,
+                            ) => {
+                              setReasonModal(
+                                null,
+                              );
 
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    onClick={() =>
-                      setReasonModal({
-                        title:
-                          isArabic
-                            ? 'رفض الموافقة'
-                            : 'Reject approval',
+                              withFeedback(
+                                () =>
+                                  TasksApi.decideApproval(
+                                    task.id,
+                                    false,
+                                    reason,
+                                  ),
 
-                        description:
-                          isArabic
-                            ? 'وضح سبب رفض المهمة.'
-                            : 'Explain why the task is being rejected.',
-
-                        minLength:
-                          5,
-
-                        confirmLabel:
-                          isArabic
-                            ? 'رفض'
-                            : 'Reject',
-
-                        danger:
-                          true,
-
-                        onConfirm:
-                          (
-                            reason,
-                          ) => {
-                            setReasonModal(
-                              null,
-                            );
-
-                            withFeedback(
-                              () =>
-                                TasksApi.decideApproval(
-                                  task.id,
-                                  false,
-                                  reason,
-                                ),
-                              isArabic
-                                ? 'تم رفض المهمة وإعادتها إلى In Progress.'
-                                : 'Task rejected and returned to In Progress.',
-                            );
-                          },
-                      })
-                    }
-                  >
-                    {isArabic
-                      ? 'رفض'
-                      : 'Reject'}
-                  </button>
-                </div>
-              )}
+                                isArabic
+                                  ? 'تم رفض المهمة وإعادتها إلى In Progress.'
+                                  : 'Task rejected and returned to In Progress.',
+                              );
+                            },
+                        })
+                      }
+                    >
+                      {isArabic
+                        ? 'رفض'
+                        : 'Reject'}
+                    </button>
+                  </div>
+                )}
             </section>
           )}
 
@@ -2013,7 +3788,16 @@ function TaskDetailContent() {
            * ==================================================
            */}
 
-          <section className="card p-6">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+              sm:p-6
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -2023,54 +3807,138 @@ function TaskDetailContent() {
               description={
                 comments.length ===
                 0
-                  ? isArabic
-                    ? 'لا توجد تعليقات بعد.'
-                    : 'No comments yet.'
-                  : `${comments.length} ${
-                      comments.length ===
-                      1
-                        ? 'comment'
-                        : 'comments'
-                    }`
+                  ? (
+                      isArabic
+                        ? 'لا توجد تعليقات بعد.'
+                        : 'No comments yet.'
+                    )
+                  : (
+                      isArabic
+                        ? `${comments.length} تعليق`
+                        : `${comments.length} ${
+                            comments.length ===
+                            1
+                              ? 'comment'
+                              : 'comments'
+                          }`
+                    )
               }
             />
 
 
             {comments.length >
               0 && (
-              <div className="mt-4 space-y-3">
+              <div
+                className="
+                  mt-5
+                  space-y-3
+                "
+              >
                 {comments.map(
                   (
                     comment,
                   ) => (
-                    <div
+                    <article
                       key={
                         comment.id
                       }
-                      className="rounded-xl border border-slate-100 bg-slate-50/60 p-4"
+                      className="
+                        rounded-xl
+                        border
+                        border-slate-100
+                        bg-slate-50/60
+                        p-4
+                      "
                     >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="text-sm font-medium text-slate-700">
+                      <div
+                        className="
+                          flex
+                          items-start
+                          gap-3
+                        "
+                      >
+                        <div
+                          className="
+                            flex
+                            h-9
+                            w-9
+                            shrink-0
+                            items-center
+                            justify-center
+                            rounded-xl
+                            bg-white
+                            text-xs
+                            font-bold
+                            text-brand-700
+                            shadow-sm
+                          "
+                        >
                           {comment.author
-                            ?.fullName ||
-                            'User'}
+                            ?.fullName
+                            ?.charAt(
+                              0,
+                            )
+                            .toUpperCase() ||
+                            '?'}
                         </div>
 
-                        <div className="text-xs text-slate-400">
-                          {new Date(
-                            comment.createdAt,
-                          ).toLocaleString(
-                            locale,
-                          )}
+                        <div
+                          className="
+                            min-w-0
+                            flex-1
+                          "
+                        >
+                          <div
+                            className="
+                              flex
+                              flex-wrap
+                              items-center
+                              justify-between
+                              gap-3
+                            "
+                          >
+                            <div
+                              className="
+                                text-sm
+                                font-semibold
+                                text-slate-700
+                              "
+                            >
+                              {comment.author
+                                ?.fullName ||
+                                'User'}
+                            </div>
+
+                            <div
+                              className="
+                                text-xs
+                                text-slate-400
+                              "
+                            >
+                              {new Date(
+                                comment.createdAt,
+                              ).toLocaleString(
+                                locale,
+                              )}
+                            </div>
+                          </div>
+
+                          <p
+                            className="
+                              mt-2
+                              whitespace-pre-wrap
+                              text-sm
+                              leading-6
+                              text-slate-600
+                            "
+                          >
+                            {
+                              comment.content
+                            }
+                          </p>
                         </div>
                       </div>
-
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
-                        {
-                          comment.content
-                        }
-                      </p>
-                    </div>
+                    </article>
                   ),
                 )}
               </div>
@@ -2080,34 +3948,25 @@ function TaskDetailContent() {
             {task.status !==
               'Archived' && (
               <form
-                className="mt-5 flex gap-2"
-                onSubmit={(
-                  event,
-                ) => {
-                  event.preventDefault();
-
-                  if (
-                    !newComment.trim()
-                  ) {
-                    return;
-                  }
-
-                  withFeedback(
-                    async () => {
-                      await CommentsApi.add(
-                        task.id,
-                        newComment.trim(),
-                      );
-
-                      setNewComment(
-                        '',
-                      );
-                    },
-                  );
-                }}
+                className="
+                  mt-5
+                  rounded-xl
+                  border
+                  border-slate-200
+                  bg-slate-50/50
+                  p-3
+                "
+                onSubmit={
+                  submitComment
+                }
               >
-                <input
-                  className="input"
+                <textarea
+                  className="
+                    input
+                    min-h-[90px]
+                    resize-y
+                    bg-white
+                  "
                   value={
                     newComment
                   }
@@ -2125,14 +3984,34 @@ function TaskDetailContent() {
                   }
                 />
 
-                <button
-                  type="submit"
-                  className="btn-primary shrink-0"
+                <div
+                  className="
+                    mt-2
+                    flex
+                    justify-end
+                  "
                 >
-                  {isArabic
-                    ? 'إرسال'
-                    : 'Post'}
-                </button>
+                  <button
+                    type="submit"
+                    className="btn-primary"
+                    disabled={
+                      commentBusy ||
+                      !newComment.trim()
+                    }
+                  >
+                    {commentBusy
+                      ? (
+                          isArabic
+                            ? 'جاري الإرسال…'
+                            : 'Posting…'
+                        )
+                      : (
+                          isArabic
+                            ? 'إرسال'
+                            : 'Post comment'
+                        )}
+                  </button>
+                </div>
               </form>
             )}
           </section>
@@ -2145,13 +4024,29 @@ function TaskDetailContent() {
          * ====================================================
          */}
 
-        <aside className="space-y-6">
-
+        <aside
+          className="
+            space-y-5
+            xl:sticky
+            xl:top-[88px]
+            xl:self-start
+          "
+        >
           {/*
+           * ==================================================
            * STATUS
+           * ==================================================
            */}
 
-          <section className="card p-5">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -2161,7 +4056,17 @@ function TaskDetailContent() {
             />
 
 
-            <div className="mt-5 rounded-xl bg-slate-50 p-4 text-center">
+            <div
+              className="
+                mt-5
+                rounded-xl
+                border
+                border-slate-100
+                bg-slate-50
+                p-4
+                text-center
+              "
+            >
               <StatusBadge
                 value={
                   task.status
@@ -2170,7 +4075,14 @@ function TaskDetailContent() {
               />
 
               {overdue && (
-                <div className="mt-2 text-xs font-medium text-red-600">
+                <div
+                  className="
+                    mt-2
+                    text-xs
+                    font-semibold
+                    text-red-600
+                  "
+                >
                   {isArabic
                     ? 'تجاوزت الموعد النهائي'
                     : 'Past deadline'}
@@ -2179,7 +4091,13 @@ function TaskDetailContent() {
             </div>
 
 
-            <div className="mt-4 divide-y divide-slate-100">
+            <div
+              className="
+                mt-4
+                divide-y
+                divide-slate-100
+              "
+            >
               <InfoRow
                 label={
                   isArabic
@@ -2195,7 +4113,6 @@ function TaskDetailContent() {
                 />
               </InfoRow>
 
-
               <InfoRow
                 label={
                   isArabic
@@ -2210,15 +4127,41 @@ function TaskDetailContent() {
                   listType="task_type"
                 />
               </InfoRow>
+
+              {!isSubtask &&
+                subtasks.length >
+                  0 && (
+                  <InfoRow
+                    label={
+                      isArabic
+                        ? 'الخطوات'
+                        : 'Subtasks'
+                    }
+                  >
+                    {closedSubtaskCount}
+                    {' / '}
+                    {subtasks.length}
+                  </InfoRow>
+                )}
             </div>
           </section>
 
 
           {/*
+           * ==================================================
            * PEOPLE
+           * ==================================================
            */}
 
-          <section className="card p-5">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -2228,7 +4171,13 @@ function TaskDetailContent() {
             />
 
 
-            <div className="mt-3 divide-y divide-slate-100">
+            <div
+              className="
+                mt-3
+                divide-y
+                divide-slate-100
+              "
+            >
               <InfoRow
                 label={
                   isArabic
@@ -2239,9 +4188,11 @@ function TaskDetailContent() {
                 {currentAssignment
                   ?.assignee
                   ?.fullName ||
-                  (isArabic
-                    ? 'غير مسندة'
-                    : 'Unassigned')}
+                  (
+                    isArabic
+                      ? 'غير مسندة'
+                      : 'Unassigned'
+                  )}
               </InfoRow>
 
 
@@ -2295,10 +4246,20 @@ function TaskDetailContent() {
 
 
           {/*
+           * ==================================================
            * ORGANIZATION
+           * ==================================================
            */}
 
-          <section className="card p-5">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -2308,7 +4269,13 @@ function TaskDetailContent() {
             />
 
 
-            <div className="mt-3 divide-y divide-slate-100">
+            <div
+              className="
+                mt-3
+                divide-y
+                divide-slate-100
+              "
+            >
               <InfoRow
                 label={
                   isArabic
@@ -2375,18 +4342,66 @@ function TaskDetailContent() {
                 }
               >
                 {task.project
-                  ?.name ||
-                  '—'}
+                  ?.name ? (
+                  <Link
+                    href={`/projects/${task.project.id}`}
+                    className="
+                      text-brand-700
+                      hover:underline
+                    "
+                  >
+                    {
+                      task.project.name
+                    }
+                  </Link>
+                ) : (
+                  '—'
+                )}
               </InfoRow>
+
+
+              {isSubtask &&
+                task.parentTask && (
+                  <InfoRow
+                    label={
+                      isArabic
+                        ? 'المهمة الرئيسية'
+                        : 'Parent task'
+                    }
+                  >
+                    <Link
+                      href={`/tasks/${task.parentTask.id}`}
+                      className="
+                        text-brand-700
+                        hover:underline
+                      "
+                    >
+                      {languageTaskTitle(
+                        task.parentTask,
+                        isArabic,
+                      )}
+                    </Link>
+                  </InfoRow>
+                )}
             </div>
           </section>
 
 
           {/*
+           * ==================================================
            * SCHEDULE
+           * ==================================================
            */}
 
-          <section className="card p-5">
+          <section
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              p-5
+            "
+          >
             <SectionTitle
               title={
                 isArabic
@@ -2396,7 +4411,13 @@ function TaskDetailContent() {
             />
 
 
-            <div className="mt-3 divide-y divide-slate-100">
+            <div
+              className="
+                mt-3
+                divide-y
+                divide-slate-100
+              "
+            >
               <InfoRow
                 label={
                   isArabic
@@ -2404,8 +4425,10 @@ function TaskDetailContent() {
                     : 'Start'
                 }
               >
-                {task.startDate ||
-                  '—'}
+                {formatDate(
+                  task.startDate,
+                  locale,
+                )}
               </InfoRow>
 
 
@@ -2419,12 +4442,14 @@ function TaskDetailContent() {
                 <span
                   className={
                     overdue
-                      ? 'text-red-600'
+                      ? 'font-semibold text-red-600'
                       : ''
                   }
                 >
-                  {task.deadlineDate ||
-                    '—'}
+                  {formatDate(
+                    task.deadlineDate,
+                    locale,
+                  )}
                 </span>
               </InfoRow>
 
@@ -2436,24 +4461,31 @@ function TaskDetailContent() {
                     : 'Actual end'
                 }
               >
-                {task.actualEndDate
-                  ? new Date(
-                      task.actualEndDate,
-                    ).toLocaleDateString(
-                      locale,
-                    )
-                  : '—'}
+                {formatDate(
+                  task.actualEndDate,
+                  locale,
+                )}
               </InfoRow>
             </div>
           </section>
 
 
           {/*
+           * ==================================================
            * BUDGET
+           * ==================================================
            */}
 
           {task.needsBudget && (
-            <section className="card p-5">
+            <section
+              className="
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                p-5
+              "
+            >
               <SectionTitle
                 title={
                   isArabic
@@ -2462,15 +4494,35 @@ function TaskDetailContent() {
                 }
               />
 
-
-              <div className="mt-4 rounded-xl bg-slate-50 p-4">
-                <div className="text-xs text-slate-400">
+              <div
+                className="
+                  mt-4
+                  rounded-xl
+                  border
+                  border-slate-100
+                  bg-slate-50
+                  p-4
+                "
+              >
+                <div
+                  className="
+                    text-xs
+                    text-slate-400
+                  "
+                >
                   {isArabic
                     ? 'النطاق'
                     : 'Range'}
                 </div>
 
-                <div className="mt-1 text-lg font-semibold text-slate-800">
+                <div
+                  className="
+                    mt-1
+                    text-lg
+                    font-semibold
+                    text-slate-800
+                  "
+                >
                   {task.budgetMin ||
                     '—'}
                   {' – '}
@@ -2482,6 +4534,124 @@ function TaskDetailContent() {
               </div>
             </section>
           )}
+
+
+          {/*
+           * ==================================================
+           * WORK BREAKDOWN SUMMARY
+           * ==================================================
+           */}
+
+          {!isSubtask &&
+            subtasks.length >
+              0 && (
+              <section
+                className="
+                  rounded-2xl
+                  border
+                  border-slate-200
+                  bg-white
+                  p-5
+                "
+              >
+                <SectionTitle
+                  title={
+                    isArabic
+                      ? 'تقدم العمل'
+                      : 'Work progress'
+                  }
+                />
+
+                <div
+                  className="
+                    mt-5
+                    flex
+                    items-end
+                    justify-between
+                  "
+                >
+                  <div>
+                    <div
+                      className="
+                        text-2xl
+                        font-semibold
+                        tracking-tight
+                        text-slate-900
+                      "
+                    >
+                      {subtaskProgress}%
+                    </div>
+
+                    <div
+                      className="
+                        mt-1
+                        text-xs
+                        text-slate-400
+                      "
+                    >
+                      {closedSubtaskCount}{' / '}
+                      {subtasks.length}{' '}
+
+                      {isArabic
+                        ? 'مكتملة'
+                        : 'completed'}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`
+                      rounded-full
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-semibold
+                      ${
+                        openSubtaskCount ===
+                        0
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
+                      }
+                    `}
+                  >
+                    {openSubtaskCount ===
+                    0
+                      ? (
+                          isArabic
+                            ? 'جاهزة للإنهاء'
+                            : 'Ready to finish'
+                        )
+                      : (
+                          isArabic
+                            ? `${openSubtaskCount} متبقية`
+                            : `${openSubtaskCount} remaining`
+                        )}
+                  </div>
+                </div>
+
+                <div
+                  className="
+                    mt-4
+                    h-2
+                    overflow-hidden
+                    rounded-full
+                    bg-slate-100
+                  "
+                >
+                  <div
+                    className="
+                      h-full
+                      rounded-full
+                      bg-brand-500
+                      transition-all
+                    "
+                    style={{
+                      width:
+                        `${subtaskProgress}%`,
+                    }}
+                  />
+                </div>
+              </section>
+            )}
         </aside>
       </div>
 
@@ -2536,6 +4706,12 @@ function TaskDetailContent() {
   );
 }
 
+
+/*
+ * ============================================================
+ * PAGE
+ * ============================================================
+ */
 
 export default function TaskDetailPage() {
   return (

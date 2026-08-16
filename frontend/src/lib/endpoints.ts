@@ -6,6 +6,7 @@ import type {
   Notification,
   Paginated,
   Project,
+  Role,
   Setting,
   SettingType,
   SettingValueType,
@@ -403,16 +404,15 @@ export const BrandingApi = {
 
 export const UsersApi = {
   list: (
-    params:
-      Record<
-        string,
-        string
-      > = {},
+    params: Record<string, string> = {},
   ) =>
     api<Paginated<User>>(
-      `/users?${new URLSearchParams(
-        params,
-      )}`,
+      `/users?${new URLSearchParams(params)}`,
+    ),
+
+  roles: () =>
+    api<Role[]>(
+      '/users/roles',
     ),
 
   get: (
@@ -528,7 +528,6 @@ export const UsersApi = {
       },
     ),
 };
-
 /*
  * ============================================================
  * PROJECTS
@@ -857,21 +856,31 @@ export const TasksApi = {
 
 export const AssignmentsApi = {
   list: (
-    taskId: string,
+    taskId:
+      string,
   ) =>
-    api(
+    api<
+      TaskAssignment[]
+    >(
       `/tasks/${taskId}/assignments`,
     ),
 
+
   assign: (
-    taskId: string,
-    assigneeId: string,
-    dueDate?: string,
+    taskId:
+      string,
+
+    assigneeId:
+      string,
+
+    dueDate?:
+      string,
   ) =>
-    api(
+    api<TaskAssignment>(
       `/tasks/${taskId}/assignments`,
       {
-        method: 'POST',
+        method:
+          'POST',
 
         body: {
           assigneeId,
@@ -880,24 +889,32 @@ export const AssignmentsApi = {
       },
     ),
 
+
   accept: (
-    id: string,
+    id:
+      string,
   ) =>
-    api(
+    api<TaskAssignment>(
       `/assignments/${id}/accept`,
       {
-        method: 'PATCH',
+        method:
+          'PATCH',
       },
     ),
 
+
   reject: (
-    id: string,
-    reason: string,
+    id:
+      string,
+
+    reason:
+      string,
   ) =>
-    api(
+    api<TaskAssignment>(
       `/assignments/${id}/reject`,
       {
-        method: 'PATCH',
+        method:
+          'PATCH',
 
         body: {
           reason,
@@ -905,15 +922,22 @@ export const AssignmentsApi = {
       },
     ),
 
+
   reassign: (
-    id: string,
-    newAssigneeId: string,
-    dueDate?: string,
+    id:
+      string,
+
+    newAssigneeId:
+      string,
+
+    dueDate?:
+      string,
   ) =>
-    api(
+    api<TaskAssignment>(
       `/assignments/${id}/reassign`,
       {
-        method: 'POST',
+        method:
+          'POST',
 
         body: {
           newAssigneeId,

@@ -43,6 +43,7 @@ import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
 import { SettingType } from '../../shared/enums/setting-type.enum';
 import { AssignmentStatus } from '../../shared/enums/assignment-status.enum';
 
+
 /*
  * ============================================================
  * BUILT-IN TASK WORKFLOW
@@ -91,21 +92,47 @@ const ALLOWED_TRANSITIONS: Record<
   [TaskStatus.ARCHIVED]: [],
 };
 
+
+/*
+ * ============================================================
+ * TASK DETAIL RELATIONS
+ * ============================================================
+ *
+ * Include enough information for:
+ *
+ * - Parent Task navigation
+ * - Sub-task list
+ * - Child assignee display
+ * - Assignment acceptance state
+ * - Ratings / comments / attachments
+ * ============================================================
+ */
+
 const TASK_RELATIONS = [
   'branch',
   'department',
   'project',
+
   'assignedTo',
   'createdBy',
   'approver',
+
   'parentTask',
+  'parentTask.assignedTo',
+  'parentTask.createdBy',
+
   'subTasks',
+  'subTasks.assignedTo',
+  'subTasks.createdBy',
+
   'assignments',
   'assignments.assignee',
+
   'comments',
   'attachments',
   'ratings',
 ];
+
 
 /*
  * ============================================================
@@ -145,6 +172,7 @@ export class TasksService {
     private readonly projectsService: ProjectsService,
   ) {}
 
+
   /*
    * ==========================================================
    * VALIDATION HELPERS
@@ -171,6 +199,7 @@ export class TasksService {
       );
     }
   }
+
 
   private async assertActiveSettingById(
     type: SettingType,
@@ -200,6 +229,7 @@ export class TasksService {
     return setting;
   }
 
+
   private async assertUsableProject(
     projectId: string,
   ): Promise<ProjectEntity> {
@@ -227,6 +257,7 @@ export class TasksService {
 
     return project;
   }
+
 
   private async assertValidAssignee(
     userId: string,
@@ -266,6 +297,7 @@ export class TasksService {
     return assignee;
   }
 
+
   private async assertValidApprover(
     userId: string,
   ): Promise<UserEntity> {
@@ -295,6 +327,7 @@ export class TasksService {
     return approver;
   }
 
+
   private assertAssigneeAndApproverDifferent(
     assignedToId?: string | null,
     approverId?: string | null,
@@ -310,6 +343,7 @@ export class TasksService {
     }
   }
 
+
   private assertValidDateRange(
     startDate?: string | null,
     deadlineDate?: string | null,
@@ -324,6 +358,7 @@ export class TasksService {
       );
     }
   }
+
 
   private assertValidBudgetRange(
     minimum?: string | null,
@@ -342,6 +377,7 @@ export class TasksService {
       );
     }
   }
+
 
   private assertBudgetComplete(
     needsBudget: boolean,
@@ -371,6 +407,121 @@ export class TasksService {
     );
   }
 
+
+  /*
+   * ==========================================================
+   * SUBTASK CREATION PERMISSION
+   * ==========================================================
+   *
+   * A Parent Task may be split by:
+   *
+   * - Admin
+   * - Parent Task creator
+   * - User who ACCEPTED the Parent Task assignment
+   *
+   * Hierarchy is intentionally one level:
+   *
+   * Parent
+   *   ├── Child
+   *   ├── Child
+   *   └── Child
+   *
+   * Children cannot create grandchildren.
+   * ==========================================================
+   */
+
+  private async assertCanCreateSubTask(
+    parentTask: TaskEntity,
+    actor: UserEntity,
+  ): Promise<void> {
+    /*
+     * Only one level.
+     */
+    if (
+      parentTask.parentTaskId
+    ) {
+      throw new BadRequestException(
+        'Only one level of Sub-tasks is supported',
+      );
+    }
+
+    /*
+     * No new work under closed Parent Tasks.
+     */
+    if (
+      parentTask.archivedAt ||
+      [
+        TaskStatus.COMPLETED,
+        TaskStatus.FINISHED,
+        TaskStatus.ARCHIVED,
+      ].includes(
+        parentTask.status as TaskStatus,
+      )
+    ) {
+      throw new BadRequestException(
+        'Cannot add Sub-tasks to a completed, finished, or archived Parent Task',
+      );
+    }
+
+    /*
+     * Admin.
+     */
+    if (
+      actor.role.name ===
+      RoleName.ADMIN
+    ) {
+      return;
+    }
+
+    /*
+     * Creator.
+     */
+    if (
+      parentTask.createdById ===
+      actor.id
+    ) {
+      return;
+    }
+
+    /*
+     * Accepted assignee.
+     */
+    const acceptedAssignment =
+      await this.assignmentRepo.findOne({
+        where: {
+          taskId:
+            parentTask.id,
+
+          assigneeId:
+            actor.id,
+
+          status:
+            AssignmentStatus.ACCEPTED,
+        },
+      });
+
+    if (
+      acceptedAssignment
+    ) {
+      return;
+    }
+
+    throw new ForbiddenException(
+      'Only the Parent Task creator, Admin, or the User who accepted the Parent Task may create Sub-tasks',
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * OPEN SUBTASK GUARD
+   * ==========================================================
+   *
+   * A Parent Task cannot be submitted / completed / finished
+   * while active children remain.
+   * ==========================================================
+   */
+
   private async assertNoOpenSubTasks(
     taskId: string,
   ): Promise<void> {
@@ -382,21 +533,37 @@ export class TasksService {
         },
       });
 
-    const hasIncomplete =
-      subTasks.some(
-        (subTask) =>
-          subTask.status !==
-            TaskStatus.COMPLETED &&
-          subTask.status !==
+    if (
+      subTasks.length ===
+      0
+    ) {
+      return;
+    }
+
+    const openSubTasks =
+      subTasks.filter(
+        (
+          subTask,
+        ) =>
+          ![
+            TaskStatus.COMPLETED,
             TaskStatus.FINISHED,
+            TaskStatus.ARCHIVED,
+          ].includes(
+            subTask.status as TaskStatus,
+          ),
       );
 
-    if (hasIncomplete) {
+    if (
+      openSubTasks.length >
+      0
+    ) {
       throw new ConflictException(
-        'Cannot complete a Task while it has open Sub-tasks',
+        `Cannot complete this Parent Task while ${openSubTasks.length} Sub-task(s) are still open`,
       );
     }
   }
+
 
   /*
    * ==========================================================
@@ -405,678 +572,608 @@ export class TasksService {
    */
 
   async findAll(
-  query: QueryTasksDto,
-) {
-  /*
-   * ==========================================================
-   * PAGINATION
-   * ==========================================================
-   */
-
-  const page =
-    query.page ??
-    1;
-
-
-  const limit =
-    query.limit ??
-    20;
-
-
-  /*
-   * ==========================================================
-   * VALIDATE FILTER DATE RANGES
-   * ==========================================================
-   */
-
-  if (
-    query.dueDateFrom &&
-    query.dueDateTo &&
-    query.dueDateTo <
-      query.dueDateFrom
+    query: QueryTasksDto,
   ) {
-    throw new BadRequestException(
-      'Deadline "to" date cannot be before the "from" date',
-    );
-  }
+    /*
+     * ========================================================
+     * PAGINATION
+     * ========================================================
+     */
+
+    const page =
+      query.page ??
+      1;
+
+    const limit =
+      query.limit ??
+      20;
 
-
-  if (
-    query.startDateFrom &&
-    query.startDateTo &&
-    query.startDateTo <
-      query.startDateFrom
-  ) {
-    throw new BadRequestException(
-      'Start date "to" cannot be before the "from" date',
-    );
-  }
-
-
-  if (
-    query.createdDateFrom &&
-    query.createdDateTo &&
-    query.createdDateTo <
-      query.createdDateFrom
-  ) {
-    throw new BadRequestException(
-      'Created date "to" cannot be before the "from" date',
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * BASE QUERY
-   * ==========================================================
-   */
-
-  const qb =
-    this.taskRepo
-      .createQueryBuilder(
-        'task',
-      )
-      .leftJoinAndSelect(
-        'task.branch',
-        'branch',
-      )
-      .leftJoinAndSelect(
-        'task.department',
-        'department',
-      )
-      .leftJoinAndSelect(
-        'task.project',
-        'project',
-      )
-      .leftJoinAndSelect(
-        'task.assignedTo',
-        'assignedTo',
-      )
-      .leftJoinAndSelect(
-        'task.createdBy',
-        'createdBy',
-      );
-
-
-  /*
-   * ==========================================================
-   * STATUS
-   * ==========================================================
-   */
-
-  if (
-    query.status
-  ) {
-    qb.andWhere(
-      'task.status = :status',
-      {
-        status:
-          query.status,
-      },
-    );
-  }
-
-
-  if (
-    query.excludeArchived ===
-      'true' &&
-    query.status !==
-      TaskStatus.ARCHIVED
-  ) {
-    qb.andWhere(
-      'task.status != :archivedStatus',
-      {
-        archivedStatus:
-          TaskStatus.ARCHIVED,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * CLASSIFICATION
-   * ==========================================================
-   */
-
-  if (
-    query.taskType
-  ) {
-    qb.andWhere(
-      'task.taskType = :taskType',
-      {
-        taskType:
-          query.taskType,
-      },
-    );
-  }
-
-
-  if (
-    query.priority
-  ) {
-    qb.andWhere(
-      'task.priority = :priority',
-      {
-        priority:
-          query.priority,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * ORGANIZATION
-   * ==========================================================
-   */
-
-  if (
-    query.branchId
-  ) {
-    qb.andWhere(
-      'task.branchId = :branchId',
-      {
-        branchId:
-          query.branchId,
-      },
-    );
-  }
-
-
-  if (
-    query.projectId
-  ) {
-    qb.andWhere(
-      'task.projectId = :projectId',
-      {
-        projectId:
-          query.projectId,
-      },
-    );
-  }
-
-
-  if (
-    query.departmentId
-  ) {
-    qb.andWhere(
-      'task.departmentId = :departmentId',
-      {
-        departmentId:
-          query.departmentId,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * PEOPLE
-   * ==========================================================
-   */
-
-  if (
-    query.createdById
-  ) {
-    qb.andWhere(
-      'task.createdById = :createdById',
-      {
-        createdById:
-          query.createdById,
-      },
-    );
-  }
-
-
-  /*
-   * Current assignee.
-   *
-   * Task.assignedToId is synchronized with the Assignment
-   * workflow, so this represents the current assignee.
-   */
-  if (
-    query.assignedToId
-  ) {
-    qb.andWhere(
-      'task.assignedToId = :assignedToId',
-      {
-        assignedToId:
-          query.assignedToId,
-      },
-    );
-  }
-
-
-  /*
-   * Historical / Assignment-record assignee.
-   *
-   * Keep this because other parts of the app may use it.
-   */
-  if (
-    query.assigneeId
-  ) {
-    qb
-      .innerJoin(
-        'task.assignments',
-        'assignment',
-      )
-      .andWhere(
-        'assignment.assigneeId = :assigneeId',
-        {
-          assigneeId:
-            query.assigneeId,
-        },
-      );
-  }
-
-
-  /*
-   * ==========================================================
-   * BILINGUAL SEARCH
-   * ==========================================================
-   */
-
-  if (
-    query.search?.trim()
-  ) {
-    const search =
-      `%${query.search.trim()}%`;
-
-
-    qb.andWhere(
-      `(
-        task.titleEn ILIKE :search
-        OR task.titleAr ILIKE :search
-        OR task.descriptionEn ILIKE :search
-        OR task.descriptionAr ILIKE :search
-        OR createdBy.fullName ILIKE :search
-        OR assignedTo.fullName ILIKE :search
-        OR project.name ILIKE :search
-      )`,
-      {
-        search,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * DEADLINE FILTER
-   * ==========================================================
-   */
-
-  if (
-    query.dueDateFrom
-  ) {
-    qb.andWhere(
-      'task.deadlineDate >= :dueDateFrom',
-      {
-        dueDateFrom:
-          query.dueDateFrom,
-      },
-    );
-  }
-
-
-  if (
-    query.dueDateTo
-  ) {
-    qb.andWhere(
-      'task.deadlineDate <= :dueDateTo',
-      {
-        dueDateTo:
-          query.dueDateTo,
-      },
-    );
-  }
-
-
-  /*
-   * Has / does not have a deadline.
-   */
-  if (
-    query.hasDeadline ===
-    'true'
-  ) {
-    qb.andWhere(
-      'task.deadlineDate IS NOT NULL',
-    );
-  }
-
-
-  if (
-    query.hasDeadline ===
-    'false'
-  ) {
-    qb.andWhere(
-      'task.deadlineDate IS NULL',
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * OVERDUE
-   * ==========================================================
-   *
-   * Overdue means:
-   *
-   * deadline exists
-   * deadline is before today
-   * task is not Completed / Finished / Archived
-   */
-
-  if (
-    query.overdueOnly ===
-    'true'
-  ) {
-    qb.andWhere(
-      'task.deadlineDate IS NOT NULL',
-    );
-
-
-    qb.andWhere(
-      'task.deadlineDate < CURRENT_DATE',
-    );
-
-
-    qb.andWhere(
-      'task.status NOT IN (:...doneStatuses)',
-      {
-        doneStatuses: [
-          TaskStatus.COMPLETED,
-          TaskStatus.FINISHED,
-          TaskStatus.ARCHIVED,
-        ],
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * START DATE
-   * ==========================================================
-   */
-
-  if (
-    query.startDateFrom
-  ) {
-    qb.andWhere(
-      'task.startDate >= :startDateFrom',
-      {
-        startDateFrom:
-          query.startDateFrom,
-      },
-    );
-  }
-
-
-  if (
-    query.startDateTo
-  ) {
-    qb.andWhere(
-      'task.startDate <= :startDateTo',
-      {
-        startDateTo:
-          query.startDateTo,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * CREATED DATE
-   * ==========================================================
-   */
-
-  if (
-    query.createdDateFrom
-  ) {
-    qb.andWhere(
-      'task.createdAt >= :createdDateFrom',
-      {
-        createdDateFrom:
-          query.createdDateFrom,
-      },
-    );
-  }
-
-
-  /*
-   * Include the entire "to" date.
-   *
-   * Example:
-   *
-   * 2026-08-16 means:
-   *
-   * createdAt < 2026-08-17 00:00
-   */
-  if (
-    query.createdDateTo
-  ) {
-    qb.andWhere(
-      `task.createdAt < (
-        :createdDateTo::date +
-        INTERVAL '1 day'
-      )`,
-      {
-        createdDateTo:
-          query.createdDateTo,
-      },
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * SORT
-   * ==========================================================
-   */
-
-  const sortColumns: Record<
-    string,
-    string
-  > = {
-    createdAt:
-      'task.createdAt',
-
-    deadline:
-      'task.deadlineDate',
-
-    startDate:
-      'task.startDate',
 
     /*
-     * English title is used for DB ordering.
-     *
-     * The display still follows the currently selected frontend
-     * language.
+     * ========================================================
+     * VALIDATE FILTER DATE RANGES
+     * ========================================================
      */
-    title:
-      'task.titleEn',
 
-    status:
-      'task.status',
+    if (
+      query.dueDateFrom &&
+      query.dueDateTo &&
+      query.dueDateTo <
+        query.dueDateFrom
+    ) {
+      throw new BadRequestException(
+        'Deadline "to" date cannot be before the "from" date',
+      );
+    }
 
-    taskType:
-      'task.taskType',
-  };
+    if (
+      query.startDateFrom &&
+      query.startDateTo &&
+      query.startDateTo <
+        query.startDateFrom
+    ) {
+      throw new BadRequestException(
+        'Start date "to" cannot be before the "from" date',
+      );
+    }
 
-
-  const sortColumn =
-    sortColumns[
-      query.sortBy ??
-        'createdAt'
-    ] ??
-    'task.createdAt';
-
-
-  const sortDirection =
-    query.sortDir ===
-    'asc'
-      ? 'ASC'
-      : 'DESC';
-
-
-  /*
-   * Date fields with null values should appear at the end instead
-   * of pushing "No deadline" Tasks ahead of real deadlines.
-   */
-  const nulls =
-    query.sortBy ===
-      'deadline' ||
-    query.sortBy ===
-      'startDate'
-      ? 'NULLS LAST'
-      : undefined;
+    if (
+      query.createdDateFrom &&
+      query.createdDateTo &&
+      query.createdDateTo <
+        query.createdDateFrom
+    ) {
+      throw new BadRequestException(
+        'Created date "to" cannot be before the "from" date',
+      );
+    }
 
 
-  qb.orderBy(
-    sortColumn,
-    sortDirection,
-    nulls,
-  );
+    /*
+     * ========================================================
+     * BASE QUERY
+     * ========================================================
+     */
 
-
-  /*
-   * Stable secondary sorting.
-   */
-  if (
-    sortColumn !==
-    'task.createdAt'
-  ) {
-    qb.addOrderBy(
-      'task.createdAt',
-      'DESC',
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * PAGINATION
-   * ==========================================================
-   */
-
-  qb
-    .skip(
-      (
-        page -
-        1
-      ) *
-      limit,
-    )
-    .take(
-      limit,
-    );
-
-
-  /*
-   * ==========================================================
-   * EXECUTE
-   * ==========================================================
-   */
-
-  const [
-    items,
-    total,
-  ] =
-    await qb.getManyAndCount();
-
-
-  /*
-   * ==========================================================
-   * RATINGS
-   * ==========================================================
-   *
-   * Keep your existing batched rating lookup.
-   */
-
-  if (
-    items.length >
-    0
-  ) {
-    const ratings =
-      await this.taskRepo.manager
+    const qb =
+      this.taskRepo
         .createQueryBuilder(
-          TaskRatingEntity,
-          'rating',
+          'task',
         )
-        .where(
-          'rating.taskId IN (:...taskIds)',
+        .leftJoinAndSelect(
+          'task.branch',
+          'branch',
+        )
+        .leftJoinAndSelect(
+          'task.department',
+          'department',
+        )
+        .leftJoinAndSelect(
+          'task.project',
+          'project',
+        )
+        .leftJoinAndSelect(
+          'task.assignedTo',
+          'assignedTo',
+        )
+        .leftJoinAndSelect(
+          'task.createdBy',
+          'createdBy',
+        );
+
+
+    /*
+     * ========================================================
+     * STATUS
+     * ========================================================
+     */
+
+    if (
+      query.status
+    ) {
+      qb.andWhere(
+        'task.status = :status',
+        {
+          status:
+            query.status,
+        },
+      );
+    }
+
+    if (
+      query.excludeArchived ===
+        'true' &&
+      query.status !==
+        TaskStatus.ARCHIVED
+    ) {
+      qb.andWhere(
+        'task.status != :archivedStatus',
+        {
+          archivedStatus:
+            TaskStatus.ARCHIVED,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * CLASSIFICATION
+     * ========================================================
+     */
+
+    if (
+      query.taskType
+    ) {
+      qb.andWhere(
+        'task.taskType = :taskType',
+        {
+          taskType:
+            query.taskType,
+        },
+      );
+    }
+
+    if (
+      query.priority
+    ) {
+      qb.andWhere(
+        'task.priority = :priority',
+        {
+          priority:
+            query.priority,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * ORGANIZATION
+     * ========================================================
+     */
+
+    if (
+      query.branchId
+    ) {
+      qb.andWhere(
+        'task.branchId = :branchId',
+        {
+          branchId:
+            query.branchId,
+        },
+      );
+    }
+
+    if (
+      query.projectId
+    ) {
+      qb.andWhere(
+        'task.projectId = :projectId',
+        {
+          projectId:
+            query.projectId,
+        },
+      );
+    }
+
+    if (
+      query.departmentId
+    ) {
+      qb.andWhere(
+        'task.departmentId = :departmentId',
+        {
+          departmentId:
+            query.departmentId,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * PEOPLE
+     * ========================================================
+     */
+
+    if (
+      query.createdById
+    ) {
+      qb.andWhere(
+        'task.createdById = :createdById',
+        {
+          createdById:
+            query.createdById,
+        },
+      );
+    }
+
+    if (
+      query.assignedToId
+    ) {
+      qb.andWhere(
+        'task.assignedToId = :assignedToId',
+        {
+          assignedToId:
+            query.assignedToId,
+        },
+      );
+    }
+
+    /*
+     * Historical assignment assignee.
+     */
+    if (
+      query.assigneeId
+    ) {
+      qb
+        .innerJoin(
+          'task.assignments',
+          'assignment',
+        )
+        .andWhere(
+          'assignment.assigneeId = :assigneeId',
           {
-            taskIds:
-              items.map(
-                (
-                  task,
-                ) =>
-                  task.id,
-              ),
+            assigneeId:
+              query.assigneeId,
           },
-        )
-        .getMany();
+        );
+    }
 
 
-    const ratingsByTaskId =
-      new Map<
-        string,
-        TaskRatingEntity[]
-      >();
+    /*
+     * ========================================================
+     * SEARCH
+     * ========================================================
+     */
 
-
-    for (
-      const rating
-      of ratings
+    if (
+      query.search?.trim()
     ) {
-      const list =
-        ratingsByTaskId.get(
+      const search =
+        `%${query.search.trim()}%`;
+
+      qb.andWhere(
+        `(
+          task.titleEn ILIKE :search
+          OR task.titleAr ILIKE :search
+          OR task.descriptionEn ILIKE :search
+          OR task.descriptionAr ILIKE :search
+          OR createdBy.fullName ILIKE :search
+          OR assignedTo.fullName ILIKE :search
+          OR project.name ILIKE :search
+        )`,
+        {
+          search,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * DEADLINE FILTER
+     * ========================================================
+     */
+
+    if (
+      query.dueDateFrom
+    ) {
+      qb.andWhere(
+        'task.deadlineDate >= :dueDateFrom',
+        {
+          dueDateFrom:
+            query.dueDateFrom,
+        },
+      );
+    }
+
+    if (
+      query.dueDateTo
+    ) {
+      qb.andWhere(
+        'task.deadlineDate <= :dueDateTo',
+        {
+          dueDateTo:
+            query.dueDateTo,
+        },
+      );
+    }
+
+    if (
+      query.hasDeadline ===
+      'true'
+    ) {
+      qb.andWhere(
+        'task.deadlineDate IS NOT NULL',
+      );
+    }
+
+    if (
+      query.hasDeadline ===
+      'false'
+    ) {
+      qb.andWhere(
+        'task.deadlineDate IS NULL',
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * OVERDUE
+     * ========================================================
+     */
+
+    if (
+      query.overdueOnly ===
+      'true'
+    ) {
+      qb.andWhere(
+        'task.deadlineDate IS NOT NULL',
+      );
+
+      qb.andWhere(
+        'task.deadlineDate < CURRENT_DATE',
+      );
+
+      qb.andWhere(
+        'task.status NOT IN (:...doneStatuses)',
+        {
+          doneStatuses: [
+            TaskStatus.COMPLETED,
+            TaskStatus.FINISHED,
+            TaskStatus.ARCHIVED,
+          ],
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * START DATE
+     * ========================================================
+     */
+
+    if (
+      query.startDateFrom
+    ) {
+      qb.andWhere(
+        'task.startDate >= :startDateFrom',
+        {
+          startDateFrom:
+            query.startDateFrom,
+        },
+      );
+    }
+
+    if (
+      query.startDateTo
+    ) {
+      qb.andWhere(
+        'task.startDate <= :startDateTo',
+        {
+          startDateTo:
+            query.startDateTo,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * CREATED DATE
+     * ========================================================
+     */
+
+    if (
+      query.createdDateFrom
+    ) {
+      qb.andWhere(
+        'task.createdAt >= :createdDateFrom',
+        {
+          createdDateFrom:
+            query.createdDateFrom,
+        },
+      );
+    }
+
+    /*
+     * Include whole "to" date.
+     */
+    if (
+      query.createdDateTo
+    ) {
+      qb.andWhere(
+        `task.createdAt < (
+          :createdDateTo::date +
+          INTERVAL '1 day'
+        )`,
+        {
+          createdDateTo:
+            query.createdDateTo,
+        },
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * SORT
+     * ========================================================
+     */
+
+    const sortColumns: Record<
+      string,
+      string
+    > = {
+      createdAt:
+        'task.createdAt',
+
+      deadline:
+        'task.deadlineDate',
+
+      startDate:
+        'task.startDate',
+
+      title:
+        'task.titleEn',
+
+      status:
+        'task.status',
+
+      taskType:
+        'task.taskType',
+    };
+
+    const sortColumn =
+      sortColumns[
+        query.sortBy ??
+          'createdAt'
+      ] ??
+      'task.createdAt';
+
+    const sortDirection =
+      query.sortDir ===
+      'asc'
+        ? 'ASC'
+        : 'DESC';
+
+    const nulls =
+      query.sortBy ===
+        'deadline' ||
+      query.sortBy ===
+        'startDate'
+        ? 'NULLS LAST'
+        : undefined;
+
+    qb.orderBy(
+      sortColumn,
+      sortDirection,
+      nulls,
+    );
+
+    if (
+      sortColumn !==
+      'task.createdAt'
+    ) {
+      qb.addOrderBy(
+        'task.createdAt',
+        'DESC',
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * PAGINATION
+     * ========================================================
+     */
+
+    qb
+      .skip(
+        (
+          page -
+          1
+        ) *
+          limit,
+      )
+      .take(
+        limit,
+      );
+
+
+    /*
+     * ========================================================
+     * EXECUTE
+     * ========================================================
+     */
+
+    const [
+      items,
+      total,
+    ] =
+      await qb.getManyAndCount();
+
+
+    /*
+     * ========================================================
+     * RATINGS
+     * ========================================================
+     */
+
+    if (
+      items.length >
+      0
+    ) {
+      const ratings =
+        await this.taskRepo.manager
+          .createQueryBuilder(
+            TaskRatingEntity,
+            'rating',
+          )
+          .where(
+            'rating.taskId IN (:...taskIds)',
+            {
+              taskIds:
+                items.map(
+                  (
+                    task,
+                  ) =>
+                    task.id,
+                ),
+            },
+          )
+          .getMany();
+
+      const ratingsByTaskId =
+        new Map<
+          string,
+          TaskRatingEntity[]
+        >();
+
+      for (
+        const rating
+        of ratings
+      ) {
+        const list =
+          ratingsByTaskId.get(
+            rating.taskId,
+          ) ??
+          [];
+
+        list.push(
+          rating,
+        );
+
+        ratingsByTaskId.set(
           rating.taskId,
-        ) ??
-        [];
+          list,
+        );
+      }
 
-
-      list.push(
-        rating,
-      );
-
-
-      ratingsByTaskId.set(
-        rating.taskId,
-        list,
-      );
+      for (
+        const task
+        of items
+      ) {
+        task.ratings =
+          ratingsByTaskId.get(
+            task.id,
+          ) ??
+          [];
+      }
     }
 
 
-    for (
-      const task
-      of items
-    ) {
-      task.ratings =
-        ratingsByTaskId.get(
-          task.id,
-        ) ??
-        [];
-    }
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
   }
 
-
-  /*
-   * ==========================================================
-   * RESPONSE
-   * ==========================================================
-   */
-
-  return {
-    items,
-    total,
-    page,
-    limit,
-  };
-}
 
   /*
    * ==========================================================
@@ -1089,10 +1186,12 @@ export class TasksService {
     query: QueryMyTasksDto,
   ) {
     const page =
-      query.page ?? 1;
+      query.page ??
+      1;
 
     const limit =
-      query.limit ?? 20;
+      query.limit ??
+      20;
 
     const idQb =
       this.taskRepo
@@ -1127,6 +1226,7 @@ export class TasksService {
           '(task.assignedToId = :userId OR (assignment.assigneeId = :userId AND assignment.status != :rejectedStatus))',
           {
             userId,
+
             rejectedStatus:
               AssignmentStatus.REJECTED,
           },
@@ -1321,14 +1421,23 @@ export class TasksService {
     const pageIds =
       rawRows
         .slice(
-          (page - 1) *
+          (
+            page -
+            1
+          ) *
             limit,
-          (page - 1) *
+
+          (
+            page -
+            1
+          ) *
             limit +
             limit,
         )
         .map(
-          (row) =>
+          (
+            row,
+          ) =>
             row.id,
         );
 
@@ -1366,7 +1475,9 @@ export class TasksService {
     const byId =
       new Map(
         hydrated.map(
-          (task) => [
+          (
+            task,
+          ) => [
             task.id,
             task,
           ],
@@ -1376,7 +1487,9 @@ export class TasksService {
     const items =
       pageIds
         .map(
-          (taskId) =>
+          (
+            taskId,
+          ) =>
             byId.get(
               taskId,
             ),
@@ -1398,6 +1511,7 @@ export class TasksService {
     };
   }
 
+
   /*
    * ==========================================================
    * ASSIGNED BY ME
@@ -1409,10 +1523,12 @@ export class TasksService {
     query: QueryMyTasksDto,
   ) {
     const page =
-      query.page ?? 1;
+      query.page ??
+      1;
 
     const limit =
-      query.limit ?? 20;
+      query.limit ??
+      20;
 
     const idQb =
       this.taskRepo
@@ -1641,14 +1757,23 @@ export class TasksService {
     const pageIds =
       rawRows
         .slice(
-          (page - 1) *
+          (
+            page -
+            1
+          ) *
             limit,
-          (page - 1) *
+
+          (
+            page -
+            1
+          ) *
             limit +
             limit,
         )
         .map(
-          (row) =>
+          (
+            row,
+          ) =>
             row.id,
         );
 
@@ -1686,7 +1811,9 @@ export class TasksService {
     const byId =
       new Map(
         hydrated.map(
-          (task) => [
+          (
+            task,
+          ) => [
             task.id,
             task,
           ],
@@ -1696,7 +1823,9 @@ export class TasksService {
     const items =
       pageIds
         .map(
-          (taskId) =>
+          (
+            taskId,
+          ) =>
             byId.get(
               taskId,
             ),
@@ -1717,6 +1846,7 @@ export class TasksService {
       limit,
     };
   }
+
 
   /*
    * ==========================================================
@@ -1748,7 +1878,9 @@ export class TasksService {
         task.attachments ||
         []
       ).filter(
-        (attachment) =>
+        (
+          attachment,
+        ) =>
           !attachment.deletedAt,
       );
 
@@ -1757,12 +1889,15 @@ export class TasksService {
         task.comments ||
         []
       ).filter(
-        (comment) =>
+        (
+          comment,
+        ) =>
           !comment.deletedAt,
       );
 
     return task;
   }
+
 
   /*
    * ==========================================================
@@ -1775,7 +1910,7 @@ export class TasksService {
     actor: UserEntity,
   ): Promise<TaskEntity> {
     /*
-     * Department is required and must be an active Department.
+     * Department.
      */
     await this.assertActiveSettingById(
       SettingType.DEPARTMENT,
@@ -1784,7 +1919,7 @@ export class TasksService {
     );
 
     /*
-     * Branch is optional but must be valid if supplied.
+     * Branch.
      */
     if (
       dto.branchId
@@ -1815,9 +1950,13 @@ export class TasksService {
       dto.deadlineDate,
     );
 
+
     /*
-     * Parent Task.
+     * ========================================================
+     * PARENT TASK / SUBTASK
+     * ========================================================
      */
+
     if (
       dto.parentTaskId
     ) {
@@ -1837,13 +1976,75 @@ export class TasksService {
         );
       }
 
+      /*
+       * Permission + hierarchy.
+       */
+      await this.assertCanCreateSubTask(
+        parentTask,
+        actor,
+      );
+
+
+      /*
+       * ======================================================
+       * ORGANIZATION MUST MATCH PARENT
+       * ======================================================
+       */
+
       if (
-        parentTask.archivedAt ||
-        parentTask.status ===
-          TaskStatus.ARCHIVED
+        dto.departmentId !==
+        parentTask.departmentId
       ) {
         throw new BadRequestException(
-          'Cannot attach a Sub-task to an archived Parent Task',
+          'Sub-task Department must match its Parent Task',
+        );
+      }
+
+      if (
+        (
+          dto.branchId ??
+          null
+        ) !==
+        (
+          parentTask.branchId ??
+          null
+        )
+      ) {
+        throw new BadRequestException(
+          'Sub-task Branch must match its Parent Task',
+        );
+      }
+
+      if (
+        (
+          dto.projectId ??
+          null
+        ) !==
+        (
+          parentTask.projectId ??
+          null
+        )
+      ) {
+        throw new BadRequestException(
+          'Sub-task Project must match its Parent Task',
+        );
+      }
+
+
+      /*
+       * ======================================================
+       * CHILD DATES MUST FIT INSIDE PARENT
+       * ======================================================
+       */
+
+      if (
+        dto.startDate &&
+        parentTask.startDate &&
+        dto.startDate <
+          parentTask.startDate
+      ) {
+        throw new BadRequestException(
+          "Sub-task start date cannot be before its Parent Task's start date",
         );
       }
 
@@ -1859,6 +2060,7 @@ export class TasksService {
       }
     }
 
+
     /*
      * Assignee.
      */
@@ -1869,6 +2071,7 @@ export class TasksService {
         dto.assignedToId,
       );
     }
+
 
     /*
      * Approval.
@@ -1898,10 +2101,12 @@ export class TasksService {
 
     this.assertAssigneeAndApproverDifferent(
       dto.assignedToId,
+
       needsApproval
         ? dto.approverId
         : undefined,
     );
+
 
     /*
      * Budget.
@@ -1916,6 +2121,7 @@ export class TasksService {
       dto.budgetMin,
       dto.budgetMax,
     );
+
 
     /*
      * Type / priority.
@@ -1935,6 +2141,7 @@ export class TasksService {
       dto.priority,
       'Priority',
     );
+
 
     /*
      * Save.
@@ -2024,6 +2231,7 @@ export class TasksService {
         }),
       );
 
+
     /*
      * Audit.
      */
@@ -2044,8 +2252,9 @@ export class TasksService {
         task,
     });
 
+
     /*
-     * The new Task may affect Project status.
+     * Project status.
      */
     if (
       task.projectId
@@ -2059,6 +2268,7 @@ export class TasksService {
       task.id,
     );
   }
+
 
   /*
    * ==========================================================
@@ -2079,6 +2289,7 @@ export class TasksService {
     const isAdmin =
       actor.role.name ===
       RoleName.ADMIN;
+
 
     /*
      * Permissions.
@@ -2113,9 +2324,11 @@ export class TasksService {
       );
     }
 
+
     /*
      * Effective values.
      */
+
     const effectiveStartDate =
       dto.startDate !==
       undefined
@@ -2177,6 +2390,7 @@ export class TasksService {
         : task.budgetMax ??
           null;
 
+
     /*
      * Dates.
      */
@@ -2210,6 +2424,7 @@ export class TasksService {
       }
     }
 
+
     /*
      * Department.
      */
@@ -2232,6 +2447,7 @@ export class TasksService {
       );
     }
 
+
     /*
      * Branch.
      */
@@ -2245,6 +2461,7 @@ export class TasksService {
       );
     }
 
+
     /*
      * Project.
      */
@@ -2255,6 +2472,7 @@ export class TasksService {
         dto.projectId,
       );
     }
+
 
     /*
      * Parent Task.
@@ -2305,6 +2523,7 @@ export class TasksService {
       }
     }
 
+
     /*
      * Assignee.
      */
@@ -2315,6 +2534,7 @@ export class TasksService {
         effectiveAssigneeId,
       );
     }
+
 
     /*
      * Approval.
@@ -2358,10 +2578,12 @@ export class TasksService {
 
     this.assertAssigneeAndApproverDifferent(
       effectiveAssigneeId,
+
       effectiveNeedsApproval
         ? effectiveApproverId
         : null,
     );
+
 
     /*
      * Budget.
@@ -2371,6 +2593,7 @@ export class TasksService {
       effectiveBudgetMin,
       effectiveBudgetMax,
     );
+
 
     /*
      * Task Type / Priority.
@@ -2395,9 +2618,11 @@ export class TasksService {
       );
     }
 
+
     /*
-     * Preserve values required for audit and project recalculation.
+     * Preserve old values.
      */
+
     const oldValue = {
       ...task,
     };
@@ -2408,16 +2633,15 @@ export class TasksService {
     const oldApproverId =
       task.approverId;
 
+
     /*
      * Apply DTO.
-     *
-     * Object.assign intentionally keeps null values so nullable DB
-     * columns can actually be cleared.
      */
     Object.assign(
       task,
       dto,
     );
+
 
     /*
      * Approval state.
@@ -2447,9 +2671,6 @@ export class TasksService {
       task.needsApproval =
         true;
 
-      /*
-       * Approval has just been enabled.
-       */
       if (
         !oldValue.needsApproval
       ) {
@@ -2462,9 +2683,6 @@ export class TasksService {
           null;
       }
 
-      /*
-       * Changing approver requires a new approval decision.
-       */
       if (
         dto.approverId !==
           undefined &&
@@ -2480,6 +2698,7 @@ export class TasksService {
           null;
       }
     }
+
 
     /*
      * Budget state.
@@ -2507,6 +2726,7 @@ export class TasksService {
         null;
     }
 
+
     /*
      * Save.
      */
@@ -2514,6 +2734,7 @@ export class TasksService {
       await this.taskRepo.save(
         task,
       );
+
 
     /*
      * Audit.
@@ -2537,9 +2758,9 @@ export class TasksService {
         saved,
     });
 
+
     /*
-     * Project moved from A -> B:
-     * recalculate both projects.
+     * Recompute previous project if moved.
      */
     if (
       oldProjectId &&
@@ -2563,6 +2784,7 @@ export class TasksService {
       saved.id,
     );
   }
+
 
   /*
    * ==========================================================
@@ -2636,6 +2858,7 @@ export class TasksService {
     return saved;
   }
 
+
   /*
    * ==========================================================
    * PARENT CYCLE CHECK
@@ -2702,6 +2925,7 @@ export class TasksService {
     }
   }
 
+
   /*
    * ==========================================================
    * STATUS CHANGE
@@ -2737,6 +2961,7 @@ export class TasksService {
       'Status',
     );
 
+
     /*
      * Reopen.
      */
@@ -2750,6 +2975,7 @@ export class TasksService {
         actor,
       );
     }
+
 
     /*
      * Finished is terminal for normal users.
@@ -2769,6 +2995,7 @@ export class TasksService {
         );
       }
     }
+
 
     /*
      * Built-in workflow.
@@ -2823,9 +3050,43 @@ export class TasksService {
       }
     }
 
+
     /*
-     * Entering PendingApproval.
+     * ========================================================
+     * PARENT TASK WORK BREAKDOWN
+     * ========================================================
+     *
+     * A Parent cannot:
+     *
+     * - submit for approval
+     * - complete
+     * - finish
+     *
+     * while open children remain.
+     * ========================================================
      */
+
+    if (
+      [
+        TaskStatus.PENDING_APPROVAL,
+        TaskStatus.COMPLETED,
+        TaskStatus.FINISHED,
+      ].includes(
+        dto.status as TaskStatus,
+      )
+    ) {
+      await this.assertNoOpenSubTasks(
+        task.id,
+      );
+    }
+
+
+    /*
+     * ========================================================
+     * ENTERING PENDING APPROVAL
+     * ========================================================
+     */
+
     if (
       dto.status ===
       TaskStatus.PENDING_APPROVAL
@@ -2846,16 +3107,10 @@ export class TasksService {
         );
       }
 
-      /*
-       * Approver may have been deactivated since Task creation.
-       */
       await this.assertValidApprover(
         task.approverId,
       );
 
-      /*
-       * Every resubmission starts a fresh approval attempt.
-       */
       task.approvalStatus =
         ApprovalStatus.PENDING;
 
@@ -2865,9 +3120,13 @@ export class TasksService {
         null;
     }
 
+
     /*
-     * Completed.
+     * ========================================================
+     * COMPLETED
+     * ========================================================
      */
+
     if (
       dto.status ===
       TaskStatus.COMPLETED
@@ -2882,13 +3141,15 @@ export class TasksService {
         );
       }
 
-      await this.assertNoOpenSubTasks(
-        task.id,
-      );
+      /*
+       * No duplicate assertNoOpenSubTasks here.
+       * It is handled by the common Parent guard above.
+       */
     }
 
+
     /*
-     * Finished requires a reason.
+     * Finished requires reason.
      */
     if (
       dto.status ===
@@ -2900,6 +3161,7 @@ export class TasksService {
       );
     }
 
+
     const oldValue = {
       status:
         task.status,
@@ -2907,6 +3169,7 @@ export class TasksService {
       approvalStatus:
         task.approvalStatus,
     };
+
 
     /*
      * Archive through status workflow.
@@ -2933,10 +3196,12 @@ export class TasksService {
         new Date();
     }
 
+
     const saved =
       await this.taskRepo.save(
         task,
       );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -2965,6 +3230,7 @@ export class TasksService {
         dto.reason,
     });
 
+
     if (
       saved.projectId
     ) {
@@ -2977,6 +3243,7 @@ export class TasksService {
       saved.id,
     );
   }
+
 
   /*
    * ==========================================================
@@ -3002,6 +3269,7 @@ export class TasksService {
       );
     }
 
+
     /*
      * Only configured Approver or Admin.
      */
@@ -3016,8 +3284,9 @@ export class TasksService {
       );
     }
 
+
     /*
-     * Approval can ONLY happen after submission for approval.
+     * Approval only after submission.
      */
     if (
       task.status !==
@@ -3037,9 +3306,13 @@ export class TasksService {
       );
     }
 
+
     /*
-     * Approval completes the Task.
-     * Therefore all child Tasks must also be done.
+     * Defensive child check.
+     *
+     * Even though entering PendingApproval already checks children,
+     * verify again because child state could theoretically change
+     * before approval is decided.
      */
     if (
       dto.approve
@@ -3049,6 +3322,7 @@ export class TasksService {
       );
     }
 
+
     const oldValue = {
       approvalStatus:
         task.approvalStatus,
@@ -3056,6 +3330,7 @@ export class TasksService {
       status:
         task.status,
     };
+
 
     if (
       dto.approve
@@ -3081,7 +3356,7 @@ export class TasksService {
         dto.rejectionReason;
 
       /*
-       * Send rejected work back for changes.
+       * Send rejected work back.
        */
       task.status =
         TaskStatus.IN_PROGRESS;
@@ -3092,10 +3367,12 @@ export class TasksService {
         null;
     }
 
+
     const saved =
       await this.taskRepo.save(
         task,
       );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -3126,6 +3403,7 @@ export class TasksService {
         dto.rejectionReason,
     });
 
+
     if (
       saved.projectId
     ) {
@@ -3138,6 +3416,7 @@ export class TasksService {
       saved.id,
     );
   }
+
 
   /*
    * ==========================================================
@@ -3185,6 +3464,7 @@ export class TasksService {
     }
   }
 
+
   /*
    * ==========================================================
    * REOPEN
@@ -3224,9 +3504,6 @@ export class TasksService {
     task.status =
       TaskStatus.REOPENED;
 
-    /*
-     * A reopened task is no longer actually finished.
-     */
     (
       task as any
     ).actualEndDate =
@@ -3273,6 +3550,7 @@ export class TasksService {
     );
   }
 
+
   /*
    * ==========================================================
    * DELETE / ARCHIVE
@@ -3292,9 +3570,13 @@ export class TasksService {
     const projectId =
       task.projectId;
 
+
     /*
-     * Permanent delete.
+     * ========================================================
+     * PERMANENT DELETE
+     * ========================================================
      */
+
     if (
       hardDelete
     ) {
@@ -3387,9 +3669,13 @@ export class TasksService {
       return;
     }
 
+
     /*
-     * Soft delete / archive.
+     * ========================================================
+     * SOFT DELETE / ARCHIVE
+     * ========================================================
      */
+
     if (
       actor.role.name !==
         RoleName.ADMIN &&
@@ -3443,6 +3729,7 @@ export class TasksService {
       );
     }
   }
+
 
   /*
    * ==========================================================

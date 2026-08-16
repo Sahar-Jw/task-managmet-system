@@ -1,31 +1,137 @@
 'use client';
 
-import { useMemo } from 'react';
+import {
+  useMemo,
+} from 'react';
+
+import {
+  useLocale,
+} from 'next-intl';
+
 
 interface PaginationProps {
   page: number;
+
   totalPages: number;
+
   total: number;
-  onPageChange: (page: number) => void;
+
+  onPageChange:
+    (page: number) => void;
+
   itemLabel?: string;
 }
 
-type PageToken = number | 'ellipsis';
 
-function getPageNumbers(page: number, totalPages: number): PageToken[] {
-  const tokens: PageToken[] = [];
-  const windowSize = 1;
+type PageToken =
+  | number
+  | 'ellipsis-left'
+  | 'ellipsis-right';
 
-  tokens.push(1);
-  if (page - windowSize > 2) tokens.push('ellipsis');
-  for (let p = Math.max(2, page - windowSize); p <= Math.min(totalPages - 1, page + windowSize); p++) {
-    tokens.push(p);
+
+function getPageNumbers(
+  page: number,
+  totalPages: number,
+): PageToken[] {
+  if (
+    totalPages <= 7
+  ) {
+    return Array.from(
+      {
+        length:
+          totalPages,
+      },
+      (
+        _,
+        index,
+      ) =>
+        index + 1,
+    );
   }
-  if (page + windowSize < totalPages - 1) tokens.push('ellipsis');
-  if (totalPages > 1) tokens.push(totalPages);
 
-  return tokens;
+
+  if (
+    page <= 4
+  ) {
+    return [
+      1,
+      2,
+      3,
+      4,
+      5,
+      'ellipsis-right',
+      totalPages,
+    ];
+  }
+
+
+  if (
+    page >=
+    totalPages - 3
+  ) {
+    return [
+      1,
+      'ellipsis-left',
+      totalPages - 4,
+      totalPages - 3,
+      totalPages - 2,
+      totalPages - 1,
+      totalPages,
+    ];
+  }
+
+
+  return [
+    1,
+    'ellipsis-left',
+    page - 1,
+    page,
+    page + 1,
+    'ellipsis-right',
+    totalPages,
+  ];
 }
+
+
+function ChevronLeft() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M12.5 15 7.5 10l5-5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+function ChevronRight() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path
+        d="M7.5 15l5-5-5-5"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 
 export default function Pagination({
   page,
@@ -34,91 +140,543 @@ export default function Pagination({
   onPageChange,
   itemLabel = 'items',
 }: PaginationProps) {
-  const pages = useMemo(
-    () => getPageNumbers(page, Math.max(totalPages, 1)),
-    [page, totalPages],
-  );
+  const locale =
+    useLocale();
 
-  const safeTotalPages = Math.max(totalPages, 1);
 
-  function go(p: number) {
-    if (p < 1 || p > safeTotalPages || p === page) return;
-    onPageChange(p);
+  const isArabic =
+    locale === 'ar';
+
+
+  const safeTotalPages =
+    Math.max(
+      totalPages,
+      1,
+    );
+
+
+  const safePage =
+    Math.min(
+      Math.max(
+        page,
+        1,
+      ),
+      safeTotalPages,
+    );
+
+
+  const pages =
+    useMemo(
+      () =>
+        getPageNumbers(
+          safePage,
+          safeTotalPages,
+        ),
+      [
+        safePage,
+        safeTotalPages,
+      ],
+    );
+
+
+  function go(
+    nextPage: number,
+  ) {
+    if (
+      nextPage < 1 ||
+      nextPage >
+        safeTotalPages ||
+      nextPage ===
+        safePage
+    ) {
+      return;
+    }
+
+
+    onPageChange(
+      nextPage,
+    );
+
+
+    /*
+     * Keeps navigation feeling natural when the list is long.
+     * We don't force-scroll all the way to the top of the page.
+     */
+    window.requestAnimationFrame(
+      () => {
+        window.scrollTo({
+          top:
+            Math.max(
+              0,
+              window.scrollY -
+                200,
+            ),
+
+          behavior:
+            'smooth',
+        });
+      },
+    );
   }
 
+
+  const previousDisabled =
+    safePage <= 1;
+
+
+  const nextDisabled =
+    safePage >=
+    safeTotalPages;
+
+
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
-        <span>
-          Page {page} of {safeTotalPages}
-        </span>
-        <span className="text-slate-300">•</span>
-        <span>
-          {total} {itemLabel}
-        </span>
-      </div>
+    <nav
+      aria-label="Pagination"
+      className="
+        mt-5
+        overflow-hidden
+        rounded-2xl
+        border
+        border-slate-200
+        bg-white
+        shadow-[0_1px_2px_rgba(15,23,42,0.03)]
+      "
+      dir={
+        isArabic
+          ? 'rtl'
+          : 'ltr'
+      }
+    >
+      <div
+        className="
+          flex
+          flex-col
+          gap-4
+          px-4
+          py-4
+          sm:px-5
+          lg:flex-row
+          lg:items-center
+          lg:justify-between
+        "
+      >
+        {/*
+         * ====================================================
+         * RESULT INFORMATION
+         * ====================================================
+         */}
 
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={() => go(page - 1)}
-          disabled={page <= 1}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        <div
+          className="
+            flex
+            min-w-0
+            items-center
+            gap-3
+          "
         >
-          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-            <path
-              d="M12.5 15 7.5 10l5-5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          Previous
-        </button>
+          <div
+            className="
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              bg-brand-50
+              text-sm
+              font-bold
+              text-brand-700
+            "
+          >
+            {safePage}
+          </div>
 
-        <div className="hidden items-center gap-1 sm:flex">
-          {pages.map((p, idx) =>
-            p === 'ellipsis' ? (
-              <span key={`ellipsis-${idx}`} className="px-2 text-sm text-slate-400">
-                …
-              </span>
-            ) : (
-              <button
-                type="button"
-                key={p}
-                onClick={() => go(p)}
-                aria-current={p === page ? 'page' : undefined}
-                className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium transition-colors ${
-                  p === page
-                    ? 'bg-brand-700 text-white'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {p}
-              </button>
-            ),
-          )}
+
+          <div className="min-w-0">
+            <div
+              className="
+                text-sm
+                font-semibold
+                text-slate-800
+              "
+            >
+              {isArabic
+                ? `الصفحة ${safePage} من ${safeTotalPages}`
+                : `Page ${safePage} of ${safeTotalPages}`}
+            </div>
+
+
+            <div
+              className="
+                mt-0.5
+                text-xs
+                text-slate-400
+              "
+            >
+              <span className="font-medium text-slate-500">
+                {total.toLocaleString(
+                  locale,
+                )}
+              </span>{' '}
+
+              {itemLabel}
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => go(page + 1)}
-          disabled={page >= safeTotalPages}
-          className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+
+        {/*
+         * ====================================================
+         * DESKTOP PAGE NUMBERS
+         * ====================================================
+         */}
+
+        <div
+          className="
+            hidden
+            items-center
+            justify-center
+            gap-1
+            md:flex
+          "
         >
-          Next
-          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-            <path
-              d="M7.5 15l5-5-5-5"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+          <button
+            type="button"
+            onClick={() =>
+              go(
+                safePage - 1,
+              )
+            }
+            disabled={
+              previousDisabled
+            }
+            aria-label={
+              isArabic
+                ? 'الصفحة السابقة'
+                : 'Previous page'
+            }
+            className="
+              inline-flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              text-slate-500
+              transition-all
+              hover:border-brand-200
+              hover:bg-brand-50
+              hover:text-brand-700
+              focus:outline-none
+              focus:ring-2
+              focus:ring-brand-200
+              disabled:cursor-not-allowed
+              disabled:border-slate-100
+              disabled:bg-slate-50
+              disabled:text-slate-300
+            "
+          >
+            {isArabic
+              ? <ChevronRight />
+              : <ChevronLeft />}
+          </button>
+
+
+          <div
+            className="
+              mx-1
+              flex
+              items-center
+              gap-1
+            "
+          >
+            {pages.map(
+              (
+                token,
+                index,
+              ) => {
+                if (
+                  typeof token !==
+                  'number'
+                ) {
+                  return (
+                    <span
+                      key={`${token}-${index}`}
+                      className="
+                        flex
+                        h-10
+                        w-8
+                        items-center
+                        justify-center
+                        text-sm
+                        font-medium
+                        text-slate-400
+                      "
+                    >
+                      •••
+                    </span>
+                  );
+                }
+
+
+                const active =
+                  token ===
+                  safePage;
+
+
+                return (
+                  <button
+                    type="button"
+                    key={
+                      token
+                    }
+                    onClick={() =>
+                      go(
+                        token,
+                      )
+                    }
+                    aria-label={`Page ${token}`}
+                    aria-current={
+                      active
+                        ? 'page'
+                        : undefined
+                    }
+                    className={`
+                      relative
+                      inline-flex
+                      h-10
+                      min-w-10
+                      items-center
+                      justify-center
+                      rounded-xl
+                      px-3
+                      text-sm
+                      font-semibold
+                      transition-all
+                      focus:outline-none
+                      focus:ring-2
+                      focus:ring-brand-200
+                      ${
+                        active
+                          ? `
+                            bg-brand-600
+                            text-white
+                            shadow-sm
+                          `
+                          : `
+                            text-slate-600
+                            hover:bg-slate-100
+                            hover:text-slate-900
+                          `
+                      }
+                    `}
+                  >
+                    {
+                      token
+                    }
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+
+          <button
+            type="button"
+            onClick={() =>
+              go(
+                safePage + 1,
+              )
+            }
+            disabled={
+              nextDisabled
+            }
+            aria-label={
+              isArabic
+                ? 'الصفحة التالية'
+                : 'Next page'
+            }
+            className="
+              inline-flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              text-slate-500
+              transition-all
+              hover:border-brand-200
+              hover:bg-brand-50
+              hover:text-brand-700
+              focus:outline-none
+              focus:ring-2
+              focus:ring-brand-200
+              disabled:cursor-not-allowed
+              disabled:border-slate-100
+              disabled:bg-slate-50
+              disabled:text-slate-300
+            "
+          >
+            {isArabic
+              ? <ChevronLeft />
+              : <ChevronRight />}
+          </button>
+        </div>
+
+
+        {/*
+         * ====================================================
+         * MOBILE CONTROLS
+         * ====================================================
+         */}
+
+        <div
+          className="
+            grid
+            grid-cols-[1fr_auto_1fr]
+            items-center
+            gap-2
+            md:hidden
+          "
+        >
+          <button
+            type="button"
+            onClick={() =>
+              go(
+                safePage - 1,
+              )
+            }
+            disabled={
+              previousDisabled
+            }
+            className="
+              inline-flex
+              h-10
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              px-3
+              text-xs
+              font-semibold
+              text-slate-600
+              transition
+              hover:bg-slate-50
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            {isArabic
+              ? <ChevronRight />
+              : <ChevronLeft />}
+
+            {isArabic
+              ? 'السابق'
+              : 'Previous'}
+          </button>
+
+
+          <span
+            className="
+              min-w-[70px]
+              text-center
+              text-xs
+              font-semibold
+              text-slate-500
+            "
+          >
+            {safePage} / {safeTotalPages}
+          </span>
+
+
+          <button
+            type="button"
+            onClick={() =>
+              go(
+                safePage + 1,
+              )
+            }
+            disabled={
+              nextDisabled
+            }
+            className="
+              inline-flex
+              h-10
+              items-center
+              justify-center
+              gap-2
+              rounded-xl
+              border
+              border-slate-200
+              bg-white
+              px-3
+              text-xs
+              font-semibold
+              text-slate-600
+              transition
+              hover:bg-slate-50
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            {isArabic
+              ? 'التالي'
+              : 'Next'}
+
+            {isArabic
+              ? <ChevronLeft />
+              : <ChevronRight />}
+          </button>
+        </div>
       </div>
-    </div>
+
+
+      {/*
+       * ======================================================
+       * PAGE PROGRESS
+       * ======================================================
+       */}
+
+      {safeTotalPages >
+        1 && (
+        <div
+          className="
+            h-[2px]
+            w-full
+            bg-slate-100
+          "
+        >
+          <div
+            className="
+              h-full
+              bg-brand-500
+              transition-all
+              duration-300
+            "
+            style={{
+              width:
+                `${Math.max(
+                  3,
+                  (
+                    safePage /
+                    safeTotalPages
+                  ) *
+                    100,
+                )}%`,
+            }}
+          />
+        </div>
+      )}
+    </nav>
   );
 }

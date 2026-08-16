@@ -15,6 +15,9 @@ import type {
   TaskAttachment,
   TaskComment,
   TaskRating,
+  TaskWorkflowActionKey,
+  TaskWorkflowConfig,
+  TaskWorkflowMode,
   User,
 } from './types';
 
@@ -1329,4 +1332,47 @@ export const ReportsApi = {
       >(
         '/reports/department-overview',
       ),
+};
+
+/*
+ * ============================================================
+ * TASK WORKFLOW
+ * ============================================================
+ */
+
+export const TaskWorkflowApi = {
+  get: () =>
+    api<TaskWorkflowConfig>(
+      '/task-workflow',
+    ),
+
+
+  update: (
+    data: {
+      mode:
+        TaskWorkflowMode;
+
+      actions:
+        {
+          key:
+            TaskWorkflowActionKey;
+
+          enabled:
+            boolean;
+
+          order:
+            number;
+        }[];
+    },
+  ) =>
+    api<TaskWorkflowConfig>(
+      '/task-workflow',
+      {
+        method:
+          'PATCH',
+
+        body:
+          data,
+      },
+    ),
 };

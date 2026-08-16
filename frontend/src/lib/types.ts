@@ -375,3 +375,57 @@ export interface Paginated<T> {
   page: number;
   limit: number;
 }
+
+export type TaskWorkflowMode =
+  | 'all_available'
+  | 'guided';
+
+
+export type TaskWorkflowActionKey =
+  | 'start'
+  | 'submit_approval'
+  | 'complete'
+  | 'finish'
+  | 'archive';
+
+
+export interface TaskWorkflowAction {
+  key:
+    TaskWorkflowActionKey;
+
+  targetStatus:
+    string;
+
+  labelEn:
+    string;
+
+  labelAr:
+    string;
+
+  descriptionEn:
+    string;
+
+  descriptionAr:
+    string;
+
+  enabled:
+    boolean;
+
+  order:
+    number;
+}
+
+
+export interface TaskWorkflowConfig {
+  id:
+    string;
+
+  mode:
+    TaskWorkflowMode;
+
+  actions:
+    TaskWorkflowAction[];
+
+  updatedAt:
+    string;
+}

@@ -15,6 +15,7 @@ import Pagination from '@/components/Pagination';
 import BrandingTab from '@/components/BrandingTab';
 import ListSettingsTab from '@/components/ListSettingsTab';
 import ColorThemeTab from '@/components/ColorThemeTab';
+import WorkflowSettingsTab from '@/components/WorkflowSettingsTab';
 
 import {
   ApiError,
@@ -51,7 +52,8 @@ type PageTab =
   | 'data'
   | 'branding'
   | 'color-theme'
-  | 'lists';
+  | 'lists'
+  | 'workflow';
 
 
 type FormState = {

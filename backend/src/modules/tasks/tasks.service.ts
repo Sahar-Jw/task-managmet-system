@@ -6,21 +6,46 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { InjectRepository } from '@nestjs/typeorm';
+import {
+  InjectRepository,
+} from '@nestjs/typeorm';
 
 import {
   In,
   Repository,
 } from 'typeorm';
 
-import { TaskEntity } from './entities/task.entity';
-import { ProjectEntity } from '../projects/entities/project.entity';
-import { SettingEntity } from '../settings/entities/setting.entity';
-import { UserEntity } from '../users/entities/user.entity';
-import { TaskAssignmentEntity } from '../task-assignments/entities/task-assignment.entity';
-import { TaskCommentEntity } from '../task-comments/entities/task-comment.entity';
-import { TaskAttachmentEntity } from '../task-attachments/entities/task-attachment.entity';
-import { TaskRatingEntity } from '../task-ratings/entities/task-rating.entity';
+import {
+  TaskEntity,
+} from './entities/task.entity';
+
+import {
+  ProjectEntity,
+} from '../projects/entities/project.entity';
+
+import {
+  SettingEntity,
+} from '../settings/entities/setting.entity';
+
+import {
+  UserEntity,
+} from '../users/entities/user.entity';
+
+import {
+  TaskAssignmentEntity,
+} from '../task-assignments/entities/task-assignment.entity';
+
+import {
+  TaskCommentEntity,
+} from '../task-comments/entities/task-comment.entity';
+
+import {
+  TaskAttachmentEntity,
+} from '../task-attachments/entities/task-attachment.entity';
+
+import {
+  TaskRatingEntity,
+} from '../task-ratings/entities/task-rating.entity';
 
 import {
   CreateTaskDto,
@@ -32,16 +57,45 @@ import {
   UpdateTaskStatusDto,
 } from './dto/task.dto';
 
-import { AuditLogsService } from '../audit-logs/audit-logs.service';
-import { ProjectsService } from '../projects/projects.service';
+import {
+  AuditLogsService,
+} from '../audit-logs/audit-logs.service';
 
-import { TaskStatus } from '../../shared/enums/task-status.enum';
-import { ProjectStatus } from '../../shared/enums/project-status.enum';
-import { AuditAction } from '../../shared/enums/audit-action.enum';
-import { RoleName } from '../../shared/enums/role.enum';
-import { ApprovalStatus } from '../../shared/enums/approval-status.enum';
-import { SettingType } from '../../shared/enums/setting-type.enum';
-import { AssignmentStatus } from '../../shared/enums/assignment-status.enum';
+import {
+  ProjectsService,
+} from '../projects/projects.service';
+
+import {
+  TaskWorkflowService,
+} from '../task-workflow/task-workflow.service';
+
+import {
+  TaskStatus,
+} from '../../shared/enums/task-status.enum';
+
+import {
+  ProjectStatus,
+} from '../../shared/enums/project-status.enum';
+
+import {
+  AuditAction,
+} from '../../shared/enums/audit-action.enum';
+
+import {
+  RoleName,
+} from '../../shared/enums/role.enum';
+
+import {
+  ApprovalStatus,
+} from '../../shared/enums/approval-status.enum';
+
+import {
+  SettingType,
+} from '../../shared/enums/setting-type.enum';
+
+import {
+  AssignmentStatus,
+} from '../../shared/enums/assignment-status.enum';
 
 
 /*
@@ -50,10 +104,11 @@ import { AssignmentStatus } from '../../shared/enums/assignment-status.enum';
  * ============================================================
  */
 
-const ALLOWED_TRANSITIONS: Record<
-  TaskStatus,
-  TaskStatus[]
-> = {
+const ALLOWED_TRANSITIONS:
+  Record<
+    TaskStatus,
+    TaskStatus[]
+  > = {
   [TaskStatus.PENDING]: [
     TaskStatus.UNASSIGNED,
     TaskStatus.IN_PROGRESS,
@@ -97,15 +152,6 @@ const ALLOWED_TRANSITIONS: Record<
  * ============================================================
  * TASK DETAIL RELATIONS
  * ============================================================
- *
- * Include enough information for:
- *
- * - Parent Task navigation
- * - Sub-task list
- * - Child assignee display
- * - Assignment acceptance state
- * - Ratings / comments / attachments
- * ============================================================
  */
 
 const TASK_RELATIONS = [
@@ -143,33 +189,65 @@ const TASK_RELATIONS = [
 @Injectable()
 export class TasksService {
   constructor(
-    @InjectRepository(TaskEntity)
-    private readonly taskRepo: Repository<TaskEntity>,
+    @InjectRepository(
+      TaskEntity,
+    )
+    private readonly taskRepo:
+      Repository<TaskEntity>,
 
-    @InjectRepository(ProjectEntity)
-    private readonly projectRepo: Repository<ProjectEntity>,
+    @InjectRepository(
+      ProjectEntity,
+    )
+    private readonly projectRepo:
+      Repository<ProjectEntity>,
 
-    @InjectRepository(SettingEntity)
-    private readonly settingRepo: Repository<SettingEntity>,
+    @InjectRepository(
+      SettingEntity,
+    )
+    private readonly settingRepo:
+      Repository<SettingEntity>,
 
-    @InjectRepository(UserEntity)
-    private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(
+      UserEntity,
+    )
+    private readonly userRepo:
+      Repository<UserEntity>,
 
-    @InjectRepository(TaskAssignmentEntity)
-    private readonly assignmentRepo: Repository<TaskAssignmentEntity>,
+    @InjectRepository(
+      TaskAssignmentEntity,
+    )
+    private readonly assignmentRepo:
+      Repository<TaskAssignmentEntity>,
 
-    @InjectRepository(TaskCommentEntity)
-    private readonly commentRepo: Repository<TaskCommentEntity>,
+    @InjectRepository(
+      TaskCommentEntity,
+    )
+    private readonly commentRepo:
+      Repository<TaskCommentEntity>,
 
-    @InjectRepository(TaskAttachmentEntity)
-    private readonly attachmentRepo: Repository<TaskAttachmentEntity>,
+    @InjectRepository(
+      TaskAttachmentEntity,
+    )
+    private readonly attachmentRepo:
+      Repository<TaskAttachmentEntity>,
 
-    @InjectRepository(TaskRatingEntity)
-    private readonly ratingRepo: Repository<TaskRatingEntity>,
+    @InjectRepository(
+      TaskRatingEntity,
+    )
+    private readonly ratingRepo:
+      Repository<TaskRatingEntity>,
 
-    private readonly auditLogsService: AuditLogsService,
+    private readonly auditLogsService:
+      AuditLogsService,
 
-    private readonly projectsService: ProjectsService,
+    private readonly projectsService:
+      ProjectsService,
+
+    /*
+     * Admin-configurable Task Workflow.
+     */
+    private readonly taskWorkflowService:
+      TaskWorkflowService,
   ) {}
 
 
@@ -180,20 +258,30 @@ export class TasksService {
    */
 
   private async assertValidListValue(
-    type: SettingType,
-    key: string,
-    label: string,
-  ): Promise<void> {
+    type:
+      SettingType,
+
+    key:
+      string,
+
+    label:
+      string,
+  ):
+    Promise<void> {
     const row =
       await this.settingRepo.findOne({
         where: {
           type,
           key,
-          isActive: true,
+          isActive:
+            true,
         },
       });
 
-    if (!row) {
+
+    if (
+      !row
+    ) {
       throw new BadRequestException(
         `"${key}" is not a valid, active ${label}`,
       );
@@ -202,10 +290,16 @@ export class TasksService {
 
 
   private async assertActiveSettingById(
-    type: SettingType,
-    id: string,
-    label: string,
-  ): Promise<SettingEntity> {
+    type:
+      SettingType,
+
+    id:
+      string,
+
+    label:
+      string,
+  ):
+    Promise<SettingEntity> {
     const setting =
       await this.settingRepo.findOne({
         where: {
@@ -214,37 +308,51 @@ export class TasksService {
         },
       });
 
-    if (!setting) {
+
+    if (
+      !setting
+    ) {
       throw new BadRequestException(
         `${label} is invalid`,
       );
     }
 
-    if (!setting.isActive) {
+
+    if (
+      !setting.isActive
+    ) {
       throw new BadRequestException(
         `${label} is inactive`,
       );
     }
+
 
     return setting;
   }
 
 
   private async assertUsableProject(
-    projectId: string,
-  ): Promise<ProjectEntity> {
+    projectId:
+      string,
+  ):
+    Promise<ProjectEntity> {
     const project =
       await this.projectRepo.findOne({
         where: {
-          id: projectId,
+          id:
+            projectId,
         },
       });
 
-    if (!project) {
+
+    if (
+      !project
+    ) {
       throw new NotFoundException(
         'Project not found',
       );
     }
+
 
     if (
       project.status ===
@@ -255,17 +363,21 @@ export class TasksService {
       );
     }
 
+
     return project;
   }
 
 
   private async assertValidAssignee(
-    userId: string,
-  ): Promise<UserEntity> {
+    userId:
+      string,
+  ):
+    Promise<UserEntity> {
     const assignee =
       await this.userRepo.findOne({
         where: {
-          id: userId,
+          id:
+            userId,
         },
 
         relations: [
@@ -273,17 +385,24 @@ export class TasksService {
         ],
       });
 
-    if (!assignee) {
+
+    if (
+      !assignee
+    ) {
       throw new NotFoundException(
         'Assigned User not found',
       );
     }
 
-    if (!assignee.isActive) {
+
+    if (
+      !assignee.isActive
+    ) {
       throw new BadRequestException(
         'Cannot assign a Task to a deactivated User',
       );
     }
+
 
     if (
       assignee.role.name ===
@@ -294,17 +413,21 @@ export class TasksService {
       );
     }
 
+
     return assignee;
   }
 
 
   private async assertValidApprover(
-    userId: string,
-  ): Promise<UserEntity> {
+    userId:
+      string,
+  ):
+    Promise<UserEntity> {
     const approver =
       await this.userRepo.findOne({
         where: {
-          id: userId,
+          id:
+            userId,
         },
 
         relations: [
@@ -312,30 +435,42 @@ export class TasksService {
         ],
       });
 
-    if (!approver) {
+
+    if (
+      !approver
+    ) {
       throw new NotFoundException(
         'Approver not found',
       );
     }
 
-    if (!approver.isActive) {
+
+    if (
+      !approver.isActive
+    ) {
       throw new BadRequestException(
         'Cannot use a deactivated User as the approver',
       );
     }
+
 
     return approver;
   }
 
 
   private assertAssigneeAndApproverDifferent(
-    assignedToId?: string | null,
-    approverId?: string | null,
-  ): void {
+    assignedToId?:
+      string | null,
+
+    approverId?:
+      string | null,
+  ):
+    void {
     if (
       assignedToId &&
       approverId &&
-      assignedToId === approverId
+      assignedToId ===
+        approverId
     ) {
       throw new BadRequestException(
         'The Task assignee and approver cannot be the same User',
@@ -345,13 +480,18 @@ export class TasksService {
 
 
   private assertValidDateRange(
-    startDate?: string | null,
-    deadlineDate?: string | null,
-  ): void {
+    startDate?:
+      string | null,
+
+    deadlineDate?:
+      string | null,
+  ):
+    void {
     if (
       startDate &&
       deadlineDate &&
-      deadlineDate < startDate
+      deadlineDate <
+        startDate
     ) {
       throw new BadRequestException(
         'Task deadline cannot be before the start date',
@@ -361,16 +501,28 @@ export class TasksService {
 
 
   private assertValidBudgetRange(
-    minimum?: string | null,
-    maximum?: string | null,
-  ): void {
+    minimum?:
+      string | null,
+
+    maximum?:
+      string | null,
+  ):
+    void {
     if (
-      minimum !== undefined &&
-      minimum !== null &&
-      maximum !== undefined &&
-      maximum !== null &&
-      Number(minimum) >
-        Number(maximum)
+      minimum !==
+        undefined &&
+      minimum !==
+        null &&
+      maximum !==
+        undefined &&
+      maximum !==
+        null &&
+      Number(
+        minimum,
+      ) >
+        Number(
+          maximum,
+        )
     ) {
       throw new BadRequestException(
         'Money range minimum cannot exceed the maximum',
@@ -380,26 +532,42 @@ export class TasksService {
 
 
   private assertBudgetComplete(
-    needsBudget: boolean,
-    minimum?: string | null,
-    maximum?: string | null,
-  ): void {
-    if (!needsBudget) {
+    needsBudget:
+      boolean,
+
+    minimum?:
+      string | null,
+
+    maximum?:
+      string | null,
+  ):
+    void {
+    if (
+      !needsBudget
+    ) {
       return;
     }
 
+
     if (
-      minimum === undefined ||
-      minimum === null ||
-      minimum === '' ||
-      maximum === undefined ||
-      maximum === null ||
-      maximum === ''
+      minimum ===
+        undefined ||
+      minimum ===
+        null ||
+      minimum ===
+        '' ||
+      maximum ===
+        undefined ||
+      maximum ===
+        null ||
+      maximum ===
+        ''
     ) {
       throw new BadRequestException(
         'Budget minimum and maximum are required when the Task needs a budget',
       );
     }
+
 
     this.assertValidBudgetRange(
       minimum,
@@ -412,30 +580,18 @@ export class TasksService {
    * ==========================================================
    * SUBTASK CREATION PERMISSION
    * ==========================================================
-   *
-   * A Parent Task may be split by:
-   *
-   * - Admin
-   * - Parent Task creator
-   * - User who ACCEPTED the Parent Task assignment
-   *
-   * Hierarchy is intentionally one level:
-   *
-   * Parent
-   *   ├── Child
-   *   ├── Child
-   *   └── Child
-   *
-   * Children cannot create grandchildren.
-   * ==========================================================
    */
 
   private async assertCanCreateSubTask(
-    parentTask: TaskEntity,
-    actor: UserEntity,
-  ): Promise<void> {
+    parentTask:
+      TaskEntity,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<void> {
     /*
-     * Only one level.
+     * One level only.
      */
     if (
       parentTask.parentTaskId
@@ -445,8 +601,9 @@ export class TasksService {
       );
     }
 
+
     /*
-     * No new work under closed Parent Tasks.
+     * No children under closed Parent Tasks.
      */
     if (
       parentTask.archivedAt ||
@@ -455,13 +612,15 @@ export class TasksService {
         TaskStatus.FINISHED,
         TaskStatus.ARCHIVED,
       ].includes(
-        parentTask.status as TaskStatus,
+        parentTask.status as
+          TaskStatus,
       )
     ) {
       throw new BadRequestException(
         'Cannot add Sub-tasks to a completed, finished, or archived Parent Task',
       );
     }
+
 
     /*
      * Admin.
@@ -473,6 +632,7 @@ export class TasksService {
       return;
     }
 
+
     /*
      * Creator.
      */
@@ -483,8 +643,9 @@ export class TasksService {
       return;
     }
 
+
     /*
-     * Accepted assignee.
+     * Accepted Parent assignee.
      */
     const acceptedAssignment =
       await this.assignmentRepo.findOne({
@@ -500,11 +661,13 @@ export class TasksService {
         },
       });
 
+
     if (
       acceptedAssignment
     ) {
       return;
     }
+
 
     throw new ForbiddenException(
       'Only the Parent Task creator, Admin, or the User who accepted the Parent Task may create Sub-tasks',
@@ -516,15 +679,13 @@ export class TasksService {
    * ==========================================================
    * OPEN SUBTASK GUARD
    * ==========================================================
-   *
-   * A Parent Task cannot be submitted / completed / finished
-   * while active children remain.
-   * ==========================================================
    */
 
   private async assertNoOpenSubTasks(
-    taskId: string,
-  ): Promise<void> {
+    taskId:
+      string,
+  ):
+    Promise<void> {
     const subTasks =
       await this.taskRepo.find({
         where: {
@@ -533,12 +694,14 @@ export class TasksService {
         },
       });
 
+
     if (
       subTasks.length ===
       0
     ) {
       return;
     }
+
 
     const openSubTasks =
       subTasks.filter(
@@ -550,9 +713,11 @@ export class TasksService {
             TaskStatus.FINISHED,
             TaskStatus.ARCHIVED,
           ].includes(
-            subTask.status as TaskStatus,
+            subTask.status as
+              TaskStatus,
           ),
       );
+
 
     if (
       openSubTasks.length >
@@ -572,17 +737,13 @@ export class TasksService {
    */
 
   async findAll(
-    query: QueryTasksDto,
+    query:
+      QueryTasksDto,
   ) {
-    /*
-     * ========================================================
-     * PAGINATION
-     * ========================================================
-     */
-
     const page =
       query.page ??
       1;
+
 
     const limit =
       query.limit ??
@@ -590,9 +751,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * VALIDATE FILTER DATE RANGES
-     * ========================================================
+     * Validate date filters.
      */
 
     if (
@@ -606,6 +765,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.startDateFrom &&
       query.startDateTo &&
@@ -616,6 +776,7 @@ export class TasksService {
         'Start date "to" cannot be before the "from" date',
       );
     }
+
 
     if (
       query.createdDateFrom &&
@@ -630,9 +791,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * BASE QUERY
-     * ========================================================
+     * Base query.
      */
 
     const qb =
@@ -663,9 +822,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * STATUS
-     * ========================================================
+     * Status.
      */
 
     if (
@@ -679,6 +836,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.excludeArchived ===
@@ -697,9 +855,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * CLASSIFICATION
-     * ========================================================
+     * Classification.
      */
 
     if (
@@ -713,6 +869,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.priority
@@ -728,9 +885,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * ORGANIZATION
-     * ========================================================
+     * Organization.
      */
 
     if (
@@ -745,6 +900,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.projectId
     ) {
@@ -756,6 +912,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.departmentId
@@ -771,9 +928,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * PEOPLE
-     * ========================================================
+     * People.
      */
 
     if (
@@ -788,6 +943,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.assignedToId
     ) {
@@ -800,9 +956,7 @@ export class TasksService {
       );
     }
 
-    /*
-     * Historical assignment assignee.
-     */
+
     if (
       query.assigneeId
     ) {
@@ -822,9 +976,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * SEARCH
-     * ========================================================
+     * Search.
      */
 
     if (
@@ -832,6 +984,7 @@ export class TasksService {
     ) {
       const search =
         `%${query.search.trim()}%`;
+
 
       qb.andWhere(
         `(
@@ -851,9 +1004,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * DEADLINE FILTER
-     * ========================================================
+     * Deadline.
      */
 
     if (
@@ -868,6 +1019,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.dueDateTo
     ) {
@@ -880,6 +1032,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.hasDeadline ===
       'true'
@@ -888,6 +1041,7 @@ export class TasksService {
         'task.deadlineDate IS NOT NULL',
       );
     }
+
 
     if (
       query.hasDeadline ===
@@ -900,9 +1054,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * OVERDUE
-     * ========================================================
+     * Overdue.
      */
 
     if (
@@ -931,9 +1083,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * START DATE
-     * ========================================================
+     * Start date.
      */
 
     if (
@@ -947,6 +1097,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.startDateTo
@@ -962,9 +1113,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * CREATED DATE
-     * ========================================================
+     * Created date.
      */
 
     if (
@@ -979,9 +1128,7 @@ export class TasksService {
       );
     }
 
-    /*
-     * Include whole "to" date.
-     */
+
     if (
       query.createdDateTo
     ) {
@@ -999,15 +1146,14 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * SORT
-     * ========================================================
+     * Sort.
      */
 
-    const sortColumns: Record<
-      string,
-      string
-    > = {
+    const sortColumns:
+      Record<
+        string,
+        string
+      > = {
       createdAt:
         'task.createdAt',
 
@@ -1027,6 +1173,7 @@ export class TasksService {
         'task.taskType',
     };
 
+
     const sortColumn =
       sortColumns[
         query.sortBy ??
@@ -1034,11 +1181,13 @@ export class TasksService {
       ] ??
       'task.createdAt';
 
+
     const sortDirection =
       query.sortDir ===
       'asc'
         ? 'ASC'
         : 'DESC';
+
 
     const nulls =
       query.sortBy ===
@@ -1048,11 +1197,13 @@ export class TasksService {
         ? 'NULLS LAST'
         : undefined;
 
+
     qb.orderBy(
       sortColumn,
       sortDirection,
       nulls,
     );
+
 
     if (
       sortColumn !==
@@ -1066,9 +1217,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * PAGINATION
-     * ========================================================
+     * Pagination.
      */
 
     qb
@@ -1084,12 +1233,6 @@ export class TasksService {
       );
 
 
-    /*
-     * ========================================================
-     * EXECUTE
-     * ========================================================
-     */
-
     const [
       items,
       total,
@@ -1098,9 +1241,7 @@ export class TasksService {
 
 
     /*
-     * ========================================================
-     * RATINGS
-     * ========================================================
+     * Ratings.
      */
 
     if (
@@ -1127,11 +1268,13 @@ export class TasksService {
           )
           .getMany();
 
+
       const ratingsByTaskId =
         new Map<
           string,
           TaskRatingEntity[]
         >();
+
 
       for (
         const rating
@@ -1143,15 +1286,18 @@ export class TasksService {
           ) ??
           [];
 
+
         list.push(
           rating,
         );
+
 
         ratingsByTaskId.set(
           rating.taskId,
           list,
         );
       }
+
 
       for (
         const task
@@ -1182,16 +1328,21 @@ export class TasksService {
    */
 
   async findMyTasks(
-    userId: string,
-    query: QueryMyTasksDto,
+    userId:
+      string,
+
+    query:
+      QueryMyTasksDto,
   ) {
     const page =
       query.page ??
       1;
 
+
     const limit =
       query.limit ??
       20;
+
 
     const idQb =
       this.taskRepo
@@ -1238,6 +1389,7 @@ export class TasksService {
           'task.id',
         );
 
+
     if (
       query.status
     ) {
@@ -1249,6 +1401,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.taskType
@@ -1262,6 +1415,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.priority
     ) {
@@ -1273,6 +1427,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.projectId
@@ -1286,6 +1441,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.search
     ) {
@@ -1297,6 +1453,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.upcomingOnly ===
@@ -1321,6 +1478,7 @@ export class TasksService {
         );
     }
 
+
     if (
       query.deadlineFrom
     ) {
@@ -1333,6 +1491,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.deadlineTo
     ) {
@@ -1344,6 +1503,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.minRating
@@ -1359,11 +1519,13 @@ export class TasksService {
       );
     }
 
+
     const dir =
       query.sortDir ===
       'asc'
         ? 'ASC'
         : 'DESC';
+
 
     switch (
       query.sortBy
@@ -1405,18 +1567,23 @@ export class TasksService {
         break;
     }
 
+
     idQb.addOrderBy(
       'task.id',
       'ASC',
     );
 
+
     const rawRows =
       await idQb.getRawMany<{
-        id: string;
+        id:
+          string;
       }>();
+
 
     const total =
       rawRows.length;
+
 
     const pageIds =
       rawRows
@@ -1441,6 +1608,7 @@ export class TasksService {
             row.id,
         );
 
+
     if (
       pageIds.length ===
       0
@@ -1452,6 +1620,7 @@ export class TasksService {
         limit,
       };
     }
+
 
     const hydrated =
       await this.taskRepo.find({
@@ -1472,6 +1641,7 @@ export class TasksService {
         ],
       });
 
+
     const byId =
       new Map(
         hydrated.map(
@@ -1483,6 +1653,7 @@ export class TasksService {
           ],
         ),
       );
+
 
     const items =
       pageIds
@@ -1497,11 +1668,13 @@ export class TasksService {
         .filter(
           (
             task,
-          ): task is TaskEntity =>
+          ):
+            task is TaskEntity =>
             Boolean(
               task,
             ),
         );
+
 
     return {
       items,
@@ -1519,16 +1692,21 @@ export class TasksService {
    */
 
   async findAssignedByMe(
-    userId: string,
-    query: QueryMyTasksDto,
+    userId:
+      string,
+
+    query:
+      QueryMyTasksDto,
   ) {
     const page =
       query.page ??
       1;
 
+
     const limit =
       query.limit ??
       20;
+
 
     const idQb =
       this.taskRepo
@@ -1574,6 +1752,7 @@ export class TasksService {
           'task.id',
         );
 
+
     if (
       query.status
     ) {
@@ -1585,6 +1764,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.taskType
@@ -1598,6 +1778,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.priority
     ) {
@@ -1609,6 +1790,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.projectId
@@ -1622,6 +1804,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.search
     ) {
@@ -1633,6 +1816,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.upcomingOnly ===
@@ -1657,6 +1841,7 @@ export class TasksService {
         );
     }
 
+
     if (
       query.deadlineFrom
     ) {
@@ -1669,6 +1854,7 @@ export class TasksService {
       );
     }
 
+
     if (
       query.deadlineTo
     ) {
@@ -1680,6 +1866,7 @@ export class TasksService {
         },
       );
     }
+
 
     if (
       query.minRating
@@ -1695,11 +1882,13 @@ export class TasksService {
       );
     }
 
+
     const dir =
       query.sortDir ===
       'asc'
         ? 'ASC'
         : 'DESC';
+
 
     switch (
       query.sortBy
@@ -1741,18 +1930,23 @@ export class TasksService {
         break;
     }
 
+
     idQb.addOrderBy(
       'task.id',
       'ASC',
     );
 
+
     const rawRows =
       await idQb.getRawMany<{
-        id: string;
+        id:
+          string;
       }>();
+
 
     const total =
       rawRows.length;
+
 
     const pageIds =
       rawRows
@@ -1777,6 +1971,7 @@ export class TasksService {
             row.id,
         );
 
+
     if (
       pageIds.length ===
       0
@@ -1788,6 +1983,7 @@ export class TasksService {
         limit,
       };
     }
+
 
     const hydrated =
       await this.taskRepo.find({
@@ -1808,6 +2004,7 @@ export class TasksService {
         ],
       });
 
+
     const byId =
       new Map(
         hydrated.map(
@@ -1819,6 +2016,7 @@ export class TasksService {
           ],
         ),
       );
+
 
     const items =
       pageIds
@@ -1833,11 +2031,13 @@ export class TasksService {
         .filter(
           (
             task,
-          ): task is TaskEntity =>
+          ):
+            task is TaskEntity =>
             Boolean(
               task,
             ),
         );
+
 
     return {
       items,
@@ -1855,8 +2055,10 @@ export class TasksService {
    */
 
   async findOne(
-    id: string,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+  ):
+    Promise<TaskEntity> {
     const task =
       await this.taskRepo.findOne({
         where: {
@@ -1867,11 +2069,15 @@ export class TasksService {
           TASK_RELATIONS,
       });
 
-    if (!task) {
+
+    if (
+      !task
+    ) {
       throw new NotFoundException(
         'Task not found',
       );
     }
+
 
     task.attachments =
       (
@@ -1884,6 +2090,7 @@ export class TasksService {
           !attachment.deletedAt,
       );
 
+
     task.comments =
       (
         task.comments ||
@@ -1894,6 +2101,7 @@ export class TasksService {
         ) =>
           !comment.deletedAt,
       );
+
 
     return task;
   }
@@ -1906,9 +2114,13 @@ export class TasksService {
    */
 
   async create(
-    dto: CreateTaskDto,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    dto:
+      CreateTaskDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     /*
      * Department.
      */
@@ -1917,6 +2129,7 @@ export class TasksService {
       dto.departmentId,
       'Department',
     );
+
 
     /*
      * Branch.
@@ -1931,6 +2144,7 @@ export class TasksService {
       );
     }
 
+
     /*
      * Project.
      */
@@ -1941,6 +2155,7 @@ export class TasksService {
         dto.projectId,
       );
     }
+
 
     /*
      * Dates.
@@ -1968,6 +2183,7 @@ export class TasksService {
           },
         });
 
+
       if (
         !parentTask
       ) {
@@ -1976,9 +2192,7 @@ export class TasksService {
         );
       }
 
-      /*
-       * Permission + hierarchy.
-       */
+
       await this.assertCanCreateSubTask(
         parentTask,
         actor,
@@ -1986,11 +2200,8 @@ export class TasksService {
 
 
       /*
-       * ======================================================
-       * ORGANIZATION MUST MATCH PARENT
-       * ======================================================
+       * Organizational context must match Parent.
        */
-
       if (
         dto.departmentId !==
         parentTask.departmentId
@@ -1999,6 +2210,7 @@ export class TasksService {
           'Sub-task Department must match its Parent Task',
         );
       }
+
 
       if (
         (
@@ -2014,6 +2226,7 @@ export class TasksService {
           'Sub-task Branch must match its Parent Task',
         );
       }
+
 
       if (
         (
@@ -2032,11 +2245,8 @@ export class TasksService {
 
 
       /*
-       * ======================================================
-       * CHILD DATES MUST FIT INSIDE PARENT
-       * ======================================================
+       * Child dates must fit inside Parent dates.
        */
-
       if (
         dto.startDate &&
         parentTask.startDate &&
@@ -2047,6 +2257,7 @@ export class TasksService {
           "Sub-task start date cannot be before its Parent Task's start date",
         );
       }
+
 
       if (
         dto.deadlineDate &&
@@ -2081,6 +2292,7 @@ export class TasksService {
         dto.needsApproval,
       );
 
+
     if (
       needsApproval &&
       !dto.approverId
@@ -2090,6 +2302,7 @@ export class TasksService {
       );
     }
 
+
     if (
       needsApproval &&
       dto.approverId
@@ -2098,6 +2311,7 @@ export class TasksService {
         dto.approverId,
       );
     }
+
 
     this.assertAssigneeAndApproverDifferent(
       dto.assignedToId,
@@ -2116,6 +2330,7 @@ export class TasksService {
         dto.needsBudget,
       );
 
+
     this.assertBudgetComplete(
       needsBudget,
       dto.budgetMin,
@@ -2124,7 +2339,7 @@ export class TasksService {
 
 
     /*
-     * Type / priority.
+     * Dynamic lists.
      */
     if (
       dto.taskType
@@ -2135,6 +2350,7 @@ export class TasksService {
         'Task Type',
       );
     }
+
 
     await this.assertValidListValue(
       SettingType.TASK_PRIORITY,
@@ -2232,9 +2448,6 @@ export class TasksService {
       );
 
 
-    /*
-     * Audit.
-     */
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -2253,9 +2466,6 @@ export class TasksService {
     });
 
 
-    /*
-     * Project status.
-     */
     if (
       task.projectId
     ) {
@@ -2263,6 +2473,7 @@ export class TasksService {
         task.projectId,
       );
     }
+
 
     return this.findOne(
       task.id,
@@ -2277,23 +2488,27 @@ export class TasksService {
    */
 
   async update(
-    id: string,
-    dto: UpdateTaskDto,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+
+    dto:
+      UpdateTaskDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     const task =
       await this.findOne(
         id,
       );
+
 
     const isAdmin =
       actor.role.name ===
       RoleName.ADMIN;
 
 
-    /*
-     * Permissions.
-     */
     if (
       !isAdmin &&
       task.createdById !==
@@ -2304,6 +2519,7 @@ export class TasksService {
       );
     }
 
+
     if (
       task.archivedAt ||
       task.status ===
@@ -2313,6 +2529,7 @@ export class TasksService {
         'Cannot edit an archived Task',
       );
     }
+
 
     if (
       task.status ===
@@ -2325,16 +2542,13 @@ export class TasksService {
     }
 
 
-    /*
-     * Effective values.
-     */
-
     const effectiveStartDate =
       dto.startDate !==
       undefined
         ? dto.startDate
         : task.startDate ??
           null;
+
 
     const effectiveDeadline =
       dto.deadlineDate !==
@@ -2343,12 +2557,14 @@ export class TasksService {
         : task.deadlineDate ??
           null;
 
+
     const effectiveParentId =
       dto.parentTaskId !==
       undefined
         ? dto.parentTaskId
         : task.parentTaskId ??
           null;
+
 
     const effectiveAssigneeId =
       dto.assignedToId !==
@@ -2357,11 +2573,13 @@ export class TasksService {
         : task.assignedToId ??
           null;
 
+
     const effectiveNeedsApproval =
       dto.needsApproval !==
       undefined
         ? dto.needsApproval
         : task.needsApproval;
+
 
     const effectiveApproverId =
       dto.approverId !==
@@ -2370,11 +2588,13 @@ export class TasksService {
         : task.approverId ??
           null;
 
+
     const effectiveNeedsBudget =
       dto.needsBudget !==
       undefined
         ? dto.needsBudget
         : task.needsBudget;
+
 
     const effectiveBudgetMin =
       dto.budgetMin !==
@@ -2382,6 +2602,7 @@ export class TasksService {
         ? dto.budgetMin
         : task.budgetMin ??
           null;
+
 
     const effectiveBudgetMax =
       dto.budgetMax !==
@@ -2391,13 +2612,11 @@ export class TasksService {
           null;
 
 
-    /*
-     * Dates.
-     */
     this.assertValidDateRange(
       effectiveStartDate,
       effectiveDeadline,
     );
+
 
     if (
       dto.deadlineDate &&
@@ -2413,6 +2632,7 @@ export class TasksService {
             10,
           );
 
+
       if (
         dto.deadlineDate <
           today &&
@@ -2425,9 +2645,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Department.
-     */
     if (
       dto.departmentId !==
       undefined
@@ -2440,6 +2657,7 @@ export class TasksService {
         );
       }
 
+
       await this.assertActiveSettingById(
         SettingType.DEPARTMENT,
         dto.departmentId,
@@ -2448,9 +2666,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Branch.
-     */
     if (
       dto.branchId
     ) {
@@ -2462,9 +2677,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Project.
-     */
     if (
       dto.projectId
     ) {
@@ -2475,7 +2687,7 @@ export class TasksService {
 
 
     /*
-     * Parent Task.
+     * Parent.
      */
     if (
       effectiveParentId
@@ -2485,6 +2697,7 @@ export class TasksService {
         effectiveParentId,
       );
 
+
       const parent =
         await this.taskRepo.findOne({
           where: {
@@ -2493,6 +2706,7 @@ export class TasksService {
           },
         });
 
+
       if (
         !parent
       ) {
@@ -2500,6 +2714,7 @@ export class TasksService {
           'Parent Task not found',
         );
       }
+
 
       if (
         parent.archivedAt ||
@@ -2510,6 +2725,7 @@ export class TasksService {
           'Cannot attach a Task to an archived Parent Task',
         );
       }
+
 
       if (
         parent.deadlineDate &&
@@ -2524,9 +2740,6 @@ export class TasksService {
     }
 
 
-    /*
-     * Assignee.
-     */
     if (
       effectiveAssigneeId
     ) {
@@ -2544,6 +2757,7 @@ export class TasksService {
         true &&
       !task.needsApproval;
 
+
     if (
       enablingApproval &&
       (
@@ -2558,6 +2772,7 @@ export class TasksService {
       );
     }
 
+
     if (
       effectiveNeedsApproval &&
       !effectiveApproverId
@@ -2567,6 +2782,7 @@ export class TasksService {
       );
     }
 
+
     if (
       effectiveNeedsApproval &&
       effectiveApproverId
@@ -2575,6 +2791,7 @@ export class TasksService {
         effectiveApproverId,
       );
     }
+
 
     this.assertAssigneeAndApproverDifferent(
       effectiveAssigneeId,
@@ -2595,9 +2812,6 @@ export class TasksService {
     );
 
 
-    /*
-     * Task Type / Priority.
-     */
     if (
       dto.taskType
     ) {
@@ -2607,6 +2821,7 @@ export class TasksService {
         'Task Type',
       );
     }
+
 
     if (
       dto.priority
@@ -2619,24 +2834,19 @@ export class TasksService {
     }
 
 
-    /*
-     * Preserve old values.
-     */
-
     const oldValue = {
       ...task,
     };
 
+
     const oldProjectId =
       task.projectId;
+
 
     const oldApproverId =
       task.approverId;
 
 
-    /*
-     * Apply DTO.
-     */
     Object.assign(
       task,
       dto,
@@ -2671,6 +2881,7 @@ export class TasksService {
       task.needsApproval =
         true;
 
+
       if (
         !oldValue.needsApproval
       ) {
@@ -2682,6 +2893,7 @@ export class TasksService {
         ).rejectionReason =
           null;
       }
+
 
       if (
         dto.approverId !==
@@ -2727,18 +2939,12 @@ export class TasksService {
     }
 
 
-    /*
-     * Save.
-     */
     const saved =
       await this.taskRepo.save(
         task,
       );
 
 
-    /*
-     * Audit.
-     */
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -2759,9 +2965,6 @@ export class TasksService {
     });
 
 
-    /*
-     * Recompute previous project if moved.
-     */
     if (
       oldProjectId &&
       oldProjectId !==
@@ -2772,6 +2975,7 @@ export class TasksService {
       );
     }
 
+
     if (
       saved.projectId
     ) {
@@ -2779,6 +2983,7 @@ export class TasksService {
         saved.projectId,
       );
     }
+
 
     return this.findOne(
       saved.id,
@@ -2793,18 +2998,26 @@ export class TasksService {
    */
 
   async updateAttachmentPermissions(
-    id: string,
-    dto: UpdateAttachmentPermissionsDto,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+
+    dto:
+      UpdateAttachmentPermissionsDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     const task =
       await this.findOne(
         id,
       );
 
+
     const isAdmin =
       actor.role.name ===
       RoleName.ADMIN;
+
 
     if (
       !isAdmin &&
@@ -2816,10 +3029,12 @@ export class TasksService {
       );
     }
 
+
     const oldValue = {
       assigneeCanDownloadAttachments:
         task.assigneeCanDownloadAttachments,
     };
+
 
     await this.taskRepo.update(
       id,
@@ -2829,10 +3044,12 @@ export class TasksService {
       },
     );
 
+
     const saved =
       await this.findOne(
         id,
       );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -2855,20 +3072,25 @@ export class TasksService {
       },
     });
 
+
     return saved;
   }
 
 
   /*
    * ==========================================================
-   * PARENT CYCLE CHECK
+   * CIRCULAR PARENT CHECK
    * ==========================================================
    */
 
   private async assertNoCircularReference(
-    taskId: string,
-    newParentId: string,
-  ): Promise<void> {
+    taskId:
+      string,
+
+    newParentId:
+      string,
+  ):
+    Promise<void> {
     if (
       taskId ===
       newParentId
@@ -2878,13 +3100,15 @@ export class TasksService {
       );
     }
 
+
     let currentId:
-      | string
-      | undefined =
+      string | undefined =
       newParentId;
+
 
     const visited =
       new Set<string>();
+
 
     while (
       currentId
@@ -2898,6 +3122,7 @@ export class TasksService {
         );
       }
 
+
       if (
         visited.has(
           currentId,
@@ -2906,19 +3131,21 @@ export class TasksService {
         break;
       }
 
+
       visited.add(
         currentId,
       );
 
+
       const ancestor:
-        | TaskEntity
-        | null =
+        TaskEntity | null =
         await this.taskRepo.findOne({
           where: {
             id:
               currentId,
           },
         });
+
 
       currentId =
         ancestor?.parentTaskId;
@@ -2933,19 +3160,30 @@ export class TasksService {
    */
 
   async changeStatus(
-    id: string,
-    dto: UpdateTaskStatusDto,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+
+    dto:
+      UpdateTaskStatusDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     const task =
       await this.findOne(
         id,
       );
 
+
+    /*
+     * Permission.
+     */
     await this.assertCanChangeStatus(
       task,
       actor,
     );
+
 
     if (
       task.archivedAt
@@ -2955,6 +3193,10 @@ export class TasksService {
       );
     }
 
+
+    /*
+     * Dynamic Status list still validates the target.
+     */
     await this.assertValidListValue(
       SettingType.TASK_STATUS,
       dto.status,
@@ -2963,8 +3205,15 @@ export class TasksService {
 
 
     /*
-     * Reopen.
+     * ========================================================
+     * REOPEN
+     * ========================================================
+     *
+     * Reopen remains an Admin/system action rather than a
+     * configurable normal Workflow action.
+     * ========================================================
      */
+
     if (
       dto.status ===
       TaskStatus.REOPENED
@@ -2998,8 +3247,16 @@ export class TasksService {
 
 
     /*
-     * Built-in workflow.
+     * ========================================================
+     * BUILT-IN TRANSITION VALIDATION
+     * ========================================================
+     *
+     * Admin Workflow configuration NEVER replaces these rules.
+     *
+     * This is the underlying safe state machine.
+     * ========================================================
      */
+
     const fromIsBuiltIn =
       (
         Object.values(
@@ -3008,6 +3265,7 @@ export class TasksService {
       ).includes(
         task.status,
       );
+
 
     const toIsBuiltIn =
       (
@@ -3018,19 +3276,23 @@ export class TasksService {
         dto.status,
       );
 
+
     if (
       fromIsBuiltIn &&
       toIsBuiltIn
     ) {
       const allowedNext =
         ALLOWED_TRANSITIONS[
-          task.status as TaskStatus
+          task.status as
+            TaskStatus
         ] ??
         [];
 
+
       if (
         !allowedNext.includes(
-          dto.status as TaskStatus,
+          dto.status as
+            TaskStatus,
         )
       ) {
         if (
@@ -3044,6 +3306,7 @@ export class TasksService {
           );
         }
 
+
         throw new ConflictException(
           `Cannot transition Task from ${task.status} to ${dto.status}`,
         );
@@ -3053,16 +3316,43 @@ export class TasksService {
 
     /*
      * ========================================================
-     * PARENT TASK WORK BREAKDOWN
+     * ADMIN-CONFIGURED WORKFLOW
      * ========================================================
      *
-     * A Parent cannot:
+     * The base state machine above says whether a transition is
+     * technically legal.
      *
-     * - submit for approval
-     * - complete
-     * - finish
+     * TaskWorkflowService then checks:
      *
-     * while open children remain.
+     * - is the Admin action enabled?
+     * - in Guided mode, is this the next configured action?
+     *
+     * It cannot make an illegal base transition legal.
+     * ========================================================
+     */
+
+    const configuredAllowedTargets =
+      fromIsBuiltIn
+        ? (
+            ALLOWED_TRANSITIONS[
+              task.status as
+                TaskStatus
+            ] ??
+            []
+          )
+        : [];
+
+
+    await this.taskWorkflowService.assertActionAllowed(
+      task,
+      dto.status,
+      configuredAllowedTargets,
+    );
+
+
+    /*
+     * ========================================================
+     * PARENT TASK WORK BREAKDOWN
      * ========================================================
      */
 
@@ -3072,7 +3362,8 @@ export class TasksService {
         TaskStatus.COMPLETED,
         TaskStatus.FINISHED,
       ].includes(
-        dto.status as TaskStatus,
+        dto.status as
+          TaskStatus,
       )
     ) {
       await this.assertNoOpenSubTasks(
@@ -3099,6 +3390,7 @@ export class TasksService {
         );
       }
 
+
       if (
         !task.approverId
       ) {
@@ -3107,12 +3399,15 @@ export class TasksService {
         );
       }
 
+
       await this.assertValidApprover(
         task.approverId,
       );
 
+
       task.approvalStatus =
         ApprovalStatus.PENDING;
+
 
       (
         task as any
@@ -3140,17 +3435,15 @@ export class TasksService {
           'This Task requires approval; route it through PendingApproval and have the approver decide first',
         );
       }
-
-      /*
-       * No duplicate assertNoOpenSubTasks here.
-       * It is handled by the common Parent guard above.
-       */
     }
 
 
     /*
-     * Finished requires reason.
+     * ========================================================
+     * FINISHED
+     * ========================================================
      */
+
     if (
       dto.status ===
         TaskStatus.FINISHED &&
@@ -3172,8 +3465,11 @@ export class TasksService {
 
 
     /*
-     * Archive through status workflow.
+     * ========================================================
+     * ARCHIVE
+     * ========================================================
      */
+
     if (
       dto.status ===
       TaskStatus.ARCHIVED
@@ -3185,8 +3481,10 @@ export class TasksService {
         new Date();
     }
 
+
     task.status =
       dto.status;
+
 
     if (
       dto.status ===
@@ -3239,6 +3537,7 @@ export class TasksService {
       );
     }
 
+
     return this.findOne(
       saved.id,
     );
@@ -3247,19 +3546,26 @@ export class TasksService {
 
   /*
    * ==========================================================
-   * APPROVAL
+   * APPROVAL DECISION
    * ==========================================================
    */
 
   async decideApproval(
-    id: string,
-    dto: DecideTaskApprovalDto,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+
+    dto:
+      DecideTaskApprovalDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     const task =
       await this.findOne(
         id,
       );
+
 
     if (
       !task.needsApproval
@@ -3271,7 +3577,7 @@ export class TasksService {
 
 
     /*
-     * Only configured Approver or Admin.
+     * Approver or Admin.
      */
     if (
       actor.role.name !==
@@ -3286,7 +3592,7 @@ export class TasksService {
 
 
     /*
-     * Approval only after submission.
+     * Must actually be awaiting approval.
      */
     if (
       task.status !==
@@ -3296,6 +3602,7 @@ export class TasksService {
         'This Task is not currently awaiting approval',
       );
     }
+
 
     if (
       task.approvalStatus !==
@@ -3308,11 +3615,7 @@ export class TasksService {
 
 
     /*
-     * Defensive child check.
-     *
-     * Even though entering PendingApproval already checks children,
-     * verify again because child state could theoretically change
-     * before approval is decided.
+     * Defensive subtask check.
      */
     if (
       dto.approve
@@ -3356,7 +3659,7 @@ export class TasksService {
         dto.rejectionReason;
 
       /*
-       * Send rejected work back.
+       * Rejected work returns to In Progress.
        */
       task.status =
         TaskStatus.IN_PROGRESS;
@@ -3412,6 +3715,7 @@ export class TasksService {
       );
     }
 
+
     return this.findOne(
       saved.id,
     );
@@ -3425,9 +3729,13 @@ export class TasksService {
    */
 
   private async assertCanChangeStatus(
-    task: TaskEntity,
-    actor: UserEntity,
-  ): Promise<void> {
+    task:
+      TaskEntity,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<void> {
     if (
       actor.role.name ===
         RoleName.ADMIN ||
@@ -3437,12 +3745,14 @@ export class TasksService {
       return;
     }
 
+
     if (
       task.assignedToId ===
       actor.id
     ) {
       return;
     }
+
 
     const isAssignee =
       await this.assignmentRepo.exist({
@@ -3454,6 +3764,7 @@ export class TasksService {
             actor.id,
         },
       });
+
 
     if (
       !isAssignee
@@ -3472,10 +3783,16 @@ export class TasksService {
    */
 
   private async reopen(
-    task: TaskEntity,
-    reason: string,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    task:
+      TaskEntity,
+
+    reason:
+      string,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     if (
       actor.role.name !==
       RoleName.ADMIN
@@ -3484,6 +3801,7 @@ export class TasksService {
         'Only Admin may reopen a Task',
       );
     }
+
 
     if (
       task.status !==
@@ -3496,23 +3814,28 @@ export class TasksService {
       );
     }
 
+
     const oldValue = {
       status:
         task.status,
     };
 
+
     task.status =
       TaskStatus.REOPENED;
+
 
     (
       task as any
     ).actualEndDate =
       null;
 
+
     const saved =
       await this.taskRepo.save(
         task,
       );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -3537,6 +3860,7 @@ export class TasksService {
       reason,
     });
 
+
     if (
       saved.projectId
     ) {
@@ -3544,6 +3868,7 @@ export class TasksService {
         saved.projectId,
       );
     }
+
 
     return this.findOne(
       saved.id,
@@ -3558,14 +3883,21 @@ export class TasksService {
    */
 
   async remove(
-    id: string,
-    actor: UserEntity,
-    hardDelete = false,
-  ): Promise<void> {
+    id:
+      string,
+
+    actor:
+      UserEntity,
+
+    hardDelete =
+      false,
+  ):
+    Promise<void> {
     const task =
       await this.findOne(
         id,
       );
+
 
     const projectId =
       task.projectId;
@@ -3573,7 +3905,7 @@ export class TasksService {
 
     /*
      * ========================================================
-     * PERMANENT DELETE
+     * HARD DELETE
      * ========================================================
      */
 
@@ -3588,6 +3920,7 @@ export class TasksService {
           'Only Admin may permanently delete a Task',
         );
       }
+
 
       const [
         assignments,
@@ -3625,6 +3958,7 @@ export class TasksService {
           }),
         ]);
 
+
       if (
         assignments +
           comments +
@@ -3637,9 +3971,11 @@ export class TasksService {
         );
       }
 
+
       await this.taskRepo.remove(
         task,
       );
+
 
       await this.auditLogsService.record({
         actorId:
@@ -3658,6 +3994,7 @@ export class TasksService {
           'Hard delete',
       });
 
+
       if (
         projectId
       ) {
@@ -3666,13 +4003,14 @@ export class TasksService {
         );
       }
 
+
       return;
     }
 
 
     /*
      * ========================================================
-     * SOFT DELETE / ARCHIVE
+     * ARCHIVE
      * ========================================================
      */
 
@@ -3687,6 +4025,7 @@ export class TasksService {
       );
     }
 
+
     if (
       task.status ===
       TaskStatus.ARCHIVED
@@ -3694,18 +4033,23 @@ export class TasksService {
       return;
     }
 
+
     task.statusBeforeArchive =
       task.status;
+
 
     task.archivedAt =
       new Date();
 
+
     task.status =
       TaskStatus.ARCHIVED;
+
 
     await this.taskRepo.save(
       task,
     );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -3720,6 +4064,7 @@ export class TasksService {
       action:
         AuditAction.ARCHIVE,
     });
+
 
     if (
       projectId
@@ -3738,9 +4083,13 @@ export class TasksService {
    */
 
   async unarchive(
-    id: string,
-    actor: UserEntity,
-  ): Promise<TaskEntity> {
+    id:
+      string,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
     if (
       actor.role.name !==
       RoleName.ADMIN
@@ -3750,10 +4099,12 @@ export class TasksService {
       );
     }
 
+
     const task =
       await this.findOne(
         id,
       );
+
 
     if (
       task.status !==
@@ -3764,6 +4115,7 @@ export class TasksService {
       );
     }
 
+
     const oldValue = {
       status:
         task.status,
@@ -3772,20 +4124,25 @@ export class TasksService {
         task.archivedAt,
     };
 
+
     task.status =
       task.statusBeforeArchive ??
       TaskStatus.PENDING;
 
+
     task.archivedAt =
       undefined;
 
+
     task.statusBeforeArchive =
       undefined;
+
 
     const saved =
       await this.taskRepo.save(
         task,
       );
+
 
     await this.auditLogsService.record({
       actorId:
@@ -3808,6 +4165,7 @@ export class TasksService {
       },
     });
 
+
     if (
       saved.projectId
     ) {
@@ -3815,6 +4173,7 @@ export class TasksService {
         saved.projectId,
       );
     }
+
 
     return this.findOne(
       saved.id,

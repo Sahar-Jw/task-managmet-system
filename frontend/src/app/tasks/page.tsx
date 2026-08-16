@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useCallback,
   useEffect,
@@ -311,9 +314,7 @@ function ViewToggle({
       <button
         type="button"
         title={
-          isArabic
-            ? 'بطاقات'
-            : 'Cards'
+          uiText(isArabic, 'text0389')
         }
         onClick={() =>
           onChange(
@@ -375,9 +376,7 @@ function ViewToggle({
       <button
         type="button"
         title={
-          isArabic
-            ? 'قائمة'
-            : 'List'
+          uiText(isArabic, 'text0067')
         }
         onClick={() =>
           onChange(
@@ -440,16 +439,12 @@ function EmptyState({
 
 
       <h3 className="mt-4 text-sm font-semibold text-slate-800">
-        {isArabic
-          ? 'لا توجد مهام'
-          : 'No tasks found'}
+        {uiText(isArabic, 'text0194')}
       </h3>
 
 
       <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
-        {isArabic
-          ? 'غيّر عوامل التصفية أو أنشئ مهمة جديدة.'
-          : 'Try changing your filters or create a new task.'}
+        {uiText(isArabic, 'text0521')}
       </p>
     </div>
   );
@@ -1400,9 +1395,7 @@ function TasksContent() {
           setError(
             err instanceof ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل المهام.'
-                : 'Could not load tasks.',
+              : uiText(isArabic, 'text0156'),
           );
         } finally {
           setLoading(
@@ -1631,9 +1624,7 @@ function TasksContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر أرشفة المهمة.'
-              : 'Could not archive this task.',
+            : uiText(isArabic, 'text0522'),
       });
 
 
@@ -1682,9 +1673,7 @@ function TasksContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر استعادة المهمة.'
-              : 'Could not restore this task.',
+            : uiText(isArabic, 'text0579'),
       });
     } finally {
       setBusyId(
@@ -1767,9 +1756,7 @@ function TasksContent() {
           }
           className="btn-secondary px-3 py-1.5 text-xs"
         >
-          {isArabic
-            ? 'التفاصيل'
-            : 'Details'}
+          {uiText(isArabic, 'text0158')}
         </Link>
 
 
@@ -1795,12 +1782,8 @@ function TasksContent() {
           >
             {busyId ===
             task.id
-              ? isArabic
-                ? 'جاري الاستعادة…'
-                : 'Restoring…'
-              : isArabic
-                ? 'استعادة'
-                : 'Restore'}
+              ? uiText(isArabic, 'text0402')
+              : uiText(isArabic, 'text0403')}
           </button>
         ) : (
           <button
@@ -1821,9 +1804,7 @@ function TasksContent() {
             }}
             className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
           >
-            {isArabic
-              ? 'أرشفة'
-              : 'Archive'}
+            {uiText(isArabic, 'text0401')}
           </button>
         )}
       </div>
@@ -1859,28 +1840,20 @@ function TasksContent() {
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-              {isArabic
-                ? 'إدارة العمل'
-                : 'Work management'}
+              {uiText(isArabic, 'text0580')}
             </div>
 
 
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-              {isArabic
-                ? 'المهام'
-                : 'Tasks'}
+              {uiText(isArabic, 'text0195')}
             </h1>
 
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               {pageView ===
               'archived'
-                ? isArabic
-                  ? 'راجع المهام المؤرشفة واستعدها عند الحاجة.'
-                  : 'Review archived tasks and restore them when needed.'
-                : isArabic
-                  ? 'تابع جميع مهام المؤسسة حسب الحالة والأهمية والمستخدم والمشروع.'
-                  : 'Manage organization-wide work by status, importance, owner, assignee and project.'}
+                ? uiText(isArabic, 'text0581')
+                : uiText(isArabic, 'text0582')}
             </p>
           </div>
 
@@ -1904,9 +1877,7 @@ function TasksContent() {
               className="btn-primary"
             >
               +{' '}
-              {isArabic
-                ? 'مهمة جديدة'
-                : 'New task'}
+              {uiText(isArabic, 'text0016')}
             </Link>
           </div>
         </div>
@@ -1934,9 +1905,7 @@ function TasksContent() {
               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           }`}
         >
-          {isArabic
-            ? 'المهام'
-            : 'Tasks'}
+          {uiText(isArabic, 'text0195')}
         </button>
 
 
@@ -1954,9 +1923,7 @@ function TasksContent() {
               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           }`}
         >
-          {isArabic
-            ? 'المؤرشفة'
-            : 'Archived'}
+          {uiText(isArabic, 'text0412')}
         </button>
       </div>
 
@@ -2006,9 +1973,7 @@ function TasksContent() {
                   : 'pl-9'
               }`}
               placeholder={
-                isArabic
-                  ? 'ابحث في العنوان أو الوصف…'
-                  : 'Search title or description…'
+                uiText(isArabic, 'text0526')
               }
               value={
                 search
@@ -2044,9 +2009,7 @@ function TasksContent() {
               }
             >
               <option value="">
-                {isArabic
-                  ? 'كل الحالات'
-                  : 'All statuses'}
+                {uiText(isArabic, 'text0069')}
               </option>
 
 
@@ -2098,9 +2061,7 @@ function TasksContent() {
             }
           >
             <option value="">
-              {isArabic
-                ? 'كل الأهميات'
-                : 'All importance'}
+              {uiText(isArabic, 'text0528')}
             </option>
 
 
@@ -2144,39 +2105,27 @@ function TasksContent() {
             }
           >
             <option value="createdAt">
-              {isArabic
-                ? 'تاريخ الإنشاء'
-                : 'Created'}
+              {uiText(isArabic, 'text0529')}
             </option>
 
             <option value="deadline">
-              {isArabic
-                ? 'الموعد النهائي'
-                : 'Deadline'}
+              {uiText(isArabic, 'text0148')}
             </option>
 
             <option value="startDate">
-              {isArabic
-                ? 'تاريخ البدء'
-                : 'Start date'}
+              {uiText(isArabic, 'text0415')}
             </option>
 
             <option value="title">
-              {isArabic
-                ? 'العنوان'
-                : 'Title'}
+              {uiText(isArabic, 'text0196')}
             </option>
 
             <option value="status">
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </option>
 
             <option value="taskType">
-              {isArabic
-                ? 'النوع'
-                : 'Task type'}
+              {uiText(isArabic, 'text0197')}
             </option>
           </select>
 
@@ -2204,12 +2153,8 @@ function TasksContent() {
             <span className="ml-1">
               {sortDir ===
               'asc'
-                ? isArabic
-                  ? 'تصاعدي'
-                  : 'Ascending'
-                : isArabic
-                  ? 'تنازلي'
-                  : 'Descending'}
+                ? uiText(isArabic, 'text0072')
+                : uiText(isArabic, 'text0073')}
             </span>
           </button>
 
@@ -2239,9 +2184,7 @@ function TasksContent() {
               />
             </svg>
 
-            {isArabic
-              ? 'التصفية'
-              : 'Filters'}
+            {uiText(isArabic, 'text0271')}
 
             {filterCount >
               0 && (
@@ -2266,9 +2209,7 @@ function TasksContent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'نوع المهمة'
-                    : 'Task type'}
+                  {uiText(isArabic, 'text0163')}
                 </label>
 
                 <select
@@ -2285,9 +2226,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل الأنواع'
-                      : 'All types'}
+                    {uiText(isArabic, 'text0008')}
                   </option>
 
 
@@ -2315,9 +2254,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'القسم'
-                    : 'Department'}
+                  {uiText(isArabic, 'text0374')}
                 </label>
 
                 <select
@@ -2334,9 +2271,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل الأقسام'
-                      : 'All departments'}
+                    {uiText(isArabic, 'text0419')}
                   </option>
 
 
@@ -2364,9 +2299,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الفرع'
-                    : 'Branch'}
+                  {uiText(isArabic, 'text0371')}
                 </label>
 
                 <select
@@ -2383,9 +2316,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل الفروع'
-                      : 'All branches'}
+                    {uiText(isArabic, 'text0420')}
                   </option>
 
 
@@ -2413,9 +2344,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'المشروع'
-                    : 'Project'}
+                  {uiText(isArabic, 'text0432')}
                 </label>
 
                 <select
@@ -2432,9 +2361,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل المشاريع'
-                      : 'All projects'}
+                    {uiText(isArabic, 'text0410')}
                   </option>
 
 
@@ -2462,9 +2389,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'أنشأها'
-                    : 'Created by'}
+                  {uiText(isArabic, 'text0483')}
                 </label>
 
                 <select
@@ -2481,9 +2406,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل المستخدمين'
-                      : 'All creators'}
+                    {uiText(isArabic, 'text0583')}
                   </option>
 
 
@@ -2511,9 +2434,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'المكلف'
-                    : 'Assigned to'}
+                  {uiText(isArabic, 'text0051')}
                 </label>
 
                 <select
@@ -2530,9 +2451,7 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل المستخدمين'
-                      : 'All assignees'}
+                    {uiText(isArabic, 'text0198')}
                   </option>
 
 
@@ -2560,9 +2479,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الموعد من'
-                    : 'Deadline from'}
+                  {uiText(isArabic, 'text0533')}
                 </label>
 
                 <input
@@ -2588,9 +2505,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الموعد إلى'
-                    : 'Deadline to'}
+                  {uiText(isArabic, 'text0164')}
                 </label>
 
                 <input
@@ -2616,9 +2531,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ البدء من'
-                    : 'Start date from'}
+                  {uiText(isArabic, 'text0423')}
                 </label>
 
                 <input
@@ -2644,9 +2557,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ البدء إلى'
-                    : 'Start date to'}
+                  {uiText(isArabic, 'text0424')}
                 </label>
 
                 <input
@@ -2672,9 +2583,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تم الإنشاء من'
-                    : 'Created from'}
+                  {uiText(isArabic, 'text0421')}
                 </label>
 
                 <input
@@ -2700,9 +2609,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تم الإنشاء إلى'
-                    : 'Created to'}
+                  {uiText(isArabic, 'text0422')}
                 </label>
 
                 <input
@@ -2728,9 +2635,7 @@ function TasksContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الموعد النهائي'
-                    : 'Deadline'}
+                  {uiText(isArabic, 'text0148')}
                 </label>
 
                 <select
@@ -2747,21 +2652,15 @@ function TasksContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'الكل'
-                      : 'All'}
+                    {uiText(isArabic, 'text0044')}
                   </option>
 
                   <option value="true">
-                    {isArabic
-                      ? 'لديها موعد'
-                      : 'Has deadline'}
+                    {uiText(isArabic, 'text0199')}
                   </option>
 
                   <option value="false">
-                    {isArabic
-                      ? 'بدون موعد'
-                      : 'No deadline'}
+                    {uiText(isArabic, 'text0192')}
                   </option>
                 </select>
               </div>
@@ -2784,9 +2683,7 @@ function TasksContent() {
                   />
 
                   <span className="text-sm font-medium text-slate-700">
-                    {isArabic
-                      ? 'المهام المتأخرة فقط'
-                      : 'Overdue tasks only'}
+                    {uiText(isArabic, 'text0584')}
                   </span>
                 </label>
               </div>
@@ -2802,9 +2699,7 @@ function TasksContent() {
                   }
                   className="text-sm font-medium text-red-600 hover:text-red-700"
                 >
-                  {isArabic
-                    ? 'مسح عوامل التصفية'
-                    : 'Clear filters'}
+                  {uiText(isArabic, 'text0275')}
                 </button>
               </div>
             )}
@@ -2844,9 +2739,7 @@ function TasksContent() {
               clearFilters
             }
           >
-            {isArabic
-              ? 'إعادة تعيين التصفية'
-              : 'Reset filters'}
+            {uiText(isArabic, 'text0426')}
           </button>
         )}
       </div>
@@ -3016,9 +2909,7 @@ function TasksContent() {
 
                       {overdue && (
                         <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-700">
-                          {isArabic
-                            ? 'متأخرة'
-                            : 'Overdue'}
+                          {uiText(isArabic, 'text0285')}
                         </span>
                       )}
 
@@ -3026,9 +2917,7 @@ function TasksContent() {
                       {!overdue &&
                         dueSoon && (
                           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
-                            {isArabic
-                              ? 'موعد قريب'
-                              : 'Due soon'}
+                            {uiText(isArabic, 'text0166')}
                           </span>
                         )}
                     </div>
@@ -3044,9 +2933,7 @@ function TasksContent() {
                     <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-5 text-slate-500">
                       {description ||
                         (
-                          isArabic
-                            ? 'لا يوجد وصف.'
-                            : 'No description.'
+                          uiText(isArabic, 'text0427')
                         )}
                     </p>
 
@@ -3064,18 +2951,14 @@ function TasksContent() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'المكلف'
-                            : 'Assigned to'}
+                          {uiText(isArabic, 'text0051')}
                         </div>
 
                         <div className="mt-1 truncate text-xs font-medium text-slate-700">
                           {task.assignedTo
                             ?.fullName ||
                             (
-                              isArabic
-                                ? 'غير مسندة'
-                                : 'Unassigned'
+                              uiText(isArabic, 'text0115')
                             )}
                         </div>
                       </div>
@@ -3083,9 +2966,7 @@ function TasksContent() {
 
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'الموعد'
-                            : 'Deadline'}
+                          {uiText(isArabic, 'text0116')}
                         </div>
 
                         <div
@@ -3107,9 +2988,7 @@ function TasksContent() {
                     <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'القسم'
-                            : 'Department'}
+                          {uiText(isArabic, 'text0374')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -3122,9 +3001,7 @@ function TasksContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'الفرع'
-                            : 'Branch'}
+                          {uiText(isArabic, 'text0371')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -3137,9 +3014,7 @@ function TasksContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'المشروع'
-                            : 'Project'}
+                          {uiText(isArabic, 'text0432')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -3152,9 +3027,7 @@ function TasksContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'أنشأها'
-                            : 'Created by'}
+                          {uiText(isArabic, 'text0483')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -3218,33 +3091,23 @@ function TasksContent() {
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="hidden grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
-              {isArabic
-                ? 'المهمة'
-                : 'Task'}
+              {uiText(isArabic, 'text0167')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </div>
 
             <div>
-              {isArabic
-                ? 'المكلف'
-                : 'Assigned to'}
+              {uiText(isArabic, 'text0051')}
             </div>
 
             <div>
-              {isArabic
-                ? 'التنظيم'
-                : 'Organization'}
+              {uiText(isArabic, 'text0518')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الموعد'
-                : 'Deadline'}
+              {uiText(isArabic, 'text0116')}
             </div>
 
             <div />
@@ -3319,9 +3182,7 @@ function TasksContent() {
 
                           {overdue && (
                             <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
-                              {isArabic
-                                ? 'متأخرة'
-                                : 'Overdue'}
+                              {uiText(isArabic, 'text0285')}
                             </span>
                           )}
 
@@ -3329,9 +3190,7 @@ function TasksContent() {
                           {!overdue &&
                             dueSoon && (
                               <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
-                                {isArabic
-                                  ? 'قريب'
-                                  : 'Soon'}
+                                {uiText(isArabic, 'text0079')}
                               </span>
                             )}
                         </div>
@@ -3384,16 +3243,12 @@ function TasksContent() {
                           {task.assignedTo
                             ?.fullName ||
                             (
-                              isArabic
-                                ? 'غير مسندة'
-                                : 'Unassigned'
+                              uiText(isArabic, 'text0115')
                             )}
                         </div>
 
                         <div className="mt-1 truncate text-[10px] text-slate-400">
-                          {isArabic
-                            ? 'أنشأها'
-                            : 'By'}{' '}
+                          {uiText(isArabic, 'text0200')}{' '}
 
                           {task.createdBy
                             ?.fullName ||
@@ -3445,9 +3300,7 @@ function TasksContent() {
                         </div>
 
                         <div className="mt-1 text-[10px] text-slate-400">
-                          {isArabic
-                            ? 'البدء'
-                            : 'Start'}{' '}
+                          {uiText(isArabic, 'text0585')}{' '}
 
                           {formatDate(
                             task.startDate,
@@ -3510,9 +3363,7 @@ function TasksContent() {
               setPage
             }
             itemLabel={
-              isArabic
-                ? 'مهام'
-                : 'tasks'
+              uiText(isArabic, 'text0024')
             }
           />
         )}
@@ -3562,27 +3413,19 @@ function TasksContent() {
 
 
               <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                {isArabic
-                  ? 'أرشفة المهمة؟'
-                  : 'Archive task?'}
+                {uiText(isArabic, 'text0536')}
               </h2>
 
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                {isArabic
-                  ? `سيتم نقل "${taskTitle(
+                {uiText(isArabic, 'text0745', { value0: taskTitle(
                       confirmArchive,
-                    )}" إلى المهام المؤرشفة.`
-                  : `"${taskTitle(
-                      confirmArchive,
-                    )}" will be moved to Archived tasks.`}
+                    ) })}
               </p>
 
 
               <p className="mt-2 text-xs text-slate-400">
-                {isArabic
-                  ? 'يمكنك استعادتها لاحقاً من تبويب المؤرشفة.'
-                  : 'You can restore it later from the Archived tab.'}
+                {uiText(isArabic, 'text0586')}
               </p>
             </div>
 
@@ -3601,9 +3444,7 @@ function TasksContent() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3622,12 +3463,8 @@ function TasksContent() {
               >
                 {busyId ===
                 confirmArchive.id
-                  ? isArabic
-                    ? 'جاري الأرشفة…'
-                    : 'Archiving…'
-                  : isArabic
-                    ? 'أرشفة المهمة'
-                    : 'Archive task'}
+                  ? uiText(isArabic, 'text0400')
+                  : uiText(isArabic, 'text0477')}
               </button>
             </div>
           </div>

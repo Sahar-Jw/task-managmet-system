@@ -187,6 +187,9 @@ export class ApiError
   status:
     number;
 
+  code:
+    string;
+
 
   constructor(
     message:
@@ -194,6 +197,9 @@ export class ApiError
 
     status:
       number,
+
+    code =
+      'UNKNOWN_ERROR',
   ) {
     super(
       message,
@@ -202,7 +208,27 @@ export class ApiError
 
     this.status =
       status;
+
+    this.code =
+      code;
   }
+}
+
+function activeLocale(): 'en' | 'ar' {
+  if (typeof document === 'undefined') return 'en';
+  return document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=(ar|en)(?:;|$)/)?.[1] === 'ar'
+    ? 'ar'
+    : document.documentElement.lang === 'ar'
+      ? 'ar'
+      : 'en';
+}
+
+function localeHeaders(): Record<string, string> {
+  const locale = activeLocale();
+  return {
+    'X-Locale': locale,
+    'Accept-Language': locale,
+  };
 }
 
 
@@ -288,6 +314,9 @@ export async function refreshAccessToken():
                 {
                   method:
                     'POST',
+
+                  headers:
+                    localeHeaders(),
 
                   credentials:
                     'include',
@@ -425,7 +454,7 @@ export async function api<
       Record<
         string,
         string
-      > = {};
+      > = localeHeaders();
 
 
     if (
@@ -571,6 +600,7 @@ export async function api<
       throw new ApiError(
         message,
         res.status,
+        json?.code || 'UNKNOWN_ERROR',
       );
     }
 
@@ -625,10 +655,11 @@ async function fetchAuthed(
           headers:
             token
               ? {
+                  ...localeHeaders(),
                   Authorization:
                     `Bearer ${token}`,
                 }
-              : {},
+              : localeHeaders(),
         },
       );
 
@@ -652,6 +683,7 @@ async function fetchAuthed(
             `${API_URL}${path}`,
             {
               headers: {
+                ...localeHeaders(),
                 Authorization:
                   `Bearer ${token}`,
               },

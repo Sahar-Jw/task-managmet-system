@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useRef,
@@ -334,9 +337,7 @@ export default function Home() {
         );
       } catch {
         setAuthError(
-          isArabic
-            ? 'تعذر تحميل بيانات الفروع والأقسام. يرجى تحديث الصفحة.'
-            : 'Could not load branch or department data. Please refresh the page.',
+          uiText(isArabic, 'text0325'),
         );
       } finally {
         setLoadingBranches(
@@ -610,9 +611,7 @@ export default function Home() {
       setAuthError(
         err instanceof ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إكمال الطلب. يرجى المحاولة مرة أخرى.'
-            : 'Unable to submit. Please try again.',
+          : uiText(isArabic, 'text0326'),
       );
 
       setSubmitting(
@@ -652,14 +651,10 @@ export default function Home() {
       ),
 
       title:
-        isArabic
-          ? 'هيكل تنظيمي واضح'
-          : 'Structured organization',
+        uiText(isArabic, 'text0327'),
 
       description:
-        isArabic
-          ? 'نظّم المستخدمين والمهام حسب الفروع والأقسام مع بقاء البيانات واضحة وسهلة الإدارة.'
-          : 'Organize people and work across branches and departments without losing visibility.',
+        uiText(isArabic, 'text0328'),
     },
 
     {
@@ -687,14 +682,10 @@ export default function Home() {
       ),
 
       title:
-        isArabic
-          ? 'تكليف وموافقة حقيقية'
-          : 'Real assignment workflow',
+        uiText(isArabic, 'text0329'),
 
       description:
-        isArabic
-          ? 'التكليف يحتاج قبولاً، ويمكن رفضه مع السبب، ثم إعادة التكليف حسب قواعد واضحة.'
-          : 'Assignments can be accepted, rejected with a reason, and reassigned through a controlled workflow.',
+        uiText(isArabic, 'text0330'),
     },
 
     {
@@ -720,14 +711,10 @@ export default function Home() {
       ),
 
       title:
-        isArabic
-          ? 'سجل تدقيق'
-          : 'Full audit trail',
+        uiText(isArabic, 'text0331'),
 
       description:
-        isArabic
-          ? 'احتفظ بسجل واضح للتغييرات والإجراءات والموافقات لمعرفة ما حدث ومن قام به.'
-          : 'Track changes, status updates and approvals so important actions remain accountable.',
+        uiText(isArabic, 'text0332'),
     },
 
     {
@@ -753,14 +740,10 @@ export default function Home() {
       ),
 
       title:
-        isArabic
-          ? 'تقارير ولوحات متابعة'
-          : 'Reports and dashboards',
+        uiText(isArabic, 'text0333'),
 
       description:
-        isArabic
-          ? 'راقب تقدم العمل والمشاريع والأداء من نفس البيانات المستخدمة يومياً.'
-          : 'Turn daily task activity into project, branch, department and performance insights.',
+        uiText(isArabic, 'text0334'),
     },
   ];
 
@@ -771,14 +754,10 @@ export default function Home() {
         '01',
 
       title:
-        isArabic
-          ? 'إنشاء المهمة'
-          : 'Create',
+        uiText(isArabic, 'text0335'),
 
       description:
-        isArabic
-          ? 'حدد التفاصيل، القسم، الأهمية والمواعيد.'
-          : 'Define the task, department, importance and schedule.',
+        uiText(isArabic, 'text0336'),
     },
 
     {
@@ -786,14 +765,10 @@ export default function Home() {
         '02',
 
       title:
-        isArabic
-          ? 'التكليف'
-          : 'Assign',
+        uiText(isArabic, 'text0046'),
 
       description:
-        isArabic
-          ? 'أرسل المهمة للمستخدم المناسب بانتظار القبول.'
-          : 'Send the task to the right person for acceptance.',
+        uiText(isArabic, 'text0337'),
     },
 
     {
@@ -801,14 +776,10 @@ export default function Home() {
         '03',
 
       title:
-        isArabic
-          ? 'التنفيذ'
-          : 'Work',
+        uiText(isArabic, 'text0338'),
 
       description:
-        isArabic
-          ? 'تابع الحالة والملاحظات والمرفقات أثناء التنفيذ.'
-          : 'Track status, comments and attachments while work progresses.',
+        uiText(isArabic, 'text0339'),
     },
 
     {
@@ -816,14 +787,10 @@ export default function Home() {
         '04',
 
       title:
-        isArabic
-          ? 'الموافقة'
-          : 'Approve',
+        uiText(isArabic, 'text0340'),
 
       description:
-        isArabic
-          ? 'مرّر المهام التي تحتاج موافقة عبر سير واضح قبل الإكمال.'
-          : 'Route approval-required work through a clear sign-off step.',
+        uiText(isArabic, 'text0341'),
     },
   ];
 
@@ -886,9 +853,7 @@ export default function Home() {
               </div>
 
               <div className="hidden text-[11px] text-slate-400 sm:block">
-                {isArabic
-                  ? 'إدارة العمل بوضوح'
-                  : 'Work, organized clearly'}
+                {uiText(isArabic, 'text0342')}
               </div>
             </div>
           </Link>
@@ -958,23 +923,17 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-brand-500" />
 
-                {isArabic
-                  ? 'نظام واحد للمهام والمشاريع'
-                  : 'One workspace for tasks and projects'}
+                {uiText(isArabic, 'text0343')}
               </div>
 
 
               <h1 className="mt-7 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[64px]">
-                {isArabic
-                  ? 'حوّل العمل اليومي إلى سير واضح يمكن متابعته.'
-                  : 'Turn daily work into a workflow everyone can follow.'}
+                {uiText(isArabic, 'text0344')}
               </h1>
 
 
               <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
-                {isArabic
-                  ? 'أنشئ المهام، كلّف الأشخاص، تابع القبول والرفض والموافقات والمشاريع من مكان واحد مع سجل واضح لكل خطوة.'
-                  : 'Create tasks, assign ownership, manage acceptance, rejection, approvals and projects from one place—with a clear record of every important step.'}
+                {uiText(isArabic, 'text0345')}
               </p>
 
 
@@ -988,9 +947,7 @@ export default function Home() {
                   }
                   className="btn-primary min-h-[46px] px-6 text-sm"
                 >
-                  {isArabic
-                    ? 'ابدأ الآن'
-                    : 'Get started'}
+                  {uiText(isArabic, 'text0346')}
 
                   <svg
                     viewBox="0 0 24 24"
@@ -1017,26 +974,18 @@ export default function Home() {
                   }
                   className="btn-secondary min-h-[46px] px-6 text-sm"
                 >
-                  {isArabic
-                    ? 'تسجيل الدخول'
-                    : 'Sign in'}
+                  {uiText(isArabic, 'text0047')}
                 </button>
               </div>
 
 
               <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm text-slate-500">
                 {[
-                  isArabic
-                    ? 'قبول ورفض التكليف'
-                    : 'Assignment acceptance',
+                  uiText(isArabic, 'text0048'),
 
-                  isArabic
-                    ? 'سير الموافقات'
-                    : 'Approval workflow',
+                  uiText(isArabic, 'text0347'),
 
-                  isArabic
-                    ? 'سجل التدقيق'
-                    : 'Audit history',
+                  uiText(isArabic, 'text0348'),
                 ].map(
                   (
                     label,
@@ -1082,9 +1031,7 @@ export default function Home() {
                   </div>
 
                   <div className="text-[11px] font-medium text-slate-400">
-                    {isArabic
-                      ? 'مساحة العمل'
-                      : 'Workspace overview'}
+                    {uiText(isArabic, 'text0349')}
                   </div>
 
                   <div className="w-10" />
@@ -1100,9 +1047,7 @@ export default function Home() {
                     {[
                       {
                         label:
-                          isArabic
-                            ? 'قيد التنفيذ'
-                            : 'In progress',
+                          uiText(isArabic, 'text0350'),
 
                         value:
                           '12',
@@ -1110,9 +1055,7 @@ export default function Home() {
 
                       {
                         label:
-                          isArabic
-                            ? 'بانتظار الموافقة'
-                            : 'Approval',
+                          uiText(isArabic, 'text0351'),
 
                         value:
                           '4',
@@ -1120,9 +1063,7 @@ export default function Home() {
 
                       {
                         label:
-                          isArabic
-                            ? 'مكتملة'
-                            : 'Completed',
+                          uiText(isArabic, 'text0018'),
 
                         value:
                           '28',
@@ -1165,25 +1106,19 @@ export default function Home() {
                           <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
 
                           <span className="text-xs font-medium text-slate-400">
-                            {isArabic
-                              ? 'المهمة'
-                              : 'TASK-024'}
+                            {uiText(isArabic, 'text0049')}
                           </span>
                         </div>
 
 
                         <div className="mt-2 text-sm font-semibold text-slate-800">
-                          {isArabic
-                            ? 'إعداد تقرير الأداء الشهري'
-                            : 'Prepare monthly performance report'}
+                          {uiText(isArabic, 'text0352')}
                         </div>
                       </div>
 
 
                       <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
-                        {isArabic
-                          ? 'أهمية عالية'
-                          : 'High'}
+                        {uiText(isArabic, 'text0050')}
                       </span>
                     </div>
 
@@ -1191,9 +1126,7 @@ export default function Home() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-lg bg-slate-50 p-3">
                         <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'المكلف'
-                            : 'Assigned to'}
+                          {uiText(isArabic, 'text0051')}
                         </div>
 
                         <div className="mt-1 text-xs font-medium text-slate-700">
@@ -1204,15 +1137,11 @@ export default function Home() {
 
                       <div className="rounded-lg bg-slate-50 p-3">
                         <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'الحالة'
-                            : 'Status'}
+                          {uiText(isArabic, 'text0052')}
                         </div>
 
                         <div className="mt-1 text-xs font-medium text-brand-700">
-                          {isArabic
-                            ? 'قيد التنفيذ'
-                            : 'In Progress'}
+                          {uiText(isArabic, 'text0353')}
                         </div>
                       </div>
                     </div>
@@ -1221,9 +1150,7 @@ export default function Home() {
                     <div className="mt-5">
                       <div className="mb-2 flex items-center justify-between">
                         <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'سير العمل'
-                            : 'Workflow'}
+                          {uiText(isArabic, 'text0354')}
                         </span>
 
                         <span className="text-[10px] text-slate-400">
@@ -1282,33 +1209,23 @@ export default function Home() {
 
                       <div className="mt-3 grid grid-cols-5 text-center text-[8px] text-slate-400">
                         <span>
-                          {isArabic
-                            ? 'إنشاء'
-                            : 'Create'}
+                          {uiText(isArabic, 'text0355')}
                         </span>
 
                         <span>
-                          {isArabic
-                            ? 'تكليف'
-                            : 'Assign'}
+                          {uiText(isArabic, 'text0053')}
                         </span>
 
                         <span>
-                          {isArabic
-                            ? 'تنفيذ'
-                            : 'Work'}
+                          {uiText(isArabic, 'text0356')}
                         </span>
 
                         <span>
-                          {isArabic
-                            ? 'موافقة'
-                            : 'Approve'}
+                          {uiText(isArabic, 'text0357')}
                         </span>
 
                         <span>
-                          {isArabic
-                            ? 'إكمال'
-                            : 'Done'}
+                          {uiText(isArabic, 'text0054')}
                         </span>
                       </div>
                     </div>
@@ -1321,9 +1238,7 @@ export default function Home() {
 
                   <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/60 p-4">
                     <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                      {isArabic
-                        ? 'آخر نشاط'
-                        : 'Recent activity'}
+                      {uiText(isArabic, 'text0055')}
                     </div>
 
 
@@ -1334,9 +1249,7 @@ export default function Home() {
                             'bg-brand-500',
 
                           text:
-                            isArabic
-                              ? 'تم قبول التكليف'
-                              : 'Assignment accepted',
+                            uiText(isArabic, 'text0056'),
 
                           time:
                             '09:42',
@@ -1347,9 +1260,7 @@ export default function Home() {
                             'bg-amber-400',
 
                           text:
-                            isArabic
-                              ? 'تم تحديث الموعد النهائي'
-                              : 'Deadline updated',
+                            uiText(isArabic, 'text0057'),
 
                           time:
                             '09:18',
@@ -1360,9 +1271,7 @@ export default function Home() {
                             'bg-slate-300',
 
                           text:
-                            isArabic
-                              ? 'تم إضافة تعليق'
-                              : 'Comment added',
+                            uiText(isArabic, 'text0058'),
 
                           time:
                             '08:51',
@@ -1460,40 +1369,26 @@ export default function Home() {
                       <h2 className="mt-8 text-3xl font-semibold tracking-tight">
                         {mode ===
                         'login'
-                          ? isArabic
-                            ? 'مرحباً بعودتك.'
-                            : 'Welcome back.'
-                          : isArabic
-                            ? 'ابدأ العمل مع فريقك.'
-                            : 'Start working with your team.'}
+                          ? uiText(isArabic, 'text0059')
+                          : uiText(isArabic, 'text0358')}
                       </h2>
 
 
                       <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
                         {mode ===
                         'login'
-                          ? isArabic
-                            ? 'سجّل الدخول للوصول إلى مهامك ومشاريعك وإشعاراتك ولوحة المتابعة.'
-                            : 'Sign in to access your tasks, projects, notifications and dashboard.'
-                          : isArabic
-                            ? 'أنشئ حسابك وحدد الفرع والقسم للانضمام إلى مساحة العمل.'
-                            : 'Create your account, select your branch and department, and join your workspace.'}
+                          ? uiText(isArabic, 'text0359')
+                          : uiText(isArabic, 'text0360')}
                       </p>
 
 
                       <div className="mt-auto space-y-3 pt-10">
                         {[
-                          isArabic
-                            ? 'إدارة المهام والمشاريع'
-                            : 'Tasks and projects',
+                          uiText(isArabic, 'text0361'),
 
-                          isArabic
-                            ? 'سير التكليف والموافقة'
-                            : 'Assignment and approvals',
+                          uiText(isArabic, 'text0362'),
 
-                          isArabic
-                            ? 'تقارير وإشعارات'
-                            : 'Reports and notifications',
+                          uiText(isArabic, 'text0363'),
                         ].map(
                           (
                             item,
@@ -1529,23 +1424,15 @@ export default function Home() {
                         <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
                           {mode ===
                           'login'
-                            ? isArabic
-                              ? 'تسجيل الدخول'
-                              : 'Sign in'
-                            : isArabic
-                              ? 'حساب جديد'
-                              : 'Create account'}
+                            ? uiText(isArabic, 'text0047')
+                            : uiText(isArabic, 'text0364')}
                         </div>
 
                         <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
                           {mode ===
                           'login'
-                            ? isArabic
-                              ? 'ادخل إلى مساحة العمل'
-                              : 'Access your workspace'
-                            : isArabic
-                              ? 'أنشئ حسابك'
-                              : 'Create your workspace account'}
+                            ? uiText(isArabic, 'text0365')
+                            : uiText(isArabic, 'text0366')}
                         </h2>
                       </div>
 
@@ -1584,9 +1471,7 @@ export default function Home() {
                             : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
-                        {isArabic
-                          ? 'تسجيل الدخول'
-                          : 'Sign in'}
+                        {uiText(isArabic, 'text0047')}
                       </button>
 
 
@@ -1604,9 +1489,7 @@ export default function Home() {
                             : 'text-slate-500 hover:text-slate-800'
                         }`}
                       >
-                        {isArabic
-                          ? 'إنشاء حساب'
-                          : 'Create account'}
+                        {uiText(isArabic, 'text0367')}
                       </button>
                     </div>
 
@@ -1625,9 +1508,7 @@ export default function Home() {
                               className="label"
                               htmlFor="fullName"
                             >
-                              {isArabic
-                                ? 'الاسم الكامل'
-                                : 'Full name'}
+                              {uiText(isArabic, 'text0060')}
                             </label>
 
                             <input
@@ -1661,14 +1542,10 @@ export default function Home() {
                               className="label"
                               htmlFor="phone"
                             >
-                              {isArabic
-                                ? 'رقم الهاتف'
-                                : 'Phone'}{' '}
+                              {uiText(isArabic, 'text0061')}{' '}
 
                               <span className="font-normal text-slate-400">
-                                {isArabic
-                                  ? '(اختياري)'
-                                  : '(optional)'}
+                                {uiText(isArabic, 'text0062')}
                               </span>
                             </label>
 
@@ -1697,9 +1574,7 @@ export default function Home() {
                               </p>
                             ) : (
                               <p className="mt-1.5 text-xs text-slate-400">
-                                {isArabic
-                                  ? '12 رقماً'
-                                  : '12 digits'}
+                                {uiText(isArabic, 'text0063')}
                               </p>
                             )}
                           </div>
@@ -1712,9 +1587,7 @@ export default function Home() {
                           className="label"
                           htmlFor="email"
                         >
-                          {isArabic
-                            ? 'البريد الإلكتروني'
-                            : 'Email'}
+                          {uiText(isArabic, 'text0064')}
                         </label>
 
                         <input
@@ -1749,9 +1622,7 @@ export default function Home() {
                             className="label"
                             htmlFor="password"
                           >
-                            {isArabic
-                              ? 'كلمة المرور'
-                              : 'Password'}
+                            {uiText(isArabic, 'text0368')}
                           </label>
 
 
@@ -1761,9 +1632,7 @@ export default function Home() {
                               href="/forgot-password"
                               className="mb-1 text-xs font-medium text-brand-600 hover:underline"
                             >
-                              {isArabic
-                                ? 'نسيت كلمة المرور؟'
-                                : 'Forgot password?'}
+                              {uiText(isArabic, 'text0369')}
                             </Link>
                           )}
                         </div>
@@ -1798,9 +1667,7 @@ export default function Home() {
                         {mode ===
                           'register' && (
                           <p className="mt-1.5 text-xs text-slate-400">
-                            {isArabic
-                              ? '8 أحرف على الأقل.'
-                              : 'At least 8 characters.'}
+                            {uiText(isArabic, 'text0370')}
                           </p>
                         )}
                       </div>
@@ -1814,9 +1681,7 @@ export default function Home() {
                               className="label"
                               htmlFor="branch"
                             >
-                              {isArabic
-                                ? 'الفرع'
-                                : 'Branch'}
+                              {uiText(isArabic, 'text0371')}
                             </label>
 
                             <select
@@ -1844,12 +1709,8 @@ export default function Home() {
                                 disabled
                               >
                                 {loadingBranches
-                                  ? isArabic
-                                    ? 'جاري تحميل الفروع…'
-                                    : 'Loading branches…'
-                                  : isArabic
-                                    ? 'اختر الفرع'
-                                    : 'Select a branch'}
+                                  ? uiText(isArabic, 'text0372')
+                                  : uiText(isArabic, 'text0373')}
                               </option>
 
                               {visibleBranches.map(
@@ -1879,9 +1740,7 @@ export default function Home() {
                               className="label"
                               htmlFor="department"
                             >
-                              {isArabic
-                                ? 'القسم'
-                                : 'Department'}
+                              {uiText(isArabic, 'text0374')}
                             </label>
 
                             <select
@@ -1909,12 +1768,8 @@ export default function Home() {
                                 disabled
                               >
                                 {loadingDepartments
-                                  ? isArabic
-                                    ? 'جاري تحميل الأقسام…'
-                                    : 'Loading departments…'
-                                  : isArabic
-                                    ? 'اختر القسم'
-                                    : 'Select a department'}
+                                  ? uiText(isArabic, 'text0375')
+                                  : uiText(isArabic, 'text0376')}
                               </option>
 
                               {visibleDepartments.map(
@@ -1960,20 +1815,12 @@ export default function Home() {
                         {submitting
                           ? mode ===
                             'login'
-                            ? isArabic
-                              ? 'جاري تسجيل الدخول…'
-                              : 'Signing in…'
-                            : isArabic
-                              ? 'جاري إنشاء الحساب…'
-                              : 'Creating account…'
+                            ? uiText(isArabic, 'text0065')
+                            : uiText(isArabic, 'text0377')
                           : mode ===
                               'login'
-                            ? isArabic
-                              ? 'تسجيل الدخول'
-                              : 'Sign in'
-                            : isArabic
-                              ? 'إنشاء الحساب'
-                              : 'Create account'}
+                            ? uiText(isArabic, 'text0047')
+                            : uiText(isArabic, 'text0378')}
                       </button>
                     </form>
                   </div>
@@ -1994,21 +1841,15 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
-                {isArabic
-                  ? 'نظام متكامل'
-                  : 'Built for real workflows'}
+                {uiText(isArabic, 'text0379')}
               </div>
 
               <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-4xl">
-                {isArabic
-                  ? 'ليس مجرد قائمة مهام.'
-                  : 'More than a list of tasks.'}
+                {uiText(isArabic, 'text0380')}
               </h2>
 
               <p className="mt-4 text-base leading-7 text-slate-600">
-                {isArabic
-                  ? 'اربط الأشخاص والعمل والمشاريع وسير الموافقات في نظام واحد بدلاً من توزيعها على أدوات مختلفة.'
-                  : 'Connect people, work, projects and approvals in one system instead of spreading them across disconnected tools.'}
+                {uiText(isArabic, 'text0381')}
               </p>
             </div>
 
@@ -2060,21 +1901,15 @@ export default function Home() {
             <div className="grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
-                  {isArabic
-                    ? 'من البداية إلى النهاية'
-                    : 'From start to finish'}
+                  {uiText(isArabic, 'text0382')}
                 </div>
 
                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-4xl">
-                  {isArabic
-                    ? 'كل مهمة لها مسار مفهوم.'
-                    : 'Every task has a clear path.'}
+                  {uiText(isArabic, 'text0383')}
                 </h2>
 
                 <p className="mt-4 max-w-md text-base leading-7 text-slate-600">
-                  {isArabic
-                    ? 'بدلاً من تغيير الحالة فقط، يتابع النظام من قام بالتكليف ومن قبله أو رفضه ومن وافق عليه.'
-                    : 'Instead of merely changing a status field, the system keeps the responsibility and decisions around the work visible.'}
+                  {uiText(isArabic, 'text0384')}
                 </p>
 
 
@@ -2086,15 +1921,11 @@ export default function Home() {
 
                     <div>
                       <div className="text-sm font-semibold text-brand-900">
-                        {isArabic
-                          ? 'المساءلة بدون تعقيد'
-                          : 'Accountability without complexity'}
+                        {uiText(isArabic, 'text0066')}
                       </div>
 
                       <p className="mt-1 text-sm leading-6 text-brand-800/70">
-                        {isArabic
-                          ? 'المستخدم يرى ما يحتاج فعله، والمدير يستطيع معرفة حالة العمل وما حدث له.'
-                          : 'Users see what needs their attention while managers retain visibility into how the work moved.'}
+                        {uiText(isArabic, 'text0385')}
                       </p>
                     </div>
                   </div>
@@ -2172,15 +2003,11 @@ export default function Home() {
               <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
                   <h2 className="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
-                    {isArabic
-                      ? 'اجعل العمل واضحاً من أول تكليف حتى الإكمال.'
-                      : 'Make work clear from first assignment to completion.'}
+                    {uiText(isArabic, 'text0386')}
                   </h2>
 
                   <p className="mt-4 max-w-xl text-sm leading-7 text-white/75 sm:text-base">
-                    {isArabic
-                      ? 'أنشئ حسابك وابدأ باستخدام نظام موحد للمهام والمشاريع والموافقات.'
-                      : 'Create your account and start managing tasks, projects and approvals in one connected workspace.'}
+                    {uiText(isArabic, 'text0387')}
                   </p>
                 </div>
 
@@ -2195,9 +2022,7 @@ export default function Home() {
                     }
                     className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
                   >
-                    {isArabic
-                      ? 'إنشاء حساب'
-                      : 'Create account'}
+                    {uiText(isArabic, 'text0367')}
                   </button>
 
 
@@ -2210,9 +2035,7 @@ export default function Home() {
                     }
                     className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
                   >
-                    {isArabic
-                      ? 'تسجيل الدخول'
-                      : 'Sign in'}
+                    {uiText(isArabic, 'text0047')}
                   </button>
                 </div>
               </div>
@@ -2262,9 +2085,7 @@ export default function Home() {
               </div>
 
               <div className="text-xs text-slate-400">
-                {isArabic
-                  ? 'نظام إدارة العمل والمشاريع'
-                  : 'Task and project management system'}
+                {uiText(isArabic, 'text0388')}
               </div>
             </div>
           </div>

@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useState,
@@ -170,9 +173,7 @@ export default function WorkflowSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحميل إعدادات سير العمل.'
-            : 'Could not load Workflow settings.',
+          : uiText(isArabic, 'text0670'),
       );
     } finally {
       setLoading(
@@ -387,9 +388,7 @@ export default function WorkflowSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حفظ سير العمل.'
-            : 'Could not save Workflow settings.',
+          : uiText(isArabic, 'text0671'),
       );
     } finally {
       setSaving(
@@ -404,9 +403,7 @@ export default function WorkflowSettingsTab() {
   ) {
     return (
       <div className="card p-8 text-center text-sm text-slate-500">
-        {isArabic
-          ? 'جاري تحميل سير العمل…'
-          : 'Loading Workflow…'}
+        {uiText(isArabic, 'text0672')}
       </div>
     );
   }
@@ -429,32 +426,24 @@ export default function WorkflowSettingsTab() {
       <section className="card overflow-hidden">
         <div className="border-b border-slate-100 p-6">
           <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
-            {isArabic
-              ? 'سير المهمة'
-              : 'Task Workflow'}
+            {uiText(isArabic, 'text0502')}
           </div>
 
 
           <h2 className="mt-1 text-xl font-semibold text-slate-900">
-            {isArabic
-              ? 'تحكم في إجراءات المهمة'
-              : 'Control Task Actions'}
+            {uiText(isArabic, 'text0673')}
           </h2>
 
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-            {isArabic
-              ? 'حدد الإجراءات التي تظهر للمستخدمين وترتيبها وطريقة عرضها.'
-              : 'Choose which Task actions are available, their order, and whether Users see every valid action or only the next recommended action.'}
+            {uiText(isArabic, 'text0674')}
           </p>
         </div>
 
 
         <div className="p-6">
           <div className="text-sm font-semibold text-slate-800">
-            {isArabic
-              ? 'طريقة عرض سير العمل'
-              : 'Workflow display mode'}
+            {uiText(isArabic, 'text0675')}
           </div>
 
 
@@ -481,15 +470,11 @@ export default function WorkflowSettingsTab() {
               `}
             >
               <div className="font-semibold text-slate-800">
-                {isArabic
-                  ? 'إظهار جميع الإجراءات المتاحة'
-                  : 'Show all available actions'}
+                {uiText(isArabic, 'text0263')}
               </div>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                {isArabic
-                  ? 'تظهر جميع الإجراءات الصحيحة حسب حالة المهمة.'
-                  : 'Users see every action that is currently valid.'}
+                {uiText(isArabic, 'text0676')}
               </p>
             </button>
 
@@ -516,15 +501,11 @@ export default function WorkflowSettingsTab() {
               `}
             >
               <div className="font-semibold text-slate-800">
-                {isArabic
-                  ? 'سير موجه'
-                  : 'Guided flow'}
+                {uiText(isArabic, 'text0135')}
               </div>
 
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                {isArabic
-                  ? 'يظهر للمستخدم الإجراء التالي فقط حسب الترتيب المحدد.'
-                  : 'Only the first valid action in your configured order is shown.'}
+                {uiText(isArabic, 'text0677')}
               </p>
             </button>
           </div>
@@ -537,15 +518,11 @@ export default function WorkflowSettingsTab() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="font-semibold text-slate-900">
-                {isArabic
-                  ? 'ترتيب الإجراءات'
-                  : 'Action order'}
+                {uiText(isArabic, 'text0678')}
               </h3>
 
               <p className="mt-1 text-xs text-slate-500">
-                {isArabic
-                  ? 'استخدم الأسهم لتغيير ترتيب سير العمل.'
-                  : 'Use the arrows to change Workflow priority.'}
+                {uiText(isArabic, 'text0679')}
               </p>
             </div>
 
@@ -557,9 +534,7 @@ export default function WorkflowSettingsTab() {
                 ) =>
                   action.enabled,
               ).length}{' '}
-              {isArabic
-                ? 'مفعلة'
-                : 'enabled'}
+              {uiText(isArabic, 'text0264')}
             </div>
           </div>
         </div>
@@ -658,9 +633,7 @@ export default function WorkflowSettingsTab() {
 
                     {start && (
                       <div className="mt-2 text-[10px] font-semibold uppercase tracking-wide text-brand-600">
-                        {isArabic
-                          ? 'إجراء أساسي — لا يمكن تعطيله'
-                          : 'Required action — cannot be disabled'}
+                        {uiText(isArabic, 'text0680')}
                       </div>
                     )}
                   </div>
@@ -699,9 +672,7 @@ export default function WorkflowSettingsTab() {
 
       {saved && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          {isArabic
-            ? 'تم حفظ سير العمل.'
-            : 'Workflow saved successfully.'}
+          {uiText(isArabic, 'text0681')}
         </div>
       )}
 
@@ -718,12 +689,8 @@ export default function WorkflowSettingsTab() {
           }
         >
           {saving
-            ? isArabic
-              ? 'جاري الحفظ…'
-              : 'Saving…'
-            : isArabic
-              ? 'حفظ سير العمل'
-              : 'Save Workflow'}
+            ? uiText(isArabic, 'text0081')
+            : uiText(isArabic, 'text0682')}
         </button>
       </div>
     </div>

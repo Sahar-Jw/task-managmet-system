@@ -2,6 +2,8 @@
 
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
 import {
   useCallback,
   useEffect,
@@ -254,9 +256,7 @@ function ViewToggle({
           )
         }
         title={
-          isArabic
-            ? 'قائمة'
-            : 'List'
+          uiText(isArabic, 'text0067')
         }
         className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
           value ===
@@ -288,9 +288,7 @@ function ViewToggle({
           )
         }
         title={
-          isArabic
-            ? 'بطاقات'
-            : 'Cards'
+          uiText(isArabic, 'text0389')
         }
         className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
           value ===
@@ -370,15 +368,11 @@ function EmptyState({
       </div>
 
       <h3 className="mt-4 text-sm font-semibold text-slate-800">
-        {isArabic
-          ? 'لا توجد مشاريع'
-          : 'No projects found'}
+        {uiText(isArabic, 'text0390')}
       </h3>
 
       <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
-        {isArabic
-          ? 'غيّر عوامل التصفية أو أنشئ مشروعاً جديداً.'
-          : 'Try changing your filters or create a new project.'}
+        {uiText(isArabic, 'text0391')}
       </p>
     </div>
   );
@@ -1189,9 +1183,7 @@ function ProjectsContent() {
           setError(
             err instanceof ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل المشاريع.'
-                : 'Could not load projects.',
+              : uiText(isArabic, 'text0392'),
           );
         } finally {
           setLoading(
@@ -1390,9 +1382,7 @@ function ProjectsContent() {
 
     if (!name) {
       setCreateError(
-        isArabic
-          ? 'اسم المشروع مطلوب.'
-          : 'Project name is required.',
+        uiText(isArabic, 'text0393'),
       );
 
       return;
@@ -1406,9 +1396,7 @@ function ProjectsContent() {
         createForm.startDate
     ) {
       setCreateError(
-        isArabic
-          ? 'لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.'
-          : 'End date cannot be before the start date.',
+        uiText(isArabic, 'text0394'),
       );
 
       return;
@@ -1458,9 +1446,7 @@ function ProjectsContent() {
       setCreateError(
         err instanceof ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إنشاء المشروع.'
-            : 'Could not create the project.',
+          : uiText(isArabic, 'text0395'),
       );
     } finally {
       setCreateBusy(
@@ -1532,9 +1518,7 @@ function ProjectsContent() {
 
     if (!name) {
       setEditError(
-        isArabic
-          ? 'اسم المشروع مطلوب.'
-          : 'Project name is required.',
+        uiText(isArabic, 'text0393'),
       );
 
       return;
@@ -1548,9 +1532,7 @@ function ProjectsContent() {
         editForm.startDate
     ) {
       setEditError(
-        isArabic
-          ? 'لا يمكن أن يكون تاريخ الانتهاء قبل تاريخ البدء.'
-          : 'End date cannot be before the start date.',
+        uiText(isArabic, 'text0394'),
       );
 
       return;
@@ -1622,9 +1604,7 @@ function ProjectsContent() {
       setEditError(
         err instanceof ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث المشروع.'
-            : 'Could not update the project.',
+          : uiText(isArabic, 'text0396'),
       );
     } finally {
       setEditBusy(
@@ -1682,9 +1662,7 @@ function ProjectsContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر حذف المشروع.'
-              : 'Could not delete this project.',
+            : uiText(isArabic, 'text0397'),
       });
 
 
@@ -1732,9 +1710,7 @@ function ProjectsContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر أرشفة المشروع.'
-              : 'Could not archive this project.',
+            : uiText(isArabic, 'text0398'),
       });
     } finally {
       setBusyId(
@@ -1777,9 +1753,7 @@ function ProjectsContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر استعادة المشروع.'
-              : 'Could not restore this project.',
+            : uiText(isArabic, 'text0399'),
       });
     } finally {
       setBusyId(
@@ -1886,9 +1860,7 @@ function ProjectsContent() {
                 );
               }}
             >
-              {isArabic
-                ? 'تعديل'
-                : 'Edit'}
+              {uiText(isArabic, 'text0068')}
             </button>
           )}
 
@@ -1916,12 +1888,8 @@ function ProjectsContent() {
             >
               {busyId ===
               project.id
-                ? isArabic
-                  ? 'جاري الأرشفة…'
-                  : 'Archiving…'
-                : isArabic
-                  ? 'أرشفة'
-                  : 'Archive'}
+                ? uiText(isArabic, 'text0400')
+                : uiText(isArabic, 'text0401')}
             </button>
           )}
 
@@ -1949,12 +1917,8 @@ function ProjectsContent() {
             >
               {busyId ===
               project.id
-                ? isArabic
-                  ? 'جاري الاستعادة…'
-                  : 'Restoring…'
-                : isArabic
-                  ? 'استعادة'
-                  : 'Restore'}
+                ? uiText(isArabic, 'text0402')
+                : uiText(isArabic, 'text0403')}
             </button>
           )}
 
@@ -1974,9 +1938,7 @@ function ProjectsContent() {
               );
             }}
           >
-            {isArabic
-              ? 'حذف'
-              : 'Delete'}
+            {uiText(isArabic, 'text0038')}
           </button>
         )}
       </div>
@@ -2012,32 +1974,22 @@ function ProjectsContent() {
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-              {isArabic
-                ? 'مساحة العمل'
-                : 'Workspace'}
+              {uiText(isArabic, 'text0404')}
             </div>
 
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-              {isArabic
-                ? 'المشاريع'
-                : 'Projects'}
+              {uiText(isArabic, 'text0405')}
             </h1>
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               {scope ===
               'archived'
-                ? isArabic
-                  ? 'المشاريع المؤرشفة.'
-                  : 'Projects that have been archived.'
+                ? uiText(isArabic, 'text0406')
                 : isAdmin &&
                     scope ===
                       'all'
-                  ? isArabic
-                    ? 'تابع جميع مشاريع المؤسسة وحالتها ومواعيدها.'
-                    : 'Manage projects across the organization and track their status and schedule.'
-                  : isArabic
-                    ? 'تابع المشاريع التي أنشأتها.'
-                    : 'Manage and track the projects you created.'}
+                  ? uiText(isArabic, 'text0407')
+                  : uiText(isArabic, 'text0408')}
             </p>
           </div>
 
@@ -2070,9 +2022,7 @@ function ProjectsContent() {
                 }}
               >
                 +{' '}
-                {isArabic
-                  ? 'مشروع جديد'
-                  : 'New project'}
+                {uiText(isArabic, 'text0409')}
               </button>
             )}
           </div>
@@ -2102,9 +2052,7 @@ function ProjectsContent() {
                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
             }`}
           >
-            {isArabic
-              ? 'كل المشاريع'
-              : 'All projects'}
+            {uiText(isArabic, 'text0410')}
           </button>
         )}
 
@@ -2123,9 +2071,7 @@ function ProjectsContent() {
               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           }`}
         >
-          {isArabic
-            ? 'مشاريعي'
-            : 'My projects'}
+          {uiText(isArabic, 'text0411')}
         </button>
 
 
@@ -2143,9 +2089,7 @@ function ProjectsContent() {
               : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
           }`}
         >
-          {isArabic
-            ? 'المؤرشفة'
-            : 'Archived'}
+          {uiText(isArabic, 'text0412')}
         </button>
       </div>
 
@@ -2195,9 +2139,7 @@ function ProjectsContent() {
                   : 'pl-9'
               }`}
               placeholder={
-                isArabic
-                  ? 'ابحث بالاسم أو الوصف أو المالك…'
-                  : 'Search name, description or owner…'
+                uiText(isArabic, 'text0413')
               }
               value={
                 search
@@ -2233,9 +2175,7 @@ function ProjectsContent() {
               }
             >
               <option value="">
-                {isArabic
-                  ? 'كل الحالات'
-                  : 'All statuses'}
+                {uiText(isArabic, 'text0069')}
               </option>
 
 
@@ -2288,33 +2228,23 @@ function ProjectsContent() {
             }
           >
             <option value="name">
-              {isArabic
-                ? 'الاسم'
-                : 'Name'}
+              {uiText(isArabic, 'text0070')}
             </option>
 
             <option value="createdAt">
-              {isArabic
-                ? 'تاريخ الإنشاء'
-                : 'Created date'}
+              {uiText(isArabic, 'text0414')}
             </option>
 
             <option value="startDate">
-              {isArabic
-                ? 'تاريخ البدء'
-                : 'Start date'}
+              {uiText(isArabic, 'text0415')}
             </option>
 
             <option value="endDate">
-              {isArabic
-                ? 'تاريخ الانتهاء'
-                : 'End date'}
+              {uiText(isArabic, 'text0071')}
             </option>
 
             <option value="status">
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </option>
           </select>
 
@@ -2342,12 +2272,8 @@ function ProjectsContent() {
             <span className="ml-1">
               {sortDir ===
               'asc'
-                ? isArabic
-                  ? 'تصاعدي'
-                  : 'Ascending'
-                : isArabic
-                  ? 'تنازلي'
-                  : 'Descending'}
+                ? uiText(isArabic, 'text0072')
+                : uiText(isArabic, 'text0073')}
             </span>
           </button>
 
@@ -2377,9 +2303,7 @@ function ProjectsContent() {
               />
             </svg>
 
-            {isArabic
-              ? 'عوامل التصفية'
-              : 'Filters'}
+            {uiText(isArabic, 'text0416')}
 
             {filterCount >
               0 && (
@@ -2406,9 +2330,7 @@ function ProjectsContent() {
                   <>
                     <div>
                       <label className="label">
-                        {isArabic
-                          ? 'المالك'
-                          : 'Owner'}
+                        {uiText(isArabic, 'text0417')}
                       </label>
 
                       <select
@@ -2425,9 +2347,7 @@ function ProjectsContent() {
                         }
                       >
                         <option value="">
-                          {isArabic
-                            ? 'كل المالكين'
-                            : 'All owners'}
+                          {uiText(isArabic, 'text0418')}
                         </option>
 
                         {owners.map(
@@ -2454,9 +2374,7 @@ function ProjectsContent() {
 
                     <div>
                       <label className="label">
-                        {isArabic
-                          ? 'القسم'
-                          : 'Department'}
+                        {uiText(isArabic, 'text0374')}
                       </label>
 
                       <select
@@ -2473,9 +2391,7 @@ function ProjectsContent() {
                         }
                       >
                         <option value="">
-                          {isArabic
-                            ? 'كل الأقسام'
-                            : 'All departments'}
+                          {uiText(isArabic, 'text0419')}
                         </option>
 
                         {visibleDepartments.map(
@@ -2502,9 +2418,7 @@ function ProjectsContent() {
 
                     <div>
                       <label className="label">
-                        {isArabic
-                          ? 'الفرع'
-                          : 'Branch'}
+                        {uiText(isArabic, 'text0371')}
                       </label>
 
                       <select
@@ -2521,9 +2435,7 @@ function ProjectsContent() {
                         }
                       >
                         <option value="">
-                          {isArabic
-                            ? 'كل الفروع'
-                            : 'All branches'}
+                          {uiText(isArabic, 'text0420')}
                         </option>
 
                         {visibleBranches.map(
@@ -2552,9 +2464,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تم الإنشاء من'
-                    : 'Created from'}
+                  {uiText(isArabic, 'text0421')}
                 </label>
 
                 <input
@@ -2580,9 +2490,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تم الإنشاء إلى'
-                    : 'Created to'}
+                  {uiText(isArabic, 'text0422')}
                 </label>
 
                 <input
@@ -2608,9 +2516,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ البدء من'
-                    : 'Start date from'}
+                  {uiText(isArabic, 'text0423')}
                 </label>
 
                 <input
@@ -2636,9 +2542,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ البدء إلى'
-                    : 'Start date to'}
+                  {uiText(isArabic, 'text0424')}
                 </label>
 
                 <input
@@ -2664,9 +2568,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ الانتهاء من'
-                    : 'End date from'}
+                  {uiText(isArabic, 'text0425')}
                 </label>
 
                 <input
@@ -2692,9 +2594,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'تاريخ الانتهاء إلى'
-                    : 'End date to'}
+                  {uiText(isArabic, 'text0074')}
                 </label>
 
                 <input
@@ -2728,9 +2628,7 @@ function ProjectsContent() {
                     clearFilters
                   }
                 >
-                  {isArabic
-                    ? 'مسح عوامل التصفية'
-                    : 'Clear filters'}
+                  {uiText(isArabic, 'text0275')}
                 </button>
               </div>
             )}
@@ -2770,9 +2668,7 @@ function ProjectsContent() {
               clearFilters
             }
           >
-            {isArabic
-              ? 'إعادة تعيين التصفية'
-              : 'Reset filters'}
+            {uiText(isArabic, 'text0426')}
           </button>
         )}
       </div>
@@ -2907,9 +2803,7 @@ function ProjectsContent() {
 
                       {overdue && (
                         <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-700">
-                          {isArabic
-                            ? 'متأخر'
-                            : 'Past end date'}
+                          {uiText(isArabic, 'text0075')}
                         </span>
                       )}
 
@@ -2917,9 +2811,7 @@ function ProjectsContent() {
                       {!overdue &&
                         dueSoon && (
                           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
-                            {isArabic
-                              ? 'ينتهي قريباً'
-                              : 'Ending soon'}
+                            {uiText(isArabic, 'text0076')}
                           </span>
                         )}
                     </div>
@@ -2935,9 +2827,7 @@ function ProjectsContent() {
                     <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-5 text-slate-500">
                       {project.description ||
                         (
-                          isArabic
-                            ? 'لا يوجد وصف.'
-                            : 'No description.'
+                          uiText(isArabic, 'text0427')
                         )}
                     </p>
 
@@ -2945,9 +2835,7 @@ function ProjectsContent() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'تاريخ البدء'
-                            : 'Start'}
+                          {uiText(isArabic, 'text0428')}
                         </div>
 
                         <div className="mt-1 text-xs font-medium text-slate-700">
@@ -2961,9 +2849,7 @@ function ProjectsContent() {
 
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'تاريخ الانتهاء'
-                            : 'End'}
+                          {uiText(isArabic, 'text0077')}
                         </div>
 
                         <div
@@ -3003,18 +2889,14 @@ function ProjectsContent() {
                             <div className="truncate text-[10px] text-slate-400">
                               {project.ownerDepartmentName ||
                                 (
-                                  isArabic
-                                    ? 'بدون قسم'
-                                    : 'No department'
+                                  uiText(isArabic, 'text0429')
                                 )}
 
                               {' · '}
 
                               {project.ownerBranchName ||
                                 (
-                                  isArabic
-                                    ? 'بدون فرع'
-                                    : 'No branch'
+                                  uiText(isArabic, 'text0430')
                                 )}
                             </div>
                           </div>
@@ -3027,9 +2909,7 @@ function ProjectsContent() {
                   <div className="relative z-20 mt-auto border-t border-slate-100 bg-slate-50/50 px-5 py-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="text-[11px] text-slate-400">
-                        {isArabic
-                          ? 'تم الإنشاء'
-                          : 'Created'}{' '}
+                        {uiText(isArabic, 'text0431')}{' '}
 
                         {new Date(
                           project.createdAt,
@@ -3071,27 +2951,19 @@ function ProjectsContent() {
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="hidden grid-cols-[minmax(240px,1fr)_150px_180px_190px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:grid">
             <div>
-              {isArabic
-                ? 'المشروع'
-                : 'Project'}
+              {uiText(isArabic, 'text0432')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الجدول'
-                : 'Schedule'}
+              {uiText(isArabic, 'text0078')}
             </div>
 
             <div>
-              {isArabic
-                ? 'المالك'
-                : 'Owner'}
+              {uiText(isArabic, 'text0417')}
             </div>
 
             <div />
@@ -3140,9 +3012,7 @@ function ProjectsContent() {
 
                           {overdue && (
                             <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
-                              {isArabic
-                                ? 'متأخر'
-                                : 'Overdue'}
+                              {uiText(isArabic, 'text0433')}
                             </span>
                           )}
 
@@ -3150,9 +3020,7 @@ function ProjectsContent() {
                           {!overdue &&
                             dueSoon && (
                               <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
-                                {isArabic
-                                  ? 'قريب'
-                                  : 'Soon'}
+                                {uiText(isArabic, 'text0079')}
                               </span>
                             )}
                         </div>
@@ -3161,9 +3029,7 @@ function ProjectsContent() {
                         <p className="mt-1 truncate text-xs text-slate-400">
                           {project.description ||
                             (
-                              isArabic
-                                ? 'لا يوجد وصف'
-                                : 'No description'
+                              uiText(isArabic, 'text0434')
                             )}
                         </p>
                       </div>
@@ -3224,9 +3090,7 @@ function ProjectsContent() {
                           </>
                         ) : (
                           <div className="text-xs text-slate-400">
-                            {isArabic
-                              ? 'تم الإنشاء'
-                              : 'Created'}{' '}
+                            {uiText(isArabic, 'text0431')}{' '}
 
                             {new Date(
                               project.createdAt,
@@ -3286,9 +3150,7 @@ function ProjectsContent() {
             setPage
           }
           itemLabel={
-            isArabic
-              ? 'مشاريع'
-              : 'projects'
+            uiText(isArabic, 'text0435')
           }
         />
       )}
@@ -3326,14 +3188,10 @@ function ProjectsContent() {
             <div className="border-b border-slate-100 px-6 py-5">
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'مشروع جديد'
-                    : 'New project'
+                  uiText(isArabic, 'text0409')
                 }
                 description={
-                  isArabic
-                    ? 'أدخل معلومات المشروع وجدوله الزمني.'
-                    : 'Add the project details and planned schedule.'
+                  uiText(isArabic, 'text0436')
                 }
               />
             </div>
@@ -3342,9 +3200,7 @@ function ProjectsContent() {
             <div className="space-y-5 p-6">
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'اسم المشروع'
-                    : 'Project name'}
+                  {uiText(isArabic, 'text0437')}
                 </label>
 
                 <input
@@ -3377,9 +3233,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الوصف'
-                    : 'Description'}
+                  {uiText(isArabic, 'text0438')}
                 </label>
 
                 <textarea
@@ -3411,9 +3265,7 @@ function ProjectsContent() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'تاريخ البدء'
-                      : 'Start date'}
+                    {uiText(isArabic, 'text0415')}
                   </label>
 
                   <input
@@ -3446,9 +3298,7 @@ function ProjectsContent() {
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'تاريخ الانتهاء'
-                      : 'End date'}
+                    {uiText(isArabic, 'text0071')}
                   </label>
 
                   <input
@@ -3503,9 +3353,7 @@ function ProjectsContent() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3517,12 +3365,8 @@ function ProjectsContent() {
                 }
               >
                 {createBusy
-                  ? isArabic
-                    ? 'جاري الإنشاء…'
-                    : 'Creating…'
-                  : isArabic
-                    ? 'إنشاء المشروع'
-                    : 'Create project'}
+                  ? uiText(isArabic, 'text0439')
+                  : uiText(isArabic, 'text0440')}
               </button>
             </div>
           </form>
@@ -3562,9 +3406,7 @@ function ProjectsContent() {
             <div className="border-b border-slate-100 px-6 py-5">
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'تعديل المشروع'
-                    : 'Edit project'
+                  uiText(isArabic, 'text0441')
                 }
                 description={
                   editingProject.name
@@ -3576,9 +3418,7 @@ function ProjectsContent() {
             <div className="space-y-5 p-6">
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'اسم المشروع'
-                    : 'Project name'}
+                  {uiText(isArabic, 'text0437')}
                 </label>
 
                 <input
@@ -3610,9 +3450,7 @@ function ProjectsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الوصف'
-                    : 'Description'}
+                  {uiText(isArabic, 'text0438')}
                 </label>
 
                 <textarea
@@ -3644,9 +3482,7 @@ function ProjectsContent() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'تاريخ البدء'
-                      : 'Start date'}
+                    {uiText(isArabic, 'text0415')}
                   </label>
 
                   <input
@@ -3679,9 +3515,7 @@ function ProjectsContent() {
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'تاريخ الانتهاء'
-                      : 'End date'}
+                    {uiText(isArabic, 'text0071')}
                   </label>
 
                   <input
@@ -3736,9 +3570,7 @@ function ProjectsContent() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3750,12 +3582,8 @@ function ProjectsContent() {
                 }
               >
                 {editBusy
-                  ? isArabic
-                    ? 'جاري الحفظ…'
-                    : 'Saving…'
-                  : isArabic
-                    ? 'حفظ التغييرات'
-                    : 'Save changes'}
+                  ? uiText(isArabic, 'text0081')
+                  : uiText(isArabic, 'text0082')}
               </button>
             </div>
           </form>
@@ -3807,23 +3635,17 @@ function ProjectsContent() {
 
 
               <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                {isArabic
-                  ? 'حذف المشروع؟'
-                  : 'Delete project?'}
+                {uiText(isArabic, 'text0442')}
               </h2>
 
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                {isArabic
-                  ? `سيتم حذف "${deleteProject.name}" نهائياً إذا لم يكن مرتبطاً بأي مهام.`
-                  : `"${deleteProject.name}" will be permanently deleted if it has no tasks attached.`}
+                {uiText(isArabic, 'text0731', { value0: deleteProject.name })}
               </p>
 
 
               <p className="mt-2 text-xs text-slate-400">
-                {isArabic
-                  ? 'إذا كان المشروع يحتوي على مهام، استخدم الأرشفة بدلاً من الحذف.'
-                  : 'Projects with tasks should be archived instead of permanently deleted.'}
+                {uiText(isArabic, 'text0443')}
               </p>
             </div>
 
@@ -3842,9 +3664,7 @@ function ProjectsContent() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3861,12 +3681,8 @@ function ProjectsContent() {
               >
                 {busyId ===
                 deleteProject.id
-                  ? isArabic
-                    ? 'جاري الحذف…'
-                    : 'Deleting…'
-                  : isArabic
-                    ? 'حذف المشروع'
-                    : 'Delete project'}
+                  ? uiText(isArabic, 'text0083')
+                  : uiText(isArabic, 'text0444')}
               </button>
             </div>
           </div>

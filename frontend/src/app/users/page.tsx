@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useCallback,
   useEffect,
@@ -160,9 +163,7 @@ function ViewToggle({
       <button
         type="button"
         title={
-          isArabic
-            ? 'بطاقات'
-            : 'Cards'
+          uiText(isArabic, 'text0389')
         }
         onClick={() =>
           onChange(
@@ -224,9 +225,7 @@ function ViewToggle({
       <button
         type="button"
         title={
-          isArabic
-            ? 'قائمة'
-            : 'List'
+          uiText(isArabic, 'text0067')
         }
         onClick={() =>
           onChange(
@@ -308,16 +307,12 @@ function EmptyState({
 
 
       <h3 className="mt-4 text-sm font-semibold text-slate-800">
-        {isArabic
-          ? 'لا يوجد مستخدمون'
-          : 'No users found'}
+        {uiText(isArabic, 'text0587')}
       </h3>
 
 
       <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
-        {isArabic
-          ? 'جرّب تغيير عوامل التصفية.'
-          : 'Try changing the current filters.'}
+        {uiText(isArabic, 'text0588')}
       </p>
     </div>
   );
@@ -943,9 +938,7 @@ function UsersContent() {
           setError(
             err instanceof ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل المستخدمين.'
-                : 'Could not load users.',
+              : uiText(isArabic, 'text0589'),
           );
         } finally {
           setLoading(
@@ -1177,9 +1170,7 @@ function UsersContent() {
       !editForm.fullName.trim()
     ) {
       setEditError(
-        isArabic
-          ? 'الاسم مطلوب.'
-          : 'Full name is required.',
+        uiText(isArabic, 'text0590'),
       );
 
       return;
@@ -1190,9 +1181,7 @@ function UsersContent() {
       !editForm.email.trim()
     ) {
       setEditError(
-        isArabic
-          ? 'البريد الإلكتروني مطلوب.'
-          : 'Email is required.',
+        uiText(isArabic, 'text0591'),
       );
 
       return;
@@ -1203,9 +1192,7 @@ function UsersContent() {
       !editForm.roleId
     ) {
       setEditError(
-        isArabic
-          ? 'الدور مطلوب.'
-          : 'Role is required.',
+        uiText(isArabic, 'text0592'),
       );
 
       return;
@@ -1216,9 +1203,7 @@ function UsersContent() {
       !editForm.branchId
     ) {
       setEditError(
-        isArabic
-          ? 'الفرع مطلوب.'
-          : 'Branch is required.',
+        uiText(isArabic, 'text0593'),
       );
 
       return;
@@ -1230,9 +1215,7 @@ function UsersContent() {
       !editForm.departmentId
     ) {
       setEditError(
-        isArabic
-          ? 'القسم مطلوب للمستخدمين غير المسؤولين.'
-          : 'Department is required for non-Admin users.',
+        uiText(isArabic, 'text0594'),
       );
 
       return;
@@ -1280,9 +1263,7 @@ function UsersContent() {
       setEditError(
         err instanceof ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث المستخدم.'
-            : 'Could not update the user.',
+          : uiText(isArabic, 'text0595'),
       );
     } finally {
       setEditBusy(
@@ -1345,9 +1326,7 @@ function UsersContent() {
         message:
           err instanceof ApiError
             ? err.message
-            : isArabic
-              ? 'تعذر تحديث حالة المستخدم.'
-              : 'Could not update the user status.',
+            : uiText(isArabic, 'text0596'),
       });
 
 
@@ -1402,9 +1381,7 @@ function UsersContent() {
       setDeleteError(
         err instanceof ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حذف المستخدم.'
-            : 'Could not delete the user.',
+          : uiText(isArabic, 'text0597'),
       );
     } finally {
       setBusyId(
@@ -1457,9 +1434,7 @@ function UsersContent() {
           href={`/tasks?ownerId=${target.id}`}
           className="btn-secondary px-3 py-1.5 text-xs"
         >
-          {isArabic
-            ? 'المهام'
-            : 'Tasks'}
+          {uiText(isArabic, 'text0195')}
         </Link>
 
 
@@ -1467,9 +1442,7 @@ function UsersContent() {
           href={`/projects?ownerId=${target.id}`}
           className="btn-secondary px-3 py-1.5 text-xs"
         >
-          {isArabic
-            ? 'المشاريع'
-            : 'Projects'}
+          {uiText(isArabic, 'text0405')}
         </Link>
 
 
@@ -1485,9 +1458,7 @@ function UsersContent() {
             )
           }
         >
-          {isArabic
-            ? 'تعديل'
-            : 'Edit'}
+          {uiText(isArabic, 'text0068')}
         </button>
 
 
@@ -1513,16 +1484,10 @@ function UsersContent() {
             }}
           >
             {busy
-              ? isArabic
-                ? 'جاري التحديث…'
-                : 'Updating…'
+              ? uiText(isArabic, 'text0095')
               : target.isActive
-                ? isArabic
-                  ? 'تعطيل'
-                  : 'Deactivate'
-                : isArabic
-                  ? 'تفعيل'
-                  : 'Activate'}
+                ? uiText(isArabic, 'text0096')
+                : uiText(isArabic, 'text0097')}
           </button>
         )}
 
@@ -1542,9 +1507,7 @@ function UsersContent() {
               );
             }}
           >
-            {isArabic
-              ? 'حذف'
-              : 'Delete'}
+            {uiText(isArabic, 'text0038')}
           </button>
         )}
       </div>
@@ -1580,30 +1543,22 @@ function UsersContent() {
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-              {isArabic
-                ? 'إدارة المؤسسة'
-                : 'Organization'}
+              {uiText(isArabic, 'text0598')}
             </div>
 
 
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-              {isArabic
-                ? 'المستخدمون'
-                : 'Users'}
+              {uiText(isArabic, 'text0599')}
             </h1>
 
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              {isArabic
-                ? 'إدارة حسابات المستخدمين والأدوار والفروع والأقسام وحالة الحساب.'
-                : 'Manage user accounts, roles, branches, departments and account access.'}
+              {uiText(isArabic, 'text0600')}
             </p>
 
 
             <p className="mt-2 text-xs text-slate-400">
-              {isArabic
-                ? 'يتم إنشاء الحسابات من خلال التسجيل الذاتي.'
-                : 'New accounts are created through self-registration.'}
+              {uiText(isArabic, 'text0601')}
             </p>
           </div>
 
@@ -1670,9 +1625,7 @@ function UsersContent() {
                   : 'pl-9'
               }`}
               placeholder={
-                isArabic
-                  ? 'ابحث بالاسم أو البريد أو الهاتف…'
-                  : 'Search name, email or phone…'
+                uiText(isArabic, 'text0602')
               }
               value={
                 search
@@ -1706,21 +1659,15 @@ function UsersContent() {
             }
           >
             <option value="">
-              {isArabic
-                ? 'كل الحالات'
-                : 'All statuses'}
+              {uiText(isArabic, 'text0069')}
             </option>
 
             <option value="true">
-              {isArabic
-                ? 'نشط'
-                : 'Active'}
+              {uiText(isArabic, 'text0091')}
             </option>
 
             <option value="false">
-              {isArabic
-                ? 'معطل'
-                : 'Deactivated'}
+              {uiText(isArabic, 'text0201')}
             </option>
           </select>
 
@@ -1743,9 +1690,7 @@ function UsersContent() {
             }
           >
             <option value="">
-              {isArabic
-                ? 'كل الأدوار'
-                : 'All roles'}
+              {uiText(isArabic, 'text0603')}
             </option>
 
 
@@ -1789,33 +1734,23 @@ function UsersContent() {
             }
           >
             <option value="fullName">
-              {isArabic
-                ? 'الاسم'
-                : 'Name'}
+              {uiText(isArabic, 'text0070')}
             </option>
 
             <option value="email">
-              {isArabic
-                ? 'البريد'
-                : 'Email'}
+              {uiText(isArabic, 'text0202')}
             </option>
 
             <option value="createdAt">
-              {isArabic
-                ? 'تاريخ الانضمام'
-                : 'Joined'}
+              {uiText(isArabic, 'text0203')}
             </option>
 
             <option value="role">
-              {isArabic
-                ? 'الدور'
-                : 'Role'}
+              {uiText(isArabic, 'text0204')}
             </option>
 
             <option value="isActive">
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </option>
           </select>
 
@@ -1843,12 +1778,8 @@ function UsersContent() {
             <span className="ml-1">
               {sortDir ===
               'asc'
-                ? isArabic
-                  ? 'تصاعدي'
-                  : 'Ascending'
-                : isArabic
-                  ? 'تنازلي'
-                  : 'Descending'}
+                ? uiText(isArabic, 'text0072')
+                : uiText(isArabic, 'text0073')}
             </span>
           </button>
 
@@ -1878,9 +1809,7 @@ function UsersContent() {
               />
             </svg>
 
-            {isArabic
-              ? 'التصفية'
-              : 'Filters'}
+            {uiText(isArabic, 'text0271')}
 
 
             {filterCount >
@@ -1906,9 +1835,7 @@ function UsersContent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'القسم'
-                    : 'Department'}
+                  {uiText(isArabic, 'text0374')}
                 </label>
 
                 <select
@@ -1925,9 +1852,7 @@ function UsersContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل الأقسام'
-                      : 'All departments'}
+                    {uiText(isArabic, 'text0419')}
                   </option>
 
 
@@ -1955,9 +1880,7 @@ function UsersContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الفرع'
-                    : 'Branch'}
+                  {uiText(isArabic, 'text0371')}
                 </label>
 
                 <select
@@ -1974,9 +1897,7 @@ function UsersContent() {
                   }
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل الفروع'
-                      : 'All branches'}
+                    {uiText(isArabic, 'text0420')}
                   </option>
 
 
@@ -2004,9 +1925,7 @@ function UsersContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'انضم من'
-                    : 'Joined from'}
+                  {uiText(isArabic, 'text0604')}
                 </label>
 
                 <input
@@ -2032,9 +1951,7 @@ function UsersContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'انضم إلى'
-                    : 'Joined to'}
+                  {uiText(isArabic, 'text0205')}
                 </label>
 
                 <input
@@ -2068,9 +1985,7 @@ function UsersContent() {
                     clearFilters
                   }
                 >
-                  {isArabic
-                    ? 'مسح عوامل التصفية'
-                    : 'Clear filters'}
+                  {uiText(isArabic, 'text0275')}
                 </button>
               </div>
             )}
@@ -2110,9 +2025,7 @@ function UsersContent() {
             }
             className="text-xs font-medium text-brand-600 hover:text-brand-800"
           >
-            {isArabic
-              ? 'إعادة تعيين التصفية'
-              : 'Reset filters'}
+            {uiText(isArabic, 'text0426')}
           </button>
         )}
       </div>
@@ -2256,9 +2169,7 @@ function UsersContent() {
 
                             {isSelf && (
                               <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[9px] font-semibold text-brand-700">
-                                {isArabic
-                                  ? 'أنت'
-                                  : 'You'}
+                                {uiText(isArabic, 'text0206')}
                               </span>
                             )}
                           </div>
@@ -2281,12 +2192,8 @@ function UsersContent() {
                         }`}
                       >
                         {target.isActive
-                          ? isArabic
-                            ? 'نشط'
-                            : 'Active'
-                          : isArabic
-                            ? 'معطل'
-                            : 'Inactive'}
+                          ? uiText(isArabic, 'text0091')
+                          : uiText(isArabic, 'text0207')}
                       </span>
                     </div>
 
@@ -2294,9 +2201,7 @@ function UsersContent() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'الدور'
-                            : 'Role'}
+                          {uiText(isArabic, 'text0204')}
                         </div>
 
                         <div className="mt-1 text-xs font-semibold text-slate-700">
@@ -2309,9 +2214,7 @@ function UsersContent() {
 
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {isArabic
-                            ? 'تاريخ الانضمام'
-                            : 'Joined'}
+                          {uiText(isArabic, 'text0203')}
                         </div>
 
                         <div className="mt-1 text-xs font-medium text-slate-700">
@@ -2327,9 +2230,7 @@ function UsersContent() {
                     <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'الفرع'
-                            : 'Branch'}
+                          {uiText(isArabic, 'text0371')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -2342,17 +2243,13 @@ function UsersContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'القسم'
-                            : 'Department'}
+                          {uiText(isArabic, 'text0374')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
                           {target.role.name ===
                           'ADMIN'
-                            ? isArabic
-                              ? 'غير مطبق'
-                              : 'Not applicable'
+                            ? uiText(isArabic, 'text0208')
                             : directoryLabel(
                                 department,
                               )}
@@ -2362,9 +2259,7 @@ function UsersContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'الهاتف'
-                            : 'Phone'}
+                          {uiText(isArabic, 'text0209')}
                         </div>
 
                         <div className="mt-1 truncate font-medium text-slate-600">
@@ -2376,9 +2271,7 @@ function UsersContent() {
 
                       <div>
                         <div className="text-slate-400">
-                          {isArabic
-                            ? 'اللغة'
-                            : 'Language'}
+                          {uiText(isArabic, 'text0210')}
                         </div>
 
                         <div className="mt-1 uppercase font-medium text-slate-600">
@@ -2422,33 +2315,23 @@ function UsersContent() {
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="hidden grid-cols-[minmax(250px,1fr)_120px_170px_170px_140px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
-              {isArabic
-                ? 'المستخدم'
-                : 'User'}
+              {uiText(isArabic, 'text0272')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الدور'
-                : 'Role'}
+              {uiText(isArabic, 'text0204')}
             </div>
 
             <div>
-              {isArabic
-                ? 'القسم'
-                : 'Department'}
+              {uiText(isArabic, 'text0374')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الفرع'
-                : 'Branch'}
+              {uiText(isArabic, 'text0371')}
             </div>
 
             <div>
-              {isArabic
-                ? 'الحالة'
-                : 'Status'}
+              {uiText(isArabic, 'text0052')}
             </div>
 
             <div />
@@ -2512,9 +2395,7 @@ function UsersContent() {
 
                             {isSelf && (
                               <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[9px] font-semibold text-brand-700">
-                                {isArabic
-                                  ? 'أنت'
-                                  : 'You'}
+                                {uiText(isArabic, 'text0206')}
                               </span>
                             )}
                           </div>
@@ -2560,9 +2441,7 @@ function UsersContent() {
                       <div className="truncate text-xs font-medium text-slate-600">
                         {target.role.name ===
                         'ADMIN'
-                          ? isArabic
-                            ? 'غير مطبق'
-                            : 'Not applicable'
+                          ? uiText(isArabic, 'text0208')
                           : directoryLabel(
                               department,
                             )}
@@ -2593,12 +2472,8 @@ function UsersContent() {
                           }`}
                         >
                           {target.isActive
-                            ? isArabic
-                              ? 'نشط'
-                              : 'Active'
-                            : isArabic
-                              ? 'معطل'
-                              : 'Inactive'}
+                            ? uiText(isArabic, 'text0091')
+                            : uiText(isArabic, 'text0207')}
                         </span>
 
 
@@ -2664,9 +2539,7 @@ function UsersContent() {
               setPage
             }
             itemLabel={
-              isArabic
-                ? 'مستخدمين'
-                : 'users'
+              uiText(isArabic, 'text0605')
             }
           />
         )}
@@ -2702,16 +2575,12 @@ function UsersContent() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-                    {isArabic
-                      ? 'إدارة المستخدم'
-                      : 'User management'}
+                    {uiText(isArabic, 'text0606')}
                   </div>
 
 
                   <h2 className="mt-2 text-xl font-semibold text-slate-900">
-                    {isArabic
-                      ? 'تعديل المستخدم'
-                      : 'Edit user'}
+                    {uiText(isArabic, 'text0607')}
                   </h2>
 
 
@@ -2743,9 +2612,7 @@ function UsersContent() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'الاسم الكامل'
-                      : 'Full name'}
+                    {uiText(isArabic, 'text0060')}
                   </label>
 
                   <input
@@ -2777,9 +2644,7 @@ function UsersContent() {
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'البريد الإلكتروني'
-                      : 'Email'}
+                    {uiText(isArabic, 'text0064')}
                   </label>
 
                   <input
@@ -2811,9 +2676,7 @@ function UsersContent() {
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'الدور'
-                      : 'Role'}
+                    {uiText(isArabic, 'text0204')}
                   </label>
 
                   <select
@@ -2831,9 +2694,7 @@ function UsersContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'اختر…'
-                        : 'Select…'}
+                      {uiText(isArabic, 'text0187')}
                     </option>
 
 
@@ -2861,9 +2722,7 @@ function UsersContent() {
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'الفرع'
-                      : 'Branch'}
+                    {uiText(isArabic, 'text0371')}
                   </label>
 
                   <select
@@ -2888,9 +2747,7 @@ function UsersContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'اختر…'
-                        : 'Select…'}
+                      {uiText(isArabic, 'text0187')}
                     </option>
 
 
@@ -2918,17 +2775,13 @@ function UsersContent() {
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'القسم'
-                      : 'Department'}
+                    {uiText(isArabic, 'text0374')}
                   </label>
 
 
                   {editRoleIsAdmin ? (
                     <div className="input flex items-center bg-slate-50 text-sm text-slate-400">
-                      {isArabic
-                        ? 'غير مطبق للمسؤول'
-                        : 'Not applicable for Admin'}
+                      {uiText(isArabic, 'text0608')}
                     </div>
                   ) : (
                     <select
@@ -2953,9 +2806,7 @@ function UsersContent() {
                       }
                     >
                       <option value="">
-                        {isArabic
-                          ? 'اختر…'
-                          : 'Select…'}
+                        {uiText(isArabic, 'text0187')}
                       </option>
 
 
@@ -3004,9 +2855,7 @@ function UsersContent() {
                   closeEdit
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3018,12 +2867,8 @@ function UsersContent() {
                 }
               >
                 {editBusy
-                  ? isArabic
-                    ? 'جاري الحفظ…'
-                    : 'Saving…'
-                  : isArabic
-                    ? 'حفظ التغييرات'
-                    : 'Save changes'}
+                  ? uiText(isArabic, 'text0081')
+                  : uiText(isArabic, 'text0082')}
               </button>
             </div>
           </form>
@@ -3081,23 +2926,17 @@ function UsersContent() {
 
 
               <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                {isArabic
-                  ? 'تعطيل الحساب؟'
-                  : 'Deactivate account?'}
+                {uiText(isArabic, 'text0211')}
               </h2>
 
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                {isArabic
-                  ? `لن يتمكن ${pendingDeactivate.fullName} من تسجيل الدخول حتى تتم إعادة تفعيل الحساب.`
-                  : `${pendingDeactivate.fullName} will no longer be able to sign in until the account is reactivated.`}
+                {uiText(isArabic, 'text0746', { value0: pendingDeactivate.fullName })}
               </p>
 
 
               <p className="mt-2 text-xs text-slate-400">
-                {isArabic
-                  ? 'لن يتم حذف المهام أو المشاريع أو سجل المستخدم.'
-                  : 'Tasks, projects and historical records will remain intact.'}
+                {uiText(isArabic, 'text0609')}
               </p>
             </div>
 
@@ -3116,9 +2955,7 @@ function UsersContent() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3137,12 +2974,8 @@ function UsersContent() {
               >
                 {busyId ===
                 pendingDeactivate.id
-                  ? isArabic
-                    ? 'جاري التعطيل…'
-                    : 'Deactivating…'
-                  : isArabic
-                    ? 'تعطيل الحساب'
-                    : 'Deactivate account'}
+                  ? uiText(isArabic, 'text0099')
+                  : uiText(isArabic, 'text0212')}
               </button>
             </div>
           </div>
@@ -3196,23 +3029,17 @@ function UsersContent() {
 
 
               <h2 className="mt-4 text-lg font-semibold text-slate-900">
-                {isArabic
-                  ? 'حذف المستخدم نهائياً؟'
-                  : 'Permanently delete user?'}
+                {uiText(isArabic, 'text0610')}
               </h2>
 
 
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                {isArabic
-                  ? `سيحاول النظام حذف حساب "${pendingDelete.fullName}" نهائياً.`
-                  : `The system will attempt to permanently delete "${pendingDelete.fullName}".`}
+                {uiText(isArabic, 'text0747', { value0: pendingDelete.fullName })}
               </p>
 
 
               <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-3 text-xs leading-5 text-red-700">
-                {isArabic
-                  ? 'إذا كان المستخدم مرتبطاً بمهام أو تعليقات أو سجلات تدقيق، فلن يسمح النظام بالحذف. استخدم التعطيل بدلاً من ذلك.'
-                  : 'If this user has related tasks, comments or audit history, deletion will be blocked. Deactivate the account instead.'}
+                {uiText(isArabic, 'text0611')}
               </div>
 
 
@@ -3242,9 +3069,7 @@ function UsersContent() {
                   setDeleteError('');
                 }}
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -3261,12 +3086,8 @@ function UsersContent() {
               >
                 {busyId ===
                 pendingDelete.id
-                  ? isArabic
-                    ? 'جاري الحذف…'
-                    : 'Deleting…'
-                  : isArabic
-                    ? 'حذف نهائي'
-                    : 'Delete permanently'}
+                  ? uiText(isArabic, 'text0083')
+                  : uiText(isArabic, 'text0612')}
               </button>
             </div>
           </div>

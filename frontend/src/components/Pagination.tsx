@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useMemo,
 } from 'react';
@@ -301,9 +304,7 @@ export default function Pagination({
                 text-slate-800
               "
             >
-              {isArabic
-                ? `الصفحة ${safePage} من ${safeTotalPages}`
-                : `Page ${safePage} of ${safeTotalPages}`}
+              {uiText(isArabic, 'text0748', { value0: safePage, value1: safeTotalPages })}
             </div>
 
 
@@ -352,9 +353,7 @@ export default function Pagination({
               previousDisabled
             }
             aria-label={
-              isArabic
-                ? 'الصفحة السابقة'
-                : 'Previous page'
+              uiText(isArabic, 'text0637')
             }
             className="
               inline-flex
@@ -496,9 +495,7 @@ export default function Pagination({
               nextDisabled
             }
             aria-label={
-              isArabic
-                ? 'الصفحة التالية'
-                : 'Next page'
+              uiText(isArabic, 'text0235')
             }
             className="
               inline-flex
@@ -580,9 +577,7 @@ export default function Pagination({
               ? <ChevronRight />
               : <ChevronLeft />}
 
-            {isArabic
-              ? 'السابق'
-              : 'Previous'}
+            {uiText(isArabic, 'text0638')}
           </button>
 
 
@@ -629,9 +624,7 @@ export default function Pagination({
               disabled:opacity-40
             "
           >
-            {isArabic
-              ? 'التالي'
-              : 'Next'}
+            {uiText(isArabic, 'text0236')}
 
             {isArabic
               ? <ChevronLeft />

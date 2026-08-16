@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useMemo,
@@ -522,9 +525,7 @@ export default function SubtasksPanel({
       !form.title.trim()
     ) {
       setError(
-        isArabic
-          ? 'عنوان المهمة الفرعية مطلوب.'
-          : 'Subtask title is required.',
+        uiText(isArabic, 'text0639'),
       );
 
       return;
@@ -535,9 +536,7 @@ export default function SubtasksPanel({
       !task.departmentId
     ) {
       setError(
-        isArabic
-          ? 'المهمة الرئيسية لا تحتوي على قسم.'
-          : 'The parent task does not have a Department.',
+        uiText(isArabic, 'text0640'),
       );
 
       return;
@@ -551,9 +550,7 @@ export default function SubtasksPanel({
         form.startDate
     ) {
       setError(
-        isArabic
-          ? 'الموعد النهائي لا يمكن أن يكون قبل تاريخ البدء.'
-          : 'Deadline cannot be before the start date.',
+        uiText(isArabic, 'text0545'),
       );
 
       return;
@@ -567,9 +564,7 @@ export default function SubtasksPanel({
         task.startDate
     ) {
       setError(
-        isArabic
-          ? 'المهمة الفرعية لا يمكن أن تبدأ قبل المهمة الرئيسية.'
-          : 'A subtask cannot start before its parent task.',
+        uiText(isArabic, 'text0546'),
       );
 
       return;
@@ -583,9 +578,7 @@ export default function SubtasksPanel({
         task.deadlineDate
     ) {
       setError(
-        isArabic
-          ? 'موعد المهمة الفرعية لا يمكن أن يتجاوز موعد المهمة الرئيسية.'
-          : 'A subtask deadline cannot exceed the parent deadline.',
+        uiText(isArabic, 'text0641'),
       );
 
       return;
@@ -695,9 +688,7 @@ export default function SubtasksPanel({
 
 
       setSuccess(
-        isArabic
-          ? 'تمت إضافة المهمة الفرعية.'
-          : 'Subtask added successfully.',
+        uiText(isArabic, 'text0237'),
       );
 
 
@@ -712,14 +703,10 @@ export default function SubtasksPanel({
           err instanceof
             ApiError
             ? (
-                isArabic
-                  ? `تم إنشاء المهمة الفرعية، لكن تعذر التكليف: ${err.message}`
-                  : `The subtask was created, but assignment failed: ${err.message}`
+                uiText(isArabic, 'text0749', { value0: err.message })
               )
             : (
-                isArabic
-                  ? 'تم إنشاء المهمة الفرعية، لكن تعذر تكليف المستخدم.'
-                  : 'The subtask was created, but the assignment could not be created.'
+                uiText(isArabic, 'text0642')
               ),
         );
 
@@ -734,9 +721,7 @@ export default function SubtasksPanel({
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إنشاء المهمة الفرعية.'
-            : 'Could not create the subtask.',
+          : uiText(isArabic, 'text0643'),
       );
     } finally {
       setSubmitting(
@@ -766,15 +751,11 @@ export default function SubtasksPanel({
 
             <div>
               <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
-                {isArabic
-                  ? 'مهمة فرعية'
-                  : 'Subtask'}
+                {uiText(isArabic, 'text0112')}
               </div>
 
               <h2 className="mt-1 text-base font-semibold text-slate-900">
-                {isArabic
-                  ? 'جزء من مهمة رئيسية'
-                  : 'Part of a parent task'}
+                {uiText(isArabic, 'text0644')}
               </h2>
             </div>
           </div>
@@ -789,9 +770,7 @@ export default function SubtasksPanel({
             >
               <div className="min-w-0">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                  {isArabic
-                    ? 'المهمة الرئيسية'
-                    : 'Parent task'}
+                  {uiText(isArabic, 'text0519')}
                 </div>
 
                 <div className="mt-1 truncate text-sm font-semibold text-slate-800 group-hover:text-brand-700">
@@ -809,9 +788,7 @@ export default function SubtasksPanel({
             </Link>
           ) : (
             <div className="text-sm text-slate-400">
-              {isArabic
-                ? 'تعذر تحميل المهمة الرئيسية.'
-                : 'Parent task information is unavailable.'}
+              {uiText(isArabic, 'text0645')}
             </div>
           )}
         </div>
@@ -838,15 +815,11 @@ export default function SubtasksPanel({
 
               <div>
                 <h2 className="text-base font-semibold text-slate-900">
-                  {isArabic
-                    ? 'تقسيم العمل'
-                    : 'Work breakdown'}
+                  {uiText(isArabic, 'text0646')}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  {isArabic
-                    ? 'قسّم المهمة إلى خطوات أصغر وتابع تقدمها بالتسلسل.'
-                    : 'Break this task into smaller steps and follow them as a visual sequence.'}
+                  {uiText(isArabic, 'text0647')}
                 </p>
               </div>
             </div>
@@ -862,9 +835,7 @@ export default function SubtasksPanel({
               >
                 +{' '}
 
-                {isArabic
-                  ? 'مهمة فرعية'
-                  : 'Add subtask'}
+                {uiText(isArabic, 'text0238')}
               </button>
             )}
           </div>
@@ -878,14 +849,10 @@ export default function SubtasksPanel({
                 {subtasks.length ===
                 0
                   ? (
-                      isArabic
-                        ? 'لم يتم تقسيم المهمة بعد'
-                        : 'No subtasks yet'
+                      uiText(isArabic, 'text0239')
                     )
                   : (
-                      isArabic
-                        ? `${completedCount} من ${subtasks.length} مكتملة`
-                        : `${completedCount} of ${subtasks.length} completed`
+                      uiText(isArabic, 'text0750', { value0: completedCount, value1: subtasks.length })
                     )}
               </div>
 
@@ -901,9 +868,7 @@ export default function SubtasksPanel({
                           : `${openCount} step${openCount === 1 ? '' : 's'} remaining`
                       )
                     : (
-                        isArabic
-                          ? 'جميع الخطوات مكتملة.'
-                          : 'All steps are complete.'
+                        uiText(isArabic, 'text0648')
                       )}
                 </div>
               )}
@@ -942,22 +907,16 @@ export default function SubtasksPanel({
             </div>
 
             <h3 className="mt-3 text-sm font-semibold text-slate-700">
-              {isArabic
-                ? 'لا توجد مهام فرعية'
-                : 'No subtasks yet'}
+              {uiText(isArabic, 'text0240')}
             </h3>
 
             <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-slate-400">
               {canCreateSubtask
                 ? (
-                    isArabic
-                      ? 'ابدأ بتقسيم المهمة إلى خطوات أصغر.'
-                      : 'Start by breaking this task into smaller steps.'
+                    uiText(isArabic, 'text0649')
                   )
                 : (
-                    isArabic
-                      ? 'لا تملك صلاحية تقسيم هذه المهمة.'
-                      : 'You do not currently have permission to split this task.'
+                    uiText(isArabic, 'text0650')
                   )}
             </p>
 
@@ -972,9 +931,7 @@ export default function SubtasksPanel({
               >
                 +{' '}
 
-                {isArabic
-                  ? 'إضافة أول خطوة'
-                  : 'Add first step'}
+                {uiText(isArabic, 'text0651')}
               </button>
             )}
           </div>
@@ -1129,17 +1086,13 @@ export default function SubtasksPanel({
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-400">
-                                  {isArabic
-                                    ? `الخطوة ${index + 1}`
-                                    : `Step ${index + 1}`}
+                                  {uiText(isArabic, 'text0751', { value0: index + 1 })}
                                 </span>
 
 
                                 {childOverdue && (
                                   <span className="rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
-                                    {isArabic
-                                      ? 'متأخرة'
-                                      : 'Overdue'}
+                                    {uiText(isArabic, 'text0285')}
                                   </span>
                                 )}
                               </div>
@@ -1187,18 +1140,14 @@ export default function SubtasksPanel({
                             <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:min-w-[310px]">
                               <div>
                                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                                  {isArabic
-                                    ? 'المكلف'
-                                    : 'Assigned to'}
+                                  {uiText(isArabic, 'text0051')}
                                 </div>
 
                                 <div className="mt-1 truncate text-xs font-medium text-slate-700">
                                   {child.assignedTo
                                     ?.fullName ||
                                     (
-                                      isArabic
-                                        ? 'غير مسندة'
-                                        : 'Unassigned'
+                                      uiText(isArabic, 'text0115')
                                     )}
                                 </div>
                               </div>
@@ -1206,9 +1155,7 @@ export default function SubtasksPanel({
 
                               <div>
                                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                                  {isArabic
-                                    ? 'الموعد'
-                                    : 'Deadline'}
+                                  {uiText(isArabic, 'text0116')}
                                 </div>
 
                                 <div
@@ -1252,9 +1199,7 @@ export default function SubtasksPanel({
         {openCount >
           0 && (
           <div className="border-t border-slate-100 bg-amber-50/40 px-5 py-3 text-xs text-amber-700 sm:px-6">
-            {isArabic
-              ? 'يجب إكمال أو إنهاء جميع المهام الفرعية قبل إكمال المهمة الرئيسية.'
-              : 'All open subtasks must be completed or finished before the parent task can be completed.'}
+            {uiText(isArabic, 'text0652')}
           </div>
         )}
       </section>
@@ -1304,21 +1249,15 @@ export default function SubtasksPanel({
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
-                  {isArabic
-                    ? 'تقسيم المهمة'
-                    : 'Work breakdown'}
+                  {uiText(isArabic, 'text0653')}
                 </div>
 
                 <h2 className="mt-1 text-xl font-semibold text-slate-900">
-                  {isArabic
-                    ? 'إضافة مهمة فرعية'
-                    : 'Add subtask'}
+                  {uiText(isArabic, 'text0241')}
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  {isArabic
-                    ? 'أنشئ خطوة أصغر ضمن المهمة الرئيسية.'
-                    : 'Create a smaller piece of work under this parent task.'}
+                  {uiText(isArabic, 'text0654')}
                 </p>
               </div>
 
@@ -1341,9 +1280,7 @@ export default function SubtasksPanel({
             <div className="space-y-5 p-5 sm:p-6">
               <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
-                  {isArabic
-                    ? 'المهمة الرئيسية'
-                    : 'Parent task'}
+                  {uiText(isArabic, 'text0519')}
                 </div>
 
                 <div className="mt-1 text-sm font-semibold text-brand-900">
@@ -1356,9 +1293,7 @@ export default function SubtasksPanel({
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'عنوان المهمة الفرعية'
-                    : 'Subtask title'}
+                  {uiText(isArabic, 'text0242')}
                 </label>
 
                 <input
@@ -1391,14 +1326,10 @@ export default function SubtasksPanel({
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الوصف'
-                    : 'Description'}{' '}
+                  {uiText(isArabic, 'text0438')}{' '}
 
                   <span className="font-normal text-slate-400">
-                    {isArabic
-                      ? '(اختياري)'
-                      : '(optional)'}
+                    {uiText(isArabic, 'text0062')}
                   </span>
                 </label>
 
@@ -1431,9 +1362,7 @@ export default function SubtasksPanel({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'الأهمية'
-                      : 'Importance'}
+                    {uiText(isArabic, 'text0297')}
                   </label>
 
                   <select
@@ -1490,14 +1419,10 @@ export default function SubtasksPanel({
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'التكليف'
-                      : 'Assign to'}{' '}
+                    {uiText(isArabic, 'text0243')}{' '}
 
                     <span className="font-normal text-slate-400">
-                      {isArabic
-                        ? '(اختياري)'
-                        : '(optional)'}
+                      {uiText(isArabic, 'text0062')}
                     </span>
                   </label>
 
@@ -1523,9 +1448,7 @@ export default function SubtasksPanel({
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'بدون تكليف'
-                        : 'Leave unassigned'}
+                      {uiText(isArabic, 'text0244')}
                     </option>
 
 
@@ -1546,9 +1469,7 @@ export default function SubtasksPanel({
                           {item.id ===
                           user?.id
                             ? (
-                                isArabic
-                                  ? ' — أنا'
-                                  : ' — Me'
+                                uiText(isArabic, 'text0245')
                               )
                             : ''}
                         </option>
@@ -1560,21 +1481,15 @@ export default function SubtasksPanel({
                   <p className="mt-1 text-xs text-slate-400">
                     {!form.assigneeId
                       ? (
-                          isArabic
-                            ? 'يمكن ترك المهمة الفرعية بدون تكليف حالياً.'
-                            : 'The subtask can be left unassigned for now.'
+                          uiText(isArabic, 'text0655')
                         )
                       : form.assigneeId ===
                           user?.id
                         ? (
-                            isArabic
-                              ? 'سيتم قبول التكليف لك تلقائياً.'
-                              : 'Your own assignment will be accepted automatically.'
+                            uiText(isArabic, 'text0656')
                           )
                         : (
-                            isArabic
-                              ? 'المستخدم الآخر سيحتاج إلى قبول أو رفض التكليف.'
-                              : 'The selected user will need to accept or reject the assignment.'
+                            uiText(isArabic, 'text0657')
                           )}
                   </p>
                 </div>
@@ -1584,14 +1499,10 @@ export default function SubtasksPanel({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'تاريخ البدء'
-                      : 'Start date'}{' '}
+                    {uiText(isArabic, 'text0415')}{' '}
 
                     <span className="font-normal text-slate-400">
-                      {isArabic
-                        ? '(اختياري)'
-                        : '(optional)'}
+                      {uiText(isArabic, 'text0062')}
                     </span>
                   </label>
 
@@ -1630,14 +1541,10 @@ export default function SubtasksPanel({
 
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'الموعد النهائي'
-                      : 'Deadline'}{' '}
+                    {uiText(isArabic, 'text0148')}{' '}
 
                     <span className="font-normal text-slate-400">
-                      {isArabic
-                        ? '(اختياري)'
-                        : '(optional)'}
+                      {uiText(isArabic, 'text0062')}
                     </span>
                   </label>
 
@@ -1674,15 +1581,10 @@ export default function SubtasksPanel({
 
                   {task.deadlineDate && (
                     <p className="mt-1 text-xs text-slate-400">
-                      {isArabic
-                        ? `يجب ألا يتجاوز ${formatDate(
+                      {uiText(isArabic, 'text0752', { value0: formatDate(
                             task.deadlineDate,
                             locale,
-                          )}`
-                        : `Must be on or before ${formatDate(
-                            task.deadlineDate,
-                            locale,
-                          )}`}
+                          ) })}
                     </p>
                   )}
                 </div>
@@ -1691,15 +1593,11 @@ export default function SubtasksPanel({
 
               <div className="rounded-xl bg-slate-50 p-4">
                 <div className="text-xs font-semibold text-slate-700">
-                  {isArabic
-                    ? 'موروث من المهمة الرئيسية'
-                    : 'Inherited from parent'}
+                  {uiText(isArabic, 'text0658')}
                 </div>
 
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  {isArabic
-                    ? 'المشروع والقسم والفرع ونوع المهمة سيتم أخذها تلقائياً من المهمة الرئيسية.'
-                    : 'Project, Department, Branch and Task Type are inherited automatically.'}
+                  {uiText(isArabic, 'text0659')}
                 </p>
               </div>
 
@@ -1723,9 +1621,7 @@ export default function SubtasksPanel({
                   closeModal
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
               <button
@@ -1739,14 +1635,10 @@ export default function SubtasksPanel({
               >
                 {submitting
                   ? (
-                      isArabic
-                        ? 'جاري الإنشاء…'
-                        : 'Creating…'
+                      uiText(isArabic, 'text0439')
                     )
                   : (
-                      isArabic
-                        ? 'إنشاء المهمة الفرعية'
-                        : 'Create subtask'
+                      uiText(isArabic, 'text0660')
                     )}
               </button>
             </div>

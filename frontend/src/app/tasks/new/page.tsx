@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useMemo,
@@ -223,9 +226,7 @@ function FieldLabel({
               text-slate-400
             "
           >
-            {isArabic
-              ? '(اختياري)'
-              : '(optional)'}
+            {uiText(isArabic, 'text0062')}
           </span>
         )}
       </label>
@@ -268,9 +269,7 @@ function AddButton({
       "
     >
       +{' '}
-      {isArabic
-        ? 'إضافة'
-        : 'Add'}
+      {uiText(isArabic, 'text0169')}
     </button>
   );
 }
@@ -738,9 +737,7 @@ function NewTaskContent() {
             err instanceof
               ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل المستخدمين.'
-                : 'Could not load the user directory.',
+              : uiText(isArabic, 'text0537'),
           );
         },
       );
@@ -1281,24 +1278,16 @@ function NewTaskContent() {
       quickAdd.type
     ) {
       case 'task_type':
-        return isArabic
-          ? 'إضافة نوع مهمة'
-          : 'Add Task Type';
+        return uiText(isArabic, 'text0170');
 
       case 'task_priority':
-        return isArabic
-          ? 'إضافة أهمية'
-          : 'Add Importance';
+        return uiText(isArabic, 'text0538');
 
       case 'department':
-        return isArabic
-          ? 'إضافة قسم'
-          : 'Add Department';
+        return uiText(isArabic, 'text0539');
 
       case 'branch':
-        return isArabic
-          ? 'إضافة فرع'
-          : 'Add Branch';
+        return uiText(isArabic, 'text0540');
 
       default:
         return '';
@@ -1326,9 +1315,7 @@ function NewTaskContent() {
           ...current,
 
           error:
-            isArabic
-              ? 'يرجى إدخال الاسم.'
-              : 'Please enter a name.',
+            uiText(isArabic, 'text0541'),
         }),
       );
 
@@ -1527,9 +1514,7 @@ function NewTaskContent() {
             err instanceof
               ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر إضافة العنصر.'
-                : 'Could not add the item.',
+              : uiText(isArabic, 'text0171'),
         }),
       );
     }
@@ -1546,36 +1531,28 @@ function NewTaskContent() {
     if (
       !form.title.trim()
     ) {
-      return isArabic
-        ? 'يرجى إدخال عنوان المهمة.'
-        : 'Please enter a task title.';
+      return uiText(isArabic, 'text0542');
     }
 
 
     if (
       !form.taskType
     ) {
-      return isArabic
-        ? 'يرجى اختيار نوع المهمة.'
-        : 'Please choose a task type.';
+      return uiText(isArabic, 'text0172');
     }
 
 
     if (
       !form.priority
     ) {
-      return isArabic
-        ? 'يرجى اختيار الأهمية.'
-        : 'Please choose an importance level.';
+      return uiText(isArabic, 'text0543');
     }
 
 
     if (
       !form.departmentId
     ) {
-      return isArabic
-        ? 'يرجى اختيار القسم.'
-        : 'Please choose a department.';
+      return uiText(isArabic, 'text0544');
     }
 
 
@@ -1585,9 +1562,7 @@ function NewTaskContent() {
       form.deadlineDate <
         form.startDate
     ) {
-      return isArabic
-        ? 'الموعد النهائي لا يمكن أن يكون قبل تاريخ البدء.'
-        : 'Deadline cannot be before the start date.';
+      return uiText(isArabic, 'text0545');
     }
 
 
@@ -1597,9 +1572,7 @@ function NewTaskContent() {
       form.startDate <
         selectedParent.startDate
     ) {
-      return isArabic
-        ? 'المهمة الفرعية لا يمكن أن تبدأ قبل المهمة الرئيسية.'
-        : 'A subtask cannot start before its parent task.';
+      return uiText(isArabic, 'text0546');
     }
 
 
@@ -1609,9 +1582,7 @@ function NewTaskContent() {
       form.deadlineDate >
         selectedParent.deadlineDate
     ) {
-      return isArabic
-        ? 'موعد المهمة الفرعية لا يمكن أن يتجاوز موعد المهمة الرئيسية.'
-        : 'A subtask deadline cannot exceed its parent task deadline.';
+      return uiText(isArabic, 'text0547');
     }
 
 
@@ -1619,9 +1590,7 @@ function NewTaskContent() {
       form.needsApproval &&
       !form.approverId
     ) {
-      return isArabic
-        ? 'يرجى اختيار الموافق.'
-        : 'Please choose an approver.';
+      return uiText(isArabic, 'text0548');
     }
 
 
@@ -1631,9 +1600,7 @@ function NewTaskContent() {
       form.approverId ===
         form.assignmentUserId
     ) {
-      return isArabic
-        ? 'المكلف والموافق لا يمكن أن يكونا نفس المستخدم.'
-        : 'The assignee and approver cannot be the same person.';
+      return uiText(isArabic, 'text0549');
     }
 
 
@@ -1644,9 +1611,7 @@ function NewTaskContent() {
         !form.budgetMax
       )
     ) {
-      return isArabic
-        ? 'أدخل الحد الأدنى والأعلى للميزانية.'
-        : 'Enter both minimum and maximum budget values.';
+      return uiText(isArabic, 'text0550');
     }
 
 
@@ -1659,9 +1624,7 @@ function NewTaskContent() {
           form.budgetMax,
         )
     ) {
-      return isArabic
-        ? 'الحد الأدنى للميزانية لا يمكن أن يتجاوز الحد الأعلى.'
-        : 'Budget minimum cannot exceed maximum.';
+      return uiText(isArabic, 'text0173');
     }
 
 
@@ -1831,14 +1794,10 @@ function NewTaskContent() {
           permissionError instanceof
             ApiError
             ? (
-                isArabic
-                  ? `تم إنشاء المهمة، لكن تعذر حفظ صلاحية تنزيل المرفقات: ${permissionError.message}`
-                  : `Task was created, but attachment download permission could not be saved: ${permissionError.message}`
+                uiText(isArabic, 'text0740', { value0: permissionError.message })
               )
             : (
-                isArabic
-                  ? 'تم إنشاء المهمة، لكن تعذر حفظ صلاحية تنزيل المرفقات.'
-                  : 'Task was created, but attachment download permission could not be saved.'
+                uiText(isArabic, 'text0551')
               ),
         );
 
@@ -1883,14 +1842,10 @@ function NewTaskContent() {
             assignmentError instanceof
               ApiError
               ? (
-                  isArabic
-                    ? `تم إنشاء المهمة، لكن تعذر التكليف: ${assignmentError.message}`
-                    : `Task was created, but the assignment could not be created: ${assignmentError.message}`
+                  uiText(isArabic, 'text0741', { value0: assignmentError.message })
                 )
               : (
-                  isArabic
-                    ? 'تم إنشاء المهمة، لكن تعذر التكليف. يمكنك التكليف من تفاصيل المهمة.'
-                    : 'Task was created, but the assignment could not be created. You can assign it from Task Details.'
+                  uiText(isArabic, 'text0552')
                 ),
           );
 
@@ -1934,14 +1889,10 @@ function NewTaskContent() {
             attachmentError instanceof
               ApiError
               ? (
-                  isArabic
-                    ? `تم إنشاء المهمة، لكن تعذر رفع بعض المرفقات: ${attachmentError.message}`
-                    : `Task was created, but the attachments could not be uploaded: ${attachmentError.message}`
+                  uiText(isArabic, 'text0742', { value0: attachmentError.message })
                 )
               : (
-                  isArabic
-                    ? 'تم إنشاء المهمة، لكن تعذر رفع المرفقات. يمكنك رفعها من تفاصيل المهمة.'
-                    : 'Task was created, but the attachments could not be uploaded. You can upload them from Task Details.'
+                  uiText(isArabic, 'text0553')
                 ),
           );
         }
@@ -1958,9 +1909,7 @@ function NewTaskContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إنشاء المهمة.'
-            : 'Could not create the task.',
+          : uiText(isArabic, 'text0554'),
       );
 
 
@@ -2054,9 +2003,7 @@ function NewTaskContent() {
               ? '→'
               : '←'}
 
-            {isArabic
-              ? 'رجوع'
-              : 'Back'}
+            {uiText(isArabic, 'text0111')}
           </button>
 
 
@@ -2068,9 +2015,7 @@ function NewTaskContent() {
               text-slate-900
             "
           >
-            {isArabic
-              ? 'مهمة جديدة'
-              : 'New Task'}
+            {uiText(isArabic, 'text0174')}
           </h1>
 
 
@@ -2081,9 +2026,7 @@ function NewTaskContent() {
               text-slate-500
             "
           >
-            {isArabic
-              ? 'أنشئ المهمة وحدد تفاصيلها وسير العمل.'
-              : 'Create the task and configure its workflow.'}
+            {uiText(isArabic, 'text0555')}
           </p>
         </div>
 
@@ -2107,9 +2050,7 @@ function NewTaskContent() {
               text-slate-400
             "
           >
-            {isArabic
-              ? 'الحالة الأولية'
-              : 'Initial status'}
+            {uiText(isArabic, 'text0175')}
           </span>
 
           <StatusBadge
@@ -2182,14 +2123,10 @@ function NewTaskContent() {
             >
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'تفاصيل المهمة'
-                    : 'Task Details'
+                  uiText(isArabic, 'text0176')
                 }
                 description={
-                  isArabic
-                    ? 'أدخل المعلومات الأساسية للمهمة.'
-                    : 'Add the main information for the task.'
+                  uiText(isArabic, 'text0556')
                 }
               />
 
@@ -2206,9 +2143,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'عنوان المهمة'
-                      : 'Task title'}
+                    {uiText(isArabic, 'text0177')}
                   </FieldLabel>
 
 
@@ -2245,9 +2180,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'الوصف'
-                      : 'Description'}
+                    {uiText(isArabic, 'text0438')}
                   </FieldLabel>
 
 
@@ -2299,14 +2232,10 @@ function NewTaskContent() {
               >
                 <SectionHeader
                   title={
-                    isArabic
-                      ? 'المرفقات'
-                      : 'Attachments'
+                    uiText(isArabic, 'text0178')
                   }
                   description={
-                    isArabic
-                      ? 'أضف الملفات المطلوبة للمهمة.'
-                      : 'Add any files needed for this task.'
+                    uiText(isArabic, 'text0557')
                   }
                 />
               </div>
@@ -2339,9 +2268,7 @@ function NewTaskContent() {
                       text-slate-800
                     "
                   >
-                    {isArabic
-                      ? 'السماح للمكلف بتنزيل المرفقات'
-                      : 'Allow assignee to download attachments'}
+                    {uiText(isArabic, 'text0179')}
                   </div>
 
                   <p
@@ -2352,9 +2279,7 @@ function NewTaskContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'يمكن للمكلف معاينة المرفقات دائماً. هذا الخيار يتحكم بالتنزيل فقط.'
-                      : 'The assignee can always preview attachments. This option controls downloading only.'}
+                    {uiText(isArabic, 'text0558')}
                   </p>
                 </div>
 
@@ -2364,9 +2289,7 @@ function NewTaskContent() {
                     form.assigneeCanDownloadAttachments
                   }
                   label={
-                    isArabic
-                      ? 'السماح للمكلف بتنزيل المرفقات'
-                      : 'Allow assignee attachment downloads'
+                    uiText(isArabic, 'text0180')
                   }
                   onChange={(
                     checked,
@@ -2465,9 +2388,7 @@ function NewTaskContent() {
                       text-slate-700
                     "
                   >
-                    {isArabic
-                      ? 'اسحب الملفات هنا أو اضغط للاختيار'
-                      : 'Drop files here or click to browse'}
+                    {uiText(isArabic, 'text0559')}
                   </div>
 
 
@@ -2478,9 +2399,7 @@ function NewTaskContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'صور، PDF، Word، Excel، PowerPoint، TXT، CSV و ZIP'
-                      : 'Images, PDF, Word, Excel, PowerPoint, TXT, CSV and ZIP'}
+                    {uiText(isArabic, 'text0560')}
                   </div>
 
 
@@ -2617,9 +2536,7 @@ function NewTaskContent() {
                               )
                             }
                             title={
-                              isArabic
-                                ? 'إزالة الملف'
-                                : 'Remove file'
+                              uiText(isArabic, 'text0181')
                             }
                             className="
                               flex
@@ -2701,14 +2618,10 @@ function NewTaskContent() {
               >
                 <SectionHeader
                   title={
-                    isArabic
-                      ? 'الميزانية'
-                      : 'Budget'
+                    uiText(isArabic, 'text0150')
                   }
                   description={
-                    isArabic
-                      ? 'فعّل هذا الخيار فقط إذا كانت المهمة تحتاج إلى ميزانية.'
-                      : 'Enable only when this task needs a budget.'
+                    uiText(isArabic, 'text0182')
                   }
                 />
 
@@ -2718,9 +2631,7 @@ function NewTaskContent() {
                     form.needsBudget
                   }
                   label={
-                    isArabic
-                      ? 'تفعيل الميزانية'
-                      : 'Enable budget'
+                    uiText(isArabic, 'text0183')
                   }
                   onChange={(
                     checked,
@@ -2777,9 +2688,7 @@ function NewTaskContent() {
                           isArabic
                         }
                       >
-                        {isArabic
-                          ? 'الحد الأدنى'
-                          : 'Minimum'}
+                        {uiText(isArabic, 'text0184')}
                       </FieldLabel>
 
                       <input
@@ -2809,9 +2718,7 @@ function NewTaskContent() {
                           isArabic
                         }
                       >
-                        {isArabic
-                          ? 'الحد الأعلى'
-                          : 'Maximum'}
+                        {uiText(isArabic, 'text0185')}
                       </FieldLabel>
 
                       <input
@@ -2841,9 +2748,7 @@ function NewTaskContent() {
                           isArabic
                         }
                       >
-                        {isArabic
-                          ? 'العملة'
-                          : 'Currency'}
+                        {uiText(isArabic, 'text0561')}
                       </FieldLabel>
 
                       <select
@@ -2910,9 +2815,7 @@ function NewTaskContent() {
             >
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'التصنيف'
-                    : 'Classification'
+                  uiText(isArabic, 'text0186')
                 }
               />
 
@@ -2945,9 +2848,7 @@ function NewTaskContent() {
                         : undefined
                     }
                   >
-                    {isArabic
-                      ? 'نوع المهمة'
-                      : 'Task type'}
+                    {uiText(isArabic, 'text0163')}
                   </FieldLabel>
 
 
@@ -2968,9 +2869,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'اختر…'
-                        : 'Select…'}
+                      {uiText(isArabic, 'text0187')}
                     </option>
 
 
@@ -3018,9 +2917,7 @@ function NewTaskContent() {
                         : undefined
                     }
                   >
-                    {isArabic
-                      ? 'الأهمية'
-                      : 'Importance'}
+                    {uiText(isArabic, 'text0297')}
                   </FieldLabel>
 
 
@@ -3041,9 +2938,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'اختر…'
-                        : 'Select…'}
+                      {uiText(isArabic, 'text0187')}
                     </option>
 
 
@@ -3075,9 +2970,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'لون المهمة'
-                      : 'Task color'}
+                    {uiText(isArabic, 'text0562')}
                   </FieldLabel>
 
 
@@ -3165,9 +3058,7 @@ function NewTaskContent() {
             >
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'التنظيم'
-                    : 'Organization'
+                  uiText(isArabic, 'text0518')
                 }
               />
 
@@ -3187,9 +3078,7 @@ function NewTaskContent() {
                     text-brand-700
                   "
                 >
-                  {isArabic
-                    ? 'هذه مهمة فرعية، لذلك القسم والفرع والمشروع موروثة من المهمة الرئيسية.'
-                    : 'This is a subtask, so Department, Branch and Project are inherited from the parent task.'}
+                  {uiText(isArabic, 'text0563')}
                 </div>
               )}
 
@@ -3223,9 +3112,7 @@ function NewTaskContent() {
                         : undefined
                     }
                   >
-                    {isArabic
-                      ? 'القسم'
-                      : 'Department'}
+                    {uiText(isArabic, 'text0374')}
                   </FieldLabel>
 
 
@@ -3251,9 +3138,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'اختر…'
-                        : 'Select…'}
+                      {uiText(isArabic, 'text0187')}
                     </option>
 
 
@@ -3303,9 +3188,7 @@ function NewTaskContent() {
                         : undefined
                     }
                   >
-                    {isArabic
-                      ? 'الفرع'
-                      : 'Branch'}
+                    {uiText(isArabic, 'text0371')}
                   </FieldLabel>
 
 
@@ -3330,9 +3213,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'بدون فرع'
-                        : 'No branch'}
+                      {uiText(isArabic, 'text0430')}
                     </option>
 
 
@@ -3365,9 +3246,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'المشروع'
-                      : 'Project'}
+                    {uiText(isArabic, 'text0432')}
                   </FieldLabel>
 
 
@@ -3392,9 +3271,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'بدون مشروع'
-                        : 'No project'}
+                      {uiText(isArabic, 'text0564')}
                     </option>
 
 
@@ -3436,14 +3313,10 @@ function NewTaskContent() {
             >
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'الأشخاص'
-                    : 'People'
+                  uiText(isArabic, 'text0145')
                 }
                 description={
-                  isArabic
-                    ? 'يمكنك التكليف الآن أو ترك المهمة بدون تكليف.'
-                    : 'Assign now or leave the task unassigned and assign it later from Task Details.'
+                  uiText(isArabic, 'text0565')
                 }
               />
 
@@ -3477,9 +3350,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'تكليف إلى'
-                      : 'Assign to'}
+                    {uiText(isArabic, 'text0188')}
                   </FieldLabel>
 
 
@@ -3499,9 +3370,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'بدون تكليف حالياً'
-                        : 'Leave unassigned'}
+                      {uiText(isArabic, 'text0189')}
                     </option>
 
 
@@ -3535,9 +3404,7 @@ function NewTaskContent() {
                         text-slate-500
                       "
                     >
-                      {isArabic
-                        ? 'سيستلم المستخدم المهمة بحالة انتظار القبول ويمكنه قبولها أو رفضها.'
-                        : 'This user will receive the task as Pending Acceptance and can accept or reject it.'}
+                      {uiText(isArabic, 'text0566')}
                     </p>
                   ) : (
                     <p
@@ -3547,9 +3414,7 @@ function NewTaskContent() {
                         text-slate-400
                       "
                     >
-                      {isArabic
-                        ? 'يمكن تكليف المهمة لاحقاً من صفحة تفاصيل المهمة.'
-                        : 'You can assign the task later from Task Details.'}
+                      {uiText(isArabic, 'text0567')}
                     </p>
                   )}
                 </div>
@@ -3591,9 +3456,7 @@ function NewTaskContent() {
                           text-slate-800
                         "
                       >
-                        {isArabic
-                          ? 'تحتاج موافقة'
-                          : 'Needs approval'}
+                        {uiText(isArabic, 'text0568')}
                       </div>
 
                       <p
@@ -3604,9 +3467,7 @@ function NewTaskContent() {
                           text-slate-400
                         "
                       >
-                        {isArabic
-                          ? 'يتطلب إكمال المهمة موافقة مستخدم آخر.'
-                          : 'Require another user to approve final completion.'}
+                        {uiText(isArabic, 'text0569')}
                       </p>
                     </div>
 
@@ -3616,9 +3477,7 @@ function NewTaskContent() {
                         form.needsApproval
                       }
                       label={
-                        isArabic
-                          ? 'تفعيل الموافقة'
-                          : 'Require approval'
+                        uiText(isArabic, 'text0570')
                       }
                       onChange={(
                         checked,
@@ -3657,9 +3516,7 @@ function NewTaskContent() {
                           isArabic
                         }
                       >
-                        {isArabic
-                          ? 'الموافق'
-                          : 'Approver'}
+                        {uiText(isArabic, 'text0511')}
                       </FieldLabel>
 
 
@@ -3680,9 +3537,7 @@ function NewTaskContent() {
                         }
                       >
                         <option value="">
-                          {isArabic
-                            ? 'اختر الموافق…'
-                            : 'Select approver…'}
+                          {uiText(isArabic, 'text0571')}
                         </option>
 
 
@@ -3719,9 +3574,7 @@ function NewTaskContent() {
                           text-slate-400
                         "
                       >
-                        {isArabic
-                          ? 'المكلف بالمهمة لا يمكن أن يكون هو الموافق على نفس المهمة.'
-                          : 'The task assignee cannot also approve the same task.'}
+                        {uiText(isArabic, 'text0572')}
                       </p>
                     </div>
                   )}
@@ -3741,9 +3594,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'المهمة الرئيسية'
-                      : 'Parent task'}
+                    {uiText(isArabic, 'text0519')}
                   </FieldLabel>
 
 
@@ -3761,9 +3612,7 @@ function NewTaskContent() {
                     }
                   >
                     <option value="">
-                      {isArabic
-                        ? 'مهمة مستقلة'
-                        : 'Standalone task'}
+                      {uiText(isArabic, 'text0190')}
                     </option>
 
 
@@ -3803,9 +3652,7 @@ function NewTaskContent() {
                         text-brand-700
                       "
                     >
-                      {isArabic
-                        ? 'سيتم إنشاء هذه المهمة كمهمة فرعية ضمن المهمة الرئيسية المحددة.'
-                        : 'This task will be created as a subtask of the selected parent.'}
+                      {uiText(isArabic, 'text0573')}
                     </div>
                   )}
                 </div>
@@ -3827,9 +3674,7 @@ function NewTaskContent() {
             >
               <SectionHeader
                 title={
-                  isArabic
-                    ? 'الجدول الزمني'
-                    : 'Schedule'
+                  uiText(isArabic, 'text0147')
                 }
               />
 
@@ -3847,9 +3692,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'تاريخ البدء'
-                      : 'Start date'}
+                    {uiText(isArabic, 'text0415')}
                   </FieldLabel>
 
 
@@ -3888,9 +3731,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'الموعد النهائي'
-                      : 'Deadline'}
+                    {uiText(isArabic, 'text0148')}
                   </FieldLabel>
 
 
@@ -3929,9 +3770,7 @@ function NewTaskContent() {
                         text-slate-400
                       "
                     >
-                      {isArabic
-                        ? `يجب ألا يتجاوز موعد المهمة الرئيسية: ${selectedParent.deadlineDate}`
-                        : `Must not exceed parent deadline: ${selectedParent.deadlineDate}`}
+                      {uiText(isArabic, 'text0743', { value0: selectedParent.deadlineDate })}
                     </p>
                   )}
                 </div>
@@ -3965,9 +3804,7 @@ function NewTaskContent() {
           >
             <SectionHeader
               title={
-                isArabic
-                  ? 'ملخص المهمة'
-                  : 'Task Summary'
+                uiText(isArabic, 'text0574')
               }
             />
           </div>
@@ -3989,9 +3826,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'الحالة'
-                  : 'Task status'}
+                {uiText(isArabic, 'text0191')}
               </div>
 
               <div
@@ -4014,9 +3849,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'التكليف'
-                  : 'Assignment'}
+                {uiText(isArabic, 'text0117')}
               </div>
 
               <div
@@ -4029,14 +3862,10 @@ function NewTaskContent() {
               >
                 {selectedAssignee
                   ? (
-                      isArabic
-                        ? `${selectedAssignee.fullName} · بانتظار القبول`
-                        : `${selectedAssignee.fullName} · Pending Acceptance`
+                      uiText(isArabic, 'text0744', { value0: selectedAssignee.fullName })
                     )
                   : (
-                      isArabic
-                        ? 'غير مسندة'
-                        : 'Unassigned'
+                      uiText(isArabic, 'text0115')
                     )}
               </div>
             </div>
@@ -4049,9 +3878,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'الموافقة'
-                  : 'Approval'}
+                {uiText(isArabic, 'text0509')}
               </div>
 
               <div
@@ -4069,9 +3896,7 @@ function NewTaskContent() {
                         : `Required · ${selectedApprover?.fullName || 'No approver'}`
                     )
                   : (
-                      isArabic
-                        ? 'غير مطلوبة'
-                        : 'Not required'
+                      uiText(isArabic, 'text0575')
                     )}
               </div>
             </div>
@@ -4084,9 +3909,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'الموعد النهائي'
-                  : 'Deadline'}
+                {uiText(isArabic, 'text0148')}
               </div>
 
               <div
@@ -4099,9 +3922,7 @@ function NewTaskContent() {
               >
                 {form.deadlineDate ||
                   (
-                    isArabic
-                      ? 'بدون موعد'
-                      : 'No deadline'
+                    uiText(isArabic, 'text0192')
                   )}
               </div>
             </div>
@@ -4114,9 +3935,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'المرفقات'
-                  : 'Attachments'}
+                {uiText(isArabic, 'text0178')}
               </div>
 
               <div
@@ -4148,14 +3967,10 @@ function NewTaskContent() {
               >
                 {form.assigneeCanDownloadAttachments
                   ? (
-                      isArabic
-                        ? 'التنزيل مسموح للمكلف'
-                        : 'Assignee downloads allowed'
+                      uiText(isArabic, 'text0193')
                     )
                   : (
-                      isArabic
-                        ? 'معاينة فقط للمكلف'
-                        : 'Assignee preview only'
+                      uiText(isArabic, 'text0576')
                     )}
               </div>
             </div>
@@ -4168,9 +3983,7 @@ function NewTaskContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'الميزانية'
-                  : 'Budget'}
+                {uiText(isArabic, 'text0150')}
               </div>
 
               <div
@@ -4184,9 +3997,7 @@ function NewTaskContent() {
                 {form.needsBudget
                   ? `${form.budgetMin || '—'} – ${form.budgetMax || '—'} ${form.budgetCurrency}`
                   : (
-                      isArabic
-                        ? 'غير مطلوبة'
-                        : 'Not required'
+                      uiText(isArabic, 'text0575')
                     )}
               </div>
             </div>
@@ -4232,9 +4043,7 @@ function NewTaskContent() {
                 router.back()
               }
             >
-              {isArabic
-                ? 'إلغاء'
-                : 'Cancel'}
+              {uiText(isArabic, 'text0080')}
             </button>
 
 
@@ -4247,14 +4056,10 @@ function NewTaskContent() {
             >
               {submitting
                 ? (
-                    isArabic
-                      ? 'جاري الإنشاء…'
-                      : 'Creating…'
+                    uiText(isArabic, 'text0439')
                   )
                 : (
-                    isArabic
-                      ? 'إنشاء المهمة'
-                      : 'Create Task'
+                    uiText(isArabic, 'text0577')
                   )}
             </button>
           </div>
@@ -4336,9 +4141,7 @@ function NewTaskContent() {
                       text-slate-500
                     "
                   >
-                    {isArabic
-                      ? 'سيتم الحفظ باللغة المحددة حالياً فقط.'
-                      : 'Saved only in the currently selected language.'}
+                    {uiText(isArabic, 'text0578')}
                   </p>
                 </div>
 
@@ -4382,9 +4185,7 @@ function NewTaskContent() {
                     isArabic
                   }
                 >
-                  {isArabic
-                    ? 'الاسم'
-                    : 'Name'}
+                  {uiText(isArabic, 'text0070')}
                 </FieldLabel>
 
 
@@ -4425,9 +4226,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'الرمز'
-                      : 'Code'}
+                    {uiText(isArabic, 'text0085')}
                   </FieldLabel>
 
 
@@ -4464,9 +4263,7 @@ function NewTaskContent() {
                       isArabic
                     }
                   >
-                    {isArabic
-                      ? 'العنوان'
-                      : 'Address'}
+                    {uiText(isArabic, 'text0463')}
                   </FieldLabel>
 
 
@@ -4536,9 +4333,7 @@ function NewTaskContent() {
                   closeQuickAdd
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -4555,14 +4350,10 @@ function NewTaskContent() {
               >
                 {quickAdd.saving
                   ? (
-                      isArabic
-                        ? 'جاري الإضافة…'
-                        : 'Adding…'
+                      uiText(isArabic, 'text0090')
                     )
                   : (
-                      isArabic
-                        ? 'إضافة'
-                        : 'Add'
+                      uiText(isArabic, 'text0169')
                     )}
               </button>
             </div>

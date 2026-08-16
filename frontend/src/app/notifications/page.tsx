@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useCallback,
   useEffect,
@@ -81,10 +84,10 @@ const DEFAULT_CONFIG:
     '•',
 
   labelEn:
-    'Activity',
+    uiText(false, 'text0709'),
 
   labelAr:
-    'نشاط',
+    uiText(true, 'text0709'),
 
   badgeClass:
     'bg-slate-100 text-slate-600',
@@ -106,10 +109,10 @@ const NOTIFICATION_CONFIG:
       '→',
 
     labelEn:
-      'Assignment',
+      uiText(false, 'text0706'),
 
     labelAr:
-      'إسناد',
+      uiText(true, 'text0706'),
 
     badgeClass:
       'bg-blue-50 text-blue-700',
@@ -124,10 +127,10 @@ const NOTIFICATION_CONFIG:
       '↻',
 
     labelEn:
-      'Reassignment',
+      uiText(false, 'text0710'),
 
     labelAr:
-      'إعادة إسناد',
+      uiText(true, 'text0710'),
 
     badgeClass:
       'bg-violet-50 text-violet-700',
@@ -142,10 +145,10 @@ const NOTIFICATION_CONFIG:
       '✓',
 
     labelEn:
-      'Accepted',
+      uiText(false, 'text0711'),
 
     labelAr:
-      'تم القبول',
+      uiText(true, 'text0711'),
 
     badgeClass:
       'bg-emerald-50 text-emerald-700',
@@ -160,10 +163,10 @@ const NOTIFICATION_CONFIG:
       '×',
 
     labelEn:
-      'Rejected',
+      uiText(false, 'text0712'),
 
     labelAr:
-      'مرفوض',
+      uiText(true, 'text0712'),
 
     badgeClass:
       'bg-red-50 text-red-700',
@@ -178,10 +181,10 @@ const NOTIFICATION_CONFIG:
       '?',
 
     labelEn:
-      'Approval',
+      uiText(false, 'text0713'),
 
     labelAr:
-      'موافقة',
+      uiText(true, 'text0713'),
 
     badgeClass:
       'bg-amber-50 text-amber-700',
@@ -196,10 +199,10 @@ const NOTIFICATION_CONFIG:
       '✓',
 
     labelEn:
-      'Approval',
+      uiText(false, 'text0713'),
 
     labelAr:
-      'موافقة',
+      uiText(true, 'text0713'),
 
     badgeClass:
       'bg-emerald-50 text-emerald-700',
@@ -214,10 +217,10 @@ const NOTIFICATION_CONFIG:
       '↔',
 
     labelEn:
-      'Status',
+      uiText(false, 'text0052'),
 
     labelAr:
-      'الحالة',
+      uiText(true, 'text0052'),
 
     badgeClass:
       'bg-blue-50 text-blue-700',
@@ -232,10 +235,10 @@ const NOTIFICATION_CONFIG:
       '✓',
 
     labelEn:
-      'Completed',
+      uiText(false, 'text0018'),
 
     labelAr:
-      'مكتملة',
+      uiText(true, 'text0018'),
 
     badgeClass:
       'bg-emerald-50 text-emerald-700',
@@ -250,10 +253,10 @@ const NOTIFICATION_CONFIG:
       '↻',
 
     labelEn:
-      'Reopened',
+      uiText(false, 'text0714'),
 
     labelAr:
-      'أعيد فتحها',
+      uiText(true, 'text0714'),
 
     badgeClass:
       'bg-violet-50 text-violet-700',
@@ -268,10 +271,10 @@ const NOTIFICATION_CONFIG:
       '✎',
 
     labelEn:
-      'Task update',
+      uiText(false, 'text0715'),
 
     labelAr:
-      'تحديث المهمة',
+      uiText(true, 'text0715'),
 
     badgeClass:
       'bg-slate-100 text-slate-700',
@@ -286,10 +289,10 @@ const NOTIFICATION_CONFIG:
       '◷',
 
     labelEn:
-      'Deadline',
+      uiText(false, 'text0148'),
 
     labelAr:
-      'الموعد النهائي',
+      uiText(true, 'text0148'),
 
     badgeClass:
       'bg-orange-50 text-orange-700',
@@ -304,10 +307,10 @@ const NOTIFICATION_CONFIG:
       '!',
 
     labelEn:
-      'Due soon',
+      uiText(false, 'text0166'),
 
     labelAr:
-      'موعد قريب',
+      uiText(true, 'text0166'),
 
     badgeClass:
       'bg-amber-50 text-amber-700',
@@ -322,10 +325,10 @@ const NOTIFICATION_CONFIG:
       '!',
 
     labelEn:
-      'Overdue',
+      uiText(false, 'text0285'),
 
     labelAr:
-      'متأخرة',
+      uiText(true, 'text0285'),
 
     badgeClass:
       'bg-red-50 text-red-700',
@@ -340,10 +343,10 @@ const NOTIFICATION_CONFIG:
       '💬',
 
     labelEn:
-      'Comment',
+      uiText(false, 'text0707'),
 
     labelAr:
-      'تعليق',
+      uiText(true, 'text0707'),
 
     badgeClass:
       'bg-cyan-50 text-cyan-700',
@@ -358,10 +361,10 @@ const NOTIFICATION_CONFIG:
       '◆',
 
     labelEn:
-      'Project',
+      uiText(false, 'text0701'),
 
     labelAr:
-      'مشروع',
+      uiText(true, 'text0701'),
 
     badgeClass:
       'bg-indigo-50 text-indigo-700',
@@ -376,10 +379,10 @@ const NOTIFICATION_CONFIG:
       '□',
 
     labelEn:
-      'Archived',
+      uiText(false, 'text0716'),
 
     labelAr:
-      'مؤرشف',
+      uiText(true, 'text0716'),
 
     badgeClass:
       'bg-slate-100 text-slate-600',
@@ -394,10 +397,10 @@ const NOTIFICATION_CONFIG:
       '↻',
 
     labelEn:
-      'Restored',
+      uiText(false, 'text0717'),
 
     labelAr:
-      'تمت الاستعادة',
+      uiText(true, 'text0717'),
 
     badgeClass:
       'bg-emerald-50 text-emerald-700',
@@ -488,9 +491,7 @@ function formatRelativeTime(
     seconds <
     60
   ) {
-    return isArabic
-      ? 'الآن'
-      : 'Just now';
+    return uiText(isArabic, 'text0036');
   }
 
 
@@ -505,9 +506,7 @@ function formatRelativeTime(
     minutes <
     60
   ) {
-    return isArabic
-      ? `منذ ${minutes} دقيقة`
-      : `${minutes}m ago`;
+    return uiText(isArabic, 'text0727', { value0: minutes });
   }
 
 
@@ -522,9 +521,7 @@ function formatRelativeTime(
     hours <
     24
   ) {
-    return isArabic
-      ? `منذ ${hours} ساعة`
-      : `${hours}h ago`;
+    return uiText(isArabic, 'text0728', { value0: hours });
   }
 
 
@@ -539,9 +536,7 @@ function formatRelativeTime(
     days <
     7
   ) {
-    return isArabic
-      ? `منذ ${days} يوم`
-      : `${days}d ago`;
+    return uiText(isArabic, 'text0729', { value0: days });
   }
 
 
@@ -556,9 +551,7 @@ function formatRelativeTime(
     weeks <
     5
   ) {
-    return isArabic
-      ? `منذ ${weeks} أسبوع`
-      : `${weeks}w ago`;
+    return uiText(isArabic, 'text0730', { value0: weeks });
   }
 
 
@@ -842,9 +835,7 @@ function NotificationRow({
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
 
-                    {isArabic
-                      ? 'جديد'
-                      : 'New'}
+                    {uiText(isArabic, 'text0037')}
                   </span>
                 )}
               </div>
@@ -925,9 +916,7 @@ function NotificationRow({
                 "
               >
                 <span className="font-semibold text-slate-700">
-                  {isArabic
-                    ? 'السبب: '
-                    : 'Reason: '}
+                  {uiText(isArabic, 'text0003')}
                 </span>
 
                 {
@@ -976,9 +965,7 @@ function NotificationRow({
                   );
                 }}
               >
-                {isArabic
-                  ? 'فتح'
-                  : 'Open'}
+                {uiText(isArabic, 'text0004')}
               </button>
             )}
 
@@ -1002,9 +989,7 @@ function NotificationRow({
                   );
                 }}
               >
-                {isArabic
-                  ? 'تحديد كمقروء'
-                  : 'Mark as read'}
+                {uiText(isArabic, 'text0314')}
               </button>
             )}
 
@@ -1027,9 +1012,7 @@ function NotificationRow({
                 );
               }}
             >
-              {isArabic
-                ? 'حذف'
-                : 'Delete'}
+              {uiText(isArabic, 'text0038')}
             </button>
 
 
@@ -1115,12 +1098,8 @@ function EmptyState({
       >
         {filter ===
         'unread'
-          ? isArabic
-            ? 'لا توجد إشعارات غير مقروءة'
-            : 'You’re all caught up'
-          : isArabic
-            ? 'لا توجد إشعارات'
-            : 'No notifications yet'}
+          ? uiText(isArabic, 'text0315')
+          : uiText(isArabic, 'text0039')}
       </h3>
 
 
@@ -1135,12 +1114,8 @@ function EmptyState({
       >
         {filter ===
         'unread'
-          ? isArabic
-            ? 'لقد قرأت جميع إشعاراتك.'
-            : 'You have read all of your notifications.'
-          : isArabic
-            ? 'ستظهر هنا تحديثات المهام والمشاريع والموافقات.'
-            : 'Task, project, assignment and approval updates will appear here.'}
+          ? uiText(isArabic, 'text0316')
+          : uiText(isArabic, 'text0317')}
       </p>
     </div>
   );
@@ -1322,9 +1297,7 @@ function NotificationsContent() {
             err instanceof
               ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل الإشعارات.'
-                : 'Could not load notifications.',
+              : uiText(isArabic, 'text0040'),
           );
         } finally {
           if (
@@ -1529,9 +1502,7 @@ function NotificationsContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث الإشعار.'
-            : 'Could not update notification.',
+          : uiText(isArabic, 'text0041'),
       );
     } finally {
       setItemBusy(
@@ -1678,9 +1649,7 @@ function NotificationsContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حذف الإشعار.'
-            : 'Could not delete notification.',
+          : uiText(isArabic, 'text0042'),
       );
     } finally {
       setItemBusy(
@@ -1749,9 +1718,7 @@ function NotificationsContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديد جميع الإشعارات كمقروءة.'
-            : 'Could not mark all notifications as read.',
+          : uiText(isArabic, 'text0318'),
       );
     } finally {
       setBulkBusy(
@@ -1803,9 +1770,7 @@ function NotificationsContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حذف الإشعارات المقروءة.'
-            : 'Could not clear read notifications.',
+          : uiText(isArabic, 'text0319'),
       );
     } finally {
       setBulkBusy(
@@ -1920,9 +1885,7 @@ function NotificationsContent() {
                 text-brand-600
               "
             >
-              {isArabic
-                ? 'مركز النشاط'
-                : 'Activity center'}
+              {uiText(isArabic, 'text0320')}
             </div>
 
 
@@ -1944,9 +1907,7 @@ function NotificationsContent() {
                   sm:text-3xl
                 "
               >
-                {isArabic
-                  ? 'الإشعارات'
-                  : 'Notifications'}
+                {uiText(isArabic, 'text0043')}
               </h1>
 
 
@@ -1984,9 +1945,7 @@ function NotificationsContent() {
                 text-slate-500
               "
             >
-              {isArabic
-                ? 'تابع إسنادات المهام والموافقات والتعليقات والمواعيد وتحديثات المشاريع.'
-                : 'Stay on top of assignments, approvals, comments, deadlines and project activity.'}
+              {uiText(isArabic, 'text0321')}
             </p>
           </div>
 
@@ -2011,9 +1970,7 @@ function NotificationsContent() {
                 markAllRead
               }
             >
-              {isArabic
-                ? 'تحديد الكل كمقروء'
-                : 'Mark all read'}
+              {uiText(isArabic, 'text0322')}
             </button>
 
 
@@ -2033,9 +1990,7 @@ function NotificationsContent() {
                 clearRead
               }
             >
-              {isArabic
-                ? 'حذف المقروء'
-                : 'Clear read'}
+              {uiText(isArabic, 'text0323')}
             </button>
           </div>
         </div>
@@ -2095,9 +2050,7 @@ function NotificationsContent() {
               }
             `}
           >
-            {isArabic
-              ? 'الكل'
-              : 'All'}
+            {uiText(isArabic, 'text0044')}
           </button>
 
 
@@ -2126,9 +2079,7 @@ function NotificationsContent() {
               }
             `}
           >
-            {isArabic
-              ? 'غير مقروء'
-              : 'Unread'}
+            {uiText(isArabic, 'text0324')}
 
 
             {unreadCount >
@@ -2336,9 +2287,7 @@ function NotificationsContent() {
               setPage
             }
             itemLabel={
-              isArabic
-                ? 'إشعارات'
-                : 'notifications'
+              uiText(isArabic, 'text0045')
             }
           />
         )}

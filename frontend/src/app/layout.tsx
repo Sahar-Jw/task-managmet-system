@@ -1,4 +1,3 @@
-import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { cookies } from 'next/headers';
@@ -6,11 +5,6 @@ import { cookies } from 'next/headers';
 import './globals.css';
 import Shell from '@/components/Shell';
 import { ThemeProvider } from '@/lib/theme-context';
-
-export const metadata: Metadata = {
-  title: 'Task & Project Manager',
-  description: 'Enterprise Task & Project Management System',
-};
 
 export default async function RootLayout({
   children,
@@ -22,7 +16,7 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
+    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
       <body>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <ThemeProvider>

@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useState,
@@ -376,34 +379,22 @@ function getWorkflowLabel(
     status
   ) {
     case 'InProgress':
-      return isArabic
-        ? 'بدء العمل'
-        : 'Start task';
+      return uiText(isArabic, 'text0475');
 
     case 'PendingApproval':
-      return isArabic
-        ? 'إرسال للموافقة'
-        : 'Submit for approval';
+      return uiText(isArabic, 'text0476');
 
     case 'Completed':
-      return isArabic
-        ? 'إكمال المهمة'
-        : 'Complete task';
+      return uiText(isArabic, 'text0102');
 
     case 'Finished':
-      return isArabic
-        ? 'إنهاء المهمة'
-        : 'Finish task';
+      return uiText(isArabic, 'text0103');
 
     case 'Archived':
-      return isArabic
-        ? 'أرشفة المهمة'
-        : 'Archive task';
+      return uiText(isArabic, 'text0477');
 
     default:
-      return isArabic
-        ? `الانتقال إلى ${status}`
-        : `Move to ${status}`;
+      return uiText(isArabic, 'text0735', { value0: status });
   }
 }
 
@@ -660,9 +651,7 @@ function TaskDetailContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحميل المهمة.'
-            : 'Could not load this task.',
+          : uiText(isArabic, 'text0104'),
       );
     } finally {
       setLoading(
@@ -696,9 +685,7 @@ function TaskDetailContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث المهمة.'
-            : 'Could not refresh the task.',
+          : uiText(isArabic, 'text0478'),
       );
     }
   }
@@ -792,9 +779,7 @@ function TaskDetailContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'حدث خطأ.'
-            : 'Something went wrong.',
+          : uiText(isArabic, 'text0479'),
       );
     }
   }
@@ -847,9 +832,7 @@ function TaskDetailContent() {
               text-slate-500
             "
           >
-            {isArabic
-              ? 'جاري تحميل المهمة…'
-              : 'Loading task…'}
+            {uiText(isArabic, 'text0105')}
           </p>
         </div>
       </div>
@@ -909,9 +892,7 @@ function TaskDetailContent() {
               text-slate-900
             "
           >
-            {isArabic
-              ? 'المهمة غير موجودة'
-              : 'Task not found'}
+            {uiText(isArabic, 'text0106')}
           </h1>
 
           <p
@@ -931,9 +912,7 @@ function TaskDetailContent() {
               router.back()
             }
           >
-            {isArabic
-              ? 'رجوع'
-              : 'Go back'}
+            {uiText(isArabic, 'text0107')}
           </button>
         </div>
       </div>
@@ -1549,9 +1528,7 @@ function TaskDetailContent() {
               undefined,
           ),
 
-        isArabic
-          ? 'تم إرسال التكليف وينتظر قبول المستخدم.'
-          : 'Assignment sent. Waiting for the user to accept.',
+        uiText(isArabic, 'text0480'),
       );
 
 
@@ -1594,9 +1571,7 @@ function TaskDetailContent() {
               undefined,
           ),
 
-        isArabic
-          ? 'تم إعادة التكليف وينتظر قبول المستخدم الجديد.'
-          : 'Task reassigned. Waiting for the new user to accept.',
+        uiText(isArabic, 'text0481'),
       );
 
 
@@ -1659,9 +1634,7 @@ function TaskDetailContent() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إضافة التعليق.'
-            : 'Could not add comment.',
+          : uiText(isArabic, 'text0108'),
       );
     } finally {
       setCommentBusy(
@@ -1690,22 +1663,16 @@ function TaskDetailContent() {
     ) {
       setReasonModal({
         title:
-          isArabic
-            ? 'إنهاء المهمة'
-            : 'Finish task',
+          uiText(isArabic, 'text0103'),
 
         description:
-          isArabic
-            ? 'وضح سبب إنهاء المهمة.'
-            : 'Explain why this task is being finished.',
+          uiText(isArabic, 'text0109'),
 
         minLength:
           10,
 
         confirmLabel:
-          isArabic
-            ? 'إنهاء'
-            : 'Finish',
+          uiText(isArabic, 'text0110'),
 
         onConfirm:
           (
@@ -1797,9 +1764,7 @@ function TaskDetailContent() {
           ←
         </span>
 
-        {isArabic
-          ? 'رجوع'
-          : 'Back'}
+        {uiText(isArabic, 'text0111')}
       </button>
 
 
@@ -1860,9 +1825,7 @@ function TaskDetailContent() {
                 text-brand-600
               "
             >
-              {isArabic
-                ? 'جزء من المهمة الرئيسية'
-                : 'Part of parent task'}
+              {uiText(isArabic, 'text0482')}
             </div>
 
             <div
@@ -1981,9 +1944,7 @@ function TaskDetailContent() {
                       text-brand-700
                     "
                   >
-                    {isArabic
-                      ? 'مهمة فرعية'
-                      : 'Subtask'}
+                    {uiText(isArabic, 'text0112')}
                   </span>
                 )}
 
@@ -2020,9 +1981,7 @@ function TaskDetailContent() {
                       text-red-700
                     "
                   >
-                    {isArabic
-                      ? 'متأخرة'
-                      : 'Overdue'}
+                    {uiText(isArabic, 'text0285')}
                   </span>
                 )}
 
@@ -2044,9 +2003,7 @@ function TaskDetailContent() {
                     {' / '}
                     {subtasks.length}{' '}
 
-                    {isArabic
-                      ? 'خطوات'
-                      : 'steps'}
+                    {uiText(isArabic, 'text0113')}
                   </span>
                 )}
               </div>
@@ -2081,9 +2038,7 @@ function TaskDetailContent() {
                 "
               >
                 <span>
-                  {isArabic
-                    ? 'أنشأها'
-                    : 'Created by'}{' '}
+                  {uiText(isArabic, 'text0483')}{' '}
 
                   <span
                     className="
@@ -2107,9 +2062,7 @@ function TaskDetailContent() {
 
                 {task.project?.name && (
                   <span>
-                    {isArabic
-                      ? 'المشروع:'
-                      : 'Project:'}{' '}
+                    {uiText(isArabic, 'text0484')}{' '}
 
                     <span
                       className="
@@ -2154,9 +2107,7 @@ function TaskDetailContent() {
                     text-slate-400
                   "
                 >
-                  {isArabic
-                    ? 'المكلف'
-                    : 'Assignee'}
+                  {uiText(isArabic, 'text0114')}
                 </div>
 
                 <div
@@ -2172,9 +2123,7 @@ function TaskDetailContent() {
                     ?.assignee
                     ?.fullName ||
                     (
-                      isArabic
-                        ? 'غير مسندة'
-                        : 'Unassigned'
+                      uiText(isArabic, 'text0115')
                     )}
                 </div>
               </div>
@@ -2198,9 +2147,7 @@ function TaskDetailContent() {
                     text-slate-400
                   "
                 >
-                  {isArabic
-                    ? 'الموعد'
-                    : 'Deadline'}
+                  {uiText(isArabic, 'text0116')}
                 </div>
 
                 <div
@@ -2249,9 +2196,7 @@ function TaskDetailContent() {
                     "
                   >
                     <span>
-                      {isArabic
-                        ? 'تقدم الخطوات'
-                        : 'Step progress'}
+                      {uiText(isArabic, 'text0485')}
                     </span>
 
                     <span
@@ -2374,9 +2319,7 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'وصف المهمة'
-                  : 'Task Description'
+                uiText(isArabic, 'text0486')
               }
             />
 
@@ -2405,9 +2348,7 @@ function TaskDetailContent() {
                   text-slate-400
                 "
               >
-                {isArabic
-                  ? 'لا يوجد وصف.'
-                  : 'No description was provided.'}
+                {uiText(isArabic, 'text0487')}
               </div>
             )}
           </section>
@@ -2465,14 +2406,10 @@ function TaskDetailContent() {
             >
               <SectionTitle
                 title={
-                  isArabic
-                    ? 'التكليف'
-                    : 'Assignment'
+                  uiText(isArabic, 'text0117')
                 }
                 description={
-                  isArabic
-                    ? 'قبول ورفض وإعادة تكليف المهمة يتم من هنا.'
-                    : 'Assignment acceptance, rejection and reassignment are managed here.'
+                  uiText(isArabic, 'text0488')
                 }
               />
             </div>
@@ -2546,9 +2483,7 @@ function TaskDetailContent() {
                             text-slate-400
                           "
                         >
-                          {isArabic
-                            ? 'المستخدم الحالي'
-                            : 'Current assignee'}
+                          {uiText(isArabic, 'text0489')}
                         </div>
 
                         <div
@@ -2592,9 +2527,7 @@ function TaskDetailContent() {
                           text-amber-700
                         "
                       >
-                        {isArabic
-                          ? 'بانتظار الرد'
-                          : 'Waiting for response'}
+                        {uiText(isArabic, 'text0490')}
                       </div>
                     )}
 
@@ -2614,9 +2547,7 @@ function TaskDetailContent() {
                       >
                         ✓{' '}
 
-                        {isArabic
-                          ? 'تم قبول التكليف'
-                          : 'Assignment accepted'}
+                        {uiText(isArabic, 'text0056')}
                       </div>
                     )}
                   </div>
@@ -2648,9 +2579,7 @@ function TaskDetailContent() {
                               text-slate-400
                             "
                           >
-                            {isArabic
-                              ? 'تم التكليف منذ'
-                              : 'Assignment age'}
+                            {uiText(isArabic, 'text0118')}
                           </div>
 
                           <div
@@ -2667,9 +2596,7 @@ function TaskDetailContent() {
                               ),
                             )}{' '}
 
-                            {isArabic
-                              ? 'يوم'
-                              : 'day(s)'}
+                            {uiText(isArabic, 'text0119')}
                           </div>
                         </div>
 
@@ -2686,9 +2613,7 @@ function TaskDetailContent() {
                                 text-slate-400
                               "
                             >
-                              {isArabic
-                                ? 'إعادة التكليف متاحة بعد'
-                                : 'Reassignment available in'}
+                              {uiText(isArabic, 'text0120')}
                             </div>
 
                             <div
@@ -2703,9 +2628,7 @@ function TaskDetailContent() {
                                 currentAssignment,
                               )}{' '}
 
-                              {isArabic
-                                ? 'يوم'
-                                : 'day(s)'}
+                              {uiText(isArabic, 'text0119')}
                             </div>
                           </div>
                         )}
@@ -2749,9 +2672,7 @@ function TaskDetailContent() {
                       text-slate-700
                     "
                   >
-                    {isArabic
-                      ? 'لا يوجد تكليف نشط'
-                      : 'No active assignment'}
+                    {uiText(isArabic, 'text0121')}
                   </div>
 
                   <div
@@ -2761,9 +2682,7 @@ function TaskDetailContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'لا يوجد مستخدم مسؤول عن المهمة حالياً.'
-                      : 'This task currently has no active assignee.'}
+                    {uiText(isArabic, 'text0491')}
                   </div>
                 </div>
               )}
@@ -2817,9 +2736,7 @@ function TaskDetailContent() {
                           text-brand-900
                         "
                       >
-                        {isArabic
-                          ? 'تم تكليفك بهذه المهمة.'
-                          : 'This task has been assigned to you.'}
+                        {uiText(isArabic, 'text0122')}
                       </div>
 
                       <p
@@ -2830,9 +2747,7 @@ function TaskDetailContent() {
                           text-brand-700
                         "
                       >
-                        {isArabic
-                          ? 'اقبل المهمة لبدء العمل أو ارفضها مع توضيح السبب.'
-                          : 'Accept it to begin work, or reject it with a reason.'}
+                        {uiText(isArabic, 'text0492')}
                       </p>
                     </div>
                   </div>
@@ -2864,9 +2779,7 @@ function TaskDetailContent() {
                               myPendingAssignment.id,
                             ),
 
-                          isArabic
-                            ? 'تم قبول التكليف.'
-                            : 'Assignment accepted.',
+                          uiText(isArabic, 'text0123'),
                         ).finally(
                           () =>
                             setAssignmentBusy(
@@ -2875,9 +2788,7 @@ function TaskDetailContent() {
                         );
                       }}
                     >
-                      {isArabic
-                        ? 'قبول التكليف'
-                        : 'Accept assignment'}
+                      {uiText(isArabic, 'text0124')}
                     </button>
 
 
@@ -2890,22 +2801,16 @@ function TaskDetailContent() {
                       onClick={() =>
                         setReasonModal({
                           title:
-                            isArabic
-                              ? 'رفض التكليف'
-                              : 'Reject assignment',
+                            uiText(isArabic, 'text0125'),
 
                           description:
-                            isArabic
-                              ? 'وضح سبب عدم قدرتك على قبول المهمة.'
-                              : 'Explain why you cannot accept this task.',
+                            uiText(isArabic, 'text0126'),
 
                           minLength:
                             10,
 
                           confirmLabel:
-                            isArabic
-                              ? 'رفض'
-                              : 'Reject',
+                            uiText(isArabic, 'text0127'),
 
                           danger:
                             true,
@@ -2926,17 +2831,13 @@ function TaskDetailContent() {
                                     reason,
                                   ),
 
-                                isArabic
-                                  ? 'تم رفض التكليف.'
-                                  : 'Assignment rejected.',
+                                uiText(isArabic, 'text0493'),
                               );
                             },
                         })
                       }
                     >
-                      {isArabic
-                        ? 'رفض التكليف'
-                        : 'Reject assignment'}
+                      {uiText(isArabic, 'text0125')}
                     </button>
                   </div>
                 </div>
@@ -2958,14 +2859,10 @@ function TaskDetailContent() {
                   "
                 >
                   <strong>
-                    {isArabic
-                      ? 'أنت مسؤول عن هذه المهمة.'
-                      : 'You are responsible for this task.'}
+                    {uiText(isArabic, 'text0494')}
                   </strong>{' '}
 
-                  {isArabic
-                    ? 'يمكنك تحديث سير العمل وتقسيم المهمة إلى خطوات عند الحاجة.'
-                    : 'You can update its workflow and break it into subtasks when needed.'}
+                  {uiText(isArabic, 'text0495')}
                 </div>
               )}
 
@@ -3022,9 +2919,7 @@ function TaskDetailContent() {
                             text-amber-800
                           "
                         >
-                          {isArabic
-                            ? 'بانتظار رد المستخدم'
-                            : 'Waiting for assignee response'}
+                          {uiText(isArabic, 'text0496')}
                         </div>
 
                         <p
@@ -3035,9 +2930,7 @@ function TaskDetailContent() {
                             text-amber-700
                           "
                         >
-                          {isArabic
-                            ? `لا يمكن إعادة التكليف حالياً. يصبح الخيار متاحاً بعد ${REASSIGN_AFTER_DAYS} يوماً بدون قبول أو رفض.`
-                            : `This assignment cannot be reassigned yet. Reassignment becomes available after ${REASSIGN_AFTER_DAYS} days without an Accept or Reject response.`}
+                          {uiText(isArabic, 'text0736', { value0: REASSIGN_AFTER_DAYS })}
                         </p>
                       </div>
                     </div>
@@ -3071,9 +2964,7 @@ function TaskDetailContent() {
                         text-emerald-800
                       "
                     >
-                      {isArabic
-                        ? 'تم قبول المهمة'
-                        : 'Assignment accepted'}
+                      {uiText(isArabic, 'text0128')}
                     </div>
 
                     <p
@@ -3084,9 +2975,7 @@ function TaskDetailContent() {
                         text-emerald-700
                       "
                     >
-                      {isArabic
-                        ? 'لا يمكن إعادة تكليف المهمة بعد قبولها.'
-                        : 'This assignment cannot be reassigned because the user has already accepted it.'}
+                      {uiText(isArabic, 'text0497')}
                     </p>
                   </div>
                 )}
@@ -3108,9 +2997,7 @@ function TaskDetailContent() {
                   "
                 >
                   <label className="label">
-                    {isArabic
-                      ? 'تكليف المهمة'
-                      : 'Assign this task'}
+                    {uiText(isArabic, 'text0129')}
                   </label>
 
                   <div
@@ -3135,9 +3022,7 @@ function TaskDetailContent() {
                       }
                     >
                       <option value="">
-                        {isArabic
-                          ? 'اختر مستخدماً…'
-                          : 'Select user…'}
+                        {uiText(isArabic, 'text0498')}
                       </option>
 
                       {assignableUsers.map(
@@ -3176,14 +3061,10 @@ function TaskDetailContent() {
                     >
                       {assignmentBusy
                         ? (
-                            isArabic
-                              ? 'جاري التكليف…'
-                              : 'Assigning…'
+                            uiText(isArabic, 'text0130')
                           )
                         : (
-                            isArabic
-                              ? 'تكليف'
-                              : 'Assign'
+                            uiText(isArabic, 'text0053')
                           )}
                     </button>
                   </div>
@@ -3216,9 +3097,7 @@ function TaskDetailContent() {
                         text-red-800
                       "
                     >
-                      {isArabic
-                        ? 'تم رفض التكليف'
-                        : 'Assignment rejected'}
+                      {uiText(isArabic, 'text0499')}
                     </div>
 
                     <div
@@ -3253,9 +3132,7 @@ function TaskDetailContent() {
                             text-red-500
                           "
                         >
-                          {isArabic
-                            ? 'سبب الرفض'
-                            : 'Rejection reason'}
+                          {uiText(isArabic, 'text0500')}
                         </div>
 
                         <p
@@ -3293,9 +3170,7 @@ function TaskDetailContent() {
                     "
                   >
                     <label className="label">
-                      {isArabic
-                        ? 'إعادة تكليف المهمة'
-                        : 'Reassign task'}
+                      {uiText(isArabic, 'text0131')}
                     </label>
 
                     <div
@@ -3320,9 +3195,7 @@ function TaskDetailContent() {
                         }
                       >
                         <option value="">
-                          {isArabic
-                            ? 'اختر المستخدم الجديد…'
-                            : 'Select new assignee…'}
+                          {uiText(isArabic, 'text0132')}
                         </option>
 
                         {assignableUsers
@@ -3367,9 +3240,7 @@ function TaskDetailContent() {
                           reassignTask
                         }
                       >
-                        {isArabic
-                          ? 'إعادة تكليف'
-                          : 'Reassign'}
+                        {uiText(isArabic, 'text0133')}
                       </button>
                     </div>
                   </div>
@@ -3399,9 +3270,7 @@ function TaskDetailContent() {
                       text-slate-800
                     "
                   >
-                    {isArabic
-                      ? 'سجل التكليف'
-                      : 'Assignment history'}
+                    {uiText(isArabic, 'text0501')}
                   </h3>
 
                   <div
@@ -3484,9 +3353,7 @@ function TaskDetailContent() {
                               "
                             >
                               <strong>
-                                {isArabic
-                                  ? 'السبب:'
-                                  : 'Reason:'}
+                                {uiText(isArabic, 'text0134')}
                               </strong>{' '}
 
                               {
@@ -3532,14 +3399,10 @@ function TaskDetailContent() {
             >
               <SectionTitle
                 title={
-                  isArabic
-                    ? 'سير المهمة'
-                    : 'Task Workflow'
+                  uiText(isArabic, 'text0502')
                 }
                 description={
-                  isArabic
-                    ? 'حدّث حالة المهمة حسب تقدم العمل.'
-                    : 'Move the task through its workflow as work progresses.'
+                  uiText(isArabic, 'text0503')
                 }
               />
 
@@ -3562,14 +3425,10 @@ function TaskDetailContent() {
                   {workflow.mode ===
                   'guided'
                     ? (
-                        isArabic
-                          ? 'سير موجه'
-                          : 'Guided flow'
+                        uiText(isArabic, 'text0135')
                       )
                     : (
-                        isArabic
-                          ? 'كل الإجراءات'
-                          : 'All actions'
+                        uiText(isArabic, 'text0009')
                       )}
                 </div>
               )}
@@ -3591,9 +3450,7 @@ function TaskDetailContent() {
                   text-amber-700
                 "
               >
-                {isArabic
-                  ? 'المهمة تنتظر قبول المستخدم قبل بدء سير العمل.'
-                  : 'The task is waiting for the assigned user to accept it before work starts.'}
+                {uiText(isArabic, 'text0504')}
               </div>
             )}
 
@@ -3616,9 +3473,7 @@ function TaskDetailContent() {
                     text-blue-700
                   "
                 >
-                  {isArabic
-                    ? 'هذه المهمة تحتاج موافقة قبل الإكمال.'
-                    : 'This task requires approval before it can be completed.'}
+                  {uiText(isArabic, 'text0505')}
                 </div>
               )}
 
@@ -3642,9 +3497,7 @@ function TaskDetailContent() {
                     text-violet-800
                   "
                 >
-                  {isArabic
-                    ? 'يوجد عمل فرعي غير مكتمل'
-                    : 'Subtasks are still open'}
+                  {uiText(isArabic, 'text0506')}
                 </div>
 
                 <p
@@ -3745,14 +3598,10 @@ function TaskDetailContent() {
                 {openSubtaskCount >
                 0
                   ? (
-                      isArabic
-                        ? 'أكمل المهام الفرعية المفتوحة لإتاحة الخطوة التالية.'
-                        : 'Complete the open subtasks to unlock the next workflow action.'
+                      uiText(isArabic, 'text0507')
                     )
                   : (
-                      isArabic
-                        ? 'لا توجد إجراءات متاحة حالياً.'
-                        : 'No workflow actions are currently available.'
+                      uiText(isArabic, 'text0508')
                     )}
               </div>
             )}
@@ -3778,14 +3627,10 @@ function TaskDetailContent() {
             >
               <SectionTitle
                 title={
-                  isArabic
-                    ? 'الموافقة'
-                    : 'Approval'
+                  uiText(isArabic, 'text0509')
                 }
                 description={
-                  isArabic
-                    ? 'معلومات حالة الموافقة ومسؤول الموافقة.'
-                    : 'Approval status and decision information.'
+                  uiText(isArabic, 'text0510')
                 }
               />
 
@@ -3813,9 +3658,7 @@ function TaskDetailContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'الموافق'
-                      : 'Approver'}
+                    {uiText(isArabic, 'text0511')}
                   </div>
 
                   <div
@@ -3847,9 +3690,7 @@ function TaskDetailContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'حالة الموافقة'
-                      : 'Approval status'}
+                    {uiText(isArabic, 'text0512')}
                   </div>
 
                   <div
@@ -3889,9 +3730,7 @@ function TaskDetailContent() {
                         text-red-500
                       "
                     >
-                      {isArabic
-                        ? 'سبب الرفض'
-                        : 'Rejection reason'}
+                      {uiText(isArabic, 'text0500')}
                     </div>
 
                     <p
@@ -3932,15 +3771,11 @@ function TaskDetailContent() {
                               true,
                             ),
 
-                          isArabic
-                            ? 'تمت الموافقة على المهمة.'
-                            : 'Task approved.',
+                          uiText(isArabic, 'text0513'),
                         )
                       }
                     >
-                      {isArabic
-                        ? 'موافقة'
-                        : 'Approve'}
+                      {uiText(isArabic, 'text0357')}
                     </button>
 
 
@@ -3950,22 +3785,16 @@ function TaskDetailContent() {
                       onClick={() =>
                         setReasonModal({
                           title:
-                            isArabic
-                              ? 'رفض الموافقة'
-                              : 'Reject approval',
+                            uiText(isArabic, 'text0514'),
 
                           description:
-                            isArabic
-                              ? 'وضح سبب رفض المهمة.'
-                              : 'Explain why the task is being rejected.',
+                            uiText(isArabic, 'text0515'),
 
                           minLength:
                             5,
 
                           confirmLabel:
-                            isArabic
-                              ? 'رفض'
-                              : 'Reject',
+                            uiText(isArabic, 'text0127'),
 
                           danger:
                             true,
@@ -3987,17 +3816,13 @@ function TaskDetailContent() {
                                     reason,
                                   ),
 
-                                isArabic
-                                  ? 'تم رفض المهمة وإعادتها إلى العمل.'
-                                  : 'Task rejected and returned to In Progress.',
+                                uiText(isArabic, 'text0516'),
                               );
                             },
                         })
                       }
                     >
-                      {isArabic
-                        ? 'رفض'
-                        : 'Reject'}
+                      {uiText(isArabic, 'text0127')}
                     </button>
                   </div>
                 )}
@@ -4023,17 +3848,13 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'التعليقات'
-                  : 'Comments'
+                uiText(isArabic, 'text0136')
               }
               description={
                 comments.length ===
                 0
                   ? (
-                      isArabic
-                        ? 'لا توجد تعليقات بعد.'
-                        : 'No comments yet.'
+                      uiText(isArabic, 'text0137')
                     )
                   : (
                       isArabic
@@ -4194,9 +4015,7 @@ function TaskDetailContent() {
                     newComment
                   }
                   placeholder={
-                    isArabic
-                      ? 'أضف تعليقاً…'
-                      : 'Add a comment…'
+                    uiText(isArabic, 'text0138')
                   }
                   onChange={(
                     event,
@@ -4224,14 +4043,10 @@ function TaskDetailContent() {
                   >
                     {commentBusy
                       ? (
-                          isArabic
-                            ? 'جاري الإرسال…'
-                            : 'Posting…'
+                          uiText(isArabic, 'text0139')
                         )
                       : (
-                          isArabic
-                            ? 'إرسال'
-                            : 'Post comment'
+                          uiText(isArabic, 'text0140')
                         )}
                   </button>
                 </div>
@@ -4266,9 +4081,7 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'حالة المهمة'
-                  : 'Task Status'
+                uiText(isArabic, 'text0141')
               }
             />
 
@@ -4300,9 +4113,7 @@ function TaskDetailContent() {
                     text-red-600
                   "
                 >
-                  {isArabic
-                    ? 'تجاوزت الموعد النهائي'
-                    : 'Past deadline'}
+                  {uiText(isArabic, 'text0142')}
                 </div>
               )}
             </div>
@@ -4317,9 +4128,7 @@ function TaskDetailContent() {
             >
               <InfoRow
                 label={
-                  isArabic
-                    ? 'الأهمية'
-                    : 'Importance'
+                  uiText(isArabic, 'text0297')
                 }
               >
                 <StatusBadge
@@ -4333,9 +4142,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'النوع'
-                    : 'Type'
+                  uiText(isArabic, 'text0143')
                 }
               >
                 <StatusBadge
@@ -4352,9 +4159,7 @@ function TaskDetailContent() {
                   0 && (
                   <InfoRow
                     label={
-                      isArabic
-                        ? 'الخطوات'
-                        : 'Subtasks'
+                      uiText(isArabic, 'text0144')
                     }
                   >
                     {closedSubtaskCount}
@@ -4377,9 +4182,7 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'الأشخاص'
-                  : 'People'
+                uiText(isArabic, 'text0145')
               }
             />
 
@@ -4393,27 +4196,21 @@ function TaskDetailContent() {
             >
               <InfoRow
                 label={
-                  isArabic
-                    ? 'المكلف'
-                    : 'Current assignee'
+                  uiText(isArabic, 'text0517')
                 }
               >
                 {currentAssignment
                   ?.assignee
                   ?.fullName ||
                   (
-                    isArabic
-                      ? 'غير مسندة'
-                      : 'Unassigned'
+                    uiText(isArabic, 'text0115')
                   )}
               </InfoRow>
 
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'حالة التكليف'
-                    : 'Assignment status'
+                  uiText(isArabic, 'text0146')
                 }
               >
                 {currentAssignment ? (
@@ -4430,9 +4227,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'أنشأها'
-                    : 'Created by'
+                  uiText(isArabic, 'text0483')
                 }
               >
                 {task.createdBy
@@ -4444,9 +4239,7 @@ function TaskDetailContent() {
               {task.needsApproval && (
                 <InfoRow
                   label={
-                    isArabic
-                      ? 'الموافق'
-                      : 'Approver'
+                    uiText(isArabic, 'text0511')
                   }
                 >
                   {task.approver
@@ -4469,9 +4262,7 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'التنظيم'
-                  : 'Organization'
+                uiText(isArabic, 'text0518')
               }
             />
 
@@ -4485,9 +4276,7 @@ function TaskDetailContent() {
             >
               <InfoRow
                 label={
-                  isArabic
-                    ? 'القسم'
-                    : 'Department'
+                  uiText(isArabic, 'text0374')
                 }
               >
                 {isArabic
@@ -4514,9 +4303,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'الفرع'
-                    : 'Branch'
+                  uiText(isArabic, 'text0371')
                 }
               >
                 {isArabic
@@ -4543,9 +4330,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'المشروع'
-                    : 'Project'
+                  uiText(isArabic, 'text0432')
                 }
               >
                 {task.project
@@ -4571,9 +4356,7 @@ function TaskDetailContent() {
                 task.parentTask && (
                   <InfoRow
                     label={
-                      isArabic
-                        ? 'المهمة الرئيسية'
-                        : 'Parent task'
+                      uiText(isArabic, 'text0519')
                     }
                   >
                     <Link
@@ -4605,9 +4388,7 @@ function TaskDetailContent() {
           >
             <SectionTitle
               title={
-                isArabic
-                  ? 'الجدول الزمني'
-                  : 'Schedule'
+                uiText(isArabic, 'text0147')
               }
             />
 
@@ -4621,9 +4402,7 @@ function TaskDetailContent() {
             >
               <InfoRow
                 label={
-                  isArabic
-                    ? 'تاريخ البدء'
-                    : 'Start'
+                  uiText(isArabic, 'text0428')
                 }
               >
                 {formatDate(
@@ -4635,9 +4414,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'الموعد النهائي'
-                    : 'Deadline'
+                  uiText(isArabic, 'text0148')
                 }
               >
                 <span
@@ -4657,9 +4434,7 @@ function TaskDetailContent() {
 
               <InfoRow
                 label={
-                  isArabic
-                    ? 'الانتهاء الفعلي'
-                    : 'Actual end'
+                  uiText(isArabic, 'text0149')
                 }
               >
                 {formatDate(
@@ -4683,9 +4458,7 @@ function TaskDetailContent() {
             >
               <SectionTitle
                 title={
-                  isArabic
-                    ? 'الميزانية'
-                    : 'Budget'
+                  uiText(isArabic, 'text0150')
                 }
               />
 
@@ -4705,9 +4478,7 @@ function TaskDetailContent() {
                     text-slate-400
                   "
                 >
-                  {isArabic
-                    ? 'النطاق'
-                    : 'Range'}
+                  {uiText(isArabic, 'text0151')}
                 </div>
 
                 <div
@@ -4745,9 +4516,7 @@ function TaskDetailContent() {
               >
                 <SectionTitle
                   title={
-                    isArabic
-                      ? 'تقدم العمل'
-                      : 'Work progress'
+                    uiText(isArabic, 'text0520')
                   }
                 />
 
@@ -4782,9 +4551,7 @@ function TaskDetailContent() {
                       {' / '}
                       {subtasks.length}{' '}
 
-                      {isArabic
-                        ? 'مكتملة'
-                        : 'completed'}
+                      {uiText(isArabic, 'text0152')}
                     </div>
                   </div>
 
@@ -4806,14 +4573,10 @@ function TaskDetailContent() {
                     {openSubtaskCount ===
                     0
                       ? (
-                          isArabic
-                            ? 'جاهزة'
-                            : 'Ready'
+                          uiText(isArabic, 'text0153')
                         )
                       : (
-                          isArabic
-                            ? `${openSubtaskCount} متبقية`
-                            : `${openSubtaskCount} remaining`
+                          uiText(isArabic, 'text0737', { value0: openSubtaskCount })
                         )}
                   </div>
                 </div>

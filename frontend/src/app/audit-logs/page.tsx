@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useCallback,
   useEffect,
@@ -58,88 +61,88 @@ const ACTION_LABELS:
     }
   > = {
   Create: {
-    en: 'Created',
-    ar: 'إنشاء',
+    en: uiText(false, 'text0683'),
+    ar: uiText(true, 'text0683'),
   },
 
   Update: {
-    en: 'Updated',
-    ar: 'تعديل',
+    en: uiText(false, 'text0684'),
+    ar: uiText(true, 'text0684'),
   },
 
   Delete: {
-    en: 'Deleted',
-    ar: 'حذف',
+    en: uiText(false, 'text0685'),
+    ar: uiText(true, 'text0685'),
   },
 
   Approve: {
-    en: 'Approved',
-    ar: 'موافقة',
+    en: uiText(false, 'text0686'),
+    ar: uiText(true, 'text0686'),
   },
 
   Reject: {
-    en: 'Rejected',
-    ar: 'رفض',
+    en: uiText(false, 'text0687'),
+    ar: uiText(true, 'text0687'),
   },
 
   Assign: {
-    en: 'Assigned',
-    ar: 'إسناد',
+    en: uiText(false, 'text0688'),
+    ar: uiText(true, 'text0688'),
   },
 
   Reassign: {
-    en: 'Reassigned',
-    ar: 'إعادة إسناد',
+    en: uiText(false, 'text0689'),
+    ar: uiText(true, 'text0689'),
   },
 
   StatusChange: {
-    en: 'Status changed',
-    ar: 'تغيير الحالة',
+    en: uiText(false, 'text0690'),
+    ar: uiText(true, 'text0690'),
   },
 
   Login: {
-    en: 'Logged in',
-    ar: 'تسجيل دخول',
+    en: uiText(false, 'text0691'),
+    ar: uiText(true, 'text0691'),
   },
 
   Logout: {
-    en: 'Logged out',
-    ar: 'تسجيل خروج',
+    en: uiText(false, 'text0692'),
+    ar: uiText(true, 'text0692'),
   },
 
   LoginFailed: {
-    en: 'Failed login',
-    ar: 'فشل تسجيل الدخول',
+    en: uiText(false, 'text0693'),
+    ar: uiText(true, 'text0693'),
   },
 
   AccountLocked: {
-    en: 'Account locked',
-    ar: 'قفل الحساب',
+    en: uiText(false, 'text0694'),
+    ar: uiText(true, 'text0694'),
   },
 
   AccountUnlocked: {
-    en: 'Account unlocked',
-    ar: 'فتح الحساب',
+    en: uiText(false, 'text0695'),
+    ar: uiText(true, 'text0695'),
   },
 
   Activate: {
-    en: 'Activated',
-    ar: 'فعّل',
+    en: uiText(false, 'text0696'),
+    ar: uiText(true, 'text0696'),
   },
 
   Deactivate: {
-    en: 'Deactivated',
-    ar: 'عطّل',
+    en: uiText(false, 'text0697'),
+    ar: uiText(true, 'text0697'),
   },
 
   Restore: {
-    en: 'Restored',
-    ar: 'استعادة',
+    en: uiText(false, 'text0698'),
+    ar: uiText(true, 'text0698'),
   },
 
   Archive: {
-    en: 'Archived',
-    ar: 'أرشفة',
+    en: uiText(false, 'text0699'),
+    ar: uiText(true, 'text0699'),
   },
 };
 
@@ -221,58 +224,58 @@ function entityLabel(
       }
     > = {
     Task: {
-      en: 'Task',
-      ar: 'مهمة',
+      en: uiText(false, 'text0700'),
+      ar: uiText(true, 'text0700'),
     },
 
     Project: {
-      en: 'Project',
-      ar: 'مشروع',
+      en: uiText(false, 'text0701'),
+      ar: uiText(true, 'text0701'),
     },
 
     User: {
-      en: 'User',
-      ar: 'مستخدم',
+      en: uiText(false, 'text0702'),
+      ar: uiText(true, 'text0702'),
     },
 
     Setting: {
-      en: 'Setting',
-      ar: 'إعداد',
+      en: uiText(false, 'text0703'),
+      ar: uiText(true, 'text0703'),
     },
 
     BrandingSettings: {
-      en: 'Branding',
-      ar: 'الهوية',
+      en: uiText(false, 'text0704'),
+      ar: uiText(true, 'text0704'),
     },
 
     TaskAttachment: {
-      en: 'Attachment',
-      ar: 'مرفق',
+      en: uiText(false, 'text0705'),
+      ar: uiText(true, 'text0705'),
     },
 
     TaskAssignment: {
-      en: 'Assignment',
-      ar: 'إسناد',
+      en: uiText(false, 'text0706'),
+      ar: uiText(true, 'text0706'),
     },
 
     TaskComment: {
-      en: 'Comment',
-      ar: 'تعليق',
+      en: uiText(false, 'text0707'),
+      ar: uiText(true, 'text0707'),
     },
 
     TaskRating: {
-      en: 'Rating',
-      ar: 'تقييم',
+      en: uiText(false, 'text0708'),
+      ar: uiText(true, 'text0708'),
     },
 
     Branch: {
-      en: 'Branch',
-      ar: 'فرع',
+      en: uiText(false, 'text0446'),
+      ar: uiText(true, 'text0446'),
     },
 
     Department: {
-      en: 'Department',
-      ar: 'قسم',
+      en: uiText(false, 'text0445'),
+      ar: uiText(true, 'text0445'),
     },
   };
 
@@ -378,9 +381,7 @@ function AuditItem({
   const actorName =
     log.actor?.fullName ||
     (
-      isArabic
-        ? 'النظام'
-        : 'System'
+      uiText(isArabic, 'text0001')
     );
 
   const initial =
@@ -524,7 +525,7 @@ function AuditItem({
               {changedUserFields.length > 0 && (
                 <span className="text-slate-500">
                   {' '}
-                  ({isArabic ? 'تم تغيير: ' : 'changed: '}
+                  ({uiText(isArabic, 'text0002')}
                   {changedUserFields.join(', ')})
                 </span>
               )}
@@ -548,9 +549,7 @@ function AuditItem({
                 "
               >
                 <span className="font-medium text-slate-600">
-                  {isArabic
-                    ? 'السبب: '
-                    : 'Reason: '}
+                  {uiText(isArabic, 'text0003')}
                 </span>
 
                 {log.reason}
@@ -621,9 +620,7 @@ function AuditItem({
                 text-xs
               "
             >
-              {isArabic
-                ? 'فتح'
-                : 'Open'}
+              {uiText(isArabic, 'text0004')}
             </Link>
           )}
         </div>
@@ -693,16 +690,12 @@ function EmptyState({
 
 
       <h3 className="mt-4 text-sm font-semibold text-slate-800">
-        {isArabic
-          ? 'لا توجد سجلات'
-          : 'No audit entries found'}
+        {uiText(isArabic, 'text0267')}
       </h3>
 
 
       <p className="mt-1 text-sm text-slate-400">
-        {isArabic
-          ? 'جرّب تغيير عوامل التصفية.'
-          : 'Try changing the filters.'}
+        {uiText(isArabic, 'text0268')}
       </p>
     </div>
   );
@@ -1015,9 +1008,7 @@ function AuditLogsContent() {
           setError(
             err instanceof ApiError
               ? err.message
-              : isArabic
-                ? 'تعذر تحميل سجل التدقيق.'
-                : 'Could not load audit logs.',
+              : uiText(isArabic, 'text0005'),
           );
         } finally {
           setLoading(false);
@@ -1182,9 +1173,7 @@ function AuditLogsContent() {
               text-brand-600
             "
           >
-            {isArabic
-              ? 'نشاط النظام'
-              : 'System activity'}
+            {uiText(isArabic, 'text0006')}
           </div>
 
 
@@ -1198,9 +1187,7 @@ function AuditLogsContent() {
               sm:text-3xl
             "
           >
-            {isArabic
-              ? 'سجل التدقيق'
-              : 'Audit Log'}
+            {uiText(isArabic, 'text0007')}
           </h1>
 
 
@@ -1213,9 +1200,7 @@ function AuditLogsContent() {
               text-slate-500
             "
           >
-            {isArabic
-              ? 'راجع الإجراءات المهمة التي قام بها المستخدمون والنظام.'
-              : 'Review important actions performed by users and the system.'}
+            {uiText(isArabic, 'text0269')}
           </p>
         </div>
       </section>
@@ -1295,9 +1280,7 @@ function AuditLogsContent() {
                 }
               `}
               placeholder={
-                isArabic
-                  ? 'ابحث بالمستخدم أو السبب…'
-                  : 'Search user or reason…'
+                uiText(isArabic, 'text0270')
               }
               value={search}
               onChange={(event) => {
@@ -1323,9 +1306,7 @@ function AuditLogsContent() {
             }}
           >
             <option value="">
-              {isArabic
-                ? 'كل الأنواع'
-                : 'All types'}
+              {uiText(isArabic, 'text0008')}
             </option>
 
 
@@ -1359,9 +1340,7 @@ function AuditLogsContent() {
             }}
           >
             <option value="">
-              {isArabic
-                ? 'كل الإجراءات'
-                : 'All actions'}
+              {uiText(isArabic, 'text0009')}
             </option>
 
 
@@ -1404,12 +1383,8 @@ function AuditLogsContent() {
             {' '}
 
             {sortDir === 'desc'
-              ? isArabic
-                ? 'الأحدث'
-                : 'Newest'
-              : isArabic
-                ? 'الأقدم'
-                : 'Oldest'}
+              ? uiText(isArabic, 'text0010')
+              : uiText(isArabic, 'text0011')}
           </button>
 
 
@@ -1427,9 +1402,7 @@ function AuditLogsContent() {
               );
             }}
           >
-            {isArabic
-              ? 'التصفية'
-              : 'Filters'}
+            {uiText(isArabic, 'text0271')}
 
 
             {filterCount > 0 && (
@@ -1481,9 +1454,7 @@ function AuditLogsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'المستخدم'
-                    : 'User'}
+                  {uiText(isArabic, 'text0272')}
                 </label>
 
 
@@ -1497,9 +1468,7 @@ function AuditLogsContent() {
                   }}
                 >
                   <option value="">
-                    {isArabic
-                      ? 'كل المستخدمين'
-                      : 'All users'}
+                    {uiText(isArabic, 'text0273')}
                   </option>
 
 
@@ -1523,9 +1492,7 @@ function AuditLogsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'من تاريخ'
-                    : 'Date from'}
+                  {uiText(isArabic, 'text0274')}
                 </label>
 
 
@@ -1552,9 +1519,7 @@ function AuditLogsContent() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'إلى تاريخ'
-                    : 'Date to'}
+                  {uiText(isArabic, 'text0012')}
                 </label>
 
 
@@ -1588,9 +1553,7 @@ function AuditLogsContent() {
                   "
                   onClick={clearFilters}
                 >
-                  {isArabic
-                    ? 'مسح عوامل التصفية'
-                    : 'Clear filters'}
+                  {uiText(isArabic, 'text0275')}
                 </button>
               </div>
             )}
@@ -1640,9 +1603,7 @@ function AuditLogsContent() {
             "
             onClick={clearFilters}
           >
-            {isArabic
-              ? 'إعادة تعيين'
-              : 'Reset filters'}
+            {uiText(isArabic, 'text0276')}
           </button>
         )}
       </div>
@@ -1747,9 +1708,7 @@ function AuditLogsContent() {
           total={total}
           onPageChange={setPage}
           itemLabel={
-            isArabic
-              ? 'سجلات'
-              : 'entries'
+            uiText(isArabic, 'text0277')
           }
         />
       )}

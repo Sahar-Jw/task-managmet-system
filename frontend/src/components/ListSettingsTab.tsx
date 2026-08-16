@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { ApiError } from '@/lib/api';
@@ -8,10 +11,10 @@ import { useListLabels } from '@/lib/list-labels-context';
 import type { Setting, SettingType } from '@/lib/types';
 
 const CATEGORIES: { value: SettingType; labelEn: string; labelAr: string }[] = [
-  { value: 'task_status', labelEn: 'Task Status', labelAr: 'حالة المهمة' },
-  { value: 'task_type', labelEn: 'Task Type', labelAr: 'نوع المهمة' },
-  { value: 'task_priority', labelEn: 'Task Priority', labelAr: 'أولوية المهمة' },
-  { value: 'project_status', labelEn: 'Project Status', labelAr: 'حالة المشروع' },
+  { value: 'task_status', labelEn: uiText(false, 'text0141'), labelAr: uiText(true, 'text0141') },
+  { value: 'task_type', labelEn: uiText(false, 'text0722'), labelAr: uiText(true, 'text0722') },
+  { value: 'task_priority', labelEn: uiText(false, 'text0723'), labelAr: uiText(true, 'text0723') },
+  { value: 'project_status', labelEn: uiText(false, 'text0724'), labelAr: uiText(true, 'text0724') },
 ];
 
 /** One row: a single input matching the active locale, plus Save/Delete. */
@@ -71,7 +74,7 @@ function ListRow({
       />
       {!row.isActive && (
         <span className="badge shrink-0 bg-slate-100 text-slate-500">
-          {locale === 'ar' ? 'محذوف' : 'Deleted'}
+          {uiText(locale === 'ar', 'text0230')}
         </span>
       )}
       <button
@@ -80,22 +83,20 @@ function ListRow({
         disabled={busy || !dirty}
         onClick={save}
       >
-        {locale === 'ar' ? 'حفظ' : 'Save'}
+        {uiText(locale === 'ar', 'text0231')}
       </button>
       {row.isSystem ? (
         <span
           className="shrink-0 text-xs text-slate-400"
           title={
-            locale === 'ar'
-              ? 'قيمة أساسية يعتمد عليها النظام — يمكن تعديل النص فقط'
-              : "Built-in — used by the app's workflow, text only can be edited"
+            uiText(locale === 'ar', 'text0634')
           }
         >
-          {locale === 'ar' ? 'أساسي' : 'Built-in'}
+          {uiText(locale === 'ar', 'text0232')}
         </span>
       ) : row.isActive ? (
         <button type="button" className="btn-secondary shrink-0 text-red-600" disabled={busy} onClick={remove}>
-          {locale === 'ar' ? 'حذف' : 'Delete'}
+          {uiText(locale === 'ar', 'text0038')}
         </button>
       ) : (
         <button
@@ -115,7 +116,7 @@ function ListRow({
             }
           }}
         >
-          {locale === 'ar' ? 'استعادة' : 'Restore'}
+          {uiText(locale === 'ar', 'text0403')}
         </button>
       )}
       {error && <p className="text-xs text-red-600">{error}</p>}
@@ -203,22 +204,20 @@ export default function ListSettingsTab() {
       </div>
 
       <p className="text-xs text-slate-500">
-        {isAr
-          ? 'يتم عرض وتعديل النص بلغة الواجهة الحالية فقط. القيم الأساسية (المستخدمة في سير العمل) يمكن تعديل نصها لكن لا يمكن حذفها.'
-          : "Text is shown and edited in the interface's current language only. Built-in values (used by the app's workflow) can be relabeled but not deleted."}
+        {uiText(isAr, 'text0635')}
       </p>
 
       <form onSubmit={addRow} className="card flex items-center gap-2 p-4">
         <input
           className="input flex-1"
           dir={isAr ? 'rtl' : 'ltr'}
-          placeholder={isAr ? 'أضف قيمة جديدة…' : 'Add a new value…'}
+          placeholder={uiText(isAr, 'text0233')}
           value={newLabel}
           onChange={(e) => setNewLabel(e.target.value)}
           disabled={adding}
         />
         <button type="submit" className="btn-primary shrink-0" disabled={adding || !newLabel.trim()}>
-          {isAr ? 'إضافة' : 'Add'}
+          {uiText(isAr, 'text0169')}
         </button>
       </form>
 
@@ -226,9 +225,9 @@ export default function ListSettingsTab() {
 
       <div className="card p-4">
         {loading ? (
-          <p className="p-6 text-center text-slate-500">{isAr ? 'جارٍ التحميل…' : 'Loading…'}</p>
+          <p className="p-6 text-center text-slate-500">{uiText(isAr, 'text0234')}</p>
         ) : visibleRows.length === 0 ? (
-          <p className="p-6 text-center text-slate-500">{isAr ? 'لا توجد عناصر بعد.' : 'No entries yet.'}</p>
+          <p className="p-6 text-center text-slate-500">{uiText(isAr, 'text0636')}</p>
         ) : (
           visibleRows.map((row) => (
             <ListRow key={row.id} row={row} locale={locale} onSaved={load} onDeleted={load} />

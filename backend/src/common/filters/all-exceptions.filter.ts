@@ -39,10 +39,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
 
       const localized = localizeMessages(message, locale, status);
+      const suppliedCode = typeof exceptionResponse === 'object' && exceptionResponse
+        ? (exceptionResponse as Record<string, any>).code
+        : undefined;
 
       response.status(status).json({
         statusCode: status,
-        code: localized.code,
+        code: suppliedCode || localized.code,
         error,
         message: localized.message,
         locale,

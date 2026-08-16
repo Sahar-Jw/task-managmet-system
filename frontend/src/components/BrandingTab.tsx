@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useMemo,
@@ -218,9 +221,7 @@ function AssetField({
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'فشل رفع الصورة.'
-            : 'Upload failed.',
+          : uiText(isArabic, 'text0213'),
       );
     } finally {
       setBusy(
@@ -258,9 +259,7 @@ function AssetField({
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حذف الصورة.'
-            : 'Could not remove the image.',
+          : uiText(isArabic, 'text0613'),
       );
     } finally {
       setBusy(
@@ -312,9 +311,7 @@ function AssetField({
 
           {file && (
             <span className="shrink-0 rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
-              {isArabic
-                ? 'غير محفوظ'
-                : 'Not uploaded'}
+              {uiText(isArabic, 'text0214')}
             </span>
           )}
         </div>
@@ -332,9 +329,7 @@ function AssetField({
         'logo' ? (
           <div>
             <div className="mb-2 text-xs font-medium text-slate-400">
-              {isArabic
-                ? 'معاينة شريط التنقل'
-                : 'Navigation preview'}
+              {uiText(isArabic, 'text0614')}
             </div>
 
 
@@ -373,9 +368,7 @@ function AssetField({
                     </div>
 
                     <div className="text-[10px] text-slate-400">
-                      {isArabic
-                        ? 'معاينة شريط الموقع'
-                        : 'Website navigation'}
+                      {uiText(isArabic, 'text0215')}
                     </div>
                   </div>
                 </div>
@@ -406,9 +399,7 @@ function AssetField({
 
           <div>
             <div className="mb-2 text-xs font-medium text-slate-400">
-              {isArabic
-                ? 'معاينة تبويب المتصفح'
-                : 'Browser tab preview'}
+              {uiText(isArabic, 'text0615')}
             </div>
 
 
@@ -462,12 +453,8 @@ function AssetField({
           <div>
             <div className="mb-2 text-xs font-medium text-slate-400">
               {file
-                ? isArabic
-                  ? 'الصورة المختارة'
-                  : 'Selected image'
-                : isArabic
-                  ? 'الصورة الحالية'
-                  : 'Current image'}
+                ? uiText(isArabic, 'text0216')
+                : uiText(isArabic, 'text0616')}
             </div>
 
 
@@ -492,9 +479,7 @@ function AssetField({
                 />
               ) : (
                 <span className="px-2 text-center text-xs text-slate-400">
-                  {isArabic
-                    ? 'لا توجد صورة'
-                    : 'No image'}
+                  {uiText(isArabic, 'text0217')}
                 </span>
               )}
             </div>
@@ -521,15 +506,11 @@ function AssetField({
             {file && (
               <div className="mt-3 rounded-xl bg-brand-50 p-3">
                 <div className="text-xs font-medium text-brand-800">
-                  {isArabic
-                    ? 'المعاينة فقط'
-                    : 'Preview only'}
+                  {uiText(isArabic, 'text0617')}
                 </div>
 
                 <p className="mt-1 text-xs leading-5 text-brand-700/70">
-                  {isArabic
-                    ? 'هذه الصورة لم تُرفع بعد. تحقق من المعاينة ثم اضغط رفع عندما تكون راضياً عنها.'
-                    : 'This image has not been uploaded yet. Check the preview above, then upload it when you are happy with it.'}
+                  {uiText(isArabic, 'text0618')}
                 </p>
               </div>
             )}
@@ -548,12 +529,8 @@ function AssetField({
                 }
               >
                 {busy
-                  ? isArabic
-                    ? 'جاري الرفع…'
-                    : 'Uploading…'
-                  : isArabic
-                    ? 'رفع الصورة'
-                    : 'Upload image'}
+                  ? uiText(isArabic, 'text0218')
+                  : uiText(isArabic, 'text0219')}
               </button>
 
 
@@ -568,9 +545,7 @@ function AssetField({
                     cancelSelection
                   }
                 >
-                  {isArabic
-                    ? 'إلغاء الاختيار'
-                    : 'Cancel selection'}
+                  {uiText(isArabic, 'text0220')}
                 </button>
               )}
 
@@ -587,9 +562,7 @@ function AssetField({
                     handleRemove
                   }
                 >
-                  {isArabic
-                    ? 'حذف الصورة'
-                    : 'Remove image'}
+                  {uiText(isArabic, 'text0221')}
                 </button>
               )}
             </div>
@@ -751,9 +724,7 @@ export default function BrandingTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحميل إعدادات الهوية.'
-            : 'Could not load branding settings.',
+          : uiText(isArabic, 'text0619'),
       );
     } finally {
       setLoading(
@@ -890,9 +861,7 @@ export default function BrandingTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حفظ إعدادات الهوية.'
-            : 'Could not save branding settings.',
+          : uiText(isArabic, 'text0620'),
       );
     } finally {
       setSaving(
@@ -968,15 +937,11 @@ export default function BrandingTab() {
 
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              {isArabic
-                ? 'هوية الموقع'
-                : 'Website branding'}
+              {uiText(isArabic, 'text0621')}
             </h2>
 
             <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
-              {isArabic
-                ? 'غيّر الشعار وأيقونة المتصفح واسم الموقع والبيانات الوصفية. يمكنك معاينة الصور قبل رفعها.'
-                : 'Manage your logo, browser icon, site name and metadata. Images can be previewed before they are uploaded.'}
+              {uiText(isArabic, 'text0622')}
             </p>
           </div>
         </div>
@@ -993,14 +958,10 @@ export default function BrandingTab() {
         <AssetField
           type="logo"
           label={
-            isArabic
-              ? 'شعار الموقع'
-              : 'Site logo'
+            uiText(isArabic, 'text0222')
           }
           hint={
-            isArabic
-              ? 'يظهر في شريط التنقل. PNG أو JPG أو WEBP أو GIF أو SVG.'
-              : 'Shown in the navigation bar. PNG, JPG, WEBP, GIF or SVG.'
+            uiText(isArabic, 'text0623')
           }
           currentUrl={
             settings?.logoUrl
@@ -1046,14 +1007,10 @@ export default function BrandingTab() {
         <AssetField
           type="favicon"
           label={
-            isArabic
-              ? 'أيقونة المتصفح'
-              : 'Favicon'
+            uiText(isArabic, 'text0223')
           }
           hint={
-            isArabic
-              ? 'تظهر بجانب اسم الموقع في تبويب المتصفح. ICO أو PNG مناسب.'
-              : 'Shown next to the page title in the browser tab. ICO or PNG works best.'
+            uiText(isArabic, 'text0624')
           }
           currentUrl={
             settings?.faviconUrl
@@ -1111,15 +1068,11 @@ export default function BrandingTab() {
       >
         <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
           <h2 className="text-base font-semibold text-slate-900">
-            {isArabic
-              ? 'اسم الموقع والبيانات الوصفية'
-              : 'Site name & metadata'}
+            {uiText(isArabic, 'text0224')}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            {isArabic
-              ? 'هذه البيانات تستخدم في اسم النظام ومعلومات الصفحة.'
-              : 'These details control the website name and page metadata.'}
+            {uiText(isArabic, 'text0625')}
           </p>
         </div>
 
@@ -1128,9 +1081,7 @@ export default function BrandingTab() {
           <div className="space-y-5">
             <div>
               <label className="label">
-                {isArabic
-                  ? 'اسم الموقع'
-                  : 'Site name'}
+                {uiText(isArabic, 'text0225')}
               </label>
 
               <input
@@ -1159,23 +1110,17 @@ export default function BrandingTab() {
               />
 
               <p className="mt-1 text-xs text-slate-400">
-                {isArabic
-                  ? 'يظهر بجانب الشعار وفي أنحاء الموقع.'
-                  : 'Displayed next to the logo and throughout the website.'}
+                {uiText(isArabic, 'text0626')}
               </p>
             </div>
 
 
             <div>
               <label className="label">
-                {isArabic
-                  ? 'عنوان الصفحة'
-                  : 'Page title'}{' '}
+                {uiText(isArabic, 'text0226')}{' '}
 
                 <span className="font-normal text-slate-400">
-                  {isArabic
-                    ? '(اختياري)'
-                    : '(optional)'}
+                  {uiText(isArabic, 'text0062')}
                 </span>
               </label>
 
@@ -1204,23 +1149,17 @@ export default function BrandingTab() {
               />
 
               <p className="mt-1 text-xs text-slate-400">
-                {isArabic
-                  ? 'يظهر في تبويب المتصفح. إذا ترك فارغاً يتم استخدام اسم الموقع.'
-                  : 'Shown in the browser tab. Falls back to the site name when blank.'}
+                {uiText(isArabic, 'text0627')}
               </p>
             </div>
 
 
             <div>
               <label className="label">
-                {isArabic
-                  ? 'وصف الصفحة'
-                  : 'Meta description'}{' '}
+                {uiText(isArabic, 'text0628')}{' '}
 
                 <span className="font-normal text-slate-400">
-                  {isArabic
-                    ? '(اختياري)'
-                    : '(optional)'}
+                  {uiText(isArabic, 'text0062')}
                 </span>
               </label>
 
@@ -1260,14 +1199,10 @@ export default function BrandingTab() {
 
             <div>
               <label className="label">
-                {isArabic
-                  ? 'الكلمات المفتاحية'
-                  : 'Meta keywords'}{' '}
+                {uiText(isArabic, 'text0629')}{' '}
 
                 <span className="font-normal text-slate-400">
-                  {isArabic
-                    ? '(اختياري)'
-                    : '(optional)'}
+                  {uiText(isArabic, 'text0062')}
                 </span>
               </label>
 
@@ -1277,9 +1212,7 @@ export default function BrandingTab() {
                 }
                 className="input"
                 placeholder={
-                  isArabic
-                    ? 'مثال: مهام، مشاريع، فرق'
-                    : 'e.g. tasks, projects, teams'
+                  uiText(isArabic, 'text0630')
                 }
                 value={
                   form.metaKeywords
@@ -1321,12 +1254,8 @@ export default function BrandingTab() {
                 }
               >
                 {saving
-                  ? isArabic
-                    ? 'جاري الحفظ…'
-                    : 'Saving…'
-                  : isArabic
-                    ? 'حفظ التغييرات'
-                    : 'Save changes'}
+                  ? uiText(isArabic, 'text0081')
+                  : uiText(isArabic, 'text0082')}
               </button>
 
 
@@ -1341,18 +1270,14 @@ export default function BrandingTab() {
                     cancelDetails
                   }
                 >
-                  {isArabic
-                    ? 'إلغاء التغييرات'
-                    : 'Cancel changes'}
+                  {uiText(isArabic, 'text0227')}
                 </button>
               )}
 
 
               {saved && (
                 <span className="text-sm font-medium text-green-600">
-                  {isArabic
-                    ? 'تم الحفظ.'
-                    : 'Saved.'}
+                  {uiText(isArabic, 'text0228')}
                 </span>
               )}
 
@@ -1360,9 +1285,7 @@ export default function BrandingTab() {
               {!hasChanges &&
                 !saved && (
                 <span className="text-xs text-slate-400">
-                  {isArabic
-                    ? 'لا توجد تغييرات غير محفوظة.'
-                    : 'No unsaved changes.'}
+                  {uiText(isArabic, 'text0229')}
                 </span>
               )}
             </div>
@@ -1378,9 +1301,7 @@ export default function BrandingTab() {
           <div>
             <div className="sticky top-24 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                {isArabic
-                  ? 'معاينة'
-                  : 'Preview'}
+                {uiText(isArabic, 'text0631')}
               </div>
 
 
@@ -1408,9 +1329,7 @@ export default function BrandingTab() {
                   <p className="mt-2 line-clamp-3 text-xs leading-5 text-slate-500">
                     {form.metaDescription ||
                       (
-                        isArabic
-                          ? 'سيظهر وصف الصفحة هنا.'
-                          : 'Your page description will appear here.'
+                        uiText(isArabic, 'text0632')
                       )}
                   </p>
                 </div>
@@ -1418,9 +1337,7 @@ export default function BrandingTab() {
 
 
               <p className="mt-3 text-xs leading-5 text-slate-400">
-                {isArabic
-                  ? 'هذه معاينة تقريبية لكيفية ظهور بيانات الصفحة.'
-                  : 'This is an approximate preview of the page metadata.'}
+                {uiText(isArabic, 'text0633')}
               </p>
             </div>
           </div>

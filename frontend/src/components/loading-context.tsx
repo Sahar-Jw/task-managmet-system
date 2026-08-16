@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   createContext,
   useCallback,
@@ -665,9 +668,7 @@ export function LoadingProvider({
           role="status"
           aria-live="polite"
           aria-label={
-            isArabic
-              ? 'جاري التحميل'
-              : 'Loading'
+            uiText(isArabic, 'text0265')
           }
         >
           <div
@@ -730,9 +731,7 @@ export function LoadingProvider({
                 text-slate-800
               "
             >
-              {isArabic
-                ? 'جاري التحميل…'
-                : 'Loading…'}
+              {uiText(isArabic, 'text0258')}
             </div>
 
 
@@ -743,9 +742,7 @@ export function LoadingProvider({
                 text-slate-400
               "
             >
-              {isArabic
-                ? 'يرجى الانتظار'
-                : 'Please wait'}
+              {uiText(isArabic, 'text0266')}
             </div>
           </div>
 

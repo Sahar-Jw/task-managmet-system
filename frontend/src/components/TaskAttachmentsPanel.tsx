@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 
 import {
   useEffect,
@@ -793,9 +796,7 @@ export default function TaskAttachmentsPanel({
 
 
       setNotice(
-        isArabic
-          ? 'تم رفع المرفقات بنجاح.'
-          : 'Attachments uploaded successfully.',
+        uiText(isArabic, 'text0246'),
       );
 
 
@@ -808,9 +809,7 @@ export default function TaskAttachmentsPanel({
           ApiError
           ? err.message
           : (
-              isArabic
-                ? 'تعذر رفع المرفقات.'
-                : 'Could not upload attachments.'
+              uiText(isArabic, 'text0247')
             ),
       );
     } finally {
@@ -858,14 +857,10 @@ export default function TaskAttachmentsPanel({
       setNotice(
         value
           ? (
-              isArabic
-                ? 'يمكن للمكلف الآن تنزيل المرفقات.'
-                : 'Assignees can now download attachments.'
+              uiText(isArabic, 'text0248')
             )
           : (
-              isArabic
-                ? 'تم تعطيل التنزيل للمكلف. المعاينة ما زالت متاحة.'
-                : 'Assignee downloads are disabled. Preview remains available.'
+              uiText(isArabic, 'text0661')
             ),
       );
 
@@ -879,9 +874,7 @@ export default function TaskAttachmentsPanel({
           ApiError
           ? err.message
           : (
-              isArabic
-                ? 'تعذر تحديث صلاحية التنزيل.'
-                : 'Could not update download permission.'
+              uiText(isArabic, 'text0662')
             ),
       );
     } finally {
@@ -1278,9 +1271,7 @@ export default function TaskAttachmentsPanel({
           ApiError
           ? err.message
           : (
-              isArabic
-                ? 'تعذر إنشاء معاينة لهذا الملف.'
-                : 'Could not generate a preview for this file.'
+              uiText(isArabic, 'text0663')
             ),
       );
     } finally {
@@ -1365,9 +1356,7 @@ export default function TaskAttachmentsPanel({
           ApiError
           ? err.message
           : (
-              isArabic
-                ? 'تعذر تنزيل الملف.'
-                : 'Could not download this file.'
+              uiText(isArabic, 'text0249')
             ),
       );
     } finally {
@@ -1457,9 +1446,7 @@ export default function TaskAttachmentsPanel({
 
 
       setNotice(
-        isArabic
-          ? 'تم حذف المرفق.'
-          : 'Attachment deleted.',
+        uiText(isArabic, 'text0250'),
       );
 
 
@@ -1472,9 +1459,7 @@ export default function TaskAttachmentsPanel({
           ApiError
           ? err.message
           : (
-              isArabic
-                ? 'تعذر حذف المرفق.'
-                : 'Could not delete this attachment.'
+              uiText(isArabic, 'text0251')
             ),
       );
     } finally {
@@ -1553,9 +1538,7 @@ export default function TaskAttachmentsPanel({
                   text-slate-900
                 "
               >
-                {isArabic
-                  ? 'المرفقات'
-                  : 'Attachments'}
+                {uiText(isArabic, 'text0178')}
               </h2>
 
 
@@ -1569,9 +1552,7 @@ export default function TaskAttachmentsPanel({
                 {attachments.length ===
                 0
                   ? (
-                      isArabic
-                        ? 'لا توجد مرفقات بعد.'
-                        : 'No attachments yet.'
+                      uiText(isArabic, 'text0252')
                     )
                   : (
                       isArabic
@@ -1616,9 +1597,7 @@ export default function TaskAttachmentsPanel({
                       text-slate-700
                     "
                   >
-                    {isArabic
-                      ? 'السماح للمكلف بالتنزيل'
-                      : 'Allow assignee downloads'}
+                    {uiText(isArabic, 'text0253')}
                   </div>
 
 
@@ -1631,9 +1610,7 @@ export default function TaskAttachmentsPanel({
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? 'المعاينة متاحة دائماً للمكلف. هذا الخيار يتحكم بالتنزيل فقط.'
-                      : 'Assignees can always preview. This controls downloading only.'}
+                    {uiText(isArabic, 'text0664')}
                   </div>
                 </div>
 
@@ -1646,9 +1623,7 @@ export default function TaskAttachmentsPanel({
                     permissionBusy
                   }
                   label={
-                    isArabic
-                      ? 'السماح بتنزيل المرفقات'
-                      : 'Allow attachment downloads'
+                    uiText(isArabic, 'text0254')
                   }
                   onChange={
                     updateDownloadPermission
@@ -1735,9 +1710,7 @@ export default function TaskAttachmentsPanel({
                     text-slate-700
                   "
                 >
-                  {isArabic
-                    ? 'إضافة مرفقات'
-                    : 'Add attachments'}
+                  {uiText(isArabic, 'text0255')}
                 </div>
 
 
@@ -1749,9 +1722,7 @@ export default function TaskAttachmentsPanel({
                     text-slate-400
                   "
                 >
-                  {isArabic
-                    ? 'صور، PDF، Word، Excel، PowerPoint، TXT، CSV وZIP.'
-                    : 'Images, PDF, Word, Excel, PowerPoint, TXT, CSV and ZIP are supported.'}
+                  {uiText(isArabic, 'text0665')}
                 </div>
 
 
@@ -1936,9 +1907,7 @@ export default function TaskAttachmentsPanel({
                             disabled:opacity-50
                           "
                         >
-                          {isArabic
-                            ? 'إزالة'
-                            : 'Remove'}
+                          {uiText(isArabic, 'text0256')}
                         </button>
                       </div>
                     ),
@@ -1968,14 +1937,10 @@ export default function TaskAttachmentsPanel({
                 >
                   {busy
                     ? (
-                        isArabic
-                          ? 'جاري الرفع…'
-                          : 'Uploading…'
+                        uiText(isArabic, 'text0218')
                       )
                     : (
-                        isArabic
-                          ? `رفع الملفات (${selectedFiles.length})`
-                          : `Upload files (${selectedFiles.length})`
+                        uiText(isArabic, 'text0753', { value0: selectedFiles.length })
                       )}
                 </button>
               </div>
@@ -2019,9 +1984,7 @@ export default function TaskAttachmentsPanel({
                   text-slate-700
                 "
               >
-                {isArabic
-                  ? 'لا توجد مرفقات'
-                  : 'No attachments'}
+                {uiText(isArabic, 'text0257')}
               </div>
             </div>
           ) : (
@@ -2166,14 +2129,10 @@ export default function TaskAttachmentsPanel({
                       >
                         {previewBusy
                           ? (
-                              isArabic
-                                ? 'جاري التحميل…'
-                                : 'Loading…'
+                              uiText(isArabic, 'text0258')
                             )
                           : (
-                              isArabic
-                                ? 'معاينة'
-                                : 'Preview'
+                              uiText(isArabic, 'text0631')
                             )}
                       </button>
 
@@ -2187,9 +2146,7 @@ export default function TaskAttachmentsPanel({
                         title={
                           !canDownload
                             ? (
-                                isArabic
-                                  ? 'قام مالك المهمة بتعطيل التنزيل.'
-                                  : 'The Task owner disabled downloading.'
+                                uiText(isArabic, 'text0666')
                               )
                             : undefined
                         }
@@ -2214,9 +2171,7 @@ export default function TaskAttachmentsPanel({
                           disabled:opacity-40
                         "
                       >
-                        {isArabic
-                          ? 'تنزيل'
-                          : 'Download'}
+                        {uiText(isArabic, 'text0259')}
                       </button>
 
 
@@ -2245,9 +2200,7 @@ export default function TaskAttachmentsPanel({
                             hover:bg-red-50
                           "
                         >
-                          {isArabic
-                            ? 'حذف'
-                            : 'Delete'}
+                          {uiText(isArabic, 'text0038')}
                         </button>
                       )}
                     </div>
@@ -2275,9 +2228,7 @@ export default function TaskAttachmentsPanel({
                 text-amber-700
               "
             >
-              {isArabic
-                ? 'يمكنك معاينة المرفقات، لكن مالك المهمة عطّل التنزيل.'
-                : 'You can preview attachments, but the Task owner has disabled downloading.'}
+              {uiText(isArabic, 'text0667')}
             </div>
           )}
         </div>
@@ -2419,9 +2370,7 @@ export default function TaskAttachmentsPanel({
                         )
                       }
                     >
-                      {isArabic
-                        ? 'تنزيل'
-                        : 'Download'}
+                      {uiText(isArabic, 'text0259')}
                     </button>
                   )}
 
@@ -2832,9 +2781,7 @@ export default function TaskAttachmentsPanel({
                         text-slate-500
                       "
                     >
-                      {isArabic
-                        ? 'هذا النوع من الملفات لا يحتوي حالياً على عارض داخل التطبيق.'
-                        : 'This file type does not currently have an in-app renderer.'}
+                      {uiText(isArabic, 'text0668')}
                     </p>
 
 
@@ -2851,9 +2798,7 @@ export default function TaskAttachmentsPanel({
                           )
                         }
                       >
-                        {isArabic
-                          ? 'تنزيل الملف'
-                          : 'Download file'}
+                        {uiText(isArabic, 'text0260')}
                       </button>
                     )}
                   </div>
@@ -2942,9 +2887,7 @@ export default function TaskAttachmentsPanel({
                     text-slate-900
                   "
                 >
-                  {isArabic
-                    ? 'حذف المرفق؟'
-                    : 'Delete attachment?'}
+                  {uiText(isArabic, 'text0261')}
                 </h2>
 
 
@@ -2956,9 +2899,7 @@ export default function TaskAttachmentsPanel({
                     text-slate-500
                   "
                 >
-                  {isArabic
-                    ? 'سيتم حذف هذا المرفق من المهمة.'
-                    : 'This attachment will be removed from the task.'}
+                  {uiText(isArabic, 'text0669')}
                 </p>
 
 
@@ -3060,9 +3001,7 @@ export default function TaskAttachmentsPanel({
                     cancelDelete
                   }
                 >
-                  {isArabic
-                    ? 'إلغاء'
-                    : 'Cancel'}
+                  {uiText(isArabic, 'text0080')}
                 </button>
 
 
@@ -3090,14 +3029,10 @@ export default function TaskAttachmentsPanel({
                 >
                   {deleteBusy
                     ? (
-                        isArabic
-                          ? 'جاري الحذف…'
-                          : 'Deleting…'
+                        uiText(isArabic, 'text0083')
                       )
                     : (
-                        isArabic
-                          ? 'حذف المرفق'
-                          : 'Delete attachment'
+                        uiText(isArabic, 'text0262')
                       )}
                 </button>
               </div>

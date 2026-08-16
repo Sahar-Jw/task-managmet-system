@@ -1,5 +1,8 @@
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
+
 import {
   useEffect,
   useMemo,
@@ -486,9 +489,7 @@ function DataSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحميل الإعدادات.'
-            : 'Could not load settings.',
+          : uiText(isArabic, 'text0084'),
       );
     } finally {
       setLoading(
@@ -620,23 +621,15 @@ function DataSettingsTab() {
   const selectedTypeName =
     type ===
     'department'
-      ? isArabic
-        ? 'قسم'
-        : 'Department'
-      : isArabic
-        ? 'فرع'
-        : 'Branch';
+      ? uiText(isArabic, 'text0445')
+      : uiText(isArabic, 'text0446');
 
 
   const pluralTypeName =
     type ===
     'department'
-      ? isArabic
-        ? 'الأقسام'
-        : 'Departments'
-      : isArabic
-        ? 'الفروع'
-        : 'Branches';
+      ? uiText(isArabic, 'text0447')
+      : uiText(isArabic, 'text0448');
 
 
   function displayCode(
@@ -685,9 +678,7 @@ function DataSettingsTab() {
     if (
       !target.code.trim()
     ) {
-      return isArabic
-        ? 'يرجى إدخال الرمز.'
-        : 'Please enter the code.';
+      return uiText(isArabic, 'text0449');
     }
 
 
@@ -696,9 +687,7 @@ function DataSettingsTab() {
         'string' &&
       !target.value.trim()
     ) {
-      return isArabic
-        ? 'يرجى إدخال القيمة.'
-        : 'Please enter the value.';
+      return uiText(isArabic, 'text0450');
     }
 
 
@@ -708,9 +697,7 @@ function DataSettingsTab() {
       target.valueNumber.trim() ===
         ''
     ) {
-      return isArabic
-        ? 'يرجى إدخال القيمة الرقمية.'
-        : 'Please enter the integer value.';
+      return uiText(isArabic, 'text0451');
     }
 
 
@@ -723,9 +710,7 @@ function DataSettingsTab() {
         ),
       )
     ) {
-      return isArabic
-        ? 'يجب أن تكون القيمة رقماً صحيحاً.'
-        : 'The value must be an integer.';
+      return uiText(isArabic, 'text0452');
     }
 
 
@@ -854,9 +839,7 @@ function DataSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر إضافة السجل.'
-            : 'Could not create the entry.',
+          : uiText(isArabic, 'text0453'),
       );
     } finally {
       setCreating(
@@ -1059,9 +1042,7 @@ function DataSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث السجل.'
-            : 'Could not update the entry.',
+          : uiText(isArabic, 'text0454'),
       );
     } finally {
       setSavingEdit(
@@ -1117,9 +1098,7 @@ function DataSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر تحديث حالة السجل.'
-            : 'Could not update the entry.',
+          : uiText(isArabic, 'text0455'),
       );
 
 
@@ -1180,9 +1159,7 @@ function DataSettingsTab() {
         err instanceof
           ApiError
           ? err.message
-          : isArabic
-            ? 'تعذر حذف السجل.'
-            : 'Could not remove the entry.',
+          : uiText(isArabic, 'text0456'),
       );
     } finally {
       setBusyId(
@@ -1240,9 +1217,7 @@ function DataSettingsTab() {
                 text-slate-900
               "
             >
-              {isArabic
-                ? 'بيانات المؤسسة'
-                : 'Organization data'}
+              {uiText(isArabic, 'text0457')}
             </h2>
 
             <p
@@ -1252,9 +1227,7 @@ function DataSettingsTab() {
                 text-slate-500
               "
             >
-              {isArabic
-                ? 'إدارة الأقسام والفروع التي تظهر في أنحاء النظام.'
-                : 'Manage the departments and branches used throughout the system.'}
+              {uiText(isArabic, 'text0458')}
             </p>
           </div>
 
@@ -1289,9 +1262,7 @@ function DataSettingsTab() {
                 }
               `}
             >
-              {isArabic
-                ? 'الأقسام'
-                : 'Departments'}
+              {uiText(isArabic, 'text0447')}
             </button>
 
 
@@ -1317,9 +1288,7 @@ function DataSettingsTab() {
                 }
               `}
             >
-              {isArabic
-                ? 'الفروع'
-                : 'Branches'}
+              {uiText(isArabic, 'text0448')}
             </button>
           </div>
         </div>
@@ -1367,9 +1336,7 @@ function DataSettingsTab() {
                 text-slate-900
               "
             >
-              {isArabic
-                ? `إضافة ${selectedTypeName}`
-                : `Add ${selectedTypeName}`}
+              {uiText(isArabic, 'text0732', { value0: selectedTypeName })}
             </h2>
 
             <p
@@ -1379,9 +1346,7 @@ function DataSettingsTab() {
                 text-slate-500
               "
             >
-              {isArabic
-                ? 'سيتم حفظ البيانات العربية فقط لأن لغة الواجهة الحالية هي العربية.'
-                : 'This entry will be saved in English only because the interface is currently English.'}
+              {uiText(isArabic, 'text0459')}
             </p>
           </div>
 
@@ -1402,9 +1367,7 @@ function DataSettingsTab() {
             >
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الرمز'
-                    : 'Code'}
+                  {uiText(isArabic, 'text0085')}
                 </label>
 
                 <input
@@ -1418,12 +1381,8 @@ function DataSettingsTab() {
                   placeholder={
                     type ===
                     'department'
-                      ? isArabic
-                        ? 'مثال: الموارد البشرية'
-                        : 'e.g. HR'
-                      : isArabic
-                        ? 'مثال: الفرع الرئيسي'
-                        : 'e.g. MAIN'
+                      ? uiText(isArabic, 'text0086')
+                      : uiText(isArabic, 'text0087')
                   }
                   value={
                     form.code
@@ -1448,9 +1407,7 @@ function DataSettingsTab() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'نوع القيمة'
-                    : 'Value type'}
+                  {uiText(isArabic, 'text0088')}
                 </label>
 
                 <select
@@ -1491,15 +1448,11 @@ function DataSettingsTab() {
                   }}
                 >
                   <option value="string">
-                    {isArabic
-                      ? 'نص'
-                      : 'String'}
+                    {uiText(isArabic, 'text0460')}
                   </option>
 
                   <option value="number">
-                    {isArabic
-                      ? 'عدد صحيح'
-                      : 'Integer'}
+                    {uiText(isArabic, 'text0461')}
                   </option>
                 </select>
               </div>
@@ -1510,9 +1463,7 @@ function DataSettingsTab() {
             'string' ? (
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'القيمة'
-                    : 'Value'}
+                  {uiText(isArabic, 'text0089')}
                 </label>
 
                 <input
@@ -1545,9 +1496,7 @@ function DataSettingsTab() {
             ) : (
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'القيمة الرقمية'
-                    : 'Integer value'}
+                  {uiText(isArabic, 'text0462')}
                 </label>
 
                 <input
@@ -1581,9 +1530,7 @@ function DataSettingsTab() {
               'branch' && (
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'العنوان'
-                    : 'Address'}{' '}
+                  {uiText(isArabic, 'text0463')}{' '}
 
                   <span
                     className="
@@ -1591,9 +1538,7 @@ function DataSettingsTab() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? '(اختياري)'
-                      : '(optional)'}
+                    {uiText(isArabic, 'text0062')}
                   </span>
                 </label>
 
@@ -1652,12 +1597,8 @@ function DataSettingsTab() {
                 }
               >
                 {creating
-                  ? isArabic
-                    ? 'جاري الإضافة…'
-                    : 'Adding…'
-                  : isArabic
-                    ? `إضافة ${selectedTypeName}`
-                    : `Add ${selectedTypeName}`}
+                  ? uiText(isArabic, 'text0090')
+                  : uiText(isArabic, 'text0732', { value0: selectedTypeName })}
               </button>
             </div>
           </div>
@@ -1719,9 +1660,7 @@ function DataSettingsTab() {
               text-slate-900
             "
           >
-            {isArabic
-              ? 'منطق اللغة'
-              : 'Language behavior'}
+            {uiText(isArabic, 'text0464')}
           </h3>
 
 
@@ -1733,9 +1672,7 @@ function DataSettingsTab() {
               text-slate-600
             "
           >
-            {isArabic
-              ? 'أنت ترى وتحرر حالياً البيانات التي تحتوي على نسخة عربية. البيانات الإنجليزية فقط لن تظهر هنا.'
-              : 'You currently see and edit entries that contain English data. Arabic-only entries stay hidden in this language.'}
+            {uiText(isArabic, 'text0465')}
           </p>
 
 
@@ -1747,9 +1684,7 @@ function DataSettingsTab() {
               text-slate-500
             "
           >
-            {isArabic
-              ? 'عند تبديل لغة الموقع إلى الإنجليزية، ستظهر بيانات الإنجليزية بدلاً منها.'
-              : 'Switch the website to Arabic to manage the Arabic records.'}
+            {uiText(isArabic, 'text0466')}
           </p>
         </aside>
       </div>
@@ -1805,9 +1740,7 @@ function DataSettingsTab() {
             >
               {visibleRows.length}{' '}
 
-              {isArabic
-                ? 'عنصر في اللغة الحالية'
-                : 'entries in the current language'}
+              {uiText(isArabic, 'text0467')}
             </p>
           </div>
 
@@ -1830,9 +1763,7 @@ function DataSettingsTab() {
               "
             />
 
-            {isArabic
-              ? 'نشط'
-              : 'Active'}
+            {uiText(isArabic, 'text0091')}
 
             <span
               className="
@@ -1844,9 +1775,7 @@ function DataSettingsTab() {
               "
             />
 
-            {isArabic
-              ? 'غير نشط'
-              : 'Inactive'}
+            {uiText(isArabic, 'text0092')}
           </div>
         </div>
 
@@ -1929,9 +1858,7 @@ function DataSettingsTab() {
                 text-slate-400
               "
             >
-              {isArabic
-                ? 'أضف أول عنصر باستخدام النموذج أعلاه.'
-                : 'Add the first entry using the form above.'}
+              {uiText(isArabic, 'text0468')}
             </p>
           </div>
         ) : (
@@ -2005,12 +1932,8 @@ function DataSettingsTab() {
                         `}
                       >
                         {row.isActive
-                          ? isArabic
-                            ? 'نشط'
-                            : 'Active'
-                          : isArabic
-                            ? 'غير نشط'
-                            : 'Inactive'}
+                          ? uiText(isArabic, 'text0091')
+                          : uiText(isArabic, 'text0092')}
                       </span>
                     </div>
 
@@ -2031,9 +1954,7 @@ function DataSettingsTab() {
                             text-slate-400
                           "
                         >
-                          {isArabic
-                            ? 'القيمة:'
-                            : 'Value:'}
+                          {uiText(isArabic, 'text0093')}
                         </span>{' '}
 
                         <span
@@ -2055,9 +1976,7 @@ function DataSettingsTab() {
                             text-slate-400
                           "
                         >
-                          {isArabic
-                            ? 'النوع:'
-                            : 'Type:'}
+                          {uiText(isArabic, 'text0094')}
                         </span>{' '}
 
                         <span
@@ -2068,12 +1987,8 @@ function DataSettingsTab() {
                         >
                           {row.valueType ===
                           'number'
-                            ? isArabic
-                              ? 'عدد صحيح'
-                              : 'Integer'
-                            : isArabic
-                              ? 'نص'
-                              : 'String'}
+                            ? uiText(isArabic, 'text0461')
+                            : uiText(isArabic, 'text0460')}
                         </span>
                       </div>
 
@@ -2086,9 +2001,7 @@ function DataSettingsTab() {
                               text-slate-400
                             "
                           >
-                            {isArabic
-                              ? 'العنوان:'
-                              : 'Address:'}
+                            {uiText(isArabic, 'text0469')}
                           </span>{' '}
 
                           <span
@@ -2128,9 +2041,7 @@ function DataSettingsTab() {
                         )
                       }
                     >
-                      {isArabic
-                        ? 'تعديل'
-                        : 'Edit'}
+                      {uiText(isArabic, 'text0068')}
                     </button>
 
 
@@ -2162,16 +2073,10 @@ function DataSettingsTab() {
                     >
                       {busyId ===
                       row.id
-                        ? isArabic
-                          ? 'جاري التحديث…'
-                          : 'Updating…'
+                        ? uiText(isArabic, 'text0095')
                         : row.isActive
-                          ? isArabic
-                            ? 'تعطيل'
-                            : 'Deactivate'
-                          : isArabic
-                            ? 'تفعيل'
-                            : 'Activate'}
+                          ? uiText(isArabic, 'text0096')
+                          : uiText(isArabic, 'text0097')}
                     </button>
 
 
@@ -2193,9 +2098,7 @@ function DataSettingsTab() {
                         )
                       }
                     >
-                      {isArabic
-                        ? 'حذف'
-                        : 'Delete'}
+                      {uiText(isArabic, 'text0038')}
                     </button>
                   </div>
                 </div>
@@ -2223,12 +2126,8 @@ function DataSettingsTab() {
           itemLabel={
             type ===
             'department'
-              ? isArabic
-                ? 'أقسام'
-                : 'departments'
-              : isArabic
-                ? 'فروع'
-                : 'branches'
+              ? uiText(isArabic, 'text0470')
+              : uiText(isArabic, 'text0471')
           }
         />
       )}
@@ -2305,9 +2204,7 @@ function DataSettingsTab() {
                       text-brand-600
                     "
                   >
-                    {isArabic
-                      ? 'تعديل البيانات'
-                      : 'Edit data'}
+                    {uiText(isArabic, 'text0098')}
                   </div>
 
                   <h2
@@ -2318,9 +2215,7 @@ function DataSettingsTab() {
                       text-slate-900
                     "
                   >
-                    {isArabic
-                      ? `تعديل ${selectedTypeName}`
-                      : `Edit ${selectedTypeName}`}
+                    {uiText(isArabic, 'text0733', { value0: selectedTypeName })}
                   </h2>
                 </div>
 
@@ -2359,9 +2254,7 @@ function DataSettingsTab() {
             >
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'الرمز'
-                    : 'Code'}
+                  {uiText(isArabic, 'text0085')}
                 </label>
 
                 <input
@@ -2395,9 +2288,7 @@ function DataSettingsTab() {
 
               <div>
                 <label className="label">
-                  {isArabic
-                    ? 'نوع القيمة'
-                    : 'Value type'}
+                  {uiText(isArabic, 'text0088')}
                 </label>
 
                 <select
@@ -2438,15 +2329,11 @@ function DataSettingsTab() {
                   }}
                 >
                   <option value="string">
-                    {isArabic
-                      ? 'نص'
-                      : 'String'}
+                    {uiText(isArabic, 'text0460')}
                   </option>
 
                   <option value="number">
-                    {isArabic
-                      ? 'عدد صحيح'
-                      : 'Integer'}
+                    {uiText(isArabic, 'text0461')}
                   </option>
                 </select>
               </div>
@@ -2456,9 +2343,7 @@ function DataSettingsTab() {
               'string' ? (
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'القيمة'
-                      : 'Value'}
+                    {uiText(isArabic, 'text0089')}
                   </label>
 
                   <input
@@ -2491,9 +2376,7 @@ function DataSettingsTab() {
               ) : (
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'القيمة الرقمية'
-                      : 'Integer value'}
+                    {uiText(isArabic, 'text0462')}
                   </label>
 
                   <input
@@ -2527,9 +2410,7 @@ function DataSettingsTab() {
                 'branch' && (
                 <div>
                   <label className="label">
-                    {isArabic
-                      ? 'العنوان'
-                      : 'Address'}
+                    {uiText(isArabic, 'text0463')}
                   </label>
 
                   <input
@@ -2566,9 +2447,7 @@ function DataSettingsTab() {
                   text-brand-800
                 "
               >
-                {isArabic
-                  ? 'سيتم تعديل النسخة العربية فقط. لن تتغير النسخة الإنجليزية.'
-                  : 'Only the English version will be updated. The Arabic version will remain untouched.'}
+                {uiText(isArabic, 'text0472')}
               </div>
 
 
@@ -2612,9 +2491,7 @@ function DataSettingsTab() {
                   closeEdit
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -2626,12 +2503,8 @@ function DataSettingsTab() {
                 }
               >
                 {savingEdit
-                  ? isArabic
-                    ? 'جاري الحفظ…'
-                    : 'Saving…'
-                  : isArabic
-                    ? 'حفظ التغييرات'
-                    : 'Save changes'}
+                  ? uiText(isArabic, 'text0081')
+                  : uiText(isArabic, 'text0082')}
               </button>
             </div>
           </form>
@@ -2710,9 +2583,7 @@ function DataSettingsTab() {
                   text-slate-900
                 "
               >
-                {isArabic
-                  ? `تعطيل ${selectedTypeName}؟`
-                  : `Deactivate ${selectedTypeName}?`}
+                {uiText(isArabic, 'text0734', { value0: selectedTypeName })}
               </h2>
 
 
@@ -2724,9 +2595,7 @@ function DataSettingsTab() {
                   text-slate-500
                 "
               >
-                {isArabic
-                  ? 'لن يظهر هذا العنصر في القوائم النشطة، لكن السجل لن يتم حذفه من قاعدة البيانات.'
-                  : 'This entry will stop appearing in active dropdowns, but its database record will remain.'}
+                {uiText(isArabic, 'text0473')}
               </p>
             </div>
 
@@ -2756,9 +2625,7 @@ function DataSettingsTab() {
                   )
                 }
               >
-                {isArabic
-                  ? 'إلغاء'
-                  : 'Cancel'}
+                {uiText(isArabic, 'text0080')}
               </button>
 
 
@@ -2777,12 +2644,8 @@ function DataSettingsTab() {
               >
                 {busyId ===
                 pendingDeactivate.id
-                  ? isArabic
-                    ? 'جاري التعطيل…'
-                    : 'Deactivating…'
-                  : isArabic
-                    ? 'تعطيل'
-                    : 'Deactivate'}
+                  ? uiText(isArabic, 'text0099')
+                  : uiText(isArabic, 'text0096')}
               </button>
             </div>
           </div>
@@ -2823,16 +2686,16 @@ const PAGE_TABS: {
       'data',
 
     labelEn:
-      'Data',
+      uiText(false, 'text0718'),
 
     labelAr:
-      'البيانات',
+      uiText(true, 'text0718'),
 
     descriptionEn:
-      'Departments and branches',
+      uiText(false, 'text0754'),
 
     descriptionAr:
-      'الأقسام والفروع',
+      uiText(true, 'text0754'),
 
     icon:
       <DataIcon />,
@@ -2843,16 +2706,16 @@ const PAGE_TABS: {
       'branding',
 
     labelEn:
-      'Branding',
+      uiText(false, 'text0704'),
 
     labelAr:
-      'الهوية',
+      uiText(true, 'text0704'),
 
     descriptionEn:
-      'Logo, favicon and metadata',
+      uiText(false, 'text0755'),
 
     descriptionAr:
-      'الشعار والأيقونة والبيانات',
+      uiText(true, 'text0755'),
 
     icon:
       <BrandingIcon />,
@@ -2863,16 +2726,16 @@ const PAGE_TABS: {
       'color-theme',
 
     labelEn:
-      'Color Theme',
+      uiText(false, 'text0719'),
 
     labelAr:
-      'ألوان الموقع',
+      uiText(true, 'text0719'),
 
     descriptionEn:
-      'Website color appearance',
+      uiText(false, 'text0756'),
 
     descriptionAr:
-      'مظهر وألوان الموقع',
+      uiText(true, 'text0756'),
 
     icon:
       <ThemeIcon />,
@@ -2883,16 +2746,16 @@ const PAGE_TABS: {
       'lists',
 
     labelEn:
-      'Statuses & Types',
+      uiText(false, 'text0720'),
 
     labelAr:
-      'الحالات والأنواع',
+      uiText(true, 'text0720'),
 
     descriptionEn:
-      'Task and project lists',
+      uiText(false, 'text0757'),
 
     descriptionAr:
-      'قوائم المهام والمشاريع',
+      uiText(true, 'text0757'),
 
     icon:
       <ListsIcon />,
@@ -2903,16 +2766,16 @@ const PAGE_TABS: {
       'workflow',
 
     labelEn:
-      'Task Workflow',
+      uiText(false, 'text0721'),
 
     labelAr:
-      'سير المهام',
+      uiText(true, 'text0721'),
 
     descriptionEn:
-      'Task actions and sequence',
+      uiText(false, 'text0758'),
 
     descriptionAr:
-      'إجراءات المهام وتسلسلها',
+      uiText(true, 'text0758'),
 
     icon:
       <WorkflowIcon />,
@@ -3017,9 +2880,7 @@ function SettingsPageContent() {
               text-brand-600
             "
           >
-            {isArabic
-              ? 'إدارة النظام'
-              : 'System management'}
+            {uiText(isArabic, 'text0100')}
           </div>
 
 
@@ -3033,9 +2894,7 @@ function SettingsPageContent() {
               sm:text-3xl
             "
           >
-            {isArabic
-              ? 'الإعدادات'
-              : 'Settings'}
+            {uiText(isArabic, 'text0101')}
           </h1>
 
 
@@ -3048,9 +2907,7 @@ function SettingsPageContent() {
               text-slate-500
             "
           >
-            {isArabic
-              ? 'إدارة بيانات المؤسسة والهوية والألوان والقوائم وسير عمل المهام في جميع أنحاء النظام.'
-              : 'Manage organization data, branding, website appearance, reusable lists and the Task workflow.'}
+            {uiText(isArabic, 'text0474')}
           </p>
         </div>
       </section>

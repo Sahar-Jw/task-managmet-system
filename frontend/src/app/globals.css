@@ -25,6 +25,20 @@ body {
   height: 100%;
 }
 
+html[dir='rtl'] body {
+  text-align: right;
+}
+
+html[dir='rtl'] input,
+html[dir='rtl'] textarea,
+html[dir='rtl'] select {
+  text-align: right;
+}
+
+html[dir='rtl'] [data-directional-icon] {
+  transform: scaleX(-1);
+}
+
 html {
   background-color: var(--theme-page-background);
 }

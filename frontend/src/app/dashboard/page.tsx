@@ -2,6 +2,8 @@
 
 'use client';
 
+import { uiText } from '@/lib/ui-text';
+
 import {
   useEffect,
   useMemo,
@@ -478,9 +480,7 @@ function DashboardContent() {
           setError(
             err instanceof ApiError
               ? err.message
-              : isAr
-                ? 'تعذر تحميل المهام.'
-                : 'Could not load your tasks.',
+              : uiText(isAr, 'text0278'),
           );
         },
       )
@@ -609,9 +609,7 @@ function DashboardContent() {
           setStatsError(
             err instanceof ApiError
               ? err.message
-              : isAr
-                ? 'تعذر تحميل الإحصائيات.'
-                : 'Could not load statistics.',
+              : uiText(isAr, 'text0013'),
           );
         },
       )
@@ -1080,9 +1078,7 @@ function DashboardContent() {
           name:
             branch.branchName ??
             (
-              isAr
-                ? 'غير محدد'
-                : 'Unassigned'
+              uiText(isAr, 'text0014')
             ),
 
           Completed:
@@ -1122,9 +1118,7 @@ function DashboardContent() {
           name:
             department.departmentName ??
             (
-              isAr
-                ? 'غير محدد'
-                : 'Unassigned'
+              uiText(isAr, 'text0014')
             ),
 
           Completed:
@@ -1276,27 +1270,19 @@ function DashboardContent() {
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-              {isAr
-                ? 'لوحة المتابعة'
-                : 'Dashboard'}
+              {uiText(isAr, 'text0279')}
             </div>
 
 
             <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
-              {isAr
-                ? `مرحباً، ${firstName}`
-                : `Welcome back, ${firstName}`}
+              {uiText(isAr, 'text0725', { value0: firstName })}
             </h1>
 
 
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
               {isAdmin
-                ? isAr
-                  ? 'تابع المهام والمشاريع والأداء في مختلف أقسام وفروع المؤسسة.'
-                  : 'Monitor tasks, projects and performance across your organization.'
-                : isAr
-                  ? 'تابع مهامك الحالية والمواعيد القادمة وما يحتاج إلى انتباهك.'
-                  : 'See your current workload, upcoming deadlines and what needs your attention.'}
+                ? uiText(isAr, 'text0280')
+                : uiText(isAr, 'text0281')}
             </p>
           </div>
 
@@ -1308,9 +1294,7 @@ function DashboardContent() {
               }
               className="btn-secondary"
             >
-              {isAr
-                ? 'عرض المهام'
-                : 'View tasks'}
+              {uiText(isAr, 'text0015')}
             </Link>
 
 
@@ -1331,9 +1315,7 @@ function DashboardContent() {
                 />
               </svg>
 
-              {isAr
-                ? 'مهمة جديدة'
-                : 'New task'}
+              {uiText(isAr, 'text0016')}
             </Link>
           </div>
         </div>
@@ -1362,21 +1344,15 @@ function DashboardContent() {
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title={
-            isAr
-              ? 'إجمالي المهام'
-              : 'Total tasks'
+            uiText(isAr, 'text0017')
           }
           value={
             totalTaskCount
           }
           description={
             isAdmin
-              ? isAr
-                ? 'المهام ضمن المؤسسة'
-                : 'Tasks across the organization'
-              : isAr
-                ? 'المهام ضمن نطاقك'
-                : 'Tasks currently in your scope'
+              ? uiText(isAr, 'text0282')
+              : uiText(isAr, 'text0283')
           }
           href={
             taskListHref()
@@ -1408,17 +1384,13 @@ function DashboardContent() {
 
         <MetricCard
           title={
-            isAr
-              ? 'مكتملة'
-              : 'Completed'
+            uiText(isAr, 'text0018')
           }
           value={
             completedTaskCount
           }
           description={
-            isAr
-              ? `${completionRate}% نسبة الإنجاز`
-              : `${completionRate}% completion rate`
+            uiText(isAr, 'text0726', { value0: completionRate })
           }
           tone="green"
           icon={
@@ -1448,17 +1420,13 @@ function DashboardContent() {
 
         <MetricCard
           title={
-            isAr
-              ? 'مفتوحة'
-              : 'Open tasks'
+            uiText(isAr, 'text0019')
           }
           value={
             openTaskCount
           }
           description={
-            isAr
-              ? 'مهام لم تكتمل بعد'
-              : 'Work still in progress'
+            uiText(isAr, 'text0284')
           }
           tone="amber"
           icon={
@@ -1487,9 +1455,7 @@ function DashboardContent() {
 
         <MetricCard
           title={
-            isAr
-              ? 'متأخرة'
-              : 'Overdue'
+            uiText(isAr, 'text0285')
           }
           value={
             overdueTaskCount
@@ -1497,12 +1463,8 @@ function DashboardContent() {
           description={
             overdueTaskCount >
             0
-              ? isAr
-                ? 'تحتاج إلى انتباه'
-                : 'Needs attention'
-              : isAr
-                ? 'لا توجد مهام متأخرة'
-                : 'Nothing overdue'
+              ? uiText(isAr, 'text0020')
+              : uiText(isAr, 'text0286')
           }
           href={
             taskListHref(
@@ -1537,14 +1499,10 @@ function DashboardContent() {
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
         <SectionHeader
           title={
-            isAr
-              ? 'حالة العمل'
-              : 'Work status'
+            uiText(isAr, 'text0287')
           }
           description={
-            isAr
-              ? 'اضغط على أي حالة لفتح المهام المصفاة مباشرة.'
-              : 'Select a status to open the matching tasks.'
+            uiText(isAr, 'text0021')
           }
           action={
             <Link
@@ -1553,9 +1511,7 @@ function DashboardContent() {
               }
               className="text-xs font-medium text-brand-600 hover:text-brand-800"
             >
-              {isAr
-                ? 'عرض الكل'
-                : 'View all'}
+              {uiText(isAr, 'text0022')}
             </Link>
           }
         />
@@ -1613,12 +1569,8 @@ function DashboardContent() {
                   <div className="mt-1 text-xs text-slate-400">
                     {item.count ===
                     1
-                      ? isAr
-                        ? 'مهمة'
-                        : 'task'
-                      : isAr
-                        ? 'مهام'
-                        : 'tasks'}
+                      ? uiText(isAr, 'text0023')
+                      : uiText(isAr, 'text0024')}
                   </div>
                 </Link>
               ),
@@ -1627,14 +1579,10 @@ function DashboardContent() {
         ) : (
           <EmptyState
             title={
-              isAr
-                ? 'لا توجد حالات'
-                : 'No task statuses'
+              uiText(isAr, 'text0025')
             }
             description={
-              isAr
-                ? 'ستظهر حالات المهام هنا بعد إعدادها.'
-                : 'Task status totals will appear here once configured.'
+              uiText(isAr, 'text0288')
             }
           />
         )}
@@ -1656,14 +1604,10 @@ function DashboardContent() {
           <div className="border-b border-slate-100 p-5 sm:p-6">
             <SectionHeader
               title={
-                isAr
-                  ? 'تحتاج إلى انتباه'
-                  : 'Needs attention'
+                uiText(isAr, 'text0020')
               }
               description={
-                isAr
-                  ? 'المهام المتأخرة التي يجب مراجعتها أولاً.'
-                  : 'Overdue work that should be reviewed first.'
+                uiText(isAr, 'text0289')
               }
             />
           </div>
@@ -1673,14 +1617,10 @@ function DashboardContent() {
           0 ? (
             <EmptyState
               title={
-                isAr
-                  ? 'كل شيء تحت السيطرة'
-                  : 'Nothing overdue'
+                uiText(isAr, 'text0290')
               }
               description={
-                isAr
-                  ? 'لا توجد مهام متأخرة حالياً.'
-                  : 'There are no overdue tasks in your current view.'
+                uiText(isAr, 'text0291')
               }
               icon={
                 <svg
@@ -1742,9 +1682,7 @@ function DashboardContent() {
                       </div>
 
                       <div className="mt-1 text-xs text-red-500">
-                        {isAr
-                          ? 'الموعد النهائي'
-                          : 'Due'}{' '}
+                        {uiText(isAr, 'text0026')}{' '}
 
                         {
                           task.deadlineDate
@@ -1775,14 +1713,10 @@ function DashboardContent() {
           <div className="border-b border-slate-100 p-5 sm:p-6">
             <SectionHeader
               title={
-                isAr
-                  ? 'المواعيد القادمة'
-                  : 'Upcoming deadlines'
+                uiText(isAr, 'text0027')
               }
               description={
-                isAr
-                  ? 'أقرب المهام حسب الموعد النهائي.'
-                  : 'The closest task deadlines in your workload.'
+                uiText(isAr, 'text0292')
               }
             />
           </div>
@@ -1792,14 +1726,10 @@ function DashboardContent() {
           0 ? (
             <EmptyState
               title={
-                isAr
-                  ? 'لا توجد مواعيد قريبة'
-                  : 'No upcoming deadlines'
+                uiText(isAr, 'text0028')
               }
               description={
-                isAr
-                  ? 'لا توجد مهام ذات موعد نهائي حالياً.'
-                  : 'Tasks with upcoming deadlines will appear here.'
+                uiText(isAr, 'text0293')
               }
             />
           ) : (
@@ -1888,14 +1818,10 @@ function DashboardContent() {
         <div className="border-b border-slate-100 p-5 sm:p-6">
           <SectionHeader
             title={
-              isAr
-                ? 'آخر المهام'
-                : 'Recent tasks'
+              uiText(isAr, 'text0029')
             }
             description={
-              isAr
-                ? 'أحدث المهام التي تمت إضافتها.'
-                : 'Recently created tasks in your current view.'
+              uiText(isAr, 'text0294')
             }
             action={
               <Link
@@ -1904,9 +1830,7 @@ function DashboardContent() {
                 }
                 className="text-xs font-medium text-brand-600 hover:text-brand-800"
               >
-                {isAr
-                  ? 'عرض جميع المهام'
-                  : 'View all tasks'}
+                {uiText(isAr, 'text0030')}
               </Link>
             }
           />
@@ -1917,14 +1841,10 @@ function DashboardContent() {
         0 ? (
           <EmptyState
             title={
-              isAr
-                ? 'لا توجد مهام'
-                : 'No tasks yet'
+              uiText(isAr, 'text0031')
             }
             description={
-              isAr
-                ? 'ستظهر المهام الجديدة هنا.'
-                : 'Your newest tasks will appear here.'
+              uiText(isAr, 'text0295')
             }
           />
         ) : (
@@ -1948,9 +1868,7 @@ function DashboardContent() {
                     </div>
 
                     <div className="mt-1 text-xs text-slate-400">
-                      {isAr
-                        ? 'تمت الإضافة'
-                        : 'Added'}{' '}
+                      {uiText(isAr, 'text0032')}{' '}
 
                       {new Date(
                         task.createdAt,
@@ -2001,14 +1919,10 @@ function DashboardContent() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <SectionHeader
             title={
-              isAr
-                ? 'أنواع المهام'
-                : 'Task types'
+              uiText(isAr, 'text0033')
             }
             description={
-              isAr
-                ? 'توزيع المهام حسب النوع.'
-                : 'Workload by task type.'
+              uiText(isAr, 'text0296')
             }
           />
 
@@ -2063,14 +1977,10 @@ function DashboardContent() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <SectionHeader
             title={
-              isAr
-                ? 'الأهمية'
-                : 'Importance'
+              uiText(isAr, 'text0297')
             }
             description={
-              isAr
-                ? 'توزيع المهام حسب الأهمية.'
-                : 'Tasks grouped by importance.'
+              uiText(isAr, 'text0298')
             }
           />
 
@@ -2126,14 +2036,10 @@ function DashboardContent() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5">
           <SectionHeader
             title={
-              isAr
-                ? 'حالة المشاريع'
-                : 'Project status'
+              uiText(isAr, 'text0299')
             }
             description={
-              isAr
-                ? 'نظرة سريعة على المشاريع.'
-                : 'Quick overview of your projects.'
+              uiText(isAr, 'text0300')
             }
           />
 
@@ -2188,29 +2094,19 @@ function DashboardContent() {
       <section className="mt-10">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
-            {isAr
-              ? 'التحليلات'
-              : 'Analytics'}
+            {uiText(isAr, 'text0034')}
           </div>
 
           <h2 className="mt-2 text-xl font-semibold tracking-tight text-slate-900">
             {isAdmin
-              ? isAr
-                ? 'أداء المؤسسة'
-                : 'Organization performance'
-              : isAr
-                ? 'أداؤك'
-                : 'Your performance'}
+              ? uiText(isAr, 'text0301')
+              : uiText(isAr, 'text0302')}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
             {isAdmin
-              ? isAr
-                ? 'راقب اتجاه الإنجاز والأداء حسب الفروع والأقسام.'
-                : 'Monitor completion trends and performance across branches and departments.'
-              : isAr
-                ? 'تابع اتجاه إنجاز مهامك خلال الفترة الماضية.'
-                : 'Track how your task workload has progressed over time.'}
+              ? uiText(isAr, 'text0303')
+              : uiText(isAr, 'text0304')}
           </p>
         </div>
 
@@ -2238,22 +2134,16 @@ function DashboardContent() {
               <div className="border-b border-slate-100 p-5 sm:p-6">
                 <SectionHeader
                   title={
-                    isAr
-                      ? 'أداء المهام مع الوقت'
-                      : 'Task performance over time'
+                    uiText(isAr, 'text0305')
                   }
                   description={
-                    isAr
-                      ? 'المهام المكتملة مقابل غير المكتملة خلال آخر 12 شهراً.'
-                      : 'Completed versus not completed work during the last 12 months.'
+                    uiText(isAr, 'text0306')
                   }
                   action={
                     <div className="flex items-center gap-2 text-xs text-slate-400">
                       <span className="h-2 w-2 rounded-full bg-brand-500" />
 
-                      {isAr
-                        ? 'آخر 12 شهراً'
-                        : '12 month trend'}
+                      {uiText(isAr, 'text0307')}
                     </div>
                   }
                 />
@@ -2264,9 +2154,7 @@ function DashboardContent() {
               0 ? (
                 <ChartEmptyState
                   message={
-                    isAr
-                      ? 'لا توجد بيانات شهرية بعد'
-                      : 'No monthly data yet'
+                    uiText(isAr, 'text0035')
                   }
                 />
               ) : (
@@ -2419,14 +2307,10 @@ function DashboardContent() {
                   <div className="border-b border-slate-100 p-5 sm:p-6">
                     <SectionHeader
                       title={
-                        isAr
-                          ? 'أداء الفروع'
-                          : 'Branch performance'
+                        uiText(isAr, 'text0308')
                       }
                       description={
-                        isAr
-                          ? 'المهام المكتملة والمتأخرة حسب الفرع.'
-                          : 'Completed and overdue work by branch.'
+                        uiText(isAr, 'text0309')
                       }
                     />
                   </div>
@@ -2436,9 +2320,7 @@ function DashboardContent() {
                   0 ? (
                     <ChartEmptyState
                       message={
-                        isAr
-                          ? 'لا توجد بيانات للفروع'
-                          : 'No branch data yet'
+                        uiText(isAr, 'text0310')
                       }
                     />
                   ) : (
@@ -2594,14 +2476,10 @@ function DashboardContent() {
                   <div className="border-b border-slate-100 p-5 sm:p-6">
                     <SectionHeader
                       title={
-                        isAr
-                          ? 'أداء الأقسام'
-                          : 'Department performance'
+                        uiText(isAr, 'text0311')
                       }
                       description={
-                        isAr
-                          ? 'المهام المكتملة والمتأخرة حسب القسم.'
-                          : 'Completed and overdue work by department.'
+                        uiText(isAr, 'text0312')
                       }
                     />
                   </div>
@@ -2611,9 +2489,7 @@ function DashboardContent() {
                   0 ? (
                     <ChartEmptyState
                       message={
-                        isAr
-                          ? 'لا توجد بيانات للأقسام'
-                          : 'No department data yet'
+                        uiText(isAr, 'text0313')
                       }
                     />
                   ) : (

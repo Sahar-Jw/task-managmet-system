@@ -15,25 +15,11 @@ import {
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
+import { useLocale } from 'next-intl';
+import { useListLabels } from '@/lib/list-labels-context';
 import { ApiError } from '@/lib/api';
-import { ReportsApi, TasksApi } from '@/lib/endpoints';
-import type { Task, TaskStatus, TaskType } from '@/lib/types';
-
-const STATUS_ORDER: TaskStatus[] = [
-  'Pending',
-  'Unassigned',
-  'InProgress',
-  'PendingApproval',
-  'Completed',
-  'Reopened',
-  'Finished',
-  'Archived',
-];
-
-const TYPE_ORDER: TaskType[] = [
-  'General', 'Administrative', 'Financial', 'Technical',
-  'Maintenance', 'HR', 'Procurement', 'Other',
-];
+import { ReportsApi, SettingsApi, TasksApi, ProjectsApi } from '@/lib/endpoints';
+import type { Project, Setting, Task } from '@/lib/types';
 
 const MONTH_LABEL = new Intl.DateTimeFormat('en', { month: 'short', year: '2-digit' });
 
@@ -58,11 +44,24 @@ interface DepartmentRow extends OverviewRow {
 
 function DashboardContent() {
   const { user } = useAuth();
+  const locale = useLocale();
+  const isAr = locale === 'ar';
+  const { getLabel } = useListLabels();
   const isAdmin = user?.role?.name === 'ADMIN';
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Live lists from Settings > "Statuses & Types" — includes any custom
+  // values that have been added, filtered to whichever language the app
+  // is currently in (an Arabic-only entry doesn't show up here in
+  // English, and vice versa).
+  const [taskStatuses, setTaskStatuses] = useState<Setting[]>([]);
+  const [taskTypes, setTaskTypes] = useState<Setting[]>([]);
+  const [taskPriorities, setTaskPriorities] = useState<Setting[]>([]);
+  const [projectStatuses, setProjectStatuses] = useState<Setting[]>([]);
 
   const [monthly, setMonthly] = useState<{ month: string; done: number; notDone: number }[]>([]);
   const [branches, setBranches] = useState<BranchRow[]>([]);
@@ -73,11 +72,20 @@ function DashboardContent() {
   useEffect(() => {
     // Admin sees org-wide task stats; a regular User only ever sees their
     // own tasks (My Tasks), so the dashboard mirrors that here too.
+    // Project visibility is scoped the same way server-side (Admin sees
+    // all Projects, a regular User only their own).
     const fetchTasks = isAdmin ? TasksApi.list({ limit: '100' }) : TasksApi.mine({ limit: '100' });
     fetchTasks
       .then((res) => setTasks(res.items))
       .catch((err) => setError(err instanceof ApiError ? err.message : 'Could not load your tasks.'))
       .finally(() => setLoading(false));
+
+    ProjectsApi.list({ limit: '100' }).then((res) => setProjects(res.items)).catch(() => {});
+
+    SettingsApi.list('task_status', true).then(setTaskStatuses).catch(() => {});
+    SettingsApi.list('task_type', true).then(setTaskTypes).catch(() => {});
+    SettingsApi.list('task_priority', true).then(setTaskPriorities).catch(() => {});
+    SettingsApi.list('project_status', true).then(setProjectStatuses).catch(() => {});
   }, [isAdmin]);
 
   useEffect(() => {
@@ -96,14 +104,32 @@ function DashboardContent() {
       .finally(() => setStatsLoading(false));
   }, []);
 
-  const counts = STATUS_ORDER.map((status) => ({
-    status,
-    count: tasks.filter((t) => t.status === status).length,
+  // Only entries that have a label in the current language — same rule as
+  // everywhere else an Arabic-only or English-only entry is involved.
+  const inCurrentLocale = (s: Setting) => !!(isAr ? s.codeAr : s.codeEn);
+
+  const counts = taskStatuses.filter(inCurrentLocale).map((s) => ({
+    status: s.key!,
+    label: getLabel('task_status', s.key!),
+    count: tasks.filter((t) => t.status === s.key).length,
   }));
 
-  const typeCounts = TYPE_ORDER.map((taskType) => ({
-    taskType,
-    count: tasks.filter((t) => t.taskType === taskType).length,
+  const typeCounts = taskTypes.filter(inCurrentLocale).map((s) => ({
+    taskType: s.key!,
+    label: getLabel('task_type', s.key!),
+    count: tasks.filter((t) => t.taskType === s.key).length,
+  }));
+
+  const priorityCounts = taskPriorities.filter(inCurrentLocale).map((s) => ({
+    priority: s.key!,
+    label: getLabel('task_priority', s.key!),
+    count: tasks.filter((t) => t.priority === s.key).length,
+  }));
+
+  const projectStatusCounts = projectStatuses.filter(inCurrentLocale).map((s) => ({
+    status: s.key!,
+    label: getLabel('project_status', s.key!),
+    count: projects.filter((p) => p.status === s.key).length,
   }));
 
   const latestTasks = [...tasks]
@@ -159,7 +185,7 @@ function DashboardContent() {
               >
                 <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
                 <div className="mt-1">
-                  <StatusBadge value={c.status} />
+                  <StatusBadge value={c.status} listType="task_status" />
                 </div>
               </Link>
             ))}
@@ -173,10 +199,43 @@ function DashboardContent() {
                 className="card p-3 text-center hover:border-brand-500"
               >
                 <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
-                <div className="mt-1 text-xs font-medium text-slate-600">{c.taskType}</div>
+                <div className="mt-1 text-xs font-medium text-slate-600">{c.label}</div>
               </Link>
             ))}
           </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {priorityCounts.map((c) => (
+              <Link
+                key={c.priority}
+                href={isAdmin ? `/tasks?priority=${c.priority}` : `/tasks/mine?priority=${c.priority}`}
+                className="card p-3 text-center hover:border-brand-500"
+              >
+                <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
+                <div className="mt-1">
+                  <StatusBadge value={c.priority} listType="task_priority" />
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {projectStatusCounts.length > 0 && (
+            <>
+              <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                {isAr ? 'المشاريع' : 'Projects'}
+              </h2>
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {projectStatusCounts.map((c) => (
+                  <Link key={c.status} href="/projects" className="card p-3 text-center hover:border-brand-500">
+                    <div className="text-2xl font-semibold text-slate-800">{c.count}</div>
+                    <div className="mt-1">
+                      <StatusBadge value={c.status} listType="project_status" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className="mt-8">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -196,7 +255,7 @@ function DashboardContent() {
                       <div className="font-medium text-slate-800">{task.titleEn}</div>
                       <div className="text-xs text-slate-500">Added {new Date(task.createdAt).toLocaleDateString()}</div>
                     </div>
-                    <StatusBadge value={task.status} />
+                    <StatusBadge value={task.status} listType="task_status" />
                   </Link>
                 ))}
               </div>
@@ -221,7 +280,7 @@ function DashboardContent() {
                       <div className="font-medium text-slate-800">{task.titleEn}</div>
                       <div className="text-xs text-slate-500">Due {task.deadlineDate}</div>
                     </div>
-                    <StatusBadge value={task.status} />
+                    <StatusBadge value={task.status} listType="task_status" />
                   </Link>
                 ))}
               </div>

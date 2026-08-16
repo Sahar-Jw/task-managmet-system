@@ -30,8 +30,8 @@ export class CreateTaskDto {
   @IsOptional() @IsString() descriptionEn?: string;
 
   // ---- Classification ----
-  @IsOptional() @IsEnum(TaskType) taskType?: TaskType;
-  @IsEnum(TaskPriority) priority!: TaskPriority;
+  @IsOptional() @IsString() taskType?: string;
+  @IsString() priority!: string;
   @IsOptional() @IsString() @MaxLength(20) color?: string;
 
   // ---- Organizational placement (each independent, all optional except Department) ----
@@ -67,8 +67,8 @@ export class UpdateTaskDto {
   @IsOptional() @IsString() descriptionAr?: string;
   @IsOptional() @IsString() descriptionEn?: string;
 
-  @IsOptional() @IsEnum(TaskType) taskType?: TaskType;
-  @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
+  @IsOptional() @IsString() taskType?: string;
+  @IsOptional() @IsString() priority?: string;
   @IsOptional() @IsString() @MaxLength(20) color?: string;
 
   @IsOptional() @IsUUID() branchId?: string;
@@ -97,7 +97,7 @@ export class UpdateAttachmentPermissionsDto {
 
 /** Reason required for FINISHED/Reopened transitions. */
 export class UpdateTaskStatusDto {
-  @IsEnum(TaskStatus) status!: TaskStatus;
+  @IsString() status!: string;
 
   @ValidateIf((o) => [TaskStatus.FINISHED, TaskStatus.REOPENED].includes(o.status))
   @IsString() @MinLength(10)
@@ -114,7 +114,7 @@ export class DecideTaskApprovalDto {
 }
 
 export class QueryTasksDto extends PaginationQueryDto {
-  @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+  @IsOptional() @IsString() status?: string;
   @IsOptional() @IsBooleanString() excludeArchived?: string;
   @IsOptional() @IsUUID() branchId?: string;
   @IsOptional() @IsUUID() projectId?: string;
@@ -122,8 +122,8 @@ export class QueryTasksDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() createdById?: string;
   @IsOptional() @IsUUID() assignedToId?: string;
   @IsOptional() @IsUUID() assigneeId?: string; // legacy multi-assignee filter (task-assignments)
-  @IsOptional() @IsEnum(TaskType) taskType?: TaskType;
-  @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
+  @IsOptional() @IsString() taskType?: string;
+  @IsOptional() @IsString() priority?: string;
   @IsOptional() @IsDateString() dueDateFrom?: string;
   @IsOptional() @IsDateString() dueDateTo?: string;
 
@@ -139,12 +139,12 @@ export class QueryTasksDto extends PaginationQueryDto {
  * upcoming deadline.
  */
 export class QueryMyTasksDto extends PaginationQueryDto {
-  @IsOptional() @IsEnum(TaskStatus) status?: TaskStatus;
+  @IsOptional() @IsString() status?: string;
 
-  @IsOptional() @IsEnum(TaskType) taskType?: TaskType;
+  @IsOptional() @IsString() taskType?: string;
 
   // Importance
-  @IsOptional() @IsEnum(TaskPriority) priority?: TaskPriority;
+  @IsOptional() @IsString() priority?: string;
 
   // Optional project scope (e.g. viewing "my tasks" within one Project)
   @IsOptional() @IsUUID() projectId?: string;

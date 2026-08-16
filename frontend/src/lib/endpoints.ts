@@ -67,9 +67,17 @@ export const PublicApi = {
 // Project Settings — pass `type` to work with just one "table" at a time.
 export interface CreateSettingPayload {
   type: SettingType;
-  codeAr: string;
-  codeEn: string;
-  valueType: SettingValueType;
+  // Required together for department/branch/project_setting. For the four
+  // list types (task_status/task_type/task_priority/project_status), only
+  // one is required — whichever language was active when the entry was
+  // added; the other stays blank until edited later from that language.
+  codeAr?: string;
+  codeEn?: string;
+  // Optional/ignored for the four list types (task_status/task_type/
+  // task_priority/project_status) — the backend derives these from
+  // codeAr/codeEn automatically. Required for department/branch/
+  // project_setting.
+  valueType?: SettingValueType;
   valueAr?: string;
   valueEn?: string;
   valueNumber?: number;
@@ -78,8 +86,10 @@ export interface CreateSettingPayload {
 }
 
 export const SettingsApi = {
-  list: (type?: SettingType) =>
-    api<Setting[]>(`/settings${type ? `?type=${type}` : ''}`),
+  list: (type?: SettingType, activeOnly?: boolean) =>
+    api<Setting[]>(
+      `/settings${type ? `?type=${type}${activeOnly ? '&isActive=true' : ''}` : activeOnly ? '?isActive=true' : ''}`,
+    ),
   get: (id: string) => api<Setting>(`/settings/${id}`),
   create: (data: CreateSettingPayload) =>
     api<Setting>('/settings', { method: 'POST', body: data }),

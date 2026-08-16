@@ -7,6 +7,7 @@ import { SettingsApi, type CreateSettingPayload } from '@/lib/endpoints';
 import type { Setting, SettingType, SettingValueType } from '@/lib/types';
 import Pagination from '@/components/Pagination';
 import BrandingTab from '@/components/BrandingTab';
+import ListSettingsTab from '@/components/ListSettingsTab';
 
 const PAGE_SIZE = 10;
 
@@ -293,6 +294,7 @@ function SettingsContent() {
 const PAGE_TABS = [
   { value: 'data', label: 'Data' },
   { value: 'branding', label: 'Branding' },
+  { value: 'lists', label: 'Statuses & Types' },
 ] as const;
 type PageTab = (typeof PAGE_TABS)[number]['value'];
 
@@ -320,7 +322,7 @@ function SettingsPageContent() {
         ))}
       </div>
 
-      {tab === 'data' ? <SettingsContent /> : <BrandingTab />}
+      {tab === 'data' ? <SettingsContent /> : tab === 'branding' ? <BrandingTab /> : <ListSettingsTab />}
     </div>
   );
 }

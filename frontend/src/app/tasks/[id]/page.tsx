@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import AttachmentCard from '@/components/AttachmentCard';
@@ -17,10 +18,11 @@ import {
   DepartmentsApi,
   ProjectsApi,
   RatingsApi,
+  SettingsApi,
   TasksApi,
   UsersApi,
 } from '@/lib/endpoints';
-import type { Branch, Department, Project, Task, TaskAttachment, TaskComment, User } from '@/lib/types';
+import type { Branch, Department, Project, Setting, Task, TaskAttachment, TaskComment, User } from '@/lib/types';
 import ReasonModal from '@/components/ReasonModal';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -39,6 +41,7 @@ function TaskDetailContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const locale = useLocale();
 
   const [task, setTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<TaskComment[]>([]);
@@ -46,6 +49,8 @@ function TaskDetailContent() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [customStatuses, setCustomStatuses] = useState<Setting[]>([]);
+  const [customStatusPick, setCustomStatusPick] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -154,6 +159,12 @@ function TaskDetailContent() {
       BranchesApi.list().then(setBranches).catch(() => {});
       DepartmentsApi.list().then(setDepartments).catch(() => {});
       ProjectsApi.list({ limit: '100' }).then((res) => setProjects(res.items)).catch(() => {});
+      // Admin-added custom statuses (Settings > "Statuses & Types") — these
+      // sit outside the built-in Pending -> ... -> Archived workflow above,
+      // so they're offered separately.
+      SettingsApi.list('task_status', true)
+        .then((rows) => setCustomStatuses(rows.filter((r) => !r.isSystem)))
+        .catch(() => {});
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -224,9 +235,9 @@ function TaskDetailContent() {
               <h2 dir="rtl" className="text-lg text-slate-500">{task.titleAr}</h2>
             </div>
             <div className="flex shrink-0 flex-wrap justify-end gap-2">
-              <StatusBadge value={task.taskType} />
-              <StatusBadge value={task.priority} />
-              <StatusBadge value={task.status} />
+              <StatusBadge value={task.taskType} listType="task_type" />
+              <StatusBadge value={task.priority} listType="task_priority" />
+              <StatusBadge value={task.status} listType="task_status" />
               {canEditTask && !isEditing && (
                 <button className="btn-secondary" onClick={startEditing}>
                   Edit
@@ -542,6 +553,37 @@ function TaskDetailContent() {
               )}
             </div>
           )}
+
+          {/* Custom statuses (Settings > "Statuses & Types") — not part of
+              the built-in workflow above, so offered as a simple picker. */}
+          {task.status !== 'Archived' && customStatuses.filter((s) => (locale === 'ar' ? s.codeAr : s.codeEn)).length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3">
+              <label className="label mb-0">Other status</label>
+              <select
+                className="input w-auto"
+                value={customStatusPick}
+                onChange={(e) => setCustomStatusPick(e.target.value)}
+              >
+                <option value="">Choose…</option>
+                {customStatuses
+                  .filter((s) => s.key !== task.status && (locale === 'ar' ? s.codeAr : s.codeEn))
+                  .map((s) => (
+                    <option key={s.id} value={s.key}>{locale === 'ar' ? s.codeAr : s.codeEn}</option>
+                  ))}
+              </select>
+              <button
+                className="btn-secondary"
+                disabled={!customStatusPick}
+                onClick={() => {
+                  const next = customStatusPick;
+                  setCustomStatusPick('');
+                  withFeedback(() => TasksApi.changeStatus(task.id, next));
+                }}
+              >
+                Set status
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sub-tasks */}
@@ -556,7 +598,7 @@ function TaskDetailContent() {
                   className="flex w-full items-center justify-between rounded-md bg-slate-50 px-3 py-2 text-left text-sm hover:bg-slate-100"
                 >
                   <span className="text-slate-700">{st.titleEn}</span>
-                  <StatusBadge value={st.status} />
+                  <StatusBadge value={st.status} listType="task_status" />
                 </button>
               ))}
             </div>

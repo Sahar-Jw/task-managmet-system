@@ -15,14 +15,25 @@ export class CreateSettingDto {
   @IsEnum(SettingType)
   type!: SettingType;
 
-  @IsString() @IsNotEmpty() @MaxLength(100)
-  codeAr!: string;
+  // Required together for department/branch/project_setting (both
+  // languages). For the four LIST_SETTING_TYPES categories, only ONE is
+  // required — an entry added while the UI is in Arabic only gets codeAr,
+  // and stays invisible in English (and vice versa) until someone edits
+  // it from the other language later. The service enforces "at least one"
+  // for list types and "both required" for the others.
+  @IsOptional() @IsString() @MaxLength(100)
+  codeAr?: string;
 
-  @IsString() @IsNotEmpty() @MaxLength(100)
-  codeEn!: string;
+  @IsOptional() @IsString() @MaxLength(100)
+  codeEn?: string;
 
-  @IsEnum(SettingValueType)
-  valueType!: SettingValueType;
+  // Optional/ignored for the four LIST_SETTING_TYPES categories (Task
+  // Status/Type/Priority, Project Status) — the service always treats
+  // those as bilingual-text rows and derives value fields from
+  // codeAr/codeEn automatically. Required for department/branch/
+  // project_setting, same as before.
+  @IsOptional() @IsEnum(SettingValueType)
+  valueType?: SettingValueType;
 
   // Required when valueType = STRING, ignored (should be omitted) when NUMBER.
   @ValidateIf((o) => o.valueType === SettingValueType.STRING)
@@ -82,4 +93,9 @@ export class UpdateSettingDto {
 export class QuerySettingsDto {
   @IsOptional() @IsEnum(SettingType)
   type?: SettingType;
+
+  // 'true' -> only active rows (used by dropdowns populating from the
+  // Statuses & Types lists). Omitted -> everything, as before.
+  @IsOptional() @IsString()
+  isActive?: string;
 }

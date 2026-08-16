@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/lib/auth-context';
 import {
@@ -9,23 +10,13 @@ import {
   BranchesApi,
   DepartmentsApi,
   ProjectsApi,
+  SettingsApi,
   TasksApi,
   UsersApi,
 } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import { ATTACHMENT_ACCEPT, formatFileSize, getFileTypeLabel } from '@/lib/file-kind';
-import type { Branch, Department, Project, Task, TaskType, User } from '@/lib/types';
-
-const TASK_TYPES: TaskType[] = [
-  'General',
-  'Administrative',
-  'Financial',
-  'Technical',
-  'Maintenance',
-  'HR',
-  'Procurement',
-  'Other',
-];
+import type { Branch, Department, Project, Setting, Task, User } from '@/lib/types';
 
 const COLORS = [
   { label: 'Blue', value: '#3B82F6' },
@@ -40,12 +31,15 @@ function NewTaskContent() {
   const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.role.name === 'ADMIN';
+  const locale = useLocale();
 
   const [branches, setBranches] = useState<Branch[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskTypes, setTaskTypes] = useState<Setting[]>([]);
+  const [priorities, setPriorities] = useState<Setting[]>([]);
 
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +95,9 @@ function NewTaskContent() {
     DepartmentsApi.list().then(setDepartments).catch(() => {});
     ProjectsApi.list({ limit: '100' }).then((res) => setProjects(res.items)).catch(() => {});
     UsersApi.list({ limit: '200', isActive: 'true' }).then((res) => setUsers(res.items)).catch(() => {});
+    // Built-in + admin-added custom values from Settings > "Statuses & Types".
+    SettingsApi.list('task_type', true).then(setTaskTypes).catch(() => {});
+    SettingsApi.list('task_priority', true).then(setPriorities).catch(() => {});
     // Admin can pick any task as the parent; a regular User can only pick
     // from their own tasks (GET /tasks is Admin-only).
     const fetchTasks = isAdmin ? TasksApi.list({ limit: '100' }) : TasksApi.mine({ limit: '100' });
@@ -300,17 +297,21 @@ function NewTaskContent() {
             <div>
               <label className="label">Task type</label>
               <select className="input" value={form.taskType} onChange={(e) => set('taskType', e.target.value)}>
-                {TASK_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
+                {taskTypes
+                  .filter((t) => (locale === 'ar' ? t.codeAr : t.codeEn))
+                  .map((t) => (
+                    <option key={t.id} value={t.key}>{locale === 'ar' ? t.codeAr : t.codeEn}</option>
+                  ))}
               </select>
             </div>
             <div>
               <label className="label">Level of importance</label>
               <select className="input" value={form.priority} onChange={(e) => set('priority', e.target.value)}>
-                {['Low', 'Medium', 'High', 'Critical'].map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
+                {priorities
+                  .filter((p) => (locale === 'ar' ? p.codeAr : p.codeEn))
+                  .map((p) => (
+                    <option key={p.id} value={p.key}>{locale === 'ar' ? p.codeAr : p.codeEn}</option>
+                  ))}
               </select>
             </div>
             <div>

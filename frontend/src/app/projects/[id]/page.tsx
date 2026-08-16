@@ -150,7 +150,7 @@ function ProjectDetailContent() {
                   <p className="mt-1 text-sm text-slate-600">{project.description}</p>
                 )}
               </div>
-              <StatusBadge value={project.status} />
+              <StatusBadge value={project.status} listType="project_status" />
             </div>
 
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
@@ -249,9 +249,9 @@ function ProjectDetailContent() {
                     )}
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
-                    <StatusBadge value={task.taskType} />
-                    <StatusBadge value={task.priority} />
-                    <StatusBadge value={task.status} />
+                    <StatusBadge value={task.taskType} listType="task_type" />
+                    <StatusBadge value={task.priority} listType="task_priority" />
+                    <StatusBadge value={task.status} listType="task_status" />
                   </div>
                 </div>
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 sm:grid-cols-4">

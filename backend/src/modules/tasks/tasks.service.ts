@@ -27,6 +27,8 @@ import {
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ProjectsService } from '../projects/projects.service';
 import { TaskStatus } from '../../shared/enums/task-status.enum';
+import { TaskType } from '../../shared/enums/task-type.enum';
+import { TaskPriority } from '../../shared/enums/task-priority.enum';
 import { ProjectStatus } from '../../shared/enums/project-status.enum';
 import { AuditAction } from '../../shared/enums/audit-action.enum';
 import { RoleName } from '../../shared/enums/role.enum';
@@ -88,6 +90,18 @@ export class TasksService {
     private readonly auditLogsService: AuditLogsService,
     private readonly projectsService: ProjectsService,
   ) {}
+
+  // Confirms `key` is a currently-active Settings row for the given list
+  // type (Task Status/Type/Priority/Project Status, managed from Settings
+  // > "Statuses & Types"). Every one of the original enum members is
+  // seeded as a permanent row, so this covers both built-in and any
+  // admin-added custom values with one check.
+  private async assertValidListValue(type: SettingType, key: string, label: string): Promise<void> {
+    const row = await this.settingRepo.findOne({ where: { type, key, isActive: true } });
+    if (!row) {
+      throw new BadRequestException(`"${key}" is not a valid, active ${label}`);
+    }
+  }
 
   async findAll(query: QueryTasksDto) {
     const page = query.page ?? 1;
@@ -420,6 +434,11 @@ export class TasksService {
       throw new BadRequestException('Money range minimum cannot exceed the maximum');
     }
 
+    if (dto.taskType) {
+      await this.assertValidListValue(SettingType.TASK_TYPE, dto.taskType, 'Task Type');
+    }
+    await this.assertValidListValue(SettingType.TASK_PRIORITY, dto.priority, 'Priority');
+
     const task = await this.taskRepo.save(
       this.taskRepo.create({
         titleAr: dto.titleAr,
@@ -518,6 +537,13 @@ export class TasksService {
       }
     }
 
+    if (dto.taskType) {
+      await this.assertValidListValue(SettingType.TASK_TYPE, dto.taskType, 'Task Type');
+    }
+    if (dto.priority) {
+      await this.assertValidListValue(SettingType.TASK_PRIORITY, dto.priority, 'Priority');
+    }
+
     const oldValue = { ...task };
     Object.assign(task, dto);
 
@@ -606,6 +632,8 @@ export class TasksService {
       throw new BadRequestException('Cannot change the status of an archived Task');
     }
 
+    await this.assertValidListValue(SettingType.TASK_STATUS, dto.status, 'Status');
+
     if (dto.status === TaskStatus.REOPENED) {
       return this.reopen(task, dto.reason!, actor);
     }
@@ -616,12 +644,22 @@ export class TasksService {
       }
     }
 
-    const allowedNext = ALLOWED_TRANSITIONS[task.status] ?? [];
-    if (!allowedNext.includes(dto.status)) {
-      if (task.status === TaskStatus.COMPLETED && dto.status === TaskStatus.PENDING) {
-        throw new ConflictException('A Completed Task cannot transition back to Pending');
+    // The transition map only governs the original built-in statuses,
+    // since it encodes real workflow rules (approval routing, completion,
+    // archiving). A custom status added from Settings on either side of
+    // the move skips the map — it's just a plain descriptive state with
+    // no special workflow behavior attached.
+    const fromIsBuiltIn = (Object.values(TaskStatus) as string[]).includes(task.status);
+    const toIsBuiltIn = (Object.values(TaskStatus) as string[]).includes(dto.status);
+
+    if (fromIsBuiltIn && toIsBuiltIn) {
+      const allowedNext = ALLOWED_TRANSITIONS[task.status as TaskStatus] ?? [];
+      if (!allowedNext.includes(dto.status as TaskStatus)) {
+        if (task.status === TaskStatus.COMPLETED && dto.status === TaskStatus.PENDING) {
+          throw new ConflictException('A Completed Task cannot transition back to Pending');
+        }
+        throw new ConflictException(`Cannot transition Task from ${task.status} to ${dto.status}`);
       }
-      throw new ConflictException(`Cannot transition Task from ${task.status} to ${dto.status}`);
     }
 
     // A Task that needs approval must go through PendingApproval + a

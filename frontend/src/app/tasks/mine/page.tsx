@@ -339,8 +339,8 @@ function MyTasksContent() {
                   <Link href={`/tasks/${task.id}`} className="flex items-start justify-between gap-2 hover:opacity-80">
                     <h3 className="min-w-0 truncate font-medium text-slate-800">{task.titleEn}</h3>
                     <div className="flex shrink-0 items-center gap-1">
-                      <StatusBadge value={task.priority} />
-                      <StatusBadge value={task.status} />
+                      <StatusBadge value={task.priority} listType="task_priority" />
+                      <StatusBadge value={task.status} listType="task_status" />
                     </div>
                   </Link>
 

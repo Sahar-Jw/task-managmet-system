@@ -444,7 +444,7 @@ function ProjectsContent() {
                     )}
                   </Link>
                   <div className="flex shrink-0 items-center gap-2">
-                    <StatusBadge value={p.status} />
+                    <StatusBadge value={p.status} listType="project_status" />
                     {canManage(p) && p.status !== 'Archived' && (
                       <button
                         className="btn-secondary px-3 py-1 text-xs"

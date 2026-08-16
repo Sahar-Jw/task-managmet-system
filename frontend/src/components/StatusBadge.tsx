@@ -1,3 +1,8 @@
+'use client';
+
+import { useListLabels } from '@/lib/list-labels-context';
+import type { SettingType } from '@/lib/types';
+
 const COLORS: Record<string, string> = {
   Pending: 'bg-slate-100 text-slate-700',
   Unassigned: 'bg-slate-100 text-slate-700',
@@ -27,6 +32,16 @@ const COLORS: Record<string, string> = {
   Other: 'bg-slate-100 text-slate-700',
 };
 
-export default function StatusBadge({ value }: { value: string }) {
-  return <span className={`badge ${COLORS[value] || 'bg-slate-100 text-slate-700'}`}>{value}</span>;
+/**
+ * `value` is always the stable machine key (e.g. "Active", "InProgress")
+ * — used for color lookup and never changes. `listType`, when given,
+ * resolves the *displayed* text through Settings > "Statuses & Types" in
+ * the current interface language, so edits made there show up everywhere
+ * immediately. Omit `listType` (or for a key with no matching row, e.g. a
+ * type this badge doesn't cover) to fall back to printing `value` as-is.
+ */
+export default function StatusBadge({ value, listType }: { value: string; listType?: SettingType }) {
+  const { getLabel } = useListLabels();
+  const label = listType ? getLabel(listType, value) : value;
+  return <span className={`badge ${COLORS[value] || 'bg-slate-100 text-slate-700'}`}>{label}</span>;
 }

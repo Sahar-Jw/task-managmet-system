@@ -3,13 +3,22 @@ export interface Role {
   name: 'ADMIN' | 'USER';
 }
 
-export type SettingType = 'department' | 'branch' | 'project_setting';
+export type SettingType =
+  | 'department'
+  | 'branch'
+  | 'project_setting'
+  // Bilingual lookup lists edited from Settings > "Statuses & Types".
+  | 'task_status'
+  | 'task_type'
+  | 'task_priority'
+  | 'project_status';
 export type SettingValueType = 'string' | 'number';
 
 // Setting is the single polymorphic lookup table that replaced the old
 // standalone Branch and Department tables (and also carries generic
-// Project Settings). Every row is exactly one `type`; only the value pair
-// matching `valueType` is populated (string pair OR number).
+// Project Settings, plus the Task/Project status & type lists). Every row
+// is exactly one `type`; only the value pair matching `valueType` is
+// populated (string pair OR number).
 export interface Setting {
   id: string;
   type: SettingType;
@@ -22,6 +31,9 @@ export interface Setting {
   address?: string; // branch-only
   isAdminDepartment?: boolean; // department-only
   isActive: boolean;
+  // List-type rows only (task_status/task_type/task_priority/project_status):
+  key?: string; // stable machine value stored on Task/Project rows
+  isSystem?: boolean; // built-in (relabelable, not deletable) vs admin-added custom
 }
 
 // Thin aliases kept so Task.branch / Task.department (below) read naturally

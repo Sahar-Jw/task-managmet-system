@@ -25,11 +25,11 @@ import { SettingValueType } from '../../../shared/enums/setting-value-type.enum'
 @Entity('settings')
 @Index(['type'])
 export class SettingEntity extends BaseEntity {
-  @Column({
-    type: 'enum',
-    enum: SettingType,
-    enumName: 'setting_type_enum',
-  })
+  // Plain varchar rather than a Postgres native enum, on purpose: new
+  // SettingType categories (like the TASK_STATUS/TASK_TYPE/TASK_PRIORITY/
+  // PROJECT_STATUS list types) can be introduced without an
+  // `ALTER TYPE ... ADD VALUE` migration.
+  @Column({ type: 'varchar', length: 50 })
   type!: SettingType;
 
   @Column({ name: 'code_ar', type: 'varchar', length: 100 })
@@ -37,6 +37,22 @@ export class SettingEntity extends BaseEntity {
 
   @Column({ name: 'code_en', type: 'varchar', length: 100 })
   codeEn!: string;
+
+  // Stable machine key, only used by the four LIST_SETTING_TYPES categories.
+  // This is what actually gets stored on task.status/taskType/priority and
+  // project.status — NOT the row's id — so relabeling AR/EN text never
+  // touches existing Task/Project data. Set once at creation, immutable
+  // after that. Null for department/branch/project_setting rows.
+  @Column({ type: 'varchar', length: 150, nullable: true })
+  key?: string;
+
+  // True for the rows seeded from the original TaskStatus/TaskType/
+  // TaskPriority/ProjectStatus enums — they drive real workflow logic
+  // (approval routing, completion rules, archiving) elsewhere in the app,
+  // so they can be relabeled but never deleted. Admin-added custom rows
+  // are isSystem=false and fully deletable.
+  @Column({ name: 'is_system', type: 'boolean', default: false })
+  isSystem!: boolean;
 
   @Column({
     name: 'value_type',

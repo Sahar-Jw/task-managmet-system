@@ -106,7 +106,12 @@ export class BrandingService {
     const settings = await this.getOrCreate();
     const previousUrl = settings[field];
 
-    settings[field] = undefined;
+    // IMPORTANT: must be `null`, not `undefined`. TypeORM's save() treats
+    // `undefined` properties as "leave unchanged" and omits them from the
+    // UPDATE statement entirely, so the old URL would silently stay in the
+    // DB even though this looks like it worked (response/audit log still
+    // succeed). `null` is what actually clears the nullable column.
+    settings[field] = null as unknown as undefined;
     settings.updatedById = user.id;
     const saved = await this.brandingRepo.save(settings);
 

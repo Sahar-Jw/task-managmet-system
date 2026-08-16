@@ -17,13 +17,11 @@ export class ProjectEntity extends VersionedEntity {
   @Column({ type: 'text', nullable: true })
   description?: string;
 
-  @Column({
-    type: 'enum',
-    enum: ProjectStatus,
-    enumName: 'project_status_enum',
-    default: ProjectStatus.PLANNED,
-  })
-  status!: ProjectStatus;
+  // Plain varchar storing the `key` of a Settings row (type=PROJECT_STATUS)
+  // — see Settings > "Statuses & Types". Same rationale as Task's
+  // status/taskType/priority columns.
+  @Column({ type: 'varchar', length: 50, default: ProjectStatus.PLANNED })
+  status!: string;
 
   @Column({ name: 'start_date', type: 'date', nullable: true })
   startDate?: string;

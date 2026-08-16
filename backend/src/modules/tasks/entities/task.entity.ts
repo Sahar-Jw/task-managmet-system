@@ -52,30 +52,23 @@ export class TaskEntity extends VersionedEntity {
   descriptionEn?: string;
 
   // ---------- Classification ----------
-  @Column({
-    name: 'task_type',
-    type: 'enum',
-    enum: TaskType,
-    enumName: 'task_type_enum',
-    default: TaskType.GENERAL,
-  })
-  taskType!: TaskType;
+  // These three are plain varchar (not a Postgres enum) storing the `key`
+  // of a Settings row (type=TASK_TYPE/TASK_PRIORITY/TASK_STATUS) — see
+  // Settings > "Statuses & Types". The original enum members (General,
+  // Medium, Pending, ...) are still valid values, seeded as isSystem
+  // rows; admins can add further custom values on top. Kept typed as
+  // `string` here (not TaskType/TaskPriority/TaskStatus) since the set is
+  // no longer closed, but TaskType/TaskPriority/TaskStatus constants
+  // remain valid string values to compare/assign against everywhere else
+  // in the codebase.
+  @Column({ name: 'task_type', type: 'varchar', length: 50, default: TaskType.GENERAL })
+  taskType!: string;
 
-  @Column({
-    type: 'enum',
-    enum: TaskPriority,
-    enumName: 'task_priority_enum',
-    default: TaskPriority.MEDIUM,
-  })
-  priority!: TaskPriority; // level of importance
+  @Column({ type: 'varchar', length: 50, default: TaskPriority.MEDIUM })
+  priority!: string; // level of importance
 
-  @Column({
-    type: 'enum',
-    enum: TaskStatus,
-    enumName: 'task_status_enum',
-    default: TaskStatus.PENDING,
-  })
-  status!: TaskStatus; // current status
+  @Column({ type: 'varchar', length: 50, default: TaskStatus.PENDING })
+  status!: string; // current status
 
   @Column({ type: 'varchar', length: 20, nullable: true })
   color?: string; // e.g. '#22C55E' or a named color, for calendar/board display
@@ -187,14 +180,8 @@ export class TaskEntity extends VersionedEntity {
 
   // The status this Task held right before it was archived, so it can be
   // restored to something meaningful instead of a hardcoded default.
-  @Column({
-    name: 'status_before_archive',
-    type: 'enum',
-    enum: TaskStatus,
-    enumName: 'task_status_enum',
-    nullable: true,
-  })
-  statusBeforeArchive?: TaskStatus;
+  @Column({ name: 'status_before_archive', type: 'varchar', length: 50, nullable: true })
+  statusBeforeArchive?: string;
 
   // ---------- Children owned by the Task ----------
   @OneToMany(() => TaskAssignmentEntity, (a) => a.task)

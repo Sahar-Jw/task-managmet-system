@@ -1,6 +1,5 @@
-import { IsBooleanString, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsBooleanString, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/utils/pagination.dto';
-import { ProjectStatus } from '../../../shared/enums/project-status.enum';
 
 export class CreateProjectDto {
   @IsString() @IsNotEmpty() @MaxLength(200)
@@ -19,7 +18,7 @@ export class UpdateProjectDto {
 }
 
 export class QueryProjectsDto extends PaginationQueryDto {
-  @IsOptional() @IsEnum(ProjectStatus) status?: ProjectStatus;
+  @IsOptional() @IsString() status?: string;
   @IsOptional() @IsBooleanString() excludeArchived?: string;
   @IsOptional() @IsString() @MaxLength(200) name?: string;
   @IsOptional() @IsString() @MaxLength(500) description?: string;

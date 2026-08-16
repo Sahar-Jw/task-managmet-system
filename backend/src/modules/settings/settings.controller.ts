@@ -24,7 +24,7 @@ export class SettingsController {
 
   @Get()
   findAll(@Query() query: QuerySettingsDto) {
-    return this.settingsService.findAll(query.type);
+    return this.settingsService.findAll(query.type, query.isActive);
   }
 
   @Get(':id')

@@ -2,7 +2,6 @@ import {
   IsBoolean,
   IsBooleanString,
   IsDateString,
-  IsEnum,
   IsIn,
   IsNotEmpty,
   IsNumberString,
@@ -13,153 +12,398 @@ import {
   MinLength,
   ValidateIf,
 } from 'class-validator';
-import { TaskPriority } from '../../../shared/enums/task-priority.enum';
+
 import { TaskStatus } from '../../../shared/enums/task-status.enum';
-import { TaskType } from '../../../shared/enums/task-type.enum';
 import { PaginationQueryDto } from '../../../common/utils/pagination.dto';
 
+/*
+ * ============================================================
+ * CREATE TASK
+ * ============================================================
+ */
+
 export class CreateTaskDto {
-  // ---- Bilingual title & description ----
-  @IsString() @IsNotEmpty() @MaxLength(255)
+  // ---------- Bilingual content ----------
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   titleAr!: string;
 
-  @IsString() @IsNotEmpty() @MaxLength(255)
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
   titleEn!: string;
 
-  @IsOptional() @IsString() descriptionAr?: string;
-  @IsOptional() @IsString() descriptionEn?: string;
+  @IsOptional()
+  @IsString()
+  descriptionAr?: string;
 
-  // ---- Classification ----
-  @IsOptional() @IsString() taskType?: string;
-  @IsString() priority!: string;
-  @IsOptional() @IsString() @MaxLength(20) color?: string;
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string;
 
-  // ---- Organizational placement (each independent, all optional except Department) ----
-  @IsOptional() @IsUUID() branchId?: string;
-  @IsUUID() departmentId!: string;
-  @IsOptional() @IsUUID() projectId?: string;
-  @IsOptional() @IsUUID() parentTaskId?: string;
+  // ---------- Classification ----------
 
-  // ---- People ----
-  @IsOptional() @IsUUID() assignedToId?: string; // for whom this task is
+  @IsOptional()
+  @IsString()
+  taskType?: string;
 
-  // ---- Approval ----
-  @IsOptional() @IsBoolean() needsApproval?: boolean;
-  @ValidateIf((o) => o.needsApproval === true)
-  @IsUUID() approverId?: string;
+  @IsString()
+  @IsNotEmpty()
+  priority!: string;
 
-  // ---- Money range ----
-  @IsOptional() @IsBoolean() needsBudget?: boolean;
-  @ValidateIf((o) => o.needsBudget === true && o.budgetMin !== undefined)
-  @IsNumberString() budgetMin?: string;
-  @ValidateIf((o) => o.needsBudget === true && o.budgetMax !== undefined)
-  @IsNumberString() budgetMax?: string;
-  @IsOptional() @IsString() @MaxLength(10) budgetCurrency?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  color?: string;
 
-  // ---- Dates ----
-  @IsOptional() @IsDateString() startDate?: string;
-  @IsOptional() @IsDateString() deadlineDate?: string;
+  // ---------- Organization ----------
+
+  @IsOptional()
+  @IsUUID()
+  branchId?: string;
+
+  @IsUUID()
+  departmentId!: string;
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  parentTaskId?: string;
+
+  // ---------- People ----------
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
+
+  // ---------- Approval ----------
+
+  @IsOptional()
+  @IsBoolean()
+  needsApproval?: boolean;
+
+  @ValidateIf((object) => object.needsApproval === true)
+  @IsUUID()
+  approverId?: string;
+
+  // ---------- Budget ----------
+
+  @IsOptional()
+  @IsBoolean()
+  needsBudget?: boolean;
+
+  @ValidateIf(
+    (object) =>
+      object.needsBudget === true &&
+      object.budgetMin !== undefined,
+  )
+  @IsNumberString()
+  budgetMin?: string;
+
+  @ValidateIf(
+    (object) =>
+      object.needsBudget === true &&
+      object.budgetMax !== undefined,
+  )
+  @IsNumberString()
+  budgetMax?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  budgetCurrency?: string;
+
+  // ---------- Dates ----------
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsDateString()
+  deadlineDate?: string;
 }
+
+/*
+ * ============================================================
+ * UPDATE TASK
+ *
+ * undefined = keep existing value
+ * null      = explicitly clear value
+ * ============================================================
+ */
 
 export class UpdateTaskDto {
-  @IsOptional() @IsString() @MaxLength(255) titleAr?: string;
-  @IsOptional() @IsString() @MaxLength(255) titleEn?: string;
-  @IsOptional() @IsString() descriptionAr?: string;
-  @IsOptional() @IsString() descriptionEn?: string;
+  // ---------- Content ----------
 
-  @IsOptional() @IsString() taskType?: string;
-  @IsOptional() @IsString() priority?: string;
-  @IsOptional() @IsString() @MaxLength(20) color?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  titleAr?: string | null;
 
-  @IsOptional() @IsUUID() branchId?: string;
-  @IsOptional() @IsUUID() departmentId?: string;
-  @IsOptional() @IsUUID() projectId?: string;
-  @IsOptional() @IsUUID() parentTaskId?: string;
-  @IsOptional() @IsUUID() assignedToId?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  titleEn?: string | null;
 
-  @IsOptional() @IsBoolean() needsApproval?: boolean;
-  @IsOptional() @IsUUID() approverId?: string;
+  @IsOptional()
+  @IsString()
+  descriptionAr?: string | null;
 
-  @IsOptional() @IsBoolean() needsBudget?: boolean;
-  @IsOptional() @IsNumberString() budgetMin?: string;
-  @IsOptional() @IsNumberString() budgetMax?: string;
-  @IsOptional() @IsString() @MaxLength(10) budgetCurrency?: string;
+  @IsOptional()
+  @IsString()
+  descriptionEn?: string | null;
 
-  @IsOptional() @IsDateString() startDate?: string;
-  @IsOptional() @IsDateString() deadlineDate?: string;
+  // ---------- Classification ----------
+
+  @IsOptional()
+  @IsString()
+  taskType?: string | null;
+
+  @IsOptional()
+  @IsString()
+  priority?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  color?: string | null;
+
+  // ---------- Organization ----------
+
+  @IsOptional()
+  @IsUUID()
+  branchId?: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string | null;
+
+  @IsOptional()
+  @IsUUID()
+  parentTaskId?: string | null;
+
+  // ---------- People ----------
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string | null;
+
+  // ---------- Approval ----------
+
+  @IsOptional()
+  @IsBoolean()
+  needsApproval?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  approverId?: string | null;
+
+  // ---------- Budget ----------
+
+  @IsOptional()
+  @IsBoolean()
+  needsBudget?: boolean;
+
+  @IsOptional()
+  @IsNumberString()
+  budgetMin?: string | null;
+
+  @IsOptional()
+  @IsNumberString()
+  budgetMax?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10)
+  budgetCurrency?: string | null;
+
+  // ---------- Dates ----------
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string | null;
+
+  @IsOptional()
+  @IsDateString()
+  deadlineDate?: string | null;
 }
 
-/** Creator/Admin toggles whether the assigned User(s) may download attachments. */
+/*
+ * ============================================================
+ * ATTACHMENT PERMISSIONS
+ * ============================================================
+ */
+
 export class UpdateAttachmentPermissionsDto {
   @IsBoolean()
   assigneeCanDownloadAttachments!: boolean;
 }
 
-/** Reason required for FINISHED/Reopened transitions. */
-export class UpdateTaskStatusDto {
-  @IsString() status!: string;
+/*
+ * ============================================================
+ * STATUS
+ * ============================================================
+ */
 
-  @ValidateIf((o) => [TaskStatus.FINISHED, TaskStatus.REOPENED].includes(o.status))
-  @IsString() @MinLength(10)
+export class UpdateTaskStatusDto {
+  @IsString()
+  status!: string;
+
+  @ValidateIf((object) =>
+    [
+      TaskStatus.FINISHED,
+      TaskStatus.REOPENED,
+    ].includes(object.status),
+  )
+  @IsString()
+  @MinLength(10)
   reason?: string;
 }
 
-/** Admin/approver decides on a Task that needs approval. */
-export class DecideTaskApprovalDto {
-  @IsBoolean() approve!: boolean;
+/*
+ * ============================================================
+ * APPROVAL
+ * ============================================================
+ */
 
-  @ValidateIf((o) => o.approve === false)
-  @IsString() @MinLength(5)
+export class DecideTaskApprovalDto {
+  @IsBoolean()
+  approve!: boolean;
+
+  @ValidateIf((object) => object.approve === false)
+  @IsString()
+  @MinLength(5)
   rejectionReason?: string;
 }
 
-export class QueryTasksDto extends PaginationQueryDto {
-  @IsOptional() @IsString() status?: string;
-  @IsOptional() @IsBooleanString() excludeArchived?: string;
-  @IsOptional() @IsUUID() branchId?: string;
-  @IsOptional() @IsUUID() projectId?: string;
-  @IsOptional() @IsUUID() departmentId?: string;
-  @IsOptional() @IsUUID() createdById?: string;
-  @IsOptional() @IsUUID() assignedToId?: string;
-  @IsOptional() @IsUUID() assigneeId?: string; // legacy multi-assignee filter (task-assignments)
-  @IsOptional() @IsString() taskType?: string;
-  @IsOptional() @IsString() priority?: string;
-  @IsOptional() @IsDateString() dueDateFrom?: string;
-  @IsOptional() @IsDateString() dueDateTo?: string;
+/*
+ * ============================================================
+ * GENERAL TASK QUERY
+ * ============================================================
+ */
 
-  // Free-text match against title/description (both languages) — same
-  // behavior as the "My Tasks" search filter.
-  @IsOptional() @IsString() @MaxLength(200) search?: string;
+export class QueryTasksDto extends PaginationQueryDto {
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  excludeArchived?: string;
+
+  @IsOptional()
+  @IsUUID()
+  branchId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  departmentId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  createdById?: string;
+
+  @IsOptional()
+  @IsUUID()
+  assignedToId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  assigneeId?: string;
+
+  @IsOptional()
+  @IsString()
+  taskType?: string;
+
+  @IsOptional()
+  @IsString()
+  priority?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDateFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  dueDateTo?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
 }
 
-/**
- * "My Tasks" — everything assigned to the current user, either via the
- * single `assignedTo` field or a `task_assignments` row, with filters for
- * importance (priority), rating (average score left on the task) and
- * upcoming deadline.
+/*
+ * ============================================================
+ * MY TASKS / ASSIGNED BY ME QUERY
+ * ============================================================
  */
+
 export class QueryMyTasksDto extends PaginationQueryDto {
-  @IsOptional() @IsString() status?: string;
+  @IsOptional()
+  @IsString()
+  status?: string;
 
-  @IsOptional() @IsString() taskType?: string;
+  @IsOptional()
+  @IsString()
+  taskType?: string;
 
-  // Importance
-  @IsOptional() @IsString() priority?: string;
+  @IsOptional()
+  @IsString()
+  priority?: string;
 
-  // Optional project scope (e.g. viewing "my tasks" within one Project)
-  @IsOptional() @IsUUID() projectId?: string;
+  @IsOptional()
+  @IsUUID()
+  projectId?: string;
 
-  // Free-text match against title/description (both languages)
-  @IsOptional() @IsString() @MaxLength(200) search?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  search?: string;
 
-  // Rating: only tasks whose average rating is >= this value (1-5)
-  @IsOptional() @IsNumberString() minRating?: string;
+  @IsOptional()
+  @IsNumberString()
+  minRating?: string;
 
-  // Upcoming deadline
-  @IsOptional() @IsBooleanString() upcomingOnly?: string; // deadline >= today & not done
-  @IsOptional() @IsDateString() deadlineFrom?: string;
-  @IsOptional() @IsDateString() deadlineTo?: string;
+  @IsOptional()
+  @IsBooleanString()
+  upcomingOnly?: string;
 
-  @IsOptional() @IsIn(['deadline', 'priority', 'rating', 'createdAt']) sortBy?: string;
-  @IsOptional() @IsIn(['asc', 'desc']) sortDir?: string;
+  @IsOptional()
+  @IsDateString()
+  deadlineFrom?: string;
+
+  @IsOptional()
+  @IsDateString()
+  deadlineTo?: string;
+
+  @IsOptional()
+  @IsIn([
+    'deadline',
+    'priority',
+    'rating',
+    'createdAt',
+  ])
+  sortBy?: string;
+
+  @IsOptional()
+  @IsIn([
+    'asc',
+    'desc',
+  ])
+  sortDir?: string;
 }

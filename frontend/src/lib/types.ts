@@ -197,11 +197,28 @@ export type AssignmentStatus =
 export interface TaskAssignment {
   id: string;
   taskId: string;
+
   assigneeId: string;
+  assignedById: string;
+
+  dueDate?: string | null;
+
+  status:
+    | 'PendingAcceptance'
+    | 'Accepted'
+    | 'Rejected'
+    | 'Reassigned';
+
+  rejectionReason?: string | null;
+
+  acceptedAt?: string | null;
+  rejectedAt?: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+
   assignee?: User;
-  status: AssignmentStatus;
-  dueDate?: string;
-  rejectionReason?: string;
+  assignedBy?: User;
 }
 
 export interface TaskComment {

@@ -566,55 +566,11 @@ export class ProjectsService {
         : 'ASC';
 
 
-    if (
-  query.sortBy ===
-    'startDate' ||
-  query.sortBy ===
-    'endDate'
-) {
-  /*
-   * MySQL/MariaDB replacement for NULLS LAST.
-   */
-  qb.orderBy(
-    `
-      CASE
-        WHEN ${sortBy} IS NULL
-        THEN 1
-        ELSE 0
-      END
-    `,
-    'ASC',
-  );
+    qb.orderBy(
+      sortBy,
+      sortDir,
+    );
 
-  qb.addOrderBy(
-    sortBy,
-    sortDir,
-  );
-} else {
-  qb.orderBy(
-    sortBy,
-    sortDir,
-  );
-}
-
-
-/*
- * Stable secondary ordering.
- */
-if (
-  sortBy !==
-  'project.name'
-) {
-  qb.addOrderBy(
-    'project.name',
-    'ASC',
-  );
-}
-
-
-    /*
-     * Stable secondary ordering.
-     */
     if (
       sortBy !==
       'project.name'
@@ -624,7 +580,6 @@ if (
         'ASC',
       );
     }
-
 
     /*
      * ========================================================

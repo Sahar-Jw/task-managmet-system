@@ -460,6 +460,15 @@ export class AuditLogsService {
           'actor',
         );
 
+    qb.andWhere(
+      'log.action NOT IN (:...hiddenAccountActions)',
+      {
+        hiddenAccountActions: [
+          AuditAction.ACCOUNT_LOCKED,
+          AuditAction.ACCOUNT_UNLOCKED,
+        ],
+      },
+    );
 
     /*
      * ========================================================
@@ -743,6 +752,10 @@ export class AuditLogsService {
       actions:
         Object.values(
           AuditAction,
+        ).filter(
+          (action) =>
+            action !== AuditAction.ACCOUNT_LOCKED &&
+            action !== AuditAction.ACCOUNT_UNLOCKED,
         ),
     };
   }

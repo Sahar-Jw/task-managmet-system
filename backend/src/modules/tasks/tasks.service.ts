@@ -1127,50 +1127,10 @@ export class TasksService {
         : 'DESC';
 
 
-    if (
-  query.sortBy ===
-    'deadline' ||
-  query.sortBy ===
-    'startDate'
-) {
-  /*
-   * MySQL / MariaDB does not support:
-   *
-   * ORDER BY ... NULLS LAST
-   *
-   * Put nulls at the bottom explicitly.
-   */
-  qb.orderBy(
-    `CASE
-      WHEN ${sortColumn} IS NULL
-      THEN 1
-      ELSE 0
-    END`,
-    'ASC',
-  );
-
-  qb.addOrderBy(
-    sortColumn,
-    sortDirection,
-  );
-} else {
-  qb.orderBy(
-    sortColumn,
-    sortDirection,
-  );
-}
-
-
-if (
-  sortColumn !==
-  'task.createdAt'
-) {
-  qb.addOrderBy(
-    'task.createdAt',
-    'DESC',
-  );
-}
-
+    qb.orderBy(
+      sortColumn,
+      sortDirection,
+    );
 
     if (
       sortColumn !==
@@ -1181,7 +1141,6 @@ if (
         'DESC',
       );
     }
-
 
     qb
       .skip(
@@ -1459,6 +1418,19 @@ if (
             TaskStatus.ARCHIVED,
           ],
         },
+      );
+  }
+
+
+  if (
+    query.overdueOnly ===
+      'true'
+  ) {
+    idQb.andWhere('task.deadlineDate IS NOT NULL')
+      .andWhere('task.deadlineDate < CURRENT_DATE')
+      .andWhere(
+        'task.status NOT IN (:...overdueDoneStatuses)',
+        { overdueDoneStatuses: [TaskStatus.COMPLETED, TaskStatus.FINISHED, TaskStatus.ARCHIVED] },
       );
   }
 

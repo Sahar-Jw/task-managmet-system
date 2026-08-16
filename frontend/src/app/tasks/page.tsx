@@ -660,7 +660,11 @@ function TasksContent() {
   const [
     overdueOnly,
     setOverdueOnly,
-  ] = useState(false);
+  ] = useState(
+    searchParams.get(
+      'overdueOnly',
+    ) === 'true',
+  );
 
 
   const [

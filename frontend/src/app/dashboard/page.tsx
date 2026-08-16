@@ -1505,7 +1505,9 @@ function DashboardContent() {
                 : 'Nothing overdue'
           }
           href={
-            taskListHref()
+            taskListHref(
+              'overdueOnly=true',
+            )
           }
           tone="red"
           icon={

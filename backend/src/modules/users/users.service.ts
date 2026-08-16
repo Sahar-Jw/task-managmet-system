@@ -283,10 +283,14 @@ export class UsersService {
     ) {
       qb.addOrderBy(
         'user.fullName',
-        'ASC',
+        sortDirection,
       );
     }
 
+    qb.addOrderBy(
+      'user.id',
+      sortDirection,
+    );
 
     qb
       .skip(
@@ -548,7 +552,12 @@ export class UsersService {
         saved.id,
 
       action:
-        AuditAction.UPDATE,
+        dto.isActive !== undefined &&
+        dto.isActive !== oldValue.isActive
+          ? saved.isActive
+            ? AuditAction.ACTIVATE
+            : AuditAction.DEACTIVATE
+          : AuditAction.UPDATE,
 
       oldValue: {
         ...oldValue,
@@ -716,14 +725,22 @@ export class UsersService {
         user.id,
 
       action:
-        AuditAction.DELETE,
+        AuditAction.DEACTIVATE,
 
       oldValue: {
+        fullName:
+          user.fullName,
+        email:
+          user.email,
         isActive:
           true,
       },
 
       newValue: {
+        fullName:
+          user.fullName,
+        email:
+          user.email,
         isActive:
           false,
       },

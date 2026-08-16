@@ -629,6 +629,15 @@ function MyTasksContent() {
       false,
     );
 
+  const [
+    overdueOnly,
+    setOverdueOnly,
+  ] =
+    useState(
+      searchParams.get(
+        'overdueOnly',
+      ) === 'true',
+    );
 
   const [
     deadlineFrom,
@@ -1211,6 +1220,12 @@ function MyTasksContent() {
               'true';
           }
 
+          if (
+            overdueOnly
+          ) {
+            params.overdueOnly =
+              'true';
+          }
 
           if (
             debouncedSearch
@@ -1300,6 +1315,7 @@ function MyTasksContent() {
         assigneeId,
         minRating,
         upcomingOnly,
+        overdueOnly,
         debouncedSearch,
         deadlineFrom,
         deadlineTo,
@@ -1328,6 +1344,7 @@ function MyTasksContent() {
     assigneeId,
     minRating,
     upcomingOnly,
+    overdueOnly,
     debouncedSearch,
     deadlineFrom,
     deadlineTo,
@@ -1350,6 +1367,7 @@ function MyTasksContent() {
       ) ||
       minRating ||
       upcomingOnly ||
+      overdueOnly ||
       deadlineFrom ||
       deadlineTo,
     );
@@ -1388,6 +1406,8 @@ function MyTasksContent() {
       ),
 
       upcomingOnly,
+
+      overdueOnly,
 
       Boolean(
         deadlineFrom ||
@@ -1428,6 +1448,10 @@ function MyTasksContent() {
     );
 
     setUpcomingOnly(
+      false,
+    );
+
+    setOverdueOnly(
       false,
     );
 

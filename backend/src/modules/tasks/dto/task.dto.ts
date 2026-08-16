@@ -519,6 +519,9 @@ export class QueryMyTasksDto
   @IsBooleanString()
   upcomingOnly?: string;
 
+  @IsOptional()
+  @IsBooleanString()
+  overdueOnly?: string;
 
   @IsOptional()
   @IsDateString()

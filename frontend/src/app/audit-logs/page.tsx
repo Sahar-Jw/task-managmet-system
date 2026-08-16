@@ -122,6 +122,16 @@ const ACTION_LABELS:
     ar: 'فتح الحساب',
   },
 
+  Activate: {
+    en: 'Activated',
+    ar: 'فعّل',
+  },
+
+  Deactivate: {
+    en: 'Deactivated',
+    ar: 'عطّل',
+  },
+
   Restore: {
     en: 'Restored',
     ar: 'استعادة',
@@ -163,6 +173,7 @@ function actionClasses(
   switch (action) {
     case 'Create':
     case 'Restore':
+    case 'Activate':
       return 'bg-green-50 text-green-700 ring-green-100';
 
     case 'Update':
@@ -179,6 +190,7 @@ function actionClasses(
     case 'Reject':
     case 'LoginFailed':
     case 'AccountLocked':
+    case 'Deactivate':
       return 'bg-red-50 text-red-700 ring-red-100';
 
     case 'Delete':
@@ -378,6 +390,21 @@ function AuditItem({
       .toUpperCase() ||
     'S';
 
+  const oldValue = log.oldValue ?? {};
+  const newValue = log.newValue ?? {};
+  const targetUserName =
+    log.entityType === 'User'
+      ? String(newValue.fullName || oldValue.fullName || '').trim()
+      : '';
+  const changedUserFields =
+    log.entityType === 'User' && log.action === 'Update'
+      ? Object.keys({ ...oldValue, ...newValue }).filter(
+          (key) =>
+            !['passwordHash', 'updatedAt', 'createdAt'].includes(key) &&
+            JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
+        )
+      : [];
+
   return (
     <article
       className="
@@ -486,11 +513,21 @@ function AuditItem({
               {' '}
 
               <span className="font-medium text-slate-800">
-                {entityLabel(
-                  log.entityType,
-                  isArabic,
-                )}
+                {targetUserName
+                  ? targetUserName
+                  : entityLabel(
+                      log.entityType,
+                      isArabic,
+                    )}
               </span>
+
+              {changedUserFields.length > 0 && (
+                <span className="text-slate-500">
+                  {' '}
+                  ({isArabic ? 'تم تغيير: ' : 'changed: '}
+                  {changedUserFields.join(', ')})
+                </span>
+              )}
             </div>
 
 

@@ -24,3 +24,5 @@ jobs:
           git add .github/workflows/apply-requested-fixes.yml
           git commit -m "chore: trigger requested fixes"
           git push origin main
+
+# one-time trigger

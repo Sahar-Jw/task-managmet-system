@@ -57,32 +57,40 @@ type PageTab =
 
 
 type FormState = {
-  code: string;
+  code:
+    string;
 
   valueType:
     SettingValueType;
 
-  value: string;
+  value:
+    string;
 
-  valueNumber: string;
+  valueNumber:
+    string;
 
-  address: string;
+  address:
+    string;
 };
 
 
 const EMPTY_FORM:
   FormState = {
-    code: '',
+  code:
+    '',
 
-    valueType:
-      'string',
+  valueType:
+    'string',
 
-    value: '',
+  value:
+    '',
 
-    valueNumber: '',
+  valueNumber:
+    '',
 
-    address: '',
-  };
+  address:
+    '',
+};
 
 
 /*
@@ -154,7 +162,17 @@ function ThemeIcon() {
       className="h-5 w-5"
     >
       <path
-        d="M12 4a8 8 0 1 0 0 16h1.1a1.8 1.8 0 0 0 0-3.6H12a1.8 1.8 0 0 1 0-3.6h2.8A5.2 5.2 0 0 0 20 7.6C20 5.6 16.6 4 12 4Z"
+        d="
+          M12 4
+          a8 8 0 1 0 0 16
+          h1.1
+          a1.8 1.8 0 0 0 0-3.6
+          H12
+          a1.8 1.8 0 0 1 0-3.6
+          h2.8
+          A5.2 5.2 0 0 0 20 7.6
+          C20 5.6 16.6 4 12 4Z
+        "
         strokeWidth="1.7"
       />
 
@@ -198,10 +216,69 @@ function ListsIcon() {
       />
 
       <path
-        d="m4 6 .7.7L6 5.4M4 12l.7.7L6 11.4M4 18l.7.7L6 17.4"
+        d="
+          m4 6 .7.7L6 5.4
+          M4 12l.7.7L6 11.4
+          M4 18l.7.7L6 17.4
+        "
         strokeWidth="1.7"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
+function WorkflowIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      className="h-5 w-5"
+    >
+      <circle
+        cx="6"
+        cy="6"
+        r="2"
+        strokeWidth="1.7"
+      />
+
+      <circle
+        cx="18"
+        cy="12"
+        r="2"
+        strokeWidth="1.7"
+      />
+
+      <circle
+        cx="6"
+        cy="18"
+        r="2"
+        strokeWidth="1.7"
+      />
+
+      <path
+        d="
+          M8 6h3
+          a3 3 0 0 1 3 3
+          a3 3 0 0 0 3 3
+          h-1
+        "
+        strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+
+      <path
+        d="
+          M8 18h3
+          a3 3 0 0 0 3-3
+          a3 3 0 0 1 3-3
+          h-1
+        "
+        strokeWidth="1.7"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -226,7 +303,7 @@ function DataSettingsTab() {
 
   /*
    * ==========================================================
-   * DATA TYPE
+   * TYPE
    * ==========================================================
    */
 
@@ -267,7 +344,9 @@ function DataSettingsTab() {
     error,
     setError,
   ] =
-    useState('');
+    useState(
+      '',
+    );
 
 
   const [
@@ -289,9 +368,9 @@ function DataSettingsTab() {
     form,
     setForm,
   ] =
-    useState<FormState>(
-      EMPTY_FORM,
-    );
+    useState<FormState>({
+      ...EMPTY_FORM,
+    });
 
 
   const [
@@ -322,16 +401,18 @@ function DataSettingsTab() {
     editForm,
     setEditForm,
   ] =
-    useState<FormState>(
-      EMPTY_FORM,
-    );
+    useState<FormState>({
+      ...EMPTY_FORM,
+    });
 
 
   const [
     editError,
     setEditError,
   ] =
-    useState('');
+    useState(
+      '',
+    );
 
 
   const [
@@ -345,7 +426,7 @@ function DataSettingsTab() {
 
   /*
    * ==========================================================
-   * ACTIONS
+   * ACTION STATE
    * ==========================================================
    */
 
@@ -382,7 +463,9 @@ function DataSettingsTab() {
       true,
     );
 
-    setError('');
+    setError(
+      '',
+    );
 
 
     try {
@@ -415,44 +498,45 @@ function DataSettingsTab() {
   }
 
 
-  useEffect(() => {
-    load(
+  useEffect(
+    () => {
+      load(
+        type,
+      );
+
+
+      setForm({
+        ...EMPTY_FORM,
+      });
+
+
+      setEditingRow(
+        null,
+      );
+
+
+      setPage(
+        1,
+      );
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [
       type,
-    );
-
-
-    setForm({
-      ...EMPTY_FORM,
-    });
-
-
-    setEditingRow(
-      null,
-    );
-
-
-    setPage(
-      1,
-    );
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    type,
-  ]);
+    ],
+  );
 
 
   /*
    * ==========================================================
-   * LANGUAGE VISIBILITY
+   * LANGUAGE FILTER
    * ==========================================================
    *
-   * English-only Department:
-   * visible only in English.
+   * English interface:
+   * show only records containing English data.
    *
-   * Arabic-only Department:
-   * visible only in Arabic.
-   *
-   * Same logic for Branch.
+   * Arabic interface:
+   * show only records containing Arabic data.
    * ==========================================================
    */
 
@@ -471,6 +555,7 @@ function DataSettingsTab() {
                     ?.trim(),
             ),
         ),
+
       [
         rows,
         isArabic,
@@ -490,6 +575,7 @@ function DataSettingsTab() {
         visibleRows.length /
           PAGE_SIZE,
       ),
+
       1,
     );
 
@@ -507,24 +593,27 @@ function DataSettingsTab() {
     );
 
 
-  useEffect(() => {
-    if (
-      page >
-      totalPages
-    ) {
-      setPage(
-        totalPages,
-      );
-    }
-  }, [
-    page,
-    totalPages,
-  ]);
+  useEffect(
+    () => {
+      if (
+        page >
+        totalPages
+      ) {
+        setPage(
+          totalPages,
+        );
+      }
+    },
+    [
+      page,
+      totalPages,
+    ],
+  );
 
 
   /*
    * ==========================================================
-   * LABEL HELPERS
+   * LABELS
    * ==========================================================
    */
 
@@ -551,7 +640,8 @@ function DataSettingsTab() {
 
 
   function displayCode(
-    row: Setting,
+    row:
+      Setting,
   ) {
     return isArabic
       ? row.codeAr
@@ -560,7 +650,8 @@ function DataSettingsTab() {
 
 
   function displayValue(
-    row: Setting,
+    row:
+      Setting,
   ) {
     if (
       row.valueType ===
@@ -655,7 +746,9 @@ function DataSettingsTab() {
     event.preventDefault();
 
 
-    setError('');
+    setError(
+      '',
+    );
 
 
     const validation =
@@ -677,63 +770,62 @@ function DataSettingsTab() {
 
     const payload:
       CreateSettingPayload = {
-        type,
+      type,
 
-        valueType:
-          form.valueType,
+      valueType:
+        form.valueType,
 
-        /*
-         * Only current language.
-         */
-        ...(isArabic
+
+      /*
+       * Only save the currently selected language.
+       */
+      ...(isArabic
+        ? {
+            codeAr:
+              form.code.trim(),
+          }
+        : {
+            codeEn:
+              form.code.trim(),
+          }),
+
+
+      /*
+       * String values are language-specific.
+       *
+       * Number values are shared.
+       */
+      ...(form.valueType ===
+      'string'
+        ? isArabic
           ? {
-              codeAr:
-                form.code.trim(),
+              valueAr:
+                form.value.trim(),
             }
           : {
-              codeEn:
-                form.code.trim(),
-            }),
-
-
-        /*
-         * String value only exists
-         * in current language.
-         */
-        ...(form.valueType ===
-        'string'
-          ? isArabic
-            ? {
-                valueAr:
-                  form.value.trim(),
-              }
-            : {
-                valueEn:
-                  form.value.trim(),
-              }
-          : {
-              /*
-               * Numeric values are shared.
-               */
-              valueNumber:
-                Number(
-                  form.valueNumber,
-                ),
-            }),
-
-
-        /*
-         * Branch only.
-         */
-        ...(type ===
-        'branch'
-          ? {
-              address:
-                form.address.trim() ||
-                undefined,
+              valueEn:
+                form.value.trim(),
             }
-          : {}),
-      };
+        : {
+            valueNumber:
+              Number(
+                form.valueNumber,
+              ),
+          }),
+
+
+      /*
+       * Address exists only for Branch.
+       */
+      ...(type ===
+      'branch'
+        ? {
+            address:
+              form.address.trim() ||
+              undefined,
+          }
+        : {}),
+    };
 
 
     setCreating(
@@ -781,9 +873,12 @@ function DataSettingsTab() {
    */
 
   function startEdit(
-    row: Setting,
+    row:
+      Setting,
   ) {
-    setEditError('');
+    setEditError(
+      '',
+    );
 
 
     setEditingRow(
@@ -842,7 +937,11 @@ function DataSettingsTab() {
       null,
     );
 
-    setEditError('');
+
+    setEditError(
+      '',
+    );
+
 
     setEditForm({
       ...EMPTY_FORM,
@@ -885,19 +984,23 @@ function DataSettingsTab() {
       true,
     );
 
-    setEditError('');
+
+    setEditError(
+      '',
+    );
 
 
     try {
       await SettingsApi.update(
         editingRow.id,
+
         {
           valueType:
             editForm.valueType,
 
 
           /*
-           * Only edit active language.
+           * Only edit the active language.
            */
           ...(isArabic
             ? {
@@ -975,18 +1078,23 @@ function DataSettingsTab() {
    */
 
   async function toggleActive(
-    row: Setting,
+    row:
+      Setting,
   ) {
     setBusyId(
       row.id,
     );
 
-    setError('');
+
+    setError(
+      '',
+    );
 
 
     try {
       await SettingsApi.update(
         row.id,
+
         {
           isActive:
             !row.isActive,
@@ -1028,21 +1136,22 @@ function DataSettingsTab() {
 
   /*
    * ==========================================================
-   * DELETE / ARCHIVE
-   * ==========================================================
-   *
-   * SettingsApi.remove() is a soft delete in the backend.
+   * DELETE
    * ==========================================================
    */
 
   async function remove(
-    row: Setting,
+    row:
+      Setting,
   ) {
     setBusyId(
       row.id,
     );
 
-    setError('');
+
+    setError(
+      '',
+    );
 
 
     try {
@@ -1100,20 +1209,49 @@ function DataSettingsTab() {
     >
       {/*
        * ======================================================
-       * TYPE SWITCHER
+       * DATA TYPE
        * ======================================================
        */}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <section
+        className="
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          p-5
+        "
+      >
+        <div
+          className="
+            flex
+            flex-col
+            gap-4
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+          "
+        >
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
+            <h2
+              className="
+                text-base
+                font-semibold
+                text-slate-900
+              "
+            >
               {isArabic
                 ? 'بيانات المؤسسة'
                 : 'Organization data'}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p
+              className="
+                mt-1
+                text-sm
+                text-slate-500
+              "
+            >
               {isArabic
                 ? 'إدارة الأقسام والفروع التي تظهر في أنحاء النظام.'
                 : 'Manage the departments and branches used throughout the system.'}
@@ -1121,7 +1259,14 @@ function DataSettingsTab() {
           </div>
 
 
-          <div className="inline-flex rounded-xl bg-slate-100 p-1">
+          <div
+            className="
+              inline-flex
+              rounded-xl
+              bg-slate-100
+              p-1
+            "
+          >
             <button
               type="button"
               onClick={() =>
@@ -1129,12 +1274,20 @@ function DataSettingsTab() {
                   'department',
                 )
               }
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                type ===
-                'department'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500'
-              }`}
+              className={`
+                rounded-lg
+                px-4
+                py-2
+                text-sm
+                font-medium
+                transition
+                ${
+                  type ===
+                  'department'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }
+              `}
             >
               {isArabic
                 ? 'الأقسام'
@@ -1149,12 +1302,20 @@ function DataSettingsTab() {
                   'branch',
                 )
               }
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                type ===
-                'branch'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500'
-              }`}
+              className={`
+                rounded-lg
+                px-4
+                py-2
+                text-sm
+                font-medium
+                transition
+                ${
+                  type ===
+                  'branch'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }
+              `}
             >
               {isArabic
                 ? 'الفروع'
@@ -1167,34 +1328,78 @@ function DataSettingsTab() {
 
       {/*
        * ======================================================
-       * CREATE + INFO
+       * CREATE + LANGUAGE INFO
        * ======================================================
        */}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_320px]">
+      <div
+        className="
+          grid
+          gap-6
+          xl:grid-cols-[minmax(0,1fr)_320px]
+        "
+      >
         <form
           onSubmit={
             createRow
           }
-          className="rounded-2xl border border-slate-200 bg-white"
+          className="
+            overflow-hidden
+            rounded-2xl
+            border
+            border-slate-200
+            bg-white
+          "
         >
-          <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-            <h2 className="text-base font-semibold text-slate-900">
+          <div
+            className="
+              border-b
+              border-slate-100
+              px-5
+              py-4
+              sm:px-6
+            "
+          >
+            <h2
+              className="
+                text-base
+                font-semibold
+                text-slate-900
+              "
+            >
               {isArabic
                 ? `إضافة ${selectedTypeName}`
                 : `Add ${selectedTypeName}`}
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p
+              className="
+                mt-1
+                text-sm
+                text-slate-500
+              "
+            >
               {isArabic
-                ? 'سيتم حفظ النص باللغة العربية فقط لأن لغة الواجهة الحالية هي العربية.'
+                ? 'سيتم حفظ البيانات العربية فقط لأن لغة الواجهة الحالية هي العربية.'
                 : 'This entry will be saved in English only because the interface is currently English.'}
             </p>
           </div>
 
 
-          <div className="space-y-5 p-5 sm:p-6">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div
+            className="
+              space-y-5
+              p-5
+              sm:p-6
+            "
+          >
+            <div
+              className="
+                grid
+                gap-4
+                sm:grid-cols-2
+              "
+            >
               <div>
                 <label className="label">
                   {isArabic
@@ -1380,7 +1585,12 @@ function DataSettingsTab() {
                     ? 'العنوان'
                     : 'Address'}{' '}
 
-                  <span className="font-normal text-slate-400">
+                  <span
+                    className="
+                      font-normal
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? '(اختياري)'
                       : '(optional)'}
@@ -1412,41 +1622,70 @@ function DataSettingsTab() {
 
 
             {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                {
-                  error
-                }
+              <div
+                className="
+                  rounded-xl
+                  border
+                  border-red-200
+                  bg-red-50
+                  p-3
+                  text-sm
+                  text-red-700
+                "
+              >
+                {error}
               </div>
             )}
 
 
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={
-                creating
-              }
+            <div
+              className="
+                flex
+                justify-end
+              "
             >
-              {creating
-                ? isArabic
-                  ? 'جاري الإضافة…'
-                  : 'Adding…'
-                : isArabic
-                  ? `إضافة ${selectedTypeName}`
-                  : `Add ${selectedTypeName}`}
-            </button>
+              <button
+                type="submit"
+                className="btn-primary"
+                disabled={
+                  creating
+                }
+              >
+                {creating
+                  ? isArabic
+                    ? 'جاري الإضافة…'
+                    : 'Adding…'
+                  : isArabic
+                    ? `إضافة ${selectedTypeName}`
+                    : `Add ${selectedTypeName}`}
+              </button>
+            </div>
           </div>
         </form>
 
 
-        {/*
-         * ====================================================
-         * LANGUAGE INFO
-         * ====================================================
-         */}
-
-        <aside className="rounded-2xl border border-brand-100 bg-brand-50/50 p-5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-brand-700 shadow-sm">
+        <aside
+          className="
+            rounded-2xl
+            border
+            border-brand-100
+            bg-brand-50/50
+            p-5
+          "
+        >
+          <div
+            className="
+              flex
+              h-10
+              w-10
+              items-center
+              justify-center
+              rounded-xl
+              bg-white
+              text-brand-700
+              shadow-sm
+            "
+          >
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -1461,28 +1700,53 @@ function DataSettingsTab() {
               />
 
               <path
-                d="M4.5 12h15M12 4c2 2.2 3 4.9 3 8s-1 5.8-3 8M12 4c-2 2.2-3 4.9-3 8s1 5.8 3 8"
+                d="
+                  M4.5 12h15
+                  M12 4c2 2.2 3 4.9 3 8s-1 5.8-3 8
+                  M12 4c-2 2.2-3 4.9-3 8s1 5.8 3 8
+                "
                 strokeWidth="1.5"
               />
             </svg>
           </div>
 
 
-          <h3 className="mt-4 text-sm font-semibold text-slate-900">
+          <h3
+            className="
+              mt-4
+              text-sm
+              font-semibold
+              text-slate-900
+            "
+          >
             {isArabic
               ? 'منطق اللغة'
               : 'Language behavior'}
           </h3>
 
 
-          <p className="mt-2 text-sm leading-6 text-slate-600">
+          <p
+            className="
+              mt-2
+              text-sm
+              leading-6
+              text-slate-600
+            "
+          >
             {isArabic
-              ? 'أنت ترى وتحرر حالياً البيانات التي تحتوي على نسخة عربية فقط. البيانات الإنجليزية فقط لن تظهر هنا.'
+              ? 'أنت ترى وتحرر حالياً البيانات التي تحتوي على نسخة عربية. البيانات الإنجليزية فقط لن تظهر هنا.'
               : 'You currently see and edit entries that contain English data. Arabic-only entries stay hidden in this language.'}
           </p>
 
 
-          <p className="mt-3 text-xs leading-5 text-slate-500">
+          <p
+            className="
+              mt-3
+              text-xs
+              leading-5
+              text-slate-500
+            "
+          >
             {isArabic
               ? 'عند تبديل لغة الموقع إلى الإنجليزية، ستظهر بيانات الإنجليزية بدلاً منها.'
               : 'Switch the website to Arabic to manage the Arabic records.'}
@@ -1497,16 +1761,48 @@ function DataSettingsTab() {
        * ======================================================
        */}
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <section
+        className="
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+        "
+      >
+        <div
+          className="
+            flex
+            flex-col
+            gap-3
+            border-b
+            border-slate-100
+            px-5
+            py-4
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            sm:px-6
+          "
+        >
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
-              {
-                pluralTypeName
-              }
+            <h2
+              className="
+                text-base
+                font-semibold
+                text-slate-900
+              "
+            >
+              {pluralTypeName}
             </h2>
 
-            <p className="mt-1 text-xs text-slate-400">
+            <p
+              className="
+                mt-1
+                text-xs
+                text-slate-400
+              "
+            >
               {visibleRows.length}{' '}
 
               {isArabic
@@ -1516,14 +1812,37 @@ function DataSettingsTab() {
           </div>
 
 
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-green-500" />
+          <div
+            className="
+              flex
+              items-center
+              gap-2
+              text-xs
+              text-slate-400
+            "
+          >
+            <span
+              className="
+                h-2
+                w-2
+                rounded-full
+                bg-green-500
+              "
+            />
 
             {isArabic
               ? 'نشط'
               : 'Active'}
 
-            <span className="ml-2 h-2 w-2 rounded-full bg-slate-300" />
+            <span
+              className="
+                ms-2
+                h-2
+                w-2
+                rounded-full
+                bg-slate-300
+              "
+            />
 
             {isArabic
               ? 'غير نشط'
@@ -1533,7 +1852,13 @@ function DataSettingsTab() {
 
 
         {loading ? (
-          <div className="space-y-3 p-5 sm:p-6">
+          <div
+            className="
+              space-y-3
+              p-5
+              sm:p-6
+            "
+          >
             {[
               1,
               2,
@@ -1546,32 +1871,76 @@ function DataSettingsTab() {
                   key={
                     item
                   }
-                  className="h-20 animate-pulse rounded-xl bg-slate-100"
+                  className="
+                    h-20
+                    animate-pulse
+                    rounded-xl
+                    bg-slate-100
+                  "
                 />
               ),
             )}
           </div>
         ) : visibleRows.length ===
           0 ? (
-          <div className="flex min-h-[220px] flex-col items-center justify-center px-6 text-center">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+          <div
+            className="
+              flex
+              min-h-[220px]
+              flex-col
+              items-center
+              justify-center
+              px-6
+              text-center
+            "
+          >
+            <div
+              className="
+                flex
+                h-11
+                w-11
+                items-center
+                justify-center
+                rounded-xl
+                bg-slate-100
+                text-slate-400
+              "
+            >
               <DataIcon />
             </div>
 
-            <h3 className="mt-3 text-sm font-semibold text-slate-700">
+            <h3
+              className="
+                mt-3
+                text-sm
+                font-semibold
+                text-slate-700
+              "
+            >
               {isArabic
                 ? 'لا توجد بيانات'
                 : `No ${pluralTypeName.toLowerCase()} yet`}
             </h3>
 
-            <p className="mt-1 text-xs text-slate-400">
+            <p
+              className="
+                mt-1
+                text-xs
+                text-slate-400
+              "
+            >
               {isArabic
                 ? 'أضف أول عنصر باستخدام النموذج أعلاه.'
                 : 'Add the first entry using the form above.'}
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div
+            className="
+              divide-y
+              divide-slate-100
+            "
+          >
             {pagedRows.map(
               (
                 row,
@@ -1580,11 +1949,41 @@ function DataSettingsTab() {
                   key={
                     row.id
                   }
-                  className="flex flex-col gap-4 px-5 py-4 transition hover:bg-slate-50/60 sm:px-6 lg:flex-row lg:items-center"
+                  className="
+                    flex
+                    flex-col
+                    gap-4
+                    px-5
+                    py-4
+                    transition
+                    hover:bg-slate-50/60
+                    sm:px-6
+                    lg:flex-row
+                    lg:items-center
+                  "
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <div className="truncate text-sm font-semibold text-slate-800">
+                  <div
+                    className="
+                      min-w-0
+                      flex-1
+                    "
+                  >
+                    <div
+                      className="
+                        flex
+                        flex-wrap
+                        items-center
+                        gap-2
+                      "
+                    >
+                      <div
+                        className="
+                          truncate
+                          text-sm
+                          font-semibold
+                          text-slate-800
+                        "
+                      >
                         {displayCode(
                           row,
                         )}
@@ -1592,11 +1991,18 @@ function DataSettingsTab() {
 
 
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          row.isActive
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-slate-100 text-slate-500'
-                        }`}
+                        className={`
+                          rounded-full
+                          px-2
+                          py-0.5
+                          text-[10px]
+                          font-semibold
+                          ${
+                            row.isActive
+                              ? 'bg-green-50 text-green-700'
+                              : 'bg-slate-100 text-slate-500'
+                          }
+                        `}
                       >
                         {row.isActive
                           ? isArabic
@@ -1609,15 +2015,33 @@ function DataSettingsTab() {
                     </div>
 
 
-                    <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-xs">
+                    <div
+                      className="
+                        mt-2
+                        flex
+                        flex-wrap
+                        gap-x-6
+                        gap-y-2
+                        text-xs
+                      "
+                    >
                       <div>
-                        <span className="text-slate-400">
+                        <span
+                          className="
+                            text-slate-400
+                          "
+                        >
                           {isArabic
                             ? 'القيمة:'
                             : 'Value:'}
                         </span>{' '}
 
-                        <span className="font-medium text-slate-600">
+                        <span
+                          className="
+                            font-medium
+                            text-slate-600
+                          "
+                        >
                           {displayValue(
                             row,
                           )}
@@ -1626,13 +2050,22 @@ function DataSettingsTab() {
 
 
                       <div>
-                        <span className="text-slate-400">
+                        <span
+                          className="
+                            text-slate-400
+                          "
+                        >
                           {isArabic
                             ? 'النوع:'
                             : 'Type:'}
                         </span>{' '}
 
-                        <span className="font-medium text-slate-600">
+                        <span
+                          className="
+                            font-medium
+                            text-slate-600
+                          "
+                        >
                           {row.valueType ===
                           'number'
                             ? isArabic
@@ -1648,13 +2081,22 @@ function DataSettingsTab() {
                       {type ===
                         'branch' && (
                         <div>
-                          <span className="text-slate-400">
+                          <span
+                            className="
+                              text-slate-400
+                            "
+                          >
                             {isArabic
                               ? 'العنوان:'
                               : 'Address:'}
                           </span>{' '}
 
-                          <span className="font-medium text-slate-600">
+                          <span
+                            className="
+                              font-medium
+                              text-slate-600
+                            "
+                          >
                             {row.address ||
                               '—'}
                           </span>
@@ -1664,10 +2106,22 @@ function DataSettingsTab() {
                   </div>
 
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div
+                    className="
+                      flex
+                      flex-wrap
+                      items-center
+                      gap-2
+                    "
+                  >
                     <button
                       type="button"
-                      className="btn-secondary px-3 py-1.5 text-xs"
+                      className="
+                        btn-secondary
+                        px-3
+                        py-1.5
+                        text-xs
+                      "
                       onClick={() =>
                         startEdit(
                           row,
@@ -1682,7 +2136,12 @@ function DataSettingsTab() {
 
                     <button
                       type="button"
-                      className="btn-secondary px-3 py-1.5 text-xs"
+                      className="
+                        btn-secondary
+                        px-3
+                        py-1.5
+                        text-xs
+                      "
                       disabled={
                         busyId ===
                         row.id
@@ -1718,7 +2177,12 @@ function DataSettingsTab() {
 
                     <button
                       type="button"
-                      className="btn-danger px-3 py-1.5 text-xs"
+                      className="
+                        btn-danger
+                        px-3
+                        py-1.5
+                        text-xs
+                      "
                       disabled={
                         busyId ===
                         row.id
@@ -1778,7 +2242,17 @@ function DataSettingsTab() {
 
       {editingRow && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          className="
+            fixed
+            inset-0
+            z-[150]
+            flex
+            items-center
+            justify-center
+            bg-slate-950/40
+            p-4
+            backdrop-blur-sm
+          "
           onMouseDown={(
             event,
           ) => {
@@ -1794,18 +2268,56 @@ function DataSettingsTab() {
             onSubmit={
               saveEdit
             }
-            className="w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            className="
+              w-full
+              max-w-xl
+              overflow-hidden
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              shadow-2xl
+            "
           >
-            <div className="border-b border-slate-100 px-6 py-5">
-              <div className="flex items-start justify-between gap-4">
+            <div
+              className="
+                border-b
+                border-slate-100
+                px-6
+                py-5
+              "
+            >
+              <div
+                className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                "
+              >
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+                  <div
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-[.14em]
+                      text-brand-600
+                    "
+                  >
                     {isArabic
                       ? 'تعديل البيانات'
                       : 'Edit data'}
                   </div>
 
-                  <h2 className="mt-2 text-xl font-semibold text-slate-900">
+                  <h2
+                    className="
+                      mt-2
+                      text-xl
+                      font-semibold
+                      text-slate-900
+                    "
+                  >
                     {isArabic
                       ? `تعديل ${selectedTypeName}`
                       : `Edit ${selectedTypeName}`}
@@ -1815,7 +2327,18 @@ function DataSettingsTab() {
 
                 <button
                   type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    items-center
+                    justify-center
+                    rounded-lg
+                    text-slate-400
+                    transition
+                    hover:bg-slate-100
+                    hover:text-slate-700
+                  "
                   onClick={
                     closeEdit
                   }
@@ -1826,7 +2349,14 @@ function DataSettingsTab() {
             </div>
 
 
-            <div className="space-y-5 p-6">
+            <div
+              className="
+                max-h-[70vh]
+                space-y-5
+                overflow-y-auto
+                p-6
+              "
+            >
               <div>
                 <label className="label">
                   {isArabic
@@ -2026,7 +2556,16 @@ function DataSettingsTab() {
               )}
 
 
-              <div className="rounded-xl bg-brand-50 p-3 text-xs leading-5 text-brand-800">
+              <div
+                className="
+                  rounded-xl
+                  bg-brand-50
+                  p-3
+                  text-xs
+                  leading-5
+                  text-brand-800
+                "
+              >
                 {isArabic
                   ? 'سيتم تعديل النسخة العربية فقط. لن تتغير النسخة الإنجليزية.'
                   : 'Only the English version will be updated. The Arabic version will remain untouched.'}
@@ -2034,16 +2573,35 @@ function DataSettingsTab() {
 
 
               {editError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                  {
-                    editError
-                  }
+                <div
+                  className="
+                    rounded-xl
+                    border
+                    border-red-200
+                    bg-red-50
+                    p-3
+                    text-sm
+                    text-red-700
+                  "
+                >
+                  {editError}
                 </div>
               )}
             </div>
 
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+            <div
+              className="
+                flex
+                justify-end
+                gap-2
+                border-t
+                border-slate-100
+                bg-slate-50/60
+                px-6
+                py-4
+              "
+            >
               <button
                 type="button"
                 className="btn-secondary"
@@ -2083,13 +2641,23 @@ function DataSettingsTab() {
 
       {/*
        * ======================================================
-       * DEACTIVATE CONFIRM
+       * DEACTIVATE CONFIRMATION
        * ======================================================
        */}
 
       {pendingDeactivate && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
+          className="
+            fixed
+            inset-0
+            z-[150]
+            flex
+            items-center
+            justify-center
+            bg-slate-950/40
+            p-4
+            backdrop-blur-sm
+          "
           onMouseDown={(
             event,
           ) => {
@@ -2105,21 +2673,57 @@ function DataSettingsTab() {
             }
           }}
         >
-          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div
+            className="
+              w-full
+              max-w-md
+              overflow-hidden
+              rounded-2xl
+              border
+              border-slate-200
+              bg-white
+              shadow-2xl
+            "
+          >
             <div className="p-6">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+              <div
+                className="
+                  flex
+                  h-11
+                  w-11
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-amber-50
+                  text-amber-700
+                "
+              >
                 !
               </div>
 
 
-              <h2 className="mt-4 text-lg font-semibold text-slate-900">
+              <h2
+                className="
+                  mt-4
+                  text-lg
+                  font-semibold
+                  text-slate-900
+                "
+              >
                 {isArabic
                   ? `تعطيل ${selectedTypeName}؟`
                   : `Deactivate ${selectedTypeName}?`}
               </h2>
 
 
-              <p className="mt-2 text-sm leading-6 text-slate-500">
+              <p
+                className="
+                  mt-2
+                  text-sm
+                  leading-6
+                  text-slate-500
+                "
+              >
                 {isArabic
                   ? 'لن يظهر هذا العنصر في القوائم النشطة، لكن السجل لن يتم حذفه من قاعدة البيانات.'
                   : 'This entry will stop appearing in active dropdowns, but its database record will remain.'}
@@ -2127,10 +2731,25 @@ function DataSettingsTab() {
             </div>
 
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
+            <div
+              className="
+                flex
+                justify-end
+                gap-2
+                border-t
+                border-slate-100
+                bg-slate-50/60
+                px-6
+                py-4
+              "
+            >
               <button
                 type="button"
                 className="btn-secondary"
+                disabled={
+                  busyId ===
+                  pendingDeactivate.id
+                }
                 onClick={() =>
                   setPendingDeactivate(
                     null,
@@ -2156,9 +2775,14 @@ function DataSettingsTab() {
                   )
                 }
               >
-                {isArabic
-                  ? 'تعطيل'
-                  : 'Deactivate'}
+                {busyId ===
+                pendingDeactivate.id
+                  ? isArabic
+                    ? 'جاري التعطيل…'
+                    : 'Deactivating…'
+                  : isArabic
+                    ? 'تعطيل'
+                    : 'Deactivate'}
               </button>
             </div>
           </div>
@@ -2176,15 +2800,20 @@ function DataSettingsTab() {
  */
 
 const PAGE_TABS: {
-  value: PageTab;
+  value:
+    PageTab;
 
-  labelEn: string;
+  labelEn:
+    string;
 
-  labelAr: string;
+  labelAr:
+    string;
 
-  descriptionEn: string;
+  descriptionEn:
+    string;
 
-  descriptionAr: string;
+  descriptionAr:
+    string;
 
   icon:
     React.ReactNode;
@@ -2268,6 +2897,26 @@ const PAGE_TABS: {
     icon:
       <ListsIcon />,
   },
+
+  {
+    value:
+      'workflow',
+
+    labelEn:
+      'Task Workflow',
+
+    labelAr:
+      'سير المهام',
+
+    descriptionEn:
+      'Task actions and sequence',
+
+    descriptionAr:
+      'إجراءات المهام وتسلسلها',
+
+    icon:
+      <WorkflowIcon />,
+  },
 ];
 
 
@@ -2298,7 +2947,11 @@ function SettingsPageContent() {
 
   return (
     <div
-      className="mx-auto max-w-[1500px] pb-12"
+      className="
+        mx-auto
+        max-w-[1500px]
+        pb-12
+      "
       dir={
         isArabic
           ? 'rtl'
@@ -2311,29 +2964,93 @@ function SettingsPageContent() {
        * ======================================================
        */}
 
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
-        <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
+      <section
+        className="
+          relative
+          overflow-hidden
+          rounded-2xl
+          border
+          border-slate-200
+          bg-white
+          px-5
+          py-6
+          sm:px-7
+        "
+      >
+        <div
+          className="
+            pointer-events-none
+            absolute
+            -right-32
+            -top-32
+            h-72
+            w-72
+            rounded-full
+            bg-brand-50
+            blur-3xl
+          "
+        />
+
+
+        <div
+          className="
+            pointer-events-none
+            absolute
+            -bottom-28
+            left-1/3
+            h-56
+            w-56
+            rounded-full
+            bg-slate-50
+            blur-3xl
+          "
+        />
 
 
         <div className="relative">
-          <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+          <div
+            className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-[.14em]
+              text-brand-600
+            "
+          >
             {isArabic
               ? 'إدارة النظام'
               : 'System management'}
           </div>
 
 
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+          <h1
+            className="
+              mt-2
+              text-2xl
+              font-semibold
+              tracking-[-0.03em]
+              text-slate-950
+              sm:text-3xl
+            "
+          >
             {isArabic
               ? 'الإعدادات'
               : 'Settings'}
           </h1>
 
 
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <p
+            className="
+              mt-2
+              max-w-3xl
+              text-sm
+              leading-6
+              text-slate-500
+            "
+          >
             {isArabic
-              ? 'إدارة بيانات المؤسسة والهوية والألوان والقوائم المستخدمة في جميع أنحاء النظام.'
-              : 'Manage organization data, branding, website appearance and reusable workflow lists.'}
+              ? 'إدارة بيانات المؤسسة والهوية والألوان والقوائم وسير عمل المهام في جميع أنحاء النظام.'
+              : 'Manage organization data, branding, website appearance, reusable lists and the Task workflow.'}
           </p>
         </div>
       </section>
@@ -2345,7 +3062,16 @@ function SettingsPageContent() {
        * ======================================================
        */}
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div
+        className="
+          mt-5
+          grid
+          gap-3
+          sm:grid-cols-2
+          lg:grid-cols-3
+          xl:grid-cols-5
+        "
+      >
         {PAGE_TABS.map(
           (
             item,
@@ -2366,32 +3092,62 @@ function SettingsPageContent() {
                     item.value,
                   )
                 }
-                className={`flex items-center gap-3 rounded-2xl border p-4 text-start transition ${
-                  active
-                    ? 'border-brand-200 bg-brand-50/60 shadow-sm'
-                    : 'border-slate-200 bg-white hover:border-brand-200 hover:bg-slate-50'
-                }`}
+                className={`
+                  group
+                  flex
+                  items-center
+                  gap-3
+                  rounded-2xl
+                  border
+                  p-4
+                  text-start
+                  transition-all
+                  duration-200
+                  ${
+                    active
+                      ? 'border-brand-200 bg-brand-50/60 shadow-sm'
+                      : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-sm'
+                  }
+                `}
               >
                 <div
-                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                    active
-                      ? 'bg-brand-600 text-white'
-                      : 'bg-slate-100 text-slate-500'
-                  }`}
+                  className={`
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    transition
+                    ${
+                      active
+                        ? 'bg-brand-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-500 group-hover:bg-brand-50 group-hover:text-brand-700'
+                    }
+                  `}
                 >
-                  {
-                    item.icon
-                  }
+                  {item.icon}
                 </div>
 
 
-                <div className="min-w-0">
+                <div
+                  className="
+                    min-w-0
+                    flex-1
+                  "
+                >
                   <div
-                    className={`text-sm font-semibold ${
-                      active
-                        ? 'text-brand-800'
-                        : 'text-slate-800'
-                    }`}
+                    className={`
+                      truncate
+                      text-sm
+                      font-semibold
+                      ${
+                        active
+                          ? 'text-brand-800'
+                          : 'text-slate-800'
+                      }
+                    `}
                   >
                     {isArabic
                       ? item.labelAr
@@ -2399,12 +3155,32 @@ function SettingsPageContent() {
                   </div>
 
 
-                  <div className="mt-0.5 truncate text-xs text-slate-400">
+                  <div
+                    className="
+                      mt-0.5
+                      truncate
+                      text-xs
+                      text-slate-400
+                    "
+                  >
                     {isArabic
                       ? item.descriptionAr
                       : item.descriptionEn}
                   </div>
                 </div>
+
+
+                {active && (
+                  <div
+                    className="
+                      h-2
+                      w-2
+                      shrink-0
+                      rounded-full
+                      bg-brand-500
+                    "
+                  />
+                )}
               </button>
             );
           },
@@ -2418,7 +3194,11 @@ function SettingsPageContent() {
        * ======================================================
        */}
 
-      <div className="mt-6">
+      <div
+        className="
+          mt-6
+        "
+      >
         {tab ===
           'data' && (
           <DataSettingsTab />
@@ -2440,6 +3220,12 @@ function SettingsPageContent() {
         {tab ===
           'lists' && (
           <ListSettingsTab />
+        )}
+
+
+        {tab ===
+          'workflow' && (
+          <WorkflowSettingsTab />
         )}
       </div>
     </div>

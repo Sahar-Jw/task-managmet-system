@@ -282,12 +282,31 @@ export interface Notification {
 
 export interface AuditLogEntry {
   id: string;
-  actorId?: string;
-  actor?: User;
+
+  actorId?: string | null;
+
+  actor?: User | null;
+
   entityType: string;
+
   entityId: string;
+
   action: string;
-  reason?: string;
+
+  oldValue?: Record<
+    string,
+    unknown
+  > | null;
+
+  newValue?: Record<
+    string,
+    unknown
+  > | null;
+
+  reason?: string | null;
+
+  ipAddress?: string | null;
+
   createdAt: string;
 }
 

@@ -1113,7 +1113,14 @@ export const NotificationsApi = {
  * ============================================================
  */
 
+/* ============================================================
+ * AUDIT LOGS
+ * ============================================================ */
+
 export const AuditLogsApi = {
+  /*
+   * Search / list.
+   */
   search: (
     params:
       Record<
@@ -1127,6 +1134,32 @@ export const AuditLogsApi = {
       `/audit-logs?${new URLSearchParams(
         params,
       )}`,
+    ),
+
+
+  /*
+   * Dynamic filter values.
+   */
+  meta: () =>
+    api<{
+      entityTypes:
+        string[];
+
+      actions:
+        string[];
+    }>(
+      '/audit-logs/meta',
+    ),
+
+
+  /*
+   * Full single entry.
+   */
+  get: (
+    id: string,
+  ) =>
+    api<AuditLogEntry>(
+      `/audit-logs/${id}`,
     ),
 };
 

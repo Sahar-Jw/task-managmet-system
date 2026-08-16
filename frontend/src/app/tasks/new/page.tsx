@@ -536,35 +536,24 @@ function NewTaskContent() {
      * - still include the current logged-in account if needed.
      */
     UsersApi.list({
-      limit: '200',
-      isActive: 'true',
-    })
-      .then(
-        (result) => {
-          setUsers(
-            result.items,
-          );
+  limit: '200',
+  isActive: 'true',
+})
+  .then((result) => {
+    setUsers(result.items);
+    setPeopleError('');
+  })
+  .catch((err) => {
+    setPeopleError(
+      err instanceof ApiError
+        ? err.message
+        : 'Could not load the user directory.',
+    );
 
-          setPeopleError(
-            '',
-          );
-        },
-      )
-      .catch(
-        (err) => {
-          setPeopleError(
-            err instanceof ApiError
-              ? err.message
-              : 'Could not load the user directory.',
-          );
-
-          if (user) {
-            setUsers([
-              user,
-            ]);
-          }
-        },
-      );
+    if (user) {
+      setUsers([user]);
+    }
+  });
 
 
     /*

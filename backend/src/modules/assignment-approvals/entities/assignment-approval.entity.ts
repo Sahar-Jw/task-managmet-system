@@ -31,6 +31,6 @@ export class AssignmentApprovalEntity extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   reason?: string;
 
-  @Column({ name: 'decided_at', type: 'timestamptz' })
+  @Column({ name: 'decided_at', type: 'timestamp' })
   decidedAt!: Date;
 }

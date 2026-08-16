@@ -29,12 +29,12 @@ export class TaskCommentEntity {
   @Column({ name: 'is_edited', type: 'boolean', default: false })
   isEdited!: boolean;
 
-  @Column({ name: 'edited_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'edited_at', type: 'timestamp', nullable: true })
   editedAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 }

@@ -17,12 +17,12 @@ export class RefreshTokenEntity {
   @Column({ name: 'token_hash', type: 'varchar', length: 255, unique: true })
   tokenHash!: string;
 
-  @Column({ name: 'expires_at', type: 'timestamptz' })
+  @Column({ name: 'expires_at', type: 'timestamp' })
   expiresAt!: Date;
 
-  @Column({ name: 'revoked_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'revoked_at', type: 'timestamp', nullable: true })
   revokedAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

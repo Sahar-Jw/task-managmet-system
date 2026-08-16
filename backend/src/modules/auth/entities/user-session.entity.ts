@@ -19,9 +19,9 @@ export class UserSessionEntity {
   @Column({ name: 'user_agent', type: 'varchar', length: 500, nullable: true })
   userAgent?: string;
 
-  @Column({ name: 'last_active_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'last_active_at', type: 'timestamp', nullable: true })
   lastActiveAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }

@@ -155,7 +155,7 @@ export class TaskEntity extends VersionedEntity {
   @Column({ name: 'deadline_date', type: 'date', nullable: true })
   deadlineDate?: string; // deadline
 
-  @Column({ name: 'actual_end_date', type: 'timestamptz', nullable: true })
+  @Column({ name: 'actual_end_date', type: 'timestamp', nullable: true })
   actualEndDate?: Date; // when it really ends
 
   // ---------- Hierarchy: father task / sub-tasks ----------
@@ -169,7 +169,7 @@ export class TaskEntity extends VersionedEntity {
   @OneToMany(() => TaskEntity, (task) => task.parentTask)
   subTasks!: TaskEntity[];
 
-  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
   archivedAt?: Date;
 
   // BR-070: only the Task creator (or Admin) decides whether the assigned

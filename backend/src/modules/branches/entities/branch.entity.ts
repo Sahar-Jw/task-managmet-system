@@ -23,6 +23,6 @@ export class BranchEntity extends BaseEntity {
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
   createdById?: string;
 
-  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
   archivedAt?: Date;
 }

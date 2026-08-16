@@ -53,9 +53,9 @@ export class TaskAttachmentEntity {
   @Column({ name: 'file_size', type: 'bigint' })
   fileSize!: number;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 
-  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'deleted_at', type: 'timestamp', nullable: true })
   deletedAt?: Date;
 }

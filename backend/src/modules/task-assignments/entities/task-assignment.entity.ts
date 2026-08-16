@@ -46,10 +46,10 @@ export class TaskAssignmentEntity extends VersionedEntity {
   @Column({ name: 'rejection_reason', type: 'text', nullable: true })
   rejectionReason?: string;
 
-  @Column({ name: 'accepted_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'accepted_at', type: 'timestamp', nullable: true })
   acceptedAt?: Date;
 
-  @Column({ name: 'rejected_at', type: 'timestamptz', nullable: true })
+  @Column({ name: 'rejected_at', type: 'timestamp', nullable: true })
   rejectedAt?: Date;
 
   @OneToMany(() => AssignmentApprovalEntity, (a) => a.assignment)

@@ -12,6 +12,7 @@ import {
 import {
   BranchesApi,
   DepartmentsApi,
+  SettingsApi,
 } from '@/lib/endpoints';
 import type {
   Branch,
@@ -197,7 +198,7 @@ function BranchesContent() {
     setError('');
 
     try {
-      await BranchesApi.update(
+      await SettingsApi.update(
         branch.id,
         {
           isActive:

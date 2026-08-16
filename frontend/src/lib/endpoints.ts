@@ -408,127 +408,188 @@ export const BrandingApi = {
 
 export const UsersApi = {
   list: (
-    params: Record<string, string> = {},
+    params:
+      Record<
+        string,
+        string
+      > = {},
   ) =>
     api<Paginated<User>>(
-      `/users?${new URLSearchParams(params)}`,
+      `/users?${new URLSearchParams(
+        params,
+      )}`,
     ),
 
+
+  /*
+   * ADMIN role selector/filter.
+   *
+   * RolesController is mounted at /roles,
+   * NOT /users/roles.
+   */
   roles: () =>
     api<Role[]>(
-      '/users/roles',
+      '/roles',
     ),
 
+
   get: (
-    id: string,
+    id:
+      string,
   ) =>
     api<User>(
       `/users/${id}`,
     ),
 
+
   adminUpdate: (
-    id: string,
+    id:
+      string,
+
     data:
       Partial<User> & {
-        password?: string;
+        password?:
+          string;
       },
   ) =>
     api<User>(
       `/users/${id}`,
       {
-        method: 'PATCH',
-        body: data,
+        method:
+          'PATCH',
+
+        body:
+          data,
       },
     ),
 
+
   updateOwnProfile: (
     data: {
-      fullName?: string;
-      phone?: string;
-      locale?: string;
-      timezone?: string;
+      fullName?:
+        string;
+
+      phone?:
+        string;
+
+      locale?:
+        string;
+
+      timezone?:
+        string;
     },
   ) =>
     api<User>(
       '/users/me',
       {
-        method: 'PATCH',
-        body: data,
+        method:
+          'PATCH',
+
+        body:
+          data,
       },
     ),
+
 
   changeOwnPassword: (
     data: {
-      currentPassword: string;
-      newPassword: string;
+      currentPassword:
+        string;
+
+      newPassword:
+        string;
     },
   ) =>
     api<{
-      message?: string;
+      message?:
+        string;
     }>(
       '/users/me/password',
       {
-        method: 'PATCH',
-        body: data,
+        method:
+          'PATCH',
+
+        body:
+          data,
       },
     ),
 
+
   uploadAvatar: (
-    file: File,
+    file:
+      File,
   ) => {
     const form =
       new FormData();
+
 
     form.append(
       'file',
       file,
     );
 
+
     return api<User>(
       '/users/me/avatar',
       {
-        method: 'POST',
-        body: form,
-        isForm: true,
+        method:
+          'POST',
+
+        body:
+          form,
+
+        isForm:
+          true,
       },
     );
   },
+
 
   removeAvatar: () =>
     api<User>(
       '/users/me/avatar',
       {
-        method: 'DELETE',
+        method:
+          'DELETE',
       },
     ),
 
+
   deactivate: (
-    id: string,
+    id:
+      string,
   ) =>
     api(
       `/users/${id}`,
       {
-        method: 'DELETE',
+        method:
+          'DELETE',
       },
     ),
 
+
   remove: (
-    id: string,
+    id:
+      string,
   ) =>
     api(
       `/users/${id}/permanent`,
       {
-        method: 'DELETE',
+        method:
+          'DELETE',
       },
     ),
 
+
   unlock: (
-    id: string,
+    id:
+      string,
   ) =>
     api<User>(
       `/users/${id}/unlock`,
       {
-        method: 'PATCH',
+        method:
+          'PATCH',
       },
     ),
 };

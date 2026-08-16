@@ -214,20 +214,23 @@ export class UsersService {
   /*
    * Include the entire final day.
    */
-  if (
-    query.joinDateTo
-  ) {
-    qb.andWhere(
-      `user.createdAt < (
-        :joinDateTo::date +
-        INTERVAL '1 day'
-      )`,
-      {
-        joinDateTo:
-          query.joinDateTo,
-      },
-    );
-  }
+ if (
+  query.joinDateTo
+) {
+  qb.andWhere(
+    `
+      user.createdAt <
+      DATE_ADD(
+        CAST(:joinDateTo AS DATE),
+        INTERVAL 1 DAY
+      )
+    `,
+    {
+      joinDateTo:
+        query.joinDateTo,
+    },
+  );
+}
 
 
   /*

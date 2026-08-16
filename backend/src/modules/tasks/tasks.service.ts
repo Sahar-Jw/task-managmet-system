@@ -1069,19 +1069,22 @@ export class TasksService {
 
 
     if (
-      query.createdDateTo
-    ) {
-      qb.andWhere(
-        `task.createdAt < (
-          :createdDateTo::date +
-          INTERVAL '1 day'
-        )`,
-        {
-          createdDateTo:
-            query.createdDateTo,
-        },
-      );
-    }
+  query.createdDateTo
+) {
+  qb.andWhere(
+    `
+      task.createdAt <
+      DATE_ADD(
+        CAST(:createdDateTo AS DATE),
+        INTERVAL 1 DAY
+      )
+    `,
+    {
+      createdDateTo:
+        query.createdDateTo,
+    },
+  );
+}
 
 
     const sortColumns:
@@ -1124,20 +1127,49 @@ export class TasksService {
         : 'DESC';
 
 
-    const nulls =
-      query.sortBy ===
-        'deadline' ||
-      query.sortBy ===
-        'startDate'
-        ? 'NULLS LAST'
-        : undefined;
+    if (
+  query.sortBy ===
+    'deadline' ||
+  query.sortBy ===
+    'startDate'
+) {
+  /*
+   * MySQL / MariaDB does not support:
+   *
+   * ORDER BY ... NULLS LAST
+   *
+   * Put nulls at the bottom explicitly.
+   */
+  qb.orderBy(
+    `CASE
+      WHEN ${sortColumn} IS NULL
+      THEN 1
+      ELSE 0
+    END`,
+    'ASC',
+  );
+
+  qb.addOrderBy(
+    sortColumn,
+    sortDirection,
+  );
+} else {
+  qb.orderBy(
+    sortColumn,
+    sortDirection,
+  );
+}
 
 
-    qb.orderBy(
-      sortColumn,
-      sortDirection,
-      nulls,
-    );
+if (
+  sortColumn !==
+  'task.createdAt'
+) {
+  qb.addOrderBy(
+    'task.createdAt',
+    'DESC',
+  );
+}
 
 
     if (
@@ -1255,361 +1287,440 @@ export class TasksService {
    */
 
   async findMyTasks(
-    userId:
-      string,
+  userId:
+    string,
 
-    query:
-      QueryMyTasksDto,
+  query:
+    QueryMyTasksDto,
+) {
+  const page =
+    query.page ??
+    1;
+
+
+  const limit =
+    query.limit ??
+    20;
+
+
+  const idQb =
+    this.taskRepo
+      .createQueryBuilder(
+        'task',
+      )
+      .leftJoin(
+        'task.assignments',
+        'assignment',
+      )
+      .leftJoin(
+        'task.ratings',
+        'rating',
+      )
+      .select(
+        'task.id',
+        'id',
+      )
+      .addSelect(
+        'task.deadlineDate',
+        'deadlineDate',
+      )
+      .addSelect(
+        'task.priority',
+        'priority',
+      )
+      .addSelect(
+        'task.createdAt',
+        'createdAt',
+      )
+      .addSelect(
+        'AVG(rating.score)',
+        'avgRating',
+      )
+      .where(
+        `(
+          task.assignedToId = :userId
+          OR
+          (
+            assignment.assigneeId = :userId
+            AND assignment.status != :rejectedStatus
+          )
+        )`,
+        {
+          userId,
+
+          rejectedStatus:
+            AssignmentStatus.REJECTED,
+        },
+      )
+      .andWhere(
+        'task.archivedAt IS NULL',
+      )
+      .groupBy(
+        'task.id',
+      )
+      .addGroupBy(
+        'task.deadlineDate',
+      )
+      .addGroupBy(
+        'task.priority',
+      )
+      .addGroupBy(
+        'task.createdAt',
+      );
+
+
+  if (
+    query.status
   ) {
-    const page =
-      query.page ??
-      1;
-
-
-    const limit =
-      query.limit ??
-      20;
-
-
-    const idQb =
-      this.taskRepo
-        .createQueryBuilder(
-          'task',
-        )
-        .leftJoin(
-          'task.assignments',
-          'assignment',
-        )
-        .leftJoin(
-          'task.ratings',
-          'rating',
-        )
-        .select(
-          'task.id',
-          'id',
-        )
-        .addSelect(
-          'task.deadlineDate',
-          'deadlineDate',
-        )
-        .addSelect(
-          'task.priority',
-          'priority',
-        )
-        .addSelect(
-          'AVG(rating.score)',
-          'avgRating',
-        )
-        .where(
-          '(task.assignedToId = :userId OR (assignment.assigneeId = :userId AND assignment.status != :rejectedStatus))',
-          {
-            userId,
-
-            rejectedStatus:
-              AssignmentStatus.REJECTED,
-          },
-        )
-        .andWhere(
-          'task.archivedAt IS NULL',
-        )
-        .groupBy(
-          'task.id',
-        );
-
-
-    if (
-      query.status
-    ) {
-      idQb.andWhere(
-        'task.status = :status',
-        {
-          status:
-            query.status,
-        },
-      );
-    }
-
-
-    if (
-      query.taskType
-    ) {
-      idQb.andWhere(
-        'task.taskType = :taskType',
-        {
-          taskType:
-            query.taskType,
-        },
-      );
-    }
-
-
-    if (
-      query.priority
-    ) {
-      idQb.andWhere(
-        'task.priority = :priority',
-        {
-          priority:
-            query.priority,
-        },
-      );
-    }
-
-
-    if (
-      query.projectId
-    ) {
-      idQb.andWhere(
-        'task.projectId = :projectId',
-        {
-          projectId:
-            query.projectId,
-        },
-      );
-    }
-
-
-    if (
-      query.search
-    ) {
-      idQb.andWhere(
-        '(task.titleEn LIKE :search OR task.titleAr LIKE :search OR task.descriptionEn LIKE :search OR task.descriptionAr LIKE :search)',
-        {
-          search:
-            `%${query.search}%`,
-        },
-      );
-    }
-
-
-    if (
-      query.upcomingOnly ===
-      'true'
-    ) {
-      idQb
-        .andWhere(
-          'task.deadlineDate IS NOT NULL',
-        )
-        .andWhere(
-          'task.deadlineDate >= CURRENT_DATE',
-        )
-        .andWhere(
-          'task.status NOT IN (:...doneStatuses)',
-          {
-            doneStatuses: [
-              TaskStatus.COMPLETED,
-              TaskStatus.FINISHED,
-              TaskStatus.ARCHIVED,
-            ],
-          },
-        );
-    }
-
-
-    if (
-      query.deadlineFrom
-    ) {
-      idQb.andWhere(
-        'task.deadlineDate >= :deadlineFrom',
-        {
-          deadlineFrom:
-            query.deadlineFrom,
-        },
-      );
-    }
-
-
-    if (
-      query.deadlineTo
-    ) {
-      idQb.andWhere(
-        'task.deadlineDate <= :deadlineTo',
-        {
-          deadlineTo:
-            query.deadlineTo,
-        },
-      );
-    }
-
-
-    if (
-      query.minRating
-    ) {
-      idQb.having(
-        'AVG(rating.score) >= :minRating',
-        {
-          minRating:
-            Number(
-              query.minRating,
-            ),
-        },
-      );
-    }
-
-
-    const dir =
-      query.sortDir ===
-      'asc'
-        ? 'ASC'
-        : 'DESC';
-
-
-    switch (
-      query.sortBy
-    ) {
-      case 'priority':
-        idQb.orderBy(
-          `CASE task.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`,
-          query.sortDir ===
-          'desc'
-            ? 'DESC'
-            : 'ASC',
-        );
-        break;
-
-      case 'rating':
-        idQb.orderBy(
-          '"avgRating"',
-          dir,
-        );
-        break;
-
-      case 'createdAt':
-        idQb.orderBy(
-          'task.createdAt',
-          dir,
-        );
-        break;
-
-      case 'deadline':
-      default:
-        idQb.orderBy(
-          'task.deadlineDate',
-          query.sortDir ===
-          'desc'
-            ? 'DESC'
-            : 'ASC',
-          'NULLS LAST',
-        );
-        break;
-    }
-
-
-    idQb.addOrderBy(
-      'task.id',
-      'ASC',
+    idQb.andWhere(
+      'task.status = :status',
+      {
+        status:
+          query.status,
+      },
     );
+  }
 
 
-    const rawRows =
-      await idQb.getRawMany<{
-        id:
-          string;
-      }>();
+  if (
+    query.taskType
+  ) {
+    idQb.andWhere(
+      'task.taskType = :taskType',
+      {
+        taskType:
+          query.taskType,
+      },
+    );
+  }
 
 
-    const total =
-      rawRows.length;
+  if (
+    query.priority
+  ) {
+    idQb.andWhere(
+      'task.priority = :priority',
+      {
+        priority:
+          query.priority,
+      },
+    );
+  }
 
 
-    const pageIds =
-      rawRows
-        .slice(
-          (
-            page -
-            1
-          ) *
-            limit,
-
-          (
-            page -
-            1
-          ) *
-            limit +
-            limit,
-        )
-        .map(
-          (
-            row,
-          ) =>
-            row.id,
-        );
+  if (
+    query.projectId
+  ) {
+    idQb.andWhere(
+      'task.projectId = :projectId',
+      {
+        projectId:
+          query.projectId,
+      },
+    );
+  }
 
 
-    if (
-      pageIds.length ===
-      0
-    ) {
-      return {
-        items: [],
-        total,
-        page,
-        limit,
-      };
-    }
+  if (
+    query.search?.trim()
+  ) {
+    idQb.andWhere(
+      `(
+        task.titleEn LIKE :search
+        OR task.titleAr LIKE :search
+        OR task.descriptionEn LIKE :search
+        OR task.descriptionAr LIKE :search
+      )`,
+      {
+        search:
+          `%${query.search.trim()}%`,
+      },
+    );
+  }
 
 
-    const hydrated =
-      await this.taskRepo.find({
-        where: {
-          id:
-            In(
-              pageIds,
-            ),
-        },
-
-        relations: [
-          'branch',
-          'department',
-          'project',
-          'assignedTo',
-          'createdBy',
-          'ratings',
-        ],
-      });
-
-
-    const byId =
-      new Map(
-        hydrated.map(
-          (
-            task,
-          ) => [
-            task.id,
-            task,
+  if (
+    query.upcomingOnly ===
+      'true'
+  ) {
+    idQb
+      .andWhere(
+        'task.deadlineDate IS NOT NULL',
+      )
+      .andWhere(
+        'task.deadlineDate >= CURRENT_DATE()',
+      )
+      .andWhere(
+        'task.status NOT IN (:...doneStatuses)',
+        {
+          doneStatuses: [
+            TaskStatus.COMPLETED,
+            TaskStatus.FINISHED,
+            TaskStatus.ARCHIVED,
           ],
-        ),
+        },
+      );
+  }
+
+
+  if (
+    query.deadlineFrom
+  ) {
+    idQb.andWhere(
+      'task.deadlineDate >= :deadlineFrom',
+      {
+        deadlineFrom:
+          query.deadlineFrom,
+      },
+    );
+  }
+
+
+  if (
+    query.deadlineTo
+  ) {
+    idQb.andWhere(
+      'task.deadlineDate <= :deadlineTo',
+      {
+        deadlineTo:
+          query.deadlineTo,
+      },
+    );
+  }
+
+
+  if (
+    query.minRating
+  ) {
+    idQb.having(
+      'AVG(rating.score) >= :minRating',
+      {
+        minRating:
+          Number(
+            query.minRating,
+          ),
+      },
+    );
+  }
+
+
+  const sortBy =
+    query.sortBy ??
+    'deadline';
+
+
+  const sortDir =
+    query.sortDir ===
+      'desc'
+      ? 'DESC'
+      : 'ASC';
+
+
+  switch (
+    sortBy
+  ) {
+    case 'priority':
+      /*
+       * ASC:
+       * Low -> Medium -> High -> Critical
+       *
+       * DESC:
+       * Critical -> High -> Medium -> Low
+       */
+      idQb.orderBy(
+        `
+          CASE task.priority
+            WHEN 'Low' THEN 1
+            WHEN 'Medium' THEN 2
+            WHEN 'High' THEN 3
+            WHEN 'Critical' THEN 4
+            ELSE 0
+          END
+        `,
+        sortDir,
+      );
+
+      break;
+
+
+    case 'rating':
+      /*
+       * Ratings without a value go last.
+       */
+      idQb.orderBy(
+        `
+          CASE
+            WHEN AVG(rating.score) IS NULL
+            THEN 1
+            ELSE 0
+          END
+        `,
+        'ASC',
+      );
+
+      idQb.addOrderBy(
+        'AVG(rating.score)',
+        sortDir,
+      );
+
+      break;
+
+
+    case 'createdAt':
+      idQb.orderBy(
+        'task.createdAt',
+        sortDir,
+      );
+
+      break;
+
+
+    case 'deadline':
+    default:
+      /*
+       * MySQL / MariaDB replacement for NULLS LAST.
+       */
+      idQb.orderBy(
+        `
+          CASE
+            WHEN task.deadlineDate IS NULL
+            THEN 1
+            ELSE 0
+          END
+        `,
+        'ASC',
+      );
+
+      idQb.addOrderBy(
+        'task.deadlineDate',
+        sortDir,
+      );
+
+      break;
+  }
+
+
+  idQb.addOrderBy(
+    'task.createdAt',
+    'DESC',
+  );
+
+
+  idQb.addOrderBy(
+    'task.id',
+    'ASC',
+  );
+
+
+  const rawRows =
+    await idQb.getRawMany<{
+      id:
+        string;
+    }>();
+
+
+  const total =
+    rawRows.length;
+
+
+  const pageIds =
+    rawRows
+      .slice(
+        (
+          page -
+          1
+        ) *
+          limit,
+
+        (
+          page -
+          1
+        ) *
+          limit +
+          limit,
+      )
+      .map(
+        (
+          row,
+        ) =>
+          row.id,
       );
 
 
-    const items =
-      pageIds
-        .map(
-          (
-            taskId,
-          ) =>
-            byId.get(
-              taskId,
-            ),
-        )
-        .filter(
-          (
-            task,
-          ):
-            task is TaskEntity =>
-            Boolean(
-              task,
-            ),
-        );
-
-
+  if (
+    pageIds.length ===
+    0
+  ) {
     return {
-      items,
+      items: [],
       total,
       page,
       limit,
     };
   }
+
+
+  const hydrated =
+    await this.taskRepo.find({
+      where: {
+        id:
+          In(
+            pageIds,
+          ),
+      },
+
+      relations: [
+        'branch',
+        'department',
+        'project',
+        'assignedTo',
+        'createdBy',
+        'ratings',
+      ],
+    });
+
+
+  const byId =
+    new Map(
+      hydrated.map(
+        (
+          task,
+        ) => [
+          task.id,
+          task,
+        ],
+      ),
+    );
+
+
+  const items =
+    pageIds
+      .map(
+        (
+          taskId,
+        ) =>
+          byId.get(
+            taskId,
+          ),
+      )
+      .filter(
+        (
+          task,
+        ):
+          task is TaskEntity =>
+          Boolean(
+            task,
+          ),
+      );
+
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+  };
+}
 
 
   /*
@@ -1625,403 +1736,432 @@ export class TasksService {
    */
 
   async findAssignedByMe(
-    userId:
-      string,
+  userId:
+    string,
 
-    query:
-      QueryMyTasksDto,
+  query:
+    QueryMyTasksDto,
+) {
+  const page =
+    query.page ??
+    1;
+
+
+  const limit =
+    query.limit ??
+    20;
+
+
+  const idQb =
+    this.taskRepo
+      .createQueryBuilder(
+        'task',
+      )
+      .leftJoin(
+        'task.ratings',
+        'rating',
+      )
+      .select(
+        'task.id',
+        'id',
+      )
+      .addSelect(
+        'task.deadlineDate',
+        'deadlineDate',
+      )
+      .addSelect(
+        'task.priority',
+        'priority',
+      )
+      .addSelect(
+        'task.createdAt',
+        'createdAt',
+      )
+      .addSelect(
+        'AVG(rating.score)',
+        'avgRating',
+      )
+      .where(
+        'task.createdById = :userId',
+        {
+          userId,
+        },
+      )
+      .andWhere(
+        `(
+          task.assignedToId IS NULL
+          OR task.assignedToId != :userId
+        )`,
+        {
+          userId,
+        },
+      )
+      .andWhere(
+        'task.archivedAt IS NULL',
+      )
+      .groupBy(
+        'task.id',
+      )
+      .addGroupBy(
+        'task.deadlineDate',
+      )
+      .addGroupBy(
+        'task.priority',
+      )
+      .addGroupBy(
+        'task.createdAt',
+      );
+
+
+  if (
+    query.status
   ) {
-    const page =
-      query.page ??
-      1;
-
-
-    const limit =
-      query.limit ??
-      20;
-
-
-    const idQb =
-      this.taskRepo
-        .createQueryBuilder(
-          'task',
-        )
-        .leftJoin(
-          'task.ratings',
-          'rating',
-        )
-        .select(
-          'task.id',
-          'id',
-        )
-        .addSelect(
-          'task.deadlineDate',
-          'deadlineDate',
-        )
-        .addSelect(
-          'task.priority',
-          'priority',
-        )
-        .addSelect(
-          'task.createdAt',
-          'createdAt',
-        )
-        .addSelect(
-          'AVG(rating.score)',
-          'avgRating',
-        )
-        .where(
-          'task.createdById = :userId',
-          {
-            userId,
-          },
-        )
-        .andWhere(
-          '(task.assignedToId IS NULL OR task.assignedToId != :userId)',
-          {
-            userId,
-          },
-        )
-        .andWhere(
-          'task.archivedAt IS NULL',
-        )
-        .groupBy(
-          'task.id',
-        );
-
-
-    if (
-      query.status
-    ) {
-      idQb.andWhere(
-        'task.status = :status',
-        {
-          status:
-            query.status,
-        },
-      );
-    }
-
-
-    if (
-      query.taskType
-    ) {
-      idQb.andWhere(
-        'task.taskType = :taskType',
-        {
-          taskType:
-            query.taskType,
-        },
-      );
-    }
-
-
-    if (
-      query.priority
-    ) {
-      idQb.andWhere(
-        'task.priority = :priority',
-        {
-          priority:
-            query.priority,
-        },
-      );
-    }
-
-
-    if (
-      query.projectId
-    ) {
-      idQb.andWhere(
-        'task.projectId = :projectId',
-        {
-          projectId:
-            query.projectId,
-        },
-      );
-    }
-
-
-    /*
-     * NEW:
-     *
-     * Filter by the Task's CURRENT assignee.
-     *
-     * We intentionally use task.assignedToId instead of old
-     * assignment history so reassigned Tasks appear under the
-     * correct current User.
-     */
-    if (
-      query.assigneeId
-    ) {
-      idQb.andWhere(
-        'task.assignedToId = :assigneeId',
-        {
-          assigneeId:
-            query.assigneeId,
-        },
-      );
-    }
-
-
-    if (
-      query.search
-    ) {
-      idQb.andWhere(
-        '(task.titleEn LIKE :search OR task.titleAr LIKE :search OR task.descriptionEn LIKE :search OR task.descriptionAr LIKE :search)',
-        {
-          search:
-            `%${query.search}%`,
-        },
-      );
-    }
-
-
-    if (
-      query.upcomingOnly ===
-      'true'
-    ) {
-      idQb
-        .andWhere(
-          'task.deadlineDate IS NOT NULL',
-        )
-        .andWhere(
-          'task.deadlineDate >= CURRENT_DATE',
-        )
-        .andWhere(
-          'task.status NOT IN (:...doneStatuses)',
-          {
-            doneStatuses: [
-              TaskStatus.COMPLETED,
-              TaskStatus.FINISHED,
-              TaskStatus.ARCHIVED,
-            ],
-          },
-        );
-    }
-
-
-    if (
-      query.deadlineFrom
-    ) {
-      idQb.andWhere(
-        'task.deadlineDate >= :deadlineFrom',
-        {
-          deadlineFrom:
-            query.deadlineFrom,
-        },
-      );
-    }
-
-
-    if (
-      query.deadlineTo
-    ) {
-      idQb.andWhere(
-        'task.deadlineDate <= :deadlineTo',
-        {
-          deadlineTo:
-            query.deadlineTo,
-        },
-      );
-    }
-
-
-    if (
-      query.minRating
-    ) {
-      idQb.having(
-        'AVG(rating.score) >= :minRating',
-        {
-          minRating:
-            Number(
-              query.minRating,
-            ),
-        },
-      );
-    }
-
-
-    /*
-     * Assigned By Me defaults to:
-     *
-     * Created DESC
-     *
-     * so newly-created tasks are always at the top.
-     */
-    const effectiveSortBy =
-      query.sortBy ??
-      'createdAt';
-
-
-    const effectiveSortDir =
-      query.sortDir ??
-      'desc';
-
-
-    const dir =
-      effectiveSortDir ===
-      'asc'
-        ? 'ASC'
-        : 'DESC';
-
-
-    switch (
-      effectiveSortBy
-    ) {
-      case 'priority':
-        idQb.orderBy(
-          `CASE task.priority WHEN 'Critical' THEN 1 WHEN 'High' THEN 2 WHEN 'Medium' THEN 3 ELSE 4 END`,
-          effectiveSortDir ===
-          'desc'
-            ? 'DESC'
-            : 'ASC',
-        );
-        break;
-
-      case 'rating':
-        idQb.orderBy(
-          '"avgRating"',
-          dir,
-        );
-        break;
-
-      case 'deadline':
-        idQb.orderBy(
-          'task.deadlineDate',
-          dir,
-          'NULLS LAST',
-        );
-        break;
-
-      case 'createdAt':
-      default:
-        idQb.orderBy(
-          'task.createdAt',
-          dir,
-        );
-        break;
-    }
-
-
-    /*
-     * Deterministic tie-breaker.
-     */
-    idQb.addOrderBy(
-      'task.id',
-      'DESC',
+    idQb.andWhere(
+      'task.status = :status',
+      {
+        status:
+          query.status,
+      },
     );
+  }
 
 
-    const rawRows =
-      await idQb.getRawMany<{
-        id:
-          string;
-      }>();
+  if (
+    query.taskType
+  ) {
+    idQb.andWhere(
+      'task.taskType = :taskType',
+      {
+        taskType:
+          query.taskType,
+      },
+    );
+  }
 
 
-    const total =
-      rawRows.length;
+  if (
+    query.priority
+  ) {
+    idQb.andWhere(
+      'task.priority = :priority',
+      {
+        priority:
+          query.priority,
+      },
+    );
+  }
 
 
-    const pageIds =
-      rawRows
-        .slice(
-          (
-            page -
-            1
-          ) *
-            limit,
-
-          (
-            page -
-            1
-          ) *
-            limit +
-            limit,
-        )
-        .map(
-          (
-            row,
-          ) =>
-            row.id,
-        );
+  if (
+    query.projectId
+  ) {
+    idQb.andWhere(
+      'task.projectId = :projectId',
+      {
+        projectId:
+          query.projectId,
+      },
+    );
+  }
 
 
-    if (
-      pageIds.length ===
-      0
-    ) {
-      return {
-        items: [],
-        total,
-        page,
-        limit,
-      };
-    }
+  if (
+    query.assigneeId
+  ) {
+    idQb.andWhere(
+      'task.assignedToId = :assigneeId',
+      {
+        assigneeId:
+          query.assigneeId,
+      },
+    );
+  }
 
 
-    const hydrated =
-      await this.taskRepo.find({
-        where: {
-          id:
-            In(
-              pageIds,
-            ),
-        },
-
-        relations: [
-          'branch',
-          'department',
-          'project',
-          'assignedTo',
-          'createdBy',
-          'ratings',
-        ],
-      });
+  if (
+    query.search?.trim()
+  ) {
+    idQb.andWhere(
+      `(
+        task.titleEn LIKE :search
+        OR task.titleAr LIKE :search
+        OR task.descriptionEn LIKE :search
+        OR task.descriptionAr LIKE :search
+      )`,
+      {
+        search:
+          `%${query.search.trim()}%`,
+      },
+    );
+  }
 
 
-    const byId =
-      new Map(
-        hydrated.map(
-          (
-            task,
-          ) => [
-            task.id,
-            task,
+  if (
+    query.upcomingOnly ===
+      'true'
+  ) {
+    idQb
+      .andWhere(
+        'task.deadlineDate IS NOT NULL',
+      )
+      .andWhere(
+        'task.deadlineDate >= CURRENT_DATE()',
+      )
+      .andWhere(
+        'task.status NOT IN (:...doneStatuses)',
+        {
+          doneStatuses: [
+            TaskStatus.COMPLETED,
+            TaskStatus.FINISHED,
+            TaskStatus.ARCHIVED,
           ],
-        ),
+        },
+      );
+  }
+
+
+  if (
+    query.deadlineFrom
+  ) {
+    idQb.andWhere(
+      'task.deadlineDate >= :deadlineFrom',
+      {
+        deadlineFrom:
+          query.deadlineFrom,
+      },
+    );
+  }
+
+
+  if (
+    query.deadlineTo
+  ) {
+    idQb.andWhere(
+      'task.deadlineDate <= :deadlineTo',
+      {
+        deadlineTo:
+          query.deadlineTo,
+      },
+    );
+  }
+
+
+  if (
+    query.minRating
+  ) {
+    idQb.having(
+      'AVG(rating.score) >= :minRating',
+      {
+        minRating:
+          Number(
+            query.minRating,
+          ),
+      },
+    );
+  }
+
+
+  /*
+   * Assigned By Me defaults to newest first.
+   */
+  const effectiveSortBy =
+    query.sortBy ??
+    'createdAt';
+
+
+  const effectiveSortDir =
+    query.sortDir ===
+      'asc'
+      ? 'ASC'
+      : 'DESC';
+
+
+  switch (
+    effectiveSortBy
+  ) {
+    case 'priority':
+      idQb.orderBy(
+        `
+          CASE task.priority
+            WHEN 'Low' THEN 1
+            WHEN 'Medium' THEN 2
+            WHEN 'High' THEN 3
+            WHEN 'Critical' THEN 4
+            ELSE 0
+          END
+        `,
+        effectiveSortDir,
+      );
+
+      break;
+
+
+    case 'rating':
+      idQb.orderBy(
+        `
+          CASE
+            WHEN AVG(rating.score) IS NULL
+            THEN 1
+            ELSE 0
+          END
+        `,
+        'ASC',
+      );
+
+      idQb.addOrderBy(
+        'AVG(rating.score)',
+        effectiveSortDir,
+      );
+
+      break;
+
+
+    case 'deadline':
+      idQb.orderBy(
+        `
+          CASE
+            WHEN task.deadlineDate IS NULL
+            THEN 1
+            ELSE 0
+          END
+        `,
+        'ASC',
+      );
+
+      idQb.addOrderBy(
+        'task.deadlineDate',
+        effectiveSortDir,
+      );
+
+      break;
+
+
+    case 'createdAt':
+    default:
+      idQb.orderBy(
+        'task.createdAt',
+        effectiveSortDir,
+      );
+
+      break;
+  }
+
+
+  idQb.addOrderBy(
+    'task.id',
+    'DESC',
+  );
+
+
+  const rawRows =
+    await idQb.getRawMany<{
+      id:
+        string;
+    }>();
+
+
+  const total =
+    rawRows.length;
+
+
+  const pageIds =
+    rawRows
+      .slice(
+        (
+          page -
+          1
+        ) *
+          limit,
+
+        (
+          page -
+          1
+        ) *
+          limit +
+          limit,
+      )
+      .map(
+        (
+          row,
+        ) =>
+          row.id,
       );
 
 
-    const items =
-      pageIds
-        .map(
-          (
-            taskId,
-          ) =>
-            byId.get(
-              taskId,
-            ),
-        )
-        .filter(
-          (
-            task,
-          ):
-            task is TaskEntity =>
-            Boolean(
-              task,
-            ),
-        );
-
-
+  if (
+    pageIds.length ===
+    0
+  ) {
     return {
-      items,
+      items: [],
       total,
       page,
       limit,
     };
   }
+
+
+  const hydrated =
+    await this.taskRepo.find({
+      where: {
+        id:
+          In(
+            pageIds,
+          ),
+      },
+
+      relations: [
+        'branch',
+        'department',
+        'project',
+        'assignedTo',
+        'createdBy',
+        'ratings',
+      ],
+    });
+
+
+  const byId =
+    new Map(
+      hydrated.map(
+        (
+          task,
+        ) => [
+          task.id,
+          task,
+        ],
+      ),
+    );
+
+
+  const items =
+    pageIds
+      .map(
+        (
+          taskId,
+        ) =>
+          byId.get(
+            taskId,
+          ),
+      )
+      .filter(
+        (
+          task,
+        ):
+          task is TaskEntity =>
+          Boolean(
+            task,
+          ),
+      );
+
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+  };
+}
 
 
   /*

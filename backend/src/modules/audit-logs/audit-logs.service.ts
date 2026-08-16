@@ -551,7 +551,7 @@ export class AuditLogsService {
 
           OR CAST(
             log.entityId
-            AS TEXT
+            AS CHAR
           ) LIKE :search
 
           OR log.reason LIKE :search
@@ -576,21 +576,22 @@ export class AuditLogsService {
      */
 
     if (
-      params.dateFrom
-    ) {
-      /*
-       * The frontend sends YYYY-MM-DD.
-       *
-       * Start at the beginning of that day.
-       */
-      qb.andWhere(
-        'log.createdAt >= :dateFrom::date',
-        {
-          dateFrom:
-            params.dateFrom,
-        },
-      );
-    }
+  params.dateFrom
+) {
+  qb.andWhere(
+    `
+      log.createdAt >=
+      CAST(
+        :dateFrom
+        AS DATE
+      )
+    `,
+    {
+      dateFrom:
+        params.dateFrom,
+    },
+  );
+}
 
 
     /*
@@ -612,20 +613,26 @@ export class AuditLogsService {
      * ========================================================
      */
 
-    if (
-      params.dateTo
-    ) {
-      qb.andWhere(
-        `log.createdAt < (
-          :dateTo::date +
-          INTERVAL '1 day'
-        )`,
-        {
-          dateTo:
-            params.dateTo,
-        },
-      );
-    }
+  if (
+  params.dateTo
+) {
+  qb.andWhere(
+    `
+      log.createdAt <
+      DATE_ADD(
+        CAST(
+          :dateTo
+          AS DATE
+        ),
+        INTERVAL 1 DAY
+      )
+    `,
+    {
+      dateTo:
+        params.dateTo,
+    },
+  );
+}
 
 
     /*

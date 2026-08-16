@@ -117,47 +117,162 @@ export class AuthService {
     });
   }
 
-  private async issueTokens(user: UserEntity): Promise<LoginResult> {
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role.name,
-      departmentId: user.departmentId,
-      branchId: user.branchId,
-    };
+  private async issueTokens(
+  user:
+    UserEntity,
+): Promise<LoginResult> {
+  if (
+    !user.role
+  ) {
+    throw new UnauthorizedException(
+      'This account does not have a valid Role.',
+    );
+  }
 
-    const accessToken = this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('jwt.accessSecret'),
-      expiresIn: this.configService.get<string>('jwt.accessExpiresIn'),
-    });
 
-    const rawRefreshToken = randomBytes(64).toString('hex');
-    const tokenHash = this.hashToken(rawRefreshToken);
-    const refreshExpiresIn = this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d';
+  const payload:
+    JwtPayload = {
+    sub:
+      user.id,
 
-    await this.refreshTokenRepo.save(
-      this.refreshTokenRepo.create({
-        userId: user.id,
-        tokenHash,
-        expiresAt: this.addDuration(new Date(), refreshExpiresIn),
-      }),
+    email:
+      user.email,
+
+    role:
+      user.role.name,
+
+    departmentId:
+      user.departmentId,
+
+    branchId:
+      user.branchId,
+  };
+
+
+  const accessToken =
+    this.jwtService.sign(
+      payload,
+      {
+        secret:
+          this.configService.get<string>(
+            'jwt.accessSecret',
+          ),
+
+        expiresIn:
+          this.configService.get<string>(
+            'jwt.accessExpiresIn',
+          ),
+      },
     );
 
-    return {
-      accessToken,
-      refreshToken: rawRefreshToken,
-      user: {
-        id: user.id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        departmentId: user.departmentId,
-        branchId: user.branchId,
-      },
-    };
-  }
+
+  const rawRefreshToken =
+    randomBytes(
+      64,
+    ).toString(
+      'hex',
+    );
+
+
+  const tokenHash =
+    this.hashToken(
+      rawRefreshToken,
+    );
+
+
+  const refreshExpiresIn =
+    this.configService.get<string>(
+      'jwt.refreshExpiresIn',
+    ) ??
+    '7d';
+
+
+  await this.refreshTokenRepo.save(
+    this.refreshTokenRepo.create({
+      userId:
+        user.id,
+
+      tokenHash,
+
+      expiresAt:
+        this.addDuration(
+          new Date(),
+          refreshExpiresIn,
+        ),
+    }),
+  );
+
+
+  /*
+   * Return the COMPLETE frontend User shape.
+   *
+   * This fixes:
+   *
+   * - Profile showing Inactive
+   * - Member since showing —
+   * - missing locale/timezone
+   * - inconsistent User state immediately after login
+   */
+  return {
+    accessToken,
+
+    refreshToken:
+      rawRefreshToken,
+
+    user: {
+      id:
+        user.id,
+
+      fullName:
+        user.fullName,
+
+      email:
+        user.email,
+
+      phone:
+        user.phone,
+
+      avatarUrl:
+        user.avatarUrl,
+
+      role:
+        user.role,
+
+      roleId:
+        user.roleId,
+
+      departmentId:
+        user.departmentId,
+
+      branchId:
+        user.branchId,
+
+      isActive:
+        user.isActive,
+
+      locale:
+        user.locale,
+
+      timezone:
+        user.timezone,
+
+      createdAt:
+        user.createdAt,
+
+      updatedAt:
+        user.updatedAt,
+
+      archivedAt:
+        user.archivedAt,
+
+      failedLoginAttempts:
+        user.failedLoginAttempts,
+
+      lockedUntil:
+        user.lockedUntil,
+    },
+  };
+}
 
   // POST /auth/refresh: rotates the refresh token (revokes old, issues new).
   async refresh(rawRefreshToken: string): Promise<LoginResult> {

@@ -439,19 +439,25 @@ export class ProjectsService {
 
 
     if (
-      query.createdDateTo
-    ) {
-      qb.andWhere(
-        `project.createdAt < (
-          :createdDateTo::date +
-          INTERVAL '1 day'
-        )`,
-        {
-          createdDateTo:
-            query.createdDateTo,
-        },
-      );
-    }
+  query.createdDateTo
+) {
+  qb.andWhere(
+    `
+      project.createdAt <
+      DATE_ADD(
+        CAST(
+          :createdDateTo
+          AS DATE
+        ),
+        INTERVAL 1 DAY
+      )
+    `,
+    {
+      createdDateTo:
+        query.createdDateTo,
+    },
+  );
+}
 
 
     /*
@@ -560,16 +566,50 @@ export class ProjectsService {
         : 'ASC';
 
 
-    qb.orderBy(
-      sortBy,
-      sortDir,
-      query.sortBy ===
-        'startDate' ||
-      query.sortBy ===
-        'endDate'
-        ? 'NULLS LAST'
-        : undefined,
-    );
+    if (
+  query.sortBy ===
+    'startDate' ||
+  query.sortBy ===
+    'endDate'
+) {
+  /*
+   * MySQL/MariaDB replacement for NULLS LAST.
+   */
+  qb.orderBy(
+    `
+      CASE
+        WHEN ${sortBy} IS NULL
+        THEN 1
+        ELSE 0
+      END
+    `,
+    'ASC',
+  );
+
+  qb.addOrderBy(
+    sortBy,
+    sortDir,
+  );
+} else {
+  qb.orderBy(
+    sortBy,
+    sortDir,
+  );
+}
+
+
+/*
+ * Stable secondary ordering.
+ */
+if (
+  sortBy !==
+  'project.name'
+) {
+  qb.addOrderBy(
+    'project.name',
+    'ASC',
+  );
+}
 
 
     /*

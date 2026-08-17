@@ -3,6 +3,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 import {
   useEffect,
@@ -1214,37 +1215,7 @@ function DashboardContent() {
   if (
     loading
   ) {
-    return (
-      <div className="space-y-6">
-        <div className="h-28 animate-pulse rounded-2xl bg-slate-100" />
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            1,
-            2,
-            3,
-            4,
-          ].map(
-            (
-              item,
-            ) => (
-              <div
-                key={
-                  item
-                }
-                className="h-32 animate-pulse rounded-2xl bg-slate-100"
-              />
-            ),
-          )}
-        </div>
-
-
-        <div className="grid gap-6 xl:grid-cols-2">
-          <div className="h-80 animate-pulse rounded-2xl bg-slate-100" />
-          <div className="h-80 animate-pulse rounded-2xl bg-slate-100" />
-        </div>
-      </div>
-    );
+    return <InlineLoader className="min-h-[320px]" />;
   }
 
 
@@ -2127,7 +2098,7 @@ function DashboardContent() {
 
 
         {statsLoading ? (
-          <div className="mt-6 h-96 animate-pulse rounded-2xl bg-slate-100" />
+          <InlineLoader className="mt-6 min-h-64" />
         ) : (
           <>
             {/*

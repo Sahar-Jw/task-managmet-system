@@ -11,6 +11,7 @@ import { ProjectsApi, TasksApi } from '@/lib/endpoints';
 import type { Project, Task } from '@/lib/types';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 function ProjectDetailContent() {
   const { id } = useParams<{ id: string }>();
@@ -55,7 +56,7 @@ function ProjectDetailContent() {
     load();
   }, [load]);
 
-  if (loading) return null;
+  if (loading) return <InlineLoader className="min-h-[40vh]" />;
   if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
 
   const canManage = isAdmin || project.createdById === user?.id;

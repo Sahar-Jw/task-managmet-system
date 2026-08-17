@@ -1,6 +1,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 import { useEffect, useState } from 'react';
@@ -234,7 +235,7 @@ export default function ListSettingsTab() {
 
       <div className="card p-4">
         {loading ? (
-          null
+          <InlineLoader className="p-6" />
         ) : visibleRows.length === 0 ? (
           <p className="p-6 text-center text-slate-500">{uiText(isAr, 'text0636')}</p>
         ) : (

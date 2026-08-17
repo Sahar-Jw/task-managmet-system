@@ -1,6 +1,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 import {
@@ -2199,36 +2200,7 @@ function NotificationsContent() {
        */}
 
       {loading ? (
-        <div
-          className="
-            mt-4
-            space-y-3
-          "
-        >
-          {[
-            1,
-            2,
-            3,
-            4,
-            5,
-          ].map(
-            (
-              item,
-            ) => (
-              <div
-                key={
-                  item
-                }
-                className="
-                  h-32
-                  animate-pulse
-                  rounded-2xl
-                  bg-slate-100
-                "
-              />
-            ),
-          )}
-        </div>
+        <InlineLoader className="mt-4 min-h-48" />
       ) : items.length ===
         0 ? (
         <div className="mt-4">

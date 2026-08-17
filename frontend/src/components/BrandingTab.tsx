@@ -1,6 +1,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 import {
@@ -898,7 +899,7 @@ export default function BrandingTab() {
   if (
     loading
   ) {
-    return null;
+    return <InlineLoader className="min-h-48" />;
   }
 
 

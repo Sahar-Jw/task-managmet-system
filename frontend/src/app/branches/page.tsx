@@ -20,6 +20,7 @@ import type {
 } from '@/lib/types';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 function BranchesContent() {
@@ -341,7 +342,7 @@ function BranchesContent() {
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
-            null
+            <InlineLoader className="p-6" />
           ) : (
             branches.map(
               (
@@ -467,7 +468,7 @@ function BranchesContent() {
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
-            null
+            <InlineLoader className="p-6" />
           ) : (
             departments.map(
               (

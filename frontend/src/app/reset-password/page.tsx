@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import PasswordInput from '@/components/PasswordInput';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 function ResetPasswordForm() {
   const locale = useLocale();
@@ -131,7 +132,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <Suspense fallback={null}>
+          <Suspense fallback={<InlineLoader className="min-h-48" />}>
             <ResetPasswordForm />
           </Suspense>
         </div>

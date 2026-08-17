@@ -3,6 +3,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 import {
   useCallback,
@@ -2696,51 +2697,7 @@ function ProjectsContent() {
        */}
 
       {loading ? (
-        viewMode ===
-        'cards' ? (
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {[
-              1,
-              2,
-              3,
-              4,
-              5,
-              6,
-            ].map(
-              (
-                item,
-              ) => (
-                <div
-                  key={
-                    item
-                  }
-                  className="h-64 animate-pulse rounded-2xl bg-slate-100"
-                />
-              ),
-            )}
-          </div>
-        ) : (
-          <div className="mt-4 space-y-2">
-            {[
-              1,
-              2,
-              3,
-              4,
-              5,
-            ].map(
-              (
-                item,
-              ) => (
-                <div
-                  key={
-                    item
-                  }
-                  className="h-24 animate-pulse rounded-xl bg-slate-100"
-                />
-              ),
-            )}
-          </div>
-        )
+        <InlineLoader className="mt-4 min-h-48" />
       ) : projects.length ===
         0 ? (
         <div className="mt-4 rounded-2xl border border-slate-200 bg-white">

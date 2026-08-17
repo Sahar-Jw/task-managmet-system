@@ -670,7 +670,6 @@ export function LoadingProvider({
       {isLoading && (
         <div
           className="
-            hidden
             fixed
             inset-0
             z-[9999]

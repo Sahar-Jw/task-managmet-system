@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 export default function ProtectedRoute({
   children,
@@ -23,7 +24,7 @@ export default function ProtectedRoute({
   }, [loading, user, router]);
 
   if (loading) {
-    return null;
+    return <InlineLoader className="min-h-[40vh]" />;
   }
   if (!user) return null;
 

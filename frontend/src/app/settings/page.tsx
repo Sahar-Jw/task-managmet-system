@@ -1,6 +1,7 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 import {
@@ -1793,35 +1794,7 @@ function DataSettingsTab() {
 
 
         {loading ? (
-          <div
-            className="
-              space-y-3
-              p-5
-              sm:p-6
-            "
-          >
-            {[
-              1,
-              2,
-              3,
-            ].map(
-              (
-                item,
-              ) => (
-                <div
-                  key={
-                    item
-                  }
-                  className="
-                    h-20
-                    animate-pulse
-                    rounded-xl
-                    bg-slate-100
-                  "
-                />
-              ),
-            )}
-          </div>
+          <InlineLoader className="min-h-[220px]" />
         ) : visibleRows.length ===
           0 ? (
           <div

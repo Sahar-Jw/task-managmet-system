@@ -7,6 +7,7 @@ import { getFileKind } from '@/lib/file-kind';
 import type { TaskAttachment } from '@/lib/types';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 // 'empty' = the file itself has no usable content (0 bytes, no sheet data,
 // no visible text/images). 'unsupported' = we simply don't render a preview
@@ -161,7 +162,7 @@ export default function AttachmentPreviewModal({
 
         <div className="flex-1 overflow-auto p-3 sm:p-5">
           {state === 'loading' && (
-            null
+            <InlineLoader className="min-h-48" />
           )}
 
           {state === 'error' && (

@@ -464,6 +464,20 @@ export function LoadingProvider({
 
 
       /*
+       * Some links, such as the application brand, are simple
+       * navigation shortcuts and must never block the current page
+       * with the global overlay while Next prepares the destination.
+       */
+      if (
+        anchor.hasAttribute(
+          'data-no-loading',
+        )
+      ) {
+        return;
+      }
+
+
+      /*
        * Downloads should not show page-navigation loading.
        */
       if (

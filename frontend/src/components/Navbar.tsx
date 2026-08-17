@@ -692,6 +692,7 @@ export default function Navbar() {
 
         <Link
           href={user ? '/dashboard' : '/'}
+          data-no-loading
           className="
             flex
             min-w-0

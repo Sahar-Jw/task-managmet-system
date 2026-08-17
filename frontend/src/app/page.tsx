@@ -851,6 +851,7 @@ export default function Home() {
                 ? '/dashboard'
                 : '/'
             }
+            data-no-loading
             className="flex items-center gap-3"
           >
             {branding?.logoUrl ? (

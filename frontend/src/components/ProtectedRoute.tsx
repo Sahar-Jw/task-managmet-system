@@ -23,7 +23,7 @@ export default function ProtectedRoute({
   }, [loading, user, router]);
 
   if (loading) {
-    return <div className="py-12 text-center text-slate-500">{uiText(isArabic, 'text0875')}</div>;
+    return null;
   }
   if (!user) return null;
 

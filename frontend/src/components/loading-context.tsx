@@ -670,12 +670,10 @@ export function LoadingProvider({
       {isLoading && (
         <div
           className="
+            hidden
             fixed
             inset-0
             z-[9999]
-            flex
-            items-center
-            justify-center
             pointer-events-none
           "
           role="status"

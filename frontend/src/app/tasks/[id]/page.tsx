@@ -794,49 +794,7 @@ function TaskDetailContent() {
   if (
     loading
   ) {
-    return (
-      <div
-        className="
-          mx-auto
-          max-w-7xl
-          pb-16
-        "
-      >
-        <div
-          className="
-            rounded-2xl
-            border
-            border-slate-200
-            bg-white
-            p-10
-            text-center
-          "
-        >
-          <div
-            className="
-              mx-auto
-              h-8
-              w-8
-              animate-spin
-              rounded-full
-              border-2
-              border-slate-200
-              border-t-brand-500
-            "
-          />
-
-          <p
-            className="
-              mt-4
-              text-sm
-              text-slate-500
-            "
-          >
-            {uiText(isArabic, 'text0105')}
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
 

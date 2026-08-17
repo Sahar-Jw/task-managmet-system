@@ -234,7 +234,7 @@ export default function ListSettingsTab() {
 
       <div className="card p-4">
         {loading ? (
-          <p className="p-6 text-center text-slate-500">{uiText(isAr, 'text0234')}</p>
+          null
         ) : visibleRows.length === 0 ? (
           <p className="p-6 text-center text-slate-500">{uiText(isAr, 'text0636')}</p>
         ) : (

@@ -55,7 +55,7 @@ function ProjectDetailContent() {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-slate-500">{uiText(isArabic, 'text0875')}</p>;
+  if (loading) return null;
   if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
 
   const canManage = isAdmin || project.createdById === user?.id;

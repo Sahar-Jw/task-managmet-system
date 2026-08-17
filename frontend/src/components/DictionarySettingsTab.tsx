@@ -187,7 +187,7 @@ export default function DictionarySettingsTab() {
       {notice && <div className="m-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{notice}</div>}
 
       {loading ? (
-        <div className="p-10 text-center text-sm text-slate-500">{uiText(isArabic, 'text0105')}</div>
+        null
       ) : visible.length === 0 ? (
         <div className="p-10 text-center text-sm text-slate-500">{uiText(isArabic, 'text0840')}</div>
       ) : (

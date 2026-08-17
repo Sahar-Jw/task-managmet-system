@@ -341,9 +341,7 @@ function BranchesContent() {
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
-            <p className="p-6 text-center text-slate-500">
-              {uiText(isArabic, 'text0875')}
-            </p>
+            null
           ) : (
             branches.map(
               (
@@ -469,9 +467,7 @@ function BranchesContent() {
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
-            <p className="p-6 text-center text-slate-500">
-              {uiText(isArabic, 'text0875')}
-            </p>
+            null
           ) : (
             departments.map(
               (

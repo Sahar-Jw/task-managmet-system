@@ -131,7 +131,7 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="px-4 py-6 sm:px-6 sm:py-8">
-          <Suspense fallback={<p className="text-sm text-slate-500">{uiText(isArabic, 'text0875')}</p>}>
+          <Suspense fallback={null}>
             <ResetPasswordForm />
           </Suspense>
         </div>

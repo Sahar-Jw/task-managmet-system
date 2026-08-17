@@ -898,12 +898,7 @@ export default function BrandingTab() {
   if (
     loading
   ) {
-    return (
-      <div className="space-y-4">
-        <div className="h-64 animate-pulse rounded-2xl bg-slate-100" />
-        <div className="h-80 animate-pulse rounded-2xl bg-slate-100" />
-      </div>
-    );
+    return null;
   }
 
 

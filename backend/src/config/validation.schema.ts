@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsIn, IsNumberString, IsOptional, IsString, validateSync } from 'class-validator';
+import { IsIn, IsNumberString, IsOptional, IsString, MinLength, validateSync } from 'class-validator';
 
 export class EnvironmentVariables {
   @IsOptional()
@@ -23,9 +23,11 @@ export class EnvironmentVariables {
   DB_NAME!: string;
 
   @IsString()
+  @MinLength(32)
   JWT_ACCESS_SECRET!: string;
 
   @IsString()
+  @MinLength(32)
   JWT_REFRESH_SECRET!: string;
 }
 

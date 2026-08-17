@@ -8,7 +8,7 @@ exercised end-to-end (login, RBAC, task lifecycle, audit trail) during developme
 
 - **Framework:** NestJS 10 (modular architecture, Guards, Interceptors, Filters)
 - **ORM:** TypeORM 0.3 with versioned migrations (no `synchronize` in production)
-- **Database:** mysql 16
+- **Database:** MySQL 8.0+
 - **Auth:** JWT access tokens (15m) + rotating refresh tokens in an HttpOnly/Secure cookie
 - **Docs:** OpenAPI/Swagger, auto-generated from decorators
 

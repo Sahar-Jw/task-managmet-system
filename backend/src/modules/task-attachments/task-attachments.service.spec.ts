@@ -11,6 +11,7 @@ import { UserEntity } from '../users/entities/user.entity';
 import { TaskRatingEntity } from '../task-ratings/entities/task-rating.entity';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ProjectsService } from '../projects/projects.service';
+import { TaskWorkflowService } from '../task-workflow/task-workflow.service';
 
 describe('TasksService', () => {
   it('filters out soft-deleted attachments and comments', async () => {
@@ -41,6 +42,7 @@ describe('TasksService', () => {
         { provide: getRepositoryToken(TaskRatingEntity), useValue: {} },
         { provide: AuditLogsService, useValue: { record: jest.fn() } },
         { provide: ProjectsService, useValue: {} },
+        { provide: TaskWorkflowService, useValue: {} },
       ],
     }).compile();
 
@@ -78,6 +80,7 @@ describe('TasksService', () => {
         { provide: getRepositoryToken(TaskRatingEntity), useValue: {} },
         { provide: AuditLogsService, useValue: { record: jest.fn() } },
         { provide: ProjectsService, useValue: {} },
+        { provide: TaskWorkflowService, useValue: {} },
       ],
     }).compile();
 

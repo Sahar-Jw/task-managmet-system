@@ -33,11 +33,14 @@ const REFRESH_COOKIE_MAX_AGE_MS = 60 * 24 * 60 * 60 * 1000; // 60 days
 // `secure: true` unconditionally also blocks the cookie from ever being set
 // over plain http (e.g. local dev on http://localhost), which produces the
 // exact same "logged out on refresh" symptom. Only require it outside dev.
+const apiPrefix = (process.env.API_PREFIX || 'api/v1').replace(/^\/+|\/+$/g, '');
+const refreshCookiePath = `/${[apiPrefix, 'auth'].filter(Boolean).join('/')}`;
+
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict' as const,
-  path: '/api/v1/auth',
+  path: refreshCookiePath,
   maxAge: REFRESH_COOKIE_MAX_AGE_MS,
 };
 

@@ -325,6 +325,160 @@ function getEntityLink(
 }
 
 
+const AUDIT_FIELD_LABELS:
+  Record<string, Parameters<typeof uiText>[1]> = {
+  status: 'text0784',
+  approvalStatus: 'text0785',
+  title: 'text0786',
+  titleEn: 'text0786',
+  titleAr: 'text0786',
+  name: 'text0787',
+  fullName: 'text0787',
+  email: 'text0788',
+  isActive: 'text0789',
+  assignedToId: 'text0790',
+  assigneeId: 'text0791',
+  approverId: 'text0792',
+  deadlineDate: 'text0793',
+  startDate: 'text0794',
+  endDate: 'text0795',
+  priority: 'text0796',
+  taskType: 'text0797',
+  roleId: 'text0798',
+  roleName: 'text0798',
+  departmentId: 'text0799',
+  branchId: 'text0800',
+  projectId: 'text0801',
+  reason: 'text0802',
+  assigneeCanDownloadAttachments: 'text0803',
+  siteName: 'text0804',
+  fileName: 'text0805',
+  valueEn: 'text0806',
+  valueAr: 'text0807',
+  codeEn: 'text0808',
+  codeAr: 'text0809',
+};
+
+
+const HIDDEN_AUDIT_FIELDS = new Set([
+  'id',
+  'createdAt',
+  'updatedAt',
+  'version',
+]);
+
+
+const AUDIT_VALUE_LABELS:
+  Record<string, Parameters<typeof uiText>[1]> = {
+  Pending: 'text0810',
+  Unassigned: 'text0811',
+  InProgress: 'text0812',
+  PendingApproval: 'text0813',
+  Completed: 'text0814',
+  Reopened: 'text0815',
+  Finished: 'text0816',
+  Archived: 'text0817',
+  Approved: 'text0818',
+  Rejected: 'text0819',
+  NotRequired: 'text0820',
+  Active: 'text0821',
+  Inactive: 'text0822',
+  ADMIN: 'text0823',
+  USER: 'text0824',
+};
+
+
+function humanizeField(key: string) {
+  return key
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/_/g, ' ')
+    .replace(/^./, (letter) => letter.toUpperCase());
+}
+
+
+function auditFieldLabel(key: string, isArabic: boolean) {
+  const catalogKey = AUDIT_FIELD_LABELS[key];
+  return catalogKey
+    ? uiText(isArabic, catalogKey)
+    : humanizeField(key);
+}
+
+
+function formatAuditValue(
+  value: unknown,
+  isArabic: boolean,
+  locale: string,
+) {
+  if (value === null || value === undefined || value === '') {
+    return uiText(isArabic, 'text0781');
+  }
+
+  if (typeof value === 'boolean') {
+    return uiText(isArabic, value ? 'text0779' : 'text0780');
+  }
+
+  if (typeof value === 'string' && AUDIT_VALUE_LABELS[value]) {
+    return uiText(isArabic, AUDIT_VALUE_LABELS[value]);
+  }
+
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(value)) {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return value.includes('T')
+        ? date.toLocaleString(locale)
+        : date.toLocaleDateString(locale);
+    }
+  }
+
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    const preferred = isArabic
+      ? record.valueAr || record.nameAr || record.titleAr || record.fullName
+      : record.valueEn || record.nameEn || record.titleEn || record.fullName;
+    return preferred ? String(preferred) : JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+
+function entityDisplayName(
+  log: AuditLogEntry,
+  isArabic: boolean,
+) {
+  const values = {
+    ...(log.oldValue ?? {}),
+    ...(log.newValue ?? {}),
+  } as Record<string, unknown>;
+
+  const candidates = isArabic
+    ? [values.titleAr, values.valueAr, values.nameAr, values.fullName, values.fileName,
+        values.siteName, values.titleEn, values.valueEn, values.nameEn]
+    : [values.titleEn, values.valueEn, values.nameEn, values.fullName, values.fileName,
+        values.siteName, values.titleAr, values.valueAr, values.nameAr];
+
+  const match = candidates.find((value) => typeof value === 'string' && value.trim());
+  return match ? String(match) : entityLabel(log.entityType, isArabic);
+}
+
+
+function changedAuditFields(log: AuditLogEntry) {
+  const oldValue = log.oldValue ?? {};
+  const newValue = log.newValue ?? {};
+
+  return Object.keys({ ...oldValue, ...newValue })
+    .filter((key) =>
+      !HIDDEN_AUDIT_FIELDS.has(key) &&
+      JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
+    )
+    .map((key) => ({
+      key,
+      before: oldValue[key],
+      after: newValue[key],
+    }));
+}
+
+
 /*
  * ============================================================
  * ACTION BADGE
@@ -391,20 +545,8 @@ function AuditItem({
       .toUpperCase() ||
     'S';
 
-  const oldValue = log.oldValue ?? {};
-  const newValue = log.newValue ?? {};
-  const targetUserName =
-    log.entityType === 'User'
-      ? String(newValue.fullName || oldValue.fullName || '').trim()
-      : '';
-  const changedUserFields =
-    log.entityType === 'User' && log.action === 'Update'
-      ? Object.keys({ ...oldValue, ...newValue }).filter(
-          (key) =>
-            !['passwordHash', 'updatedAt', 'createdAt'].includes(key) &&
-            JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
-        )
-      : [];
+  const targetName = entityDisplayName(log, isArabic);
+  const changes = changedAuditFields(log);
 
   return (
     <article
@@ -514,22 +656,52 @@ function AuditItem({
               {' '}
 
               <span className="font-medium text-slate-800">
-                {targetUserName
-                  ? targetUserName
-                  : entityLabel(
-                      log.entityType,
-                      isArabic,
-                    )}
+                {targetName}
               </span>
-
-              {changedUserFields.length > 0 && (
-                <span className="text-slate-500">
-                  {' '}
-                  ({uiText(isArabic, 'text0002')}
-                  {changedUserFields.join(', ')})
-                </span>
-              )}
             </div>
+
+
+            {changes.length > 0 && (
+              <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {uiText(isArabic, 'text0774')}
+                  </span>
+
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200">
+                    {uiText(isArabic, 'text0783', { value0: changes.length })}
+                  </span>
+                </div>
+
+
+                <div className="grid gap-2 xl:grid-cols-2">
+                  {changes.map((change) => (
+                    <div
+                      key={change.key}
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <div className="text-[11px] font-semibold text-slate-600">
+                        {auditFieldLabel(change.key, isArabic)}
+                      </div>
+
+                      <div className="mt-1 flex min-w-0 items-center gap-2 text-xs">
+                        <span className="min-w-0 truncate rounded-md bg-red-50 px-2 py-1 text-red-700 line-through decoration-red-300">
+                          {formatAuditValue(change.before, isArabic, locale)}
+                        </span>
+
+                        <span className="shrink-0 text-slate-300" aria-hidden="true">
+                          {isArabic ? '←' : '→'}
+                        </span>
+
+                        <span className="min-w-0 truncate rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+                          {formatAuditValue(change.after, isArabic, locale)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
 
             {/*
@@ -575,6 +747,17 @@ function AuditItem({
                 {log.actor.email}
               </div>
             )}
+
+
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
+              <span>
+                {uiText(isArabic, 'text0777')}: <span dir="ltr">{log.entityId}</span>
+              </span>
+
+              {log.ipAddress && (
+                <span dir="ltr">IP: {log.ipAddress}</span>
+              )}
+            </div>
           </div>
         </div>
 

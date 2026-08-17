@@ -10,47 +10,44 @@ import {
   type ThemeColors,
   useTheme,
 } from '@/lib/theme-context';
+import { useLocale } from 'next-intl';
+import { uiText, type GeneratedKey } from '@/lib/ui-text';
 
 type ColorFieldDefinition = {
   key: keyof ThemeColors;
-  label: string;
-  description: string;
+  labelKey: GeneratedKey;
+  descriptionKey: GeneratedKey;
 };
 
 const COLOR_FIELDS: ColorFieldDefinition[] = [
   {
     key: 'primary',
-    label: 'Primary',
-    description:
-      'Main website color used for primary buttons, active tabs, links, focus states, and brand-colored UI.',
+    labelKey: 'text0986',
+    descriptionKey: 'text0987',
   },
 
   {
     key: 'primaryText',
-    label: 'Primary Button Text',
-    description:
-      'Text color used inside primary buttons.',
+    labelKey: 'text0988',
+    descriptionKey: 'text0989',
   },
 
   {
     key: 'pageBackground',
-    label: 'Page Background',
-    description:
-      'Main background color behind the website content.',
+    labelKey: 'text0990',
+    descriptionKey: 'text0991',
   },
 
   {
     key: 'surface',
-    label: 'Card / Surface',
-    description:
-      'Background color used for cards, forms, panels, and common inputs.',
+    labelKey: 'text0992',
+    descriptionKey: 'text0993',
   },
 
   {
     key: 'bodyText',
-    label: 'Body Text',
-    description:
-      'Main text color used by the website.',
+    labelKey: 'text0994',
+    descriptionKey: 'text0995',
   },
 ];
 
@@ -62,10 +59,12 @@ function ColorField({
   field,
   value,
   onChange,
+  isArabic,
 }: {
   field: ColorFieldDefinition;
   value: string;
   onChange: (value: string) => void;
+  isArabic: boolean;
 }) {
   const [inputValue, setInputValue] = useState(value);
 
@@ -90,14 +89,14 @@ function ColorField({
   return (
     <div>
       <label className="label uppercase tracking-wide">
-        {field.label}
+        {uiText(isArabic, field.labelKey)}
       </label>
 
       <div className="flex items-center gap-3">
         <input
           type="color"
           value={value}
-          aria-label={`${field.label} color picker`}
+          aria-label={uiText(isArabic, field.labelKey)}
           onChange={(event) => {
             const nextColor = event.target.value;
 
@@ -136,13 +135,14 @@ function ColorField({
       </div>
 
       <p className="mt-3 text-sm text-slate-500">
-        {field.description}
+        {uiText(isArabic, field.descriptionKey)}
       </p>
     </div>
   );
 }
 
 export default function ColorThemeTab() {
+  const isArabic = useLocale() === 'ar';
   /*
    * "colors" = the SAVED website theme.
    *
@@ -262,12 +262,11 @@ export default function ColorThemeTab() {
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <h2 className="text-xl font-semibold">
-              Website Colors
+              {uiText(isArabic, 'text0970')}
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Choose your website colors, preview them below,
-              then save when you are happy with the result.
+              {uiText(isArabic, 'text0971')}
             </p>
           </div>
 
@@ -276,7 +275,7 @@ export default function ColorThemeTab() {
             className="btn-secondary shrink-0"
             onClick={handleReset}
           >
-            Reset to defaults
+            {uiText(isArabic, 'text0837')}
           </button>
         </div>
 
@@ -287,6 +286,7 @@ export default function ColorThemeTab() {
             <ColorField
               key={field.key}
               field={field}
+              isArabic={isArabic}
               value={draftColors[field.key]}
               onChange={(nextColor) =>
                 changeDraftColor(
@@ -303,12 +303,11 @@ export default function ColorThemeTab() {
         <div className="mt-10">
           <div className="mb-3">
             <h3 className="text-base font-semibold">
-              Live Preview
+              {uiText(isArabic, 'text0972')}
             </h3>
 
             <p className="mt-1 text-sm text-slate-500">
-              Changes below are only a preview until you click
-              Save Theme.
+              {uiText(isArabic, 'text0973')}
             </p>
           </div>
 
@@ -336,7 +335,7 @@ export default function ColorThemeTab() {
                     draftColors.bodyText,
                 }}
               >
-                Website Preview
+                {uiText(isArabic, 'text0974')}
               </h3>
 
               <p
@@ -346,8 +345,7 @@ export default function ColorThemeTab() {
                     draftColors.bodyText,
                 }}
               >
-                This preview shows how your page background,
-                cards, text, and primary buttons will look.
+                {uiText(isArabic, 'text0975')}
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -362,7 +360,7 @@ export default function ColorThemeTab() {
                       draftColors.primaryText,
                   }}
                 >
-                  Primary Button
+                  {uiText(isArabic, 'text0976')}
                 </button>
 
                 <div
@@ -375,7 +373,7 @@ export default function ColorThemeTab() {
                       draftColors.bodyText,
                   }}
                 >
-                  Card / Surface
+                  {uiText(isArabic, 'text0977')}
                 </div>
               </div>
 
@@ -393,7 +391,7 @@ export default function ColorThemeTab() {
                   }}
                 >
                   <p className="font-medium">
-                    Example Card
+                    {uiText(isArabic, 'text0978')}
                   </p>
 
                   <p
@@ -403,8 +401,7 @@ export default function ColorThemeTab() {
                         draftColors.bodyText,
                     }}
                   >
-                    This represents cards and panels throughout
-                    your website.
+                    {uiText(isArabic, 'text0979')}
                   </p>
                 </div>
 
@@ -425,13 +422,13 @@ export default function ColorThemeTab() {
                         draftColors.bodyText,
                     }}
                   >
-                    Example Input
+                    {uiText(isArabic, 'text0980')}
                   </label>
 
                   <input
                     type="text"
                     readOnly
-                    value="Example field"
+                    value={uiText(isArabic, 'text0980')}
                     className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
                     style={{
                       backgroundColor:
@@ -457,7 +454,7 @@ export default function ColorThemeTab() {
               disabled={!hasChanges}
               onClick={handleSave}
             >
-              Save Theme
+              {uiText(isArabic, 'text0981')}
             </button>
 
             {hasChanges && (
@@ -466,19 +463,19 @@ export default function ColorThemeTab() {
                 className="btn-secondary"
                 onClick={handleCancel}
               >
-                Cancel Changes
+                {uiText(isArabic, 'text0982')}
               </button>
             )}
 
             {savedMessage && (
               <span className="text-sm font-medium text-green-600">
-                Theme saved successfully.
+                {uiText(isArabic, 'text0983')}
               </span>
             )}
 
             {!hasChanges && !savedMessage && (
               <span className="text-sm text-slate-500">
-                No unsaved changes.
+                {uiText(isArabic, 'text0984')}
               </span>
             )}
           </div>

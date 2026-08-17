@@ -1,7 +1,7 @@
 import arMessages from '@/i18n/messages/ar.json';
 import enMessages from '@/i18n/messages/en.json';
 
-type GeneratedKey = keyof typeof enMessages.generatedUi;
+export type GeneratedKey = keyof typeof enMessages.generatedUi;
 
 type DictionaryOverride = {
   textEn: string;

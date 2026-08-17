@@ -5,6 +5,8 @@ import { downloadFile, fetchFileAsObjectUrl } from '@/lib/api';
 import { AttachmentsApi } from '@/lib/endpoints';
 import { formatFileSize, getFileKind, getFileTypeLabel } from '@/lib/file-kind';
 import type { TaskAttachment } from '@/lib/types';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 const BADGE_COLORS: Record<string, string> = {
   image: 'bg-emerald-50 text-emerald-700',
@@ -47,6 +49,7 @@ export default function AttachmentCard({
   onPreview: () => void;
   onDelete: () => void;
 }) {
+  const isArabic = useLocale() === 'ar';
   const kind = getFileKind(attachment.mimeType, attachment.fileName);
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
 
@@ -106,19 +109,19 @@ export default function AttachmentCard({
 
       <div className="flex flex-wrap gap-2">
         <button className="btn-secondary flex-1 text-xs" onClick={onPreview}>
-          Preview
+          {uiText(isArabic, 'text0967')}
         </button>
         {canDownload && (
           <button
             className="btn-secondary flex-1 text-xs"
             onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
           >
-            Download
+            {uiText(isArabic, 'text0259')}
           </button>
         )}
         {canDelete && (
           <button className="btn-danger flex-1 text-xs" onClick={onDelete}>
-            Delete
+            {uiText(isArabic, 'text0038')}
           </button>
         )}
       </div>

@@ -675,7 +675,7 @@ function ProfileContent() {
 
     if (!cleanName) {
       setProfileError(
-        'Full name is required.',
+        uiText(isArabic, 'text1015'),
       );
 
       return;
@@ -687,7 +687,7 @@ function ProfileContent() {
       150
     ) {
       setProfileError(
-        'Full name cannot exceed 150 characters.',
+        uiText(isArabic, 'text1016'),
       );
 
       return;
@@ -1098,7 +1098,7 @@ function ProfileContent() {
                 src={
                   avatarPreview
                 }
-                alt="Avatar preview"
+                alt={uiText(isArabic, 'text0950')}
                 className="
                   h-24
                   w-24
@@ -1230,7 +1230,7 @@ function ProfileContent() {
               >
                 {user.isActive
                   ? uiText(isArabic, 'text0937')
-                  : 'Inactive'}
+                  : uiText(isArabic, 'text1006')}
               </span>
             </div>
 
@@ -1261,7 +1261,7 @@ function ProfileContent() {
             >
               <span>
                 <strong className="font-medium text-slate-700">
-                  Department:
+                  {uiText(isArabic, 'text0951')}
                 </strong>{' '}
 
                 {getSettingLabel(
@@ -1272,7 +1272,7 @@ function ProfileContent() {
 
               <span>
                 <strong className="font-medium text-slate-700">
-                  Branch:
+                  {uiText(isArabic, 'text0952')}
                 </strong>{' '}
 
                 {getSettingLabel(
@@ -1283,7 +1283,7 @@ function ProfileContent() {
 
               <span>
                 <strong className="font-medium text-slate-700">
-                  Member since:
+                  {uiText(isArabic, 'text0953')}
                 </strong>{' '}
 
                 {formatDate(
@@ -1327,7 +1327,7 @@ function ProfileContent() {
                   text-slate-800
                 "
               >
-                New profile photo selected
+                {uiText(isArabic, 'text0954')}
               </div>
 
               <div
@@ -1363,7 +1363,7 @@ function ProfileContent() {
                   clearSelectedAvatar
                 }
               >
-                Cancel
+                {uiText(isArabic, 'text0996')}
               </button>
 
 
@@ -1378,8 +1378,8 @@ function ProfileContent() {
                 }
               >
                 {avatarUploading
-                  ? 'Uploading…'
-                  : 'Save photo'}
+                  ? uiText(isArabic, 'text0997')
+                  : uiText(isArabic, 'text0998')}
               </button>
             </div>
           </div>
@@ -1408,8 +1408,8 @@ function ProfileContent() {
               }
             >
               {avatarUploading
-                ? 'Working…'
-                : 'Change photo'}
+                ? uiText(isArabic, 'text0999')
+                : uiText(isArabic, 'text0869')}
             </button>
 
 
@@ -1430,7 +1430,7 @@ function ProfileContent() {
                   disabled:opacity-50
                 "
               >
-                Remove photo
+                {uiText(isArabic, 'text0955')}
               </button>
             )}
 
@@ -1441,7 +1441,7 @@ function ProfileContent() {
                 text-slate-400
               "
             >
-              PNG, JPG, WEBP or GIF · Max {MAX_AVATAR_MB}MB
+              {uiText(isArabic, 'text0956', {value0: MAX_AVATAR_MB})}
             </span>
           </div>
         )}
@@ -1524,9 +1524,9 @@ function ProfileContent() {
             "
           >
             <SectionHeader
-              eyebrow="Profile"
+              eyebrow={uiText(isArabic, 'text1007')}
               title={uiText(isArabic, 'text0870')}
-              description="Keep your name and contact information up to date."
+              description={uiText(isArabic, 'text1008')}
             />
 
 
@@ -1540,7 +1540,7 @@ function ProfileContent() {
             >
               <div className="sm:col-span-2">
                 <label className="label">
-                  Full name
+                  {uiText(isArabic, 'text0957')}
                 </label>
 
                 <input
@@ -1569,7 +1569,7 @@ function ProfileContent() {
 
               <div>
                 <label className="label">
-                  Phone
+                  {uiText(isArabic, 'text0958')}
                 </label>
 
                 <input
@@ -1609,7 +1609,7 @@ function ProfileContent() {
                       text-slate-400
                     "
                   >
-                    12 digits.
+                    {uiText(isArabic, 'text0959')}
                   </p>
                 )}
               </div>
@@ -1617,7 +1617,7 @@ function ProfileContent() {
 
               <div>
                 <label className="label">
-                  Email
+                  {uiText(isArabic, 'text0960')}
                 </label>
 
                 <input
@@ -1640,7 +1640,7 @@ function ProfileContent() {
                     text-slate-400
                   "
                 >
-                  Email changes require Admin action.
+                  {uiText(isArabic, 'text0961')}
                 </p>
               </div>
             </div>
@@ -1681,7 +1681,7 @@ function ProfileContent() {
                   text-emerald-700
                 "
               >
-                Profile changes saved successfully.
+                {uiText(isArabic, 'text0962')}
               </div>
             )}
 
@@ -1702,8 +1702,8 @@ function ProfileContent() {
                 }
               >
                 {profileSaving
-                  ? 'Saving…'
-                  : 'Save changes'}
+                  ? uiText(isArabic, 'text1000')
+                  : uiText(isArabic, 'text1001')}
               </button>
             </div>
           </form>
@@ -1729,9 +1729,9 @@ function ProfileContent() {
             "
           >
             <SectionHeader
-              eyebrow="Security"
+              eyebrow={uiText(isArabic, 'text1009')}
               title={uiText(isArabic, 'text0871')}
-              description="Use your current password to set a new password for your account."
+              description={uiText(isArabic, 'text1010')}
             />
 
 
@@ -1743,7 +1743,7 @@ function ProfileContent() {
             >
               <div>
                 <label className="label">
-                  Current password
+                  {uiText(isArabic, 'text0963')}
                 </label>
 
                 <div className="relative">
@@ -1794,7 +1794,7 @@ function ProfileContent() {
                   >
                     {showCurrentPassword
                       ? uiText(isArabic, 'text0938')
-                      : 'Show'}
+                      : uiText(isArabic, 'text1005')}
                   </button>
                 </div>
               </div>
@@ -1809,7 +1809,7 @@ function ProfileContent() {
               >
                 <div>
                   <label className="label">
-                    New password
+                    {uiText(isArabic, 'text1002')}
                   </label>
 
                   <div className="relative">
@@ -1863,7 +1863,7 @@ function ProfileContent() {
                     >
                       {showNewPassword
                         ? uiText(isArabic, 'text0938')
-                        : 'Show'}
+                        : uiText(isArabic, 'text1005')}
                     </button>
                   </div>
 
@@ -1874,14 +1874,14 @@ function ProfileContent() {
                       text-slate-400
                     "
                   >
-                    Minimum 8 characters.
+                    {uiText(isArabic, 'text1003')}
                   </p>
                 </div>
 
 
                 <div>
                   <label className="label">
-                    Confirm new password
+                    {uiText(isArabic, 'text1004')}
                   </label>
 
                   <input
@@ -1950,7 +1950,7 @@ function ProfileContent() {
                   text-emerald-700
                 "
               >
-                Password changed successfully.
+                {uiText(isArabic, 'text0964')}
               </div>
             )}
 
@@ -2004,9 +2004,9 @@ function ProfileContent() {
             "
           >
             <SectionHeader
-              eyebrow="Organization"
+              eyebrow={uiText(isArabic, 'text1011')}
               title={uiText(isArabic, 'text0872')}
-              description="Organization details are managed by an Administrator."
+              description={uiText(isArabic, 'text1012')}
             />
 
 
@@ -2051,8 +2051,7 @@ function ProfileContent() {
                 text-slate-500
               "
             >
-              Contact an Administrator if your role, department,
-              branch or email needs to be changed.
+              {uiText(isArabic, 'text0965')}
             </div>
           </section>
 
@@ -2073,9 +2072,9 @@ function ProfileContent() {
             "
           >
             <SectionHeader
-              eyebrow="Account"
+              eyebrow={uiText(isArabic, 'text1013')}
               title={uiText(isArabic, 'text0873')}
-              description="Basic information about your system account."
+              description={uiText(isArabic, 'text1014')}
             />
 
 
@@ -2115,7 +2114,7 @@ function ProfileContent() {
 
                     {user.isActive
                       ? uiText(isArabic, 'text0937')
-                      : 'Inactive'}
+                      : uiText(isArabic, 'text1006')}
                   </span>
                 }
               />

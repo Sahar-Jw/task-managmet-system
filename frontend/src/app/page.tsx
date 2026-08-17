@@ -2152,7 +2152,7 @@ export default function Home() {
 
             <div>
               <div className="text-sm font-semibold text-slate-800">
-                Task &amp; Project Manager
+                {uiText(isArabic, 'text0985')}
               </div>
 
               <div className="text-xs text-slate-400">
@@ -2164,7 +2164,7 @@ export default function Home() {
 
           <div className="text-xs text-slate-400">
             © {new Date().getFullYear()}{' '}
-            Task &amp; Project Manager
+            {uiText(isArabic, 'text0985')}
           </div>
         </div>
       </footer>

@@ -126,6 +126,8 @@ function Stars({
   showEmpty?:
     boolean;
 }) {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   if (
     value ===
     null
@@ -139,7 +141,7 @@ function Stars({
 
     return (
       <span className="text-xs text-slate-400">
-        Not rated
+        {uiText(isArabic, 'text0966')}
       </span>
     );
   }

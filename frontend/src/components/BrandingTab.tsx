@@ -364,7 +364,7 @@ function AssetField({
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-slate-900">
                       {siteName ||
-                        'Task & Project Manager'}
+                        uiText(isArabic, 'text0985')}
                     </div>
 
                     <div className="text-[10px] text-slate-400">
@@ -376,15 +376,15 @@ function AssetField({
 
                 <div className="hidden items-center gap-4 text-xs text-slate-400 sm:flex">
                   <span>
-                    Dashboard
+                    {uiText(isArabic, 'text0968')}
                   </span>
 
                   <span>
-                    Tasks
+                    {uiText(isArabic, 'text0862')}
                   </span>
 
                   <span className="rounded-lg bg-brand-600 px-3 py-1.5 text-white">
-                    Action
+                    {uiText(isArabic, 'text0969')}
                   </span>
                 </div>
               </div>

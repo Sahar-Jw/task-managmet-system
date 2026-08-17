@@ -13,6 +13,14 @@ Create two HTTPS applications, normally:
 
 These should be same-site subdomains so the refresh cookie's `SameSite=Strict` policy works. In cPanel, set each application's root to its respective `frontend` or `backend` directory. If the UI asks for a startup file, use `dist/main.js` for the backend. For the frontend, the host must support the `npm run start -- -p "$PORT"` startup command or an equivalent Passenger configuration for Next.js; confirm this with the provider.
 
+The repository also supports mounting both applications on one origin:
+
+- Frontend: `https://example.com/`
+- Backend application URL: `https://example.com/api`
+- Public API URL: `https://example.com/api/v1`
+
+For that layout, use `frontend/app.js` as the Passenger startup file, set backend `PUBLIC_BASE_PATH=api`, and set frontend `NEXT_PUBLIC_API_ORIGIN=https://example.com/api`. The application roots remain the separate `frontend` and `backend` directories; do not copy either source tree into the domain document root.
+
 ## MySQL setup
 
 1. In **MySQL Databases**, create a database and a dedicated database user.
@@ -45,6 +53,7 @@ Set these in cPanel's Node.js application environment (never commit production v
 NODE_ENV=production
 PORT=<provided-by-cPanel>
 API_PREFIX=api/v1
+PUBLIC_BASE_PATH=
 DB_HOST=localhost
 DB_PORT=3306
 DB_USERNAME=<cpanel_database_user>
@@ -79,6 +88,14 @@ Set the public API URL before building because Next.js embeds public environment
 ```dotenv
 NODE_ENV=production
 NEXT_PUBLIC_API_URL=https://api.example.com/api/v1
+NEXT_PUBLIC_API_ORIGIN=https://api.example.com
+```
+
+When the backend is mounted at `/api` on the frontend domain, use:
+
+```dotenv
+NEXT_PUBLIC_API_URL=https://example.com/api/v1
+NEXT_PUBLIC_API_ORIGIN=https://example.com/api
 ```
 
 Then run from the frontend application root with Node.js 20 or 22:

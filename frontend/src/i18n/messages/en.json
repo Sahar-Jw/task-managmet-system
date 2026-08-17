@@ -1058,6 +1058,7 @@
     "text1013": "Account",
     "text1014": "Basic information about your system account.",
     "text1015": "Full name is required.",
-    "text1016": "Full name cannot exceed 150 characters."
+    "text1016": "Full name cannot exceed 150 characters.",
+    "text1017": "dictionary entries"
   }
 }

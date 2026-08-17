@@ -10,6 +10,7 @@ import {
 import { DictionaryApi } from '@/lib/endpoints';
 import { uiText } from '@/lib/ui-text';
 import type { DictionaryEntry } from '@/lib/types';
+import Pagination from '@/components/Pagination';
 
 const PAGE_SIZE = 40;
 
@@ -71,6 +72,10 @@ export default function DictionarySettingsTab() {
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const visible = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage((current) => Math.min(current, pageCount));
+  }, [pageCount]);
 
   function update(key: string, language: 'textEn' | 'textAr', value: string) {
     setRows((current) =>
@@ -191,10 +196,14 @@ export default function DictionarySettingsTab() {
       )}
 
       {pageCount > 1 && (
-        <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4">
-          <button type="button" className="btn-secondary" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>{uiText(isArabic, 'text0387')}</button>
-          <span className="text-xs text-slate-500">{uiText(isArabic, 'text0748', { value0: page, value1: pageCount })}</span>
-          <button type="button" className="btn-secondary" disabled={page >= pageCount} onClick={() => setPage((value) => value + 1)}>{uiText(isArabic, 'text0388')}</button>
+        <div className="border-t border-slate-100 px-5 pb-5">
+          <Pagination
+            page={page}
+            totalPages={pageCount}
+            total={filtered.length}
+            onPageChange={setPage}
+            itemLabel={uiText(isArabic, 'text1017')}
+          />
         </div>
       )}
     </section>

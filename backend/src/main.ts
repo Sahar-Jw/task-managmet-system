@@ -155,6 +155,32 @@ async function bootstrap() {
    * ==========================================================
    */
 
+  const publicBasePath =
+    (
+      process.env.PUBLIC_BASE_PATH ||
+      ''
+    ).replace(
+      /^\/+|\/+$/g,
+      '',
+    );
+
+
+  const publicStoragePrefix = (
+    category:
+      string,
+  ) =>
+    `/${[
+      publicBasePath,
+      'storage',
+      category,
+    ]
+      .filter(
+        Boolean,
+      )
+      .join(
+        '/',
+      )}`;
+
   app.useStaticAssets(
     join(
       STORAGE_ROOT,
@@ -162,7 +188,9 @@ async function bootstrap() {
     ),
     {
       prefix:
-        '/storage/avatars',
+        publicStoragePrefix(
+          'avatars',
+        ),
     },
   );
 
@@ -174,7 +202,9 @@ async function bootstrap() {
     ),
     {
       prefix:
-        '/storage/branding',
+        publicStoragePrefix(
+          'branding',
+        ),
     },
   );
 

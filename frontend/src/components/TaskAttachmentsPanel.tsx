@@ -1736,29 +1736,7 @@ export default function TaskAttachmentsPanel({
                   disabled={
                     busy
                   }
-                  className="
-                    mt-3
-                    block
-                    w-full
-                    cursor-pointer
-                    rounded-xl
-                    border
-                    border-slate-200
-                    bg-white
-                    px-3
-                    py-2
-                    text-sm
-                    text-slate-600
-                    file:me-3
-                    file:rounded-lg
-                    file:border-0
-                    file:bg-brand-50
-                    file:px-3
-                    file:py-2
-                    file:text-xs
-                    file:font-semibold
-                    file:text-brand-700
-                  "
+                  className="sr-only"
                   onChange={(
                     event,
                   ) => {
@@ -1775,6 +1753,55 @@ export default function TaskAttachmentsPanel({
                       '';
                   }}
                 />
+
+
+                <div
+                  className={`
+                    mt-3
+                    flex
+                    min-h-12
+                    w-full
+                    items-center
+                    justify-between
+                    gap-3
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-white
+                    px-3
+                    py-2
+                    text-sm
+                    ${
+                      busy
+                        ? 'cursor-not-allowed opacity-50'
+                        : 'cursor-pointer hover:border-brand-300'
+                    }
+                  `}
+                >
+                  <span className="truncate text-slate-500">
+                    {selectedFiles.length === 0
+                      ? uiText(isArabic, 'text0771')
+                      : uiText(isArabic, 'text0772', {
+                          value0: selectedFiles.length,
+                        })}
+                  </span>
+
+
+                  <span
+                    className="
+                      shrink-0
+                      rounded-lg
+                      bg-brand-50
+                      px-3
+                      py-2
+                      text-xs
+                      font-semibold
+                      text-brand-700
+                    "
+                  >
+                    {uiText(isArabic, 'text0770')}
+                  </span>
+                </div>
               </label>
 
 

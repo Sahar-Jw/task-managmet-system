@@ -811,6 +811,9 @@
     "text0766": "There are {count} open subtasks.",
     "text0767": "{count} comments",
     "text0768": "Required · {name}",
-    "text0769": "No {items} yet"
+    "text0769": "No {items} yet",
+    "text0770": "Choose files",
+    "text0771": "No files selected",
+    "text0772": "{value0} files selected"
   }
 }

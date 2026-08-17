@@ -843,7 +843,7 @@ export default function Home() {
        */}
 
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-2 px-3 sm:h-[72px] sm:px-6 lg:px-8">
           <Link
             href={
               user
@@ -890,7 +890,7 @@ export default function Home() {
               </div>
             )}
 
-            <div>
+            <div className="hidden min-w-0 sm:block">
               <div className="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
                 {branding?.siteName || 'Task & Project Manager'}
               </div>
@@ -907,8 +907,8 @@ export default function Home() {
               type="button"
               onClick={toggleLanguage}
               className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
-              aria-label={uiText(locale === 'en', 'text0763')}
-              title={uiText(locale === 'en', 'text0763')}
+              aria-label={uiText(isArabic, 'text0763')}
+              title={uiText(isArabic, 'text0763')}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -953,7 +953,7 @@ export default function Home() {
                   'register',
                 )
               }
-              className="btn-primary"
+              className="btn-primary px-3 sm:px-3.5"
             >
               {t(
                 'createAccount',
@@ -985,7 +985,7 @@ export default function Home() {
           </div>
 
 
-          <div className="relative mx-auto grid min-h-[650px] max-w-7xl gap-14 px-5 py-20 sm:px-6 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-8 lg:py-24">
+          <div className="relative mx-auto grid max-w-7xl gap-10 px-3 py-12 sm:min-h-[650px] sm:gap-14 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-8 lg:py-24">
             {/*
              * HERO COPY
              */}
@@ -998,7 +998,7 @@ export default function Home() {
               </div>
 
 
-              <h1 className="mt-7 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[64px]">
+              <h1 className="mt-7 max-w-3xl text-3xl font-semibold leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[64px]">
                 {uiText(isArabic, 'text0344')}
               </h1>
 

@@ -2083,9 +2083,11 @@ function TaskDetailContent() {
             <div
               className="
                 grid
-                min-w-[260px]
+                w-full
+                min-w-0
                 grid-cols-2
                 gap-2
+                sm:min-w-[260px]
                 lg:max-w-[330px]
               "
             >

@@ -759,7 +759,7 @@ export default function Navbar() {
             className="
               hidden
               min-w-0
-              xl:block
+              2xl:block
             "
           >
             <div
@@ -792,7 +792,7 @@ export default function Navbar() {
             flex-1
             items-center
             gap-1
-            lg:flex
+            xl:flex
           "
         >
           {links.map(
@@ -822,7 +822,8 @@ export default function Navbar() {
                     gap-2
                     whitespace-nowrap
                     rounded-xl
-                    px-3
+                    px-2.5
+                    2xl:px-3
                     text-[13px]
                     font-semibold
                     transition-all
@@ -1090,7 +1091,7 @@ export default function Navbar() {
                   hidden
                   max-w-[130px]
                   text-left
-                  xl:block
+                  2xl:block
                 "
               >
                 <div
@@ -1151,7 +1152,7 @@ export default function Navbar() {
                   absolute
                   top-[calc(100%+10px)]
                   z-50
-                  w-64
+                  w-[min(16rem,calc(100vw-1.5rem))]
                   overflow-hidden
                   rounded-2xl
                   border
@@ -1347,7 +1348,7 @@ export default function Navbar() {
               text-slate-600
               transition
               hover:bg-slate-100
-              lg:hidden
+              xl:hidden
             "
             aria-label={dictionaryText('generatedUi.text0850')}
             aria-expanded={
@@ -1377,7 +1378,7 @@ export default function Navbar() {
             px-4
             pb-4
             pt-3
-            lg:hidden
+            xl:hidden
           "
         >
           <nav

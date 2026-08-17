@@ -1058,7 +1058,7 @@ function ProfileContent() {
           border
           border-slate-200
           bg-white
-          p-6
+          p-4
           sm:p-7
         "
       >

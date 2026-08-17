@@ -71,7 +71,7 @@ function ListRow({
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-slate-100 py-2 last:border-0">
+    <div className="flex flex-col gap-2 border-b border-slate-100 py-3 last:border-0 sm:flex-row sm:flex-wrap sm:items-center">
       <input
         className="input flex-1"
         dir={locale === 'ar' ? 'rtl' : 'ltr'}
@@ -79,6 +79,7 @@ function ListRow({
         disabled={busy}
         onChange={(e) => setValue(e.target.value)}
       />
+      <div className="flex flex-wrap items-center gap-2">
       {!row.isActive && (
         <span className="badge shrink-0 bg-slate-100 text-slate-500">
           {uiText(locale === 'ar', 'text0230')}
@@ -126,7 +127,8 @@ function ListRow({
           {uiText(locale === 'ar', 'text0403')}
         </button>
       )}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      </div>
+      {error && <p className="w-full text-xs text-red-600">{error}</p>}
     </div>
   );
 }
@@ -193,7 +195,7 @@ export default function ListSettingsTab() {
 
   return (
     <div className="space-y-6" dir={isAr ? 'rtl' : 'ltr'}>
-      <div className="flex flex-wrap gap-1 border-b border-slate-200">
+      <div className="flex max-w-full gap-1 overflow-x-auto border-b border-slate-200">
         {CATEGORIES.map((c) => (
           <button
             key={c.value}
@@ -214,7 +216,7 @@ export default function ListSettingsTab() {
         {uiText(isAr, 'text0635')}
       </p>
 
-      <form onSubmit={addRow} className="card flex items-center gap-2 p-4">
+      <form onSubmit={addRow} className="card flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:p-4">
         <input
           className="input flex-1"
           dir={isAr ? 'rtl' : 'ltr'}
@@ -223,7 +225,7 @@ export default function ListSettingsTab() {
           onChange={(e) => setNewLabel(e.target.value)}
           disabled={adding}
         />
-        <button type="submit" className="btn-primary shrink-0" disabled={adding || !newLabel.trim()}>
+        <button type="submit" className="btn-primary w-full shrink-0 sm:w-auto" disabled={adding || !newLabel.trim()}>
           {uiText(isAr, 'text0169')}
         </button>
       </form>

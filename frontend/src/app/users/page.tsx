@@ -159,7 +159,7 @@ function ViewToggle({
   isArabic: boolean;
 }) {
   return (
-    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+    <div className="flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
       <button
         type="button"
         title={

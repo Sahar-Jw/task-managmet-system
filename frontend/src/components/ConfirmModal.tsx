@@ -30,17 +30,19 @@ export default function ConfirmModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        className="max-h-[100dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-2rem)] sm:rounded-xl sm:p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-base font-semibold text-slate-800">{title}</h3>
         {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-2 sm:flex sm:justify-end">
           <button type="button" className="btn-secondary" onClick={onCancel}>
             {cancelLabel || uiText(isArabic, 'text0878')}
           </button>

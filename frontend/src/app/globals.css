@@ -46,9 +46,33 @@ html {
 body {
   background-color: var(--theme-page-background);
   color: var(--theme-body-text);
+  min-width: 280px;
+  overflow-x: hidden;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+label {
+  overflow-wrap: anywhere;
 }
 
 /*
@@ -75,7 +99,7 @@ input:-webkit-autofill:active {
 /* Reusable application components */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center rounded-md px-3.5 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex min-h-10 items-center justify-center rounded-md px-3.5 py-2 text-center text-sm font-medium leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary {
@@ -104,7 +128,7 @@ input:-webkit-autofill:active {
   }
 
   .input {
-    @apply w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500;
+    @apply min-h-11 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500;
 
     background-color: var(--theme-surface);
     color: var(--theme-body-text);
@@ -135,6 +159,50 @@ input:-webkit-autofill:active {
 
   .icon-btn-danger {
     @apply icon-btn border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50;
+  }
+}
+
+/* Compact phones: keep actions tappable and prevent modal/footer overflow. */
+@media (max-width: 479px) {
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    white-space: normal;
+  }
+
+  .card {
+    border-radius: 0.75rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 639px) {
+  /* Page-owned dialogs use the same mobile bottom-sheet behavior. */
+  [class~='fixed'][class~='inset-0'][class~='z-50'] {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  [class~='fixed'][class~='inset-0'][class~='z-50'] > form,
+  [class~='fixed'][class~='inset-0'][class~='z-50'] > div {
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+
+  [class~='fixed'][class~='inset-0'][class~='z-50'] form > [class~='p-6'],
+  [class~='fixed'][class~='inset-0'][class~='z-50'] > div > [class~='p-6'] {
+    padding: 1rem;
+  }
+
+  [class~='fixed'][class~='inset-0'][class~='z-50'] [class~='px-6'] {
+    padding-inline: 1rem;
   }
 }
 

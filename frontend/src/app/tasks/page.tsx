@@ -1890,7 +1890,7 @@ function TasksContent() {
        * ======================================================
        */}
 
-      <div className="mt-5 inline-flex rounded-xl border border-slate-200 bg-white p-1">
+      <div className="mt-5 flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
         <button
           type="button"
           onClick={() =>

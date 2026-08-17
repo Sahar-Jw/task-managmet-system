@@ -1137,7 +1137,7 @@ export default function SubtasksPanel({
                             </div>
 
 
-                            <div className="grid shrink-0 gap-4 sm:grid-cols-2 lg:min-w-[310px]">
+                            <div className="grid w-full shrink-0 gap-4 sm:grid-cols-2 lg:w-auto lg:min-w-[310px]">
                               <div>
                                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
                                   {uiText(isArabic, 'text0051')}
@@ -1228,7 +1228,7 @@ export default function SubtasksPanel({
 
       {modalOpen && (
         <div
-          className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[150] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
           onMouseDown={(
             event,
           ) => {
@@ -1244,7 +1244,7 @@ export default function SubtasksPanel({
             onSubmit={
               createSubtask
             }
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl"
+            className="max-h-[100dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl"
           >
             <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
               <div>
@@ -1610,7 +1610,7 @@ export default function SubtasksPanel({
             </div>
 
 
-            <div className="sticky bottom-0 flex justify-end gap-2 border-t border-slate-100 bg-slate-50/95 px-5 py-4 backdrop-blur sm:px-6">
+            <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-slate-100 bg-slate-50/95 px-4 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
               <button
                 type="button"
                 className="btn-secondary"

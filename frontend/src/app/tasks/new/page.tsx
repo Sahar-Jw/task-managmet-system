@@ -2978,7 +2978,8 @@ function NewTaskContent() {
                   <div
                     className="
                       grid
-                      grid-cols-6
+                      grid-cols-3
+                      sm:grid-cols-6
                       gap-2
                     "
                   >
@@ -3817,7 +3818,9 @@ function NewTaskContent() {
               gap-5
               p-6
               sm:grid-cols-2
-              lg:grid-cols-6
+              sm:grid-cols-2
+              lg:grid-cols-3
+              2xl:grid-cols-6
             "
           >
             <div>

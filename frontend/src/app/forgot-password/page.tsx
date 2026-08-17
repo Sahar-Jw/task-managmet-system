@@ -32,16 +32,16 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12" dir={isArabic ? 'rtl' : 'ltr'}>
+    <div className="flex min-h-[100dvh] items-center justify-center bg-slate-50 px-3 py-6 sm:px-6 sm:py-12" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
+        <div className="border-b border-slate-200 bg-slate-50 px-4 py-5 sm:px-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             {uiText(isArabic, 'text0896')}
           </p>
           <h1 className="mt-2 text-2xl font-semibold text-ink">{uiText(isArabic, 'text0855')}</h1>
         </div>
 
-        <div className="px-6 py-8">
+        <div className="px-4 py-6 sm:px-6 sm:py-8">
           {sent ? (
             <div className="space-y-6">
               <p className="text-sm leading-relaxed text-slate-600">

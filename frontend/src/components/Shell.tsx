@@ -43,7 +43,11 @@ export default function Shell({
     pathname ===
       '/login' ||
     pathname ===
-      '/register';
+      '/register' ||
+    pathname ===
+      '/forgot-password' ||
+    pathname ===
+      '/reset-password';
 
 
   return (
@@ -64,10 +68,14 @@ export default function Shell({
                     ? ''
                     : `
                       mx-auto
-                      max-w-6xl
-                      px-4
-                      pb-6
-                      pt-[92px]
+                      w-full
+                      max-w-[1600px]
+                      px-3
+                      pb-8
+                      pt-[84px]
+                      sm:px-5
+                      lg:px-6
+                      2xl:px-8
                     `
                 }
               >

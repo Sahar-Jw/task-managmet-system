@@ -156,11 +156,11 @@ export default function DictionarySettingsTab() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn-secondary" onClick={resetDefaults}>
+          <div className="grid w-full grid-cols-2 gap-2 lg:w-auto">
+            <button type="button" className="btn-secondary px-2 sm:px-3.5" onClick={resetDefaults}>
               {uiText(isArabic, 'text0837')}
             </button>
-            <button type="button" className="btn-primary" onClick={save} disabled={!dirty || saving}>
+            <button type="button" className="btn-primary px-2 sm:px-3.5" onClick={save} disabled={!dirty || saving}>
               {saving ? uiText(isArabic, 'text0833') : uiText(isArabic, 'text0832')}
             </button>
           </div>
@@ -191,7 +191,41 @@ export default function DictionarySettingsTab() {
       ) : visible.length === 0 ? (
         <div className="p-10 text-center text-sm text-slate-500">{uiText(isArabic, 'text0840')}</div>
       ) : (
-        <div className="overflow-x-auto">
+        <>
+        <div className="grid gap-3 p-3 md:hidden">
+          {visible.map((row) => (
+            <article key={row.key} className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="mb-3 text-sm font-semibold leading-5 text-slate-800">
+                {readableKey(row, isArabic)}
+              </div>
+              <label className="mb-3 block">
+                <span className="mb-1 block text-xs font-semibold text-slate-500">
+                  {uiText(isArabic, 'text0829')}
+                </span>
+                <textarea
+                  className="input min-h-24 resize-y"
+                  dir="ltr"
+                  lang="en"
+                  value={row.textEn}
+                  onChange={(event) => update(row.key, 'textEn', event.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-slate-500">
+                  {uiText(isArabic, 'text0830')}
+                </span>
+                <textarea
+                  className="input min-h-24 resize-y text-right"
+                  dir="rtl"
+                  lang="ar"
+                  value={row.textAr}
+                  onChange={(event) => update(row.key, 'textAr', event.target.value)}
+                />
+              </label>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-[980px] w-full border-collapse">
             <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
@@ -219,6 +253,7 @@ export default function DictionarySettingsTab() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {pageCount > 1 && (

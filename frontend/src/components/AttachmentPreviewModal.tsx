@@ -141,14 +141,16 @@ export default function AttachmentPreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/40 p-0 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg bg-white shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        className="flex h-[100dvh] w-full max-w-3xl flex-col overflow-hidden bg-white shadow-xl sm:h-auto sm:max-h-[90dvh] sm:rounded-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+        <div className="flex items-center justify-between border-b border-slate-200 px-3 py-3 sm:px-5">
           <h3 className="truncate text-sm font-semibold text-slate-800" title={attachment.fileName}>
             {attachment.fileName}
           </h3>
@@ -157,7 +159,7 @@ export default function AttachmentPreviewModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-auto p-5">
+        <div className="flex-1 overflow-auto p-3 sm:p-5">
           {state === 'loading' && (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-500">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-brand-500" />

@@ -50,16 +50,17 @@ const MAX_AVATAR_MB =
 function getSettingLabel(
   setting:
     Setting | Department | null,
+  isArabic:
+    boolean,
 ) {
   if (!setting) {
     return '—';
   }
 
   return (
-    setting.valueEn ||
-    setting.codeEn ||
-    setting.valueAr ||
-    setting.codeAr ||
+    (isArabic
+      ? setting.valueAr || setting.codeAr || setting.valueEn || setting.codeEn
+      : setting.valueEn || setting.codeEn || setting.valueAr || setting.codeAr) ||
     '—'
   );
 }
@@ -67,6 +68,8 @@ function getSettingLabel(
 
 function formatDate(
   value?:
+    string,
+  locale?:
     string,
 ) {
   if (!value) {
@@ -87,7 +90,7 @@ function formatDate(
   }
 
   return date.toLocaleDateString(
-    undefined,
+    locale,
     {
       year:
         'numeric',
@@ -808,7 +811,7 @@ function ProfileContent() {
       )
     ) {
       setAvatarError(
-        'Please choose an image file.',
+        uiText(isArabic, 'text1026'),
       );
 
       return;
@@ -822,7 +825,7 @@ function ProfileContent() {
         1024
     ) {
       setAvatarError(
-        `Image must be under ${MAX_AVATAR_MB}MB.`,
+        uiText(isArabic, 'text1027', { value0: MAX_AVATAR_MB }),
       );
 
       return;
@@ -950,7 +953,7 @@ function ProfileContent() {
       !currentPassword
     ) {
       setPasswordError(
-        'Enter your current password.',
+        uiText(isArabic, 'text1028'),
       );
 
       return;
@@ -962,7 +965,7 @@ function ProfileContent() {
       8
     ) {
       setPasswordError(
-        'New password must contain at least 8 characters.',
+        uiText(isArabic, 'text1029'),
       );
 
       return;
@@ -974,7 +977,7 @@ function ProfileContent() {
       currentPassword
     ) {
       setPasswordError(
-        'Your new password must be different from your current password.',
+        uiText(isArabic, 'text1030'),
       );
 
       return;
@@ -986,7 +989,7 @@ function ProfileContent() {
       confirmPassword
     ) {
       setPasswordError(
-        'New passwords do not match.',
+        uiText(isArabic, 'text1031'),
       );
 
       return;
@@ -1266,6 +1269,7 @@ function ProfileContent() {
 
                 {getSettingLabel(
                   department,
+                  isArabic,
                 )}
               </span>
 
@@ -1277,6 +1281,7 @@ function ProfileContent() {
 
                 {getSettingLabel(
                   branch,
+                  isArabic,
                 )}
               </span>
 
@@ -1973,8 +1978,8 @@ function ProfileContent() {
                 }
               >
                 {passwordSaving
-                  ? 'Updating…'
-                  : 'Change password'}
+                  ? uiText(isArabic, 'text0095')
+                  : uiText(isArabic, 'text0871')}
               </button>
             </div>
           </form>
@@ -2017,23 +2022,29 @@ function ProfileContent() {
               "
             >
               <InfoItem
-                label="Role"
+                label={uiText(isArabic, 'text0798')}
                 value={
-                  user.role.name
+                  user.role.name === 'ADMIN'
+                    ? uiText(isArabic, 'text0823')
+                    : user.role.name === 'USER'
+                      ? uiText(isArabic, 'text0824')
+                      : user.role.name
                 }
               />
 
               <InfoItem
-                label="Department"
+                label={uiText(isArabic, 'text0799')}
                 value={getSettingLabel(
                   department,
+                  isArabic,
                 )}
               />
 
               <InfoItem
-                label="Branch"
+                label={uiText(isArabic, 'text0800')}
                 value={getSettingLabel(
                   branch,
+                  isArabic,
                 )}
               />
             </div>
@@ -2085,7 +2096,7 @@ function ProfileContent() {
               "
             >
               <InfoItem
-                label="Status"
+                label={uiText(isArabic, 'text0784')}
                 value={
                   <span
                     className={`
@@ -2121,18 +2132,20 @@ function ProfileContent() {
 
 
               <InfoItem
-                label="Member since"
+                label={uiText(isArabic, 'text1024')}
                 value={formatDate(
                   user.createdAt,
+                  locale,
                 )}
               />
 
 
               {user.updatedAt && (
                 <InfoItem
-                  label="Last profile update"
+                  label={uiText(isArabic, 'text1025')}
                   value={formatDate(
                     user.updatedAt,
+                    locale,
                   )}
                 />
               )}

@@ -1065,6 +1065,14 @@
     "text1020": "Tasks",
     "text1021": "Error message",
     "text1022": "Interface text",
-    "text1023": "Location and text"
+    "text1023": "Location and text",
+    "text1024": "Member since",
+    "text1025": "Last profile update",
+    "text1026": "Please choose an image file.",
+    "text1027": "Image must be under {value0} MB.",
+    "text1028": "Enter your current password.",
+    "text1029": "New password must contain at least 8 characters.",
+    "text1030": "Your new password must be different from your current password.",
+    "text1031": "New passwords do not match."
   }
 }

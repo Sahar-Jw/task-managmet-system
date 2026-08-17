@@ -74,14 +74,16 @@ interface OverviewRow {
 interface BranchRow
   extends OverviewRow {
   branchId: string;
-  branchName: string;
+  branchNameEn?: string;
+  branchNameAr?: string;
 }
 
 
 interface DepartmentRow
   extends OverviewRow {
   departmentId: string;
-  departmentName: string;
+  departmentNameEn?: string;
+  departmentNameAr?: string;
 }
 
 
@@ -1076,7 +1078,9 @@ function DashboardContent() {
           branch,
         ) => ({
           name:
-            branch.branchName ??
+            (isAr
+              ? branch.branchNameAr || branch.branchNameEn
+              : branch.branchNameEn || branch.branchNameAr) ??
             (
               uiText(isAr, 'text0014')
             ),
@@ -1116,7 +1120,9 @@ function DashboardContent() {
           department,
         ) => ({
           name:
-            department.departmentName ??
+            (isAr
+              ? department.departmentNameAr || department.departmentNameEn
+              : department.departmentNameEn || department.departmentNameAr) ??
             (
               uiText(isAr, 'text0014')
             ),
@@ -2158,7 +2164,7 @@ function DashboardContent() {
                   }
                 />
               ) : (
-                <div className="h-[370px] p-4 sm:p-6">
+                <div className="h-[370px] p-4 sm:p-6" dir="ltr">
                   <ResponsiveContainer
                     width="100%"
                     height="100%"
@@ -2238,6 +2244,12 @@ function DashboardContent() {
 
                           fontSize:
                             '12px',
+
+                          direction:
+                            isAr ? 'rtl' : 'ltr',
+
+                          textAlign:
+                            isAr ? 'right' : 'left',
                         }}
                       />
 
@@ -2257,6 +2269,7 @@ function DashboardContent() {
                       <Line
                         type="monotone"
                         dataKey="Completed"
+                        name={uiText(isAr, 'text0018')}
                         stroke="#16a34a"
                         strokeWidth={
                           2.5
@@ -2273,6 +2286,7 @@ function DashboardContent() {
                       <Line
                         type="monotone"
                         dataKey="Not completed"
+                        name={uiText(isAr, 'text0773')}
                         stroke="var(--theme-primary)"
                         strokeWidth={
                           2.5
@@ -2332,6 +2346,7 @@ function DashboardContent() {
                       }}
                     >
                       <div
+                        dir="ltr"
                         style={{
                           height:
                             branchChartHeight,
@@ -2407,6 +2422,13 @@ function DashboardContent() {
 
 
                             <Tooltip
+                              wrapperStyle={{
+                                direction:
+                                  isAr ? 'rtl' : 'ltr',
+
+                                textAlign:
+                                  isAr ? 'right' : 'left',
+                              }}
                               contentStyle={{
                                 borderRadius:
                                   '12px',
@@ -2434,6 +2456,7 @@ function DashboardContent() {
 
                             <Bar
                               dataKey="Completed"
+                              name={uiText(isAr, 'text0018')}
                               fill="#16a34a"
                               radius={[
                                 0,
@@ -2449,6 +2472,7 @@ function DashboardContent() {
 
                             <Bar
                               dataKey="Overdue"
+                              name={uiText(isAr, 'text0285')}
                               fill="#dc2626"
                               radius={[
                                 0,
@@ -2501,6 +2525,7 @@ function DashboardContent() {
                       }}
                     >
                       <div
+                        dir="ltr"
                         style={{
                           height:
                             departmentChartHeight,
@@ -2576,6 +2601,13 @@ function DashboardContent() {
 
 
                             <Tooltip
+                              wrapperStyle={{
+                                direction:
+                                  isAr ? 'rtl' : 'ltr',
+
+                                textAlign:
+                                  isAr ? 'right' : 'left',
+                              }}
                               contentStyle={{
                                 borderRadius:
                                   '12px',
@@ -2603,6 +2635,7 @@ function DashboardContent() {
 
                             <Bar
                               dataKey="Completed"
+                              name={uiText(isAr, 'text0018')}
                               fill="#16a34a"
                               radius={[
                                 0,
@@ -2618,6 +2651,7 @@ function DashboardContent() {
 
                             <Bar
                               dataKey="Overdue"
+                              name={uiText(isAr, 'text0285')}
                               fill="#dc2626"
                               radius={[
                                 0,

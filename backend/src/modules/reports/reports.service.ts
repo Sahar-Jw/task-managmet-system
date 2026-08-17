@@ -388,7 +388,11 @@ export class ReportsService {
         )
         .addSelect(
           'department.valueEn',
-          'departmentName',
+          'departmentNameEn',
+        )
+        .addSelect(
+          'department.valueAr',
+          'departmentNameAr',
         )
         .addSelect(
           'COUNT(*)',
@@ -436,6 +440,9 @@ export class ReportsService {
         .addGroupBy(
           'department.valueEn',
         )
+        .addGroupBy(
+          'department.valueAr',
+        )
         .orderBy(
           'department.valueEn',
           'ASC',
@@ -450,8 +457,11 @@ export class ReportsService {
         departmentId:
           row.departmentId,
 
-        departmentName:
-          row.departmentName,
+        departmentNameEn:
+          row.departmentNameEn,
+
+        departmentNameAr:
+          row.departmentNameAr,
 
         totalTasks:
           Number(
@@ -741,7 +751,11 @@ export class ReportsService {
         )
         .addSelect(
           'branch.valueEn',
-          'branchName',
+          'branchNameEn',
+        )
+        .addSelect(
+          'branch.valueAr',
+          'branchNameAr',
         )
         .addSelect(
           'COUNT(*)',
@@ -789,6 +803,9 @@ export class ReportsService {
         .addGroupBy(
           'branch.valueEn',
         )
+        .addGroupBy(
+          'branch.valueAr',
+        )
         .orderBy(
           'branch.valueEn',
           'ASC',
@@ -803,8 +820,11 @@ export class ReportsService {
         branchId:
           row.branchId,
 
-        branchName:
-          row.branchName,
+        branchNameEn:
+          row.branchNameEn,
+
+        branchNameAr:
+          row.branchNameAr,
 
         totalTasks:
           Number(

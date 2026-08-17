@@ -814,6 +814,7 @@
     "text0769": "No {items} yet",
     "text0770": "Choose files",
     "text0771": "No files selected",
-    "text0772": "{value0} files selected"
+    "text0772": "{value0} files selected",
+    "text0773": "Not completed"
   }
 }

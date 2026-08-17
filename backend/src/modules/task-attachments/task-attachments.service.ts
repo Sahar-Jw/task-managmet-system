@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -146,7 +147,7 @@ export class TaskAttachmentsService {
       !task
     ) {
       throw new NotFoundException(
-        'Task not found',
+        appError('TASK_NOT_FOUND', 'Task not found'),
       );
     }
 
@@ -155,7 +156,7 @@ export class TaskAttachmentsService {
       task.archivedAt
     ) {
       throw new BadRequestException(
-        'Cannot add attachments to an archived Task',
+        appError('CANNOT_ADD_ATTACHMENTS_ARCHIVED_TASK', 'Cannot add attachments to an archived Task'),
       );
     }
 
@@ -172,7 +173,7 @@ export class TaskAttachmentsService {
         0
     ) {
       throw new BadRequestException(
-        'At least one file is required',
+        appError('AT_LEAST_ONE_FILE_REQUIRED', 'At least one file is required'),
       );
     }
 
@@ -259,7 +260,7 @@ export class TaskAttachmentsService {
       !assignment
     ) {
       throw new NotFoundException(
-        'Assignment not found',
+        appError('ASSIGNMENT_NOT_FOUND', 'Assignment not found'),
       );
     }
 
@@ -268,7 +269,7 @@ export class TaskAttachmentsService {
       assignment.task.archivedAt
     ) {
       throw new BadRequestException(
-        'Cannot add attachments to an archived Task',
+        appError('CANNOT_ADD_ATTACHMENTS_ARCHIVED_TASK', 'Cannot add attachments to an archived Task'),
       );
     }
 
@@ -285,7 +286,7 @@ export class TaskAttachmentsService {
         0
     ) {
       throw new BadRequestException(
-        'At least one file is required',
+        appError('AT_LEAST_ONE_FILE_REQUIRED', 'At least one file is required'),
       );
     }
 
@@ -349,7 +350,7 @@ export class TaskAttachmentsService {
       !isCreator
     ) {
       throw new ForbiddenException(
-        'Only the Task creator or Admin may add attachments',
+        appError('ONLY_TASK_CREATOR_ADMIN_MAY_ADD_ATTACHMENTS', 'Only the Task creator or Admin may add attachments'),
       );
     }
   }
@@ -431,7 +432,7 @@ export class TaskAttachmentsService {
         0
     ) {
       throw new BadRequestException(
-        'Uploaded file data is missing',
+        appError('UPLOADED_FILE_DATA_MISSING', 'Uploaded file data is missing'),
       );
     }
 
@@ -759,7 +760,7 @@ export class TaskAttachmentsService {
       attachment.deletedAt
     ) {
       throw new NotFoundException(
-        'Attachment not found',
+        appError('ATTACHMENT_NOT_FOUND', 'Attachment not found'),
       );
     }
 
@@ -871,7 +872,7 @@ export class TaskAttachmentsService {
       !task
     ) {
       throw new NotFoundException(
-        'The Task for this Attachment no longer exists',
+        appError('TASK_ATTACHMENT_NO_LONGER_EXISTS', 'The Task for this Attachment no longer exists'),
       );
     }
 
@@ -908,7 +909,7 @@ export class TaskAttachmentsService {
       !isAssignee
     ) {
       throw new ForbiddenException(
-        'You do not have access to this Attachment',
+        appError('YOU_DO_NOT_HAVE_ACCESS_ATTACHMENT', 'You do not have access to this Attachment'),
       );
     }
 
@@ -934,7 +935,7 @@ export class TaskAttachmentsService {
       !task.assigneeCanDownloadAttachments
     ) {
       throw new ForbiddenException(
-        'The Task creator has disabled attachment downloads for assignees',
+        appError('TASK_CREATOR_HAS_DISABLED_ATTACHMENT_DOWNLOADS_ASSIGNEES', 'The Task creator has disabled attachment downloads for assignees'),
       );
     }
   }
@@ -976,7 +977,7 @@ export class TaskAttachmentsService {
       !task
     ) {
       throw new NotFoundException(
-        'The Task for this Attachment no longer exists',
+        appError('TASK_ATTACHMENT_NO_LONGER_EXISTS', 'The Task for this Attachment no longer exists'),
       );
     }
 
@@ -993,7 +994,7 @@ export class TaskAttachmentsService {
       !isCreator
     ) {
       throw new ForbiddenException(
-        'Only the Task owner may delete this Attachment',
+        appError('ONLY_TASK_OWNER_MAY_DELETE_ATTACHMENT', 'Only the Task owner may delete this Attachment'),
       );
     }
 
@@ -1002,7 +1003,7 @@ export class TaskAttachmentsService {
       task.archivedAt
     ) {
       throw new BadRequestException(
-        'Cannot delete an Attachment on an archived Task',
+        appError('CANNOT_DELETE_ATTACHMENT_ON_ARCHIVED_TASK', 'Cannot delete an Attachment on an archived Task'),
       );
     }
 

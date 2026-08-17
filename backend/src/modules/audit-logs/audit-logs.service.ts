@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -349,7 +350,7 @@ export class AuditLogsService {
       !entityType
     ) {
       throw new BadRequestException(
-        'Audit entity type is required',
+        appError('AUDIT_ENTITY_TYPE_REQUIRED', 'Audit entity type is required'),
       );
     }
 
@@ -439,7 +440,7 @@ export class AuditLogsService {
         params.dateTo
     ) {
       throw new BadRequestException(
-        'Date "to" cannot be before date "from"',
+        appError('DATE_CANNOT_BEFORE_DATE_FROM', 'Date "to" cannot be before date "from"'),
       );
     }
 
@@ -786,7 +787,7 @@ export class AuditLogsService {
       !log
     ) {
       throw new NotFoundException(
-        'Audit log entry not found',
+        appError('AUDIT_LOG_ENTRY_NOT_FOUND', 'Audit log entry not found'),
       );
     }
 

@@ -59,6 +59,70 @@ const EXACT_AR: Record<string, string> = {
   'You may only delete your own comments': 'يمكنك حذف تعليقاتك فقط.',
   'Project end date cannot be before the start date': 'لا يمكن أن يكون تاريخ انتهاء المشروع قبل تاريخ البدء.',
   'This account does not have a valid Role.': 'لا يملك هذا الحساب دوراً صالحاً.',
+  'Notification not found': 'الإشعار غير موجود.',
+  'You may only manage your own Notifications': 'يمكنك إدارة إشعاراتك فقط.',
+  'Setting not found': 'الإعداد غير موجود.',
+  'Provide text in at least one language': 'أدخل نصاً بلغة واحدة على الأقل.',
+  'Provide a value in at least one language': 'أدخل قيمة بلغة واحدة على الأقل.',
+  'A setting must have text in at least one language': 'يجب أن يحتوي الإعداد على نص بلغة واحدة على الأقل.',
+  'Arabic value is required when Arabic code is provided': 'القيمة العربية مطلوبة عند إدخال الرمز العربي.',
+  'English value is required when English code is provided': 'القيمة الإنجليزية مطلوبة عند إدخال الرمز الإنجليزي.',
+  'No file uploaded': 'لم يتم رفع أي ملف.',
+  'File type is not permitted': 'نوع الملف غير مسموح به.',
+  'At least one file is required': 'مطلوب ملف واحد على الأقل.',
+  'Uploaded file data is missing': 'بيانات الملف المرفوع مفقودة.',
+  'Attachment not found': 'المرفق غير موجود.',
+  'Attachment data not found': 'بيانات المرفق غير موجودة.',
+  'Attachment image path is missing': 'مسار صورة المرفق مفقود.',
+  'Attachment image not found': 'صورة المرفق غير موجودة.',
+  'Unknown attachment storage type': 'نوع تخزين المرفق غير معروف.',
+  'Cannot add attachments to an archived Task': 'لا يمكن إضافة مرفقات إلى مهمة مؤرشفة.',
+  'Only the Task creator or Admin may add attachments': 'يمكن لمنشئ المهمة أو المسؤول فقط إضافة المرفقات.',
+  'You do not have access to this Attachment': 'ليس لديك صلاحية للوصول إلى هذا المرفق.',
+  'The Task creator has disabled attachment downloads for assignees': 'عطّل منشئ المهمة تنزيل المرفقات للمكلّفين.',
+  'Only the Task owner may delete this Attachment': 'يمكن لمالك المهمة فقط حذف هذا المرفق.',
+  'Cannot delete an Attachment on an archived Task': 'لا يمكن حذف مرفق من مهمة مؤرشفة.',
+  'Assignee not found': 'المكلّف غير موجود.',
+  'Cannot assign an archived Task': 'لا يمكن تكليف مهمة مؤرشفة.',
+  'Only an Admin or the Task creator may assign this Task': 'يمكن للمسؤول أو منشئ المهمة فقط تكليف هذه المهمة.',
+  'Assignment is not in PendingAcceptance status': 'التكليف ليس في حالة انتظار القبول.',
+  'Only the assigned User may accept this Assignment': 'يمكن للمستخدم المكلّف فقط قبول هذا التكليف.',
+  'Only the assigned User may reject this Assignment': 'يمكن للمستخدم المكلّف فقط رفض هذا التكليف.',
+  'Cannot reassign an archived Task': 'لا يمكن إعادة تكليف مهمة مؤرشفة.',
+  'Only an Admin or the Task creator may reassign this Assignment': 'يمكن للمسؤول أو منشئ المهمة فقط إعادة هذا التكليف.',
+  'An accepted Assignment cannot be reassigned': 'لا يمكن إعادة تكليف مهمة بعد قبول التكليف.',
+  'This Assignment is not eligible for reassignment': 'هذا التكليف غير مؤهل لإعادة التكليف.',
+  'Choose a different User for reassignment': 'اختر مستخدماً مختلفاً لإعادة التكليف.',
+  'Project name is required': 'اسم المشروع مطلوب.',
+  'Project name must be unique': 'يجب أن يكون اسم المشروع فريداً.',
+  'You do not have access to this project': 'ليس لديك صلاحية للوصول إلى هذا المشروع.',
+  'Cannot edit an archived Project': 'لا يمكن تعديل مشروع مؤرشف.',
+  'Project is already archived': 'المشروع مؤرشف بالفعل.',
+  'Only an Archived Project can be unarchived': 'يمكن استعادة مشروع مؤرشف فقط.',
+  'Parent Task not found': 'المهمة الرئيسية غير موجودة.',
+  'Department is required': 'القسم مطلوب.',
+  'Cannot edit an archived Task': 'لا يمكن تعديل مهمة مؤرشفة.',
+  'Cannot change the status of an archived Task': 'لا يمكن تغيير حالة مهمة مؤرشفة.',
+  'This Task does not require approval': 'هذه المهمة لا تتطلب موافقة.',
+  'This Task requires approval but has no approver': 'تتطلب هذه المهمة موافقة لكن لم يتم تحديد معتمد.',
+  'A reason is required to finish a Task': 'السبب مطلوب لإنهاء المهمة.',
+  'This Task is not currently awaiting approval': 'هذه المهمة ليست بانتظار الموافقة حالياً.',
+  'This approval request has already been decided': 'تم اتخاذ قرار بشأن طلب الموافقة بالفعل.',
+  'Only Admin may reopen a Task': 'يمكن للمسؤول فقط إعادة فتح المهمة.',
+  'Only a Completed or Finished Task can be reopened': 'يمكن إعادة فتح مهمة مكتملة أو منتهية فقط.',
+  'Only Admin may permanently delete a Task': 'يمكن للمسؤول فقط حذف المهمة نهائياً.',
+  'Only Admin may unarchive a Task': 'يمكن للمسؤول فقط استعادة مهمة مؤرشفة.',
+  'Only an Archived Task can be unarchived': 'يمكن استعادة مهمة مؤرشفة فقط.',
+  'Audit entity type is required': 'نوع كيان سجل التدقيق مطلوب.',
+  'Audit log entry not found': 'سجل التدقيق غير موجود.',
+  'Selected role does not exist': 'الدور المحدد غير موجود.',
+  'Current password is incorrect': 'كلمة المرور الحالية غير صحيحة.',
+  'A User with this email already exists': 'يوجد مستخدم بهذا البريد الإلكتروني بالفعل.',
+  'Default USER role is not configured': 'دور المستخدم الافتراضي غير مهيأ.',
+  'You cannot permanently delete your own account': 'لا يمكنك حذف حسابك الشخصي نهائياً.',
+  'Cannot deactivate the last remaining active Admin account': 'لا يمكن تعطيل آخر حساب مسؤول نشط.',
+  'Workflow actions cannot contain duplicate entries': 'لا يمكن أن يحتوي سير العمل على إجراءات مكررة.',
+  'Start Task cannot be disabled': 'لا يمكن تعطيل إجراء بدء المهمة.',
 };
 
 const STATUS_AR: Record<number, string> = {
@@ -184,6 +248,44 @@ function stableCode(message: string, status: number): string {
 }
 
 function translateBusinessError(message: string): string | null {
+  let match = message.match(/^Account is locked until (.+)\. Contact your Admin or wait for the cool-down\.$/i);
+  if (match) return `الحساب مقفل حتى ${match[1]}. تواصل مع المسؤول أو انتظر انتهاء مدة القفل.`;
+
+  match = message.match(/^Cannot complete this Parent Task while (\d+) Sub-task\(s\) are still open$/i);
+  if (match) return `لا يمكن إكمال المهمة الرئيسية لوجود ${match[1]} من المهام الفرعية المفتوحة.`;
+
+  match = message.match(/^Cannot transition Task from (.+) to (.+)$/i);
+  if (match) return `لا يمكن تغيير حالة المهمة من ${match[1]} إلى ${match[2]}.`;
+
+  match = message.match(/^This Assignment is still waiting for a response\. It can be reassigned after (\d+) days\. (\d+) day\(s\) remaining\.$/i);
+  if (match) return `لا يزال التكليف بانتظار الرد. يمكن إعادة التكليف بعد ${match[1]} يوماً، والمتبقي ${match[2]} يوماً.`;
+
+  match = message.match(/^Cannot delete this Project: it still has (\d+) task\(s\) attached to it\./i);
+  if (match) return `لا يمكن حذف المشروع لأنه مرتبط بـ ${match[1]} من المهام. أزل المهام أو أعد إسنادها أو أرشف المشروع.`;
+
+  match = message.match(/^Workflow action "(.+)" is missing$/i);
+  if (match) return `إجراء سير العمل «${match[1]}» مفقود.`;
+
+  match = message.match(/^Unknown Workflow action "(.+)"$/i);
+  if (match) return `إجراء سير العمل «${match[1]}» غير معروف.`;
+
+  match = message.match(/^"(.+)" is disabled in Task Workflow settings$/i);
+  if (match) return `الإجراء «${match[1]}» معطّل في إعدادات سير عمل المهام.`;
+
+  match = message.match(/^The next configured Workflow action is "(.+)"$/i);
+  if (match) return `إجراء سير العمل التالي المهيأ هو «${match[1]}».`;
+
+  match = message.match(/^You may only (.+) your own comments$/i);
+  if (match) return `يمكنك تنفيذ الإجراء «${match[1]}» على تعليقاتك فقط.`;
+
+  match = message.match(/^"(.+)" is not a valid, active (.+)$/i);
+  if (match) return `القيمة «${match[1]}» ليست ${match[2]} صالحة ونشطة.`;
+
+  match = message.match(/^(.+) is (invalid|inactive)$/i);
+  if (match) return match[2].toLowerCase() === 'inactive'
+    ? `${match[1]} غير نشط.`
+    : `${match[1]} غير صالح.`;
+
   if (/not found$/i.test(message)) return 'العنصر المطلوب غير موجود.';
   if (/already (?:exists|in use)|must be unique|duplicate/i.test(message)) return 'هذه القيمة مستخدمة بالفعل ويجب أن تكون فريدة.';
   if (/cannot be before|cannot exceed|must be (?:before|after|between)/i.test(message)) return 'ترتيب القيم أو التواريخ المدخلة غير صالح.';
@@ -222,7 +324,7 @@ export function localizeMessages(
   };
 }
 
-function localizeErrorLabel(error: string, locale: AppLocale): string {
+export function localizeErrorLabel(error: string, locale: AppLocale): string {
   if (locale === 'en') return error;
 
   const labels: Record<string, string> = {

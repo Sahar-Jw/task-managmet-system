@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Repository } from 'typeorm';
 import { TaskCommentEntity } from './entities/task-comment.entity';
@@ -42,7 +43,7 @@ export class TaskCommentsService {
   // not allowed on archived Tasks.
   private async getTaskAndAssertVisibility(taskId: string, actor: UserEntity): Promise<TaskEntity> {
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException(appError('TASK_NOT_FOUND', 'Task not found'));
 
     if (actor.role.name === RoleName.ADMIN) return task;
     if (task.createdById === actor.id) return task;
@@ -51,7 +52,7 @@ export class TaskCommentsService {
     const isAssignee = await this.assignmentRepo.exist({ where: { taskId, assigneeId: actor.id } });
     if (isAssignee) return task;
 
-    throw new ForbiddenException('You do not have visibility into this Task');
+    throw new ForbiddenException(appError('YOU_DO_NOT_HAVE_VISIBILITY_INTO_TASK', 'You do not have visibility into this Task'));
   }
 
   async create(taskId: string, dto: CreateCommentDto, actor: UserEntity): Promise<TaskCommentEntity> {
@@ -59,7 +60,7 @@ export class TaskCommentsService {
 
     // BR-063: comments cannot be added to archived (or hard-deleted) Tasks.
     if (task.archivedAt) {
-      throw new ForbiddenException('Cannot add comments to an archived Task');
+      throw new ForbiddenException(appError('CANNOT_ADD_COMMENTS_ARCHIVED_TASK', 'Cannot add comments to an archived Task'));
     }
 
     const comment = await this.commentRepo.save(
@@ -115,12 +116,12 @@ export class TaskCommentsService {
   // BR-061: Admin may delete (moderate) any comment. BR-064: soft-delete.
   async remove(id: string, actor: UserEntity): Promise<void> {
     const comment = await this.commentRepo.findOne({ where: { id } });
-    if (!comment) throw new NotFoundException('Comment not found');
+    if (!comment) throw new NotFoundException(appError('COMMENT_NOT_FOUND', 'Comment not found'));
 
     const isOwner = comment.authorId === actor.id;
     const isAdmin = actor.role.name === RoleName.ADMIN;
     if (!isOwner && !isAdmin) {
-      throw new ForbiddenException('You may only delete your own comments');
+      throw new ForbiddenException(appError('YOU_MAY_ONLY_DELETE_OWN_COMMENTS', 'You may only delete your own comments'));
     }
 
     comment.deletedAt = new Date();
@@ -141,9 +142,9 @@ export class TaskCommentsService {
     action: 'edit',
   ): Promise<TaskCommentEntity> {
     const comment = await this.commentRepo.findOne({ where: { id } });
-    if (!comment || comment.deletedAt) throw new NotFoundException('Comment not found');
+    if (!comment || comment.deletedAt) throw new NotFoundException(appError('COMMENT_NOT_FOUND', 'Comment not found'));
     if (comment.authorId !== actor.id) {
-      throw new ForbiddenException(`You may only ${action} your own comments`);
+      throw new ForbiddenException(appError('YOU_MAY_ONLY_VALUE_OWN_COMMENTS', `You may only ${action} your own comments`));
     }
     return comment;
   }

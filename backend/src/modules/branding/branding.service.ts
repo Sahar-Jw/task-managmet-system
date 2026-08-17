@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -175,7 +176,7 @@ export class BrandingService {
       !file
     ) {
       throw new BadRequestException(
-        'No file uploaded',
+        appError('NO_FILE_UPLOADED', 'No file uploaded'),
       );
     }
 
@@ -218,7 +219,7 @@ export class BrandingService {
       !file
     ) {
       throw new BadRequestException(
-        'No file uploaded',
+        appError('NO_FILE_UPLOADED', 'No file uploaded'),
       );
     }
 

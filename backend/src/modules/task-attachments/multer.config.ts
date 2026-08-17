@@ -1,6 +1,7 @@
 import {
   BadRequestException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   memoryStorage,
@@ -225,7 +226,7 @@ export const multerConfig =
       ) {
         return callback(
           new BadRequestException(
-            'File type is not permitted',
+            appError('FILE_TYPE_NOT_PERMITTED', 'File type is not permitted'),
           ),
 
           false,
@@ -260,7 +261,7 @@ export const multerConfig =
       ) {
         return callback(
           new BadRequestException(
-            'File type is not permitted',
+            appError('FILE_TYPE_NOT_PERMITTED', 'File type is not permitted'),
           ),
 
           false,

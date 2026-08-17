@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
+import { appError } from '../errors/app-error';
 import { RoleName } from '../../shared/enums/role.enum';
 
 
@@ -12,13 +13,13 @@ export class SelfOrAdminGuard implements CanActivate {
     const targetId = request.params[this.paramName];
 
     if (!user) {
-      throw new ForbiddenException('Authentication required');
+      throw new ForbiddenException(appError('AUTHENTICATION_REQUIRED', 'Authentication required'));
     }
     if (user.role?.name === RoleName.ADMIN) {
       return true;
     }
     if (user.id !== targetId) {
-      throw new ForbiddenException('You may only access your own record');
+      throw new ForbiddenException(appError('YOU_MAY_ONLY_ACCESS_OWN_RECORD', 'You may only access your own record'));
     }
     return true;
   }

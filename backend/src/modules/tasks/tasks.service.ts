@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -281,7 +282,7 @@ export class TasksService {
       !row
     ) {
       throw new BadRequestException(
-        `"${key}" is not a valid, active ${label}`,
+        appError('VALUE_NOT_VALID_ACTIVE_VALUE', `"${key}" is not a valid, active ${label}`),
       );
     }
   }
@@ -311,7 +312,7 @@ export class TasksService {
       !setting
     ) {
       throw new BadRequestException(
-        `${label} is invalid`,
+        appError('VALUE_INVALID', `${label} is invalid`),
       );
     }
 
@@ -320,7 +321,7 @@ export class TasksService {
       !setting.isActive
     ) {
       throw new BadRequestException(
-        `${label} is inactive`,
+        appError('VALUE_INACTIVE', `${label} is inactive`),
       );
     }
 
@@ -347,7 +348,7 @@ export class TasksService {
       !project
     ) {
       throw new NotFoundException(
-        'Project not found',
+        appError('PROJECT_NOT_FOUND', 'Project not found'),
       );
     }
 
@@ -357,7 +358,7 @@ export class TasksService {
       ProjectStatus.ARCHIVED
     ) {
       throw new BadRequestException(
-        'Cannot use an archived Project',
+        appError('CANNOT_USE_ARCHIVED_PROJECT', 'Cannot use an archived Project'),
       );
     }
 
@@ -388,7 +389,7 @@ export class TasksService {
       !assignee
     ) {
       throw new NotFoundException(
-        'Assigned User not found',
+        appError('ASSIGNED_USER_NOT_FOUND', 'Assigned User not found'),
       );
     }
 
@@ -397,7 +398,7 @@ export class TasksService {
       !assignee.isActive
     ) {
       throw new BadRequestException(
-        'Cannot assign a Task to a deactivated User',
+        appError('CANNOT_ASSIGN_TASK_DEACTIVATED_USER', 'Cannot assign a Task to a deactivated User'),
       );
     }
 
@@ -407,7 +408,7 @@ export class TasksService {
       RoleName.ADMIN
     ) {
       throw new BadRequestException(
-        'Cannot assign a Task to an Admin',
+        appError('CANNOT_ASSIGN_TASK_ADMIN', 'Cannot assign a Task to an Admin'),
       );
     }
 
@@ -438,7 +439,7 @@ export class TasksService {
       !approver
     ) {
       throw new NotFoundException(
-        'Approver not found',
+        appError('APPROVER_NOT_FOUND', 'Approver not found'),
       );
     }
 
@@ -447,7 +448,7 @@ export class TasksService {
       !approver.isActive
     ) {
       throw new BadRequestException(
-        'Cannot use a deactivated User as the approver',
+        appError('CANNOT_USE_DEACTIVATED_USER_AS_APPROVER', 'Cannot use a deactivated User as the approver'),
       );
     }
 
@@ -471,7 +472,7 @@ export class TasksService {
         approverId
     ) {
       throw new BadRequestException(
-        'The Task assignee and approver cannot be the same User',
+        appError('TASK_ASSIGNEE_APPROVER_CANNOT_SAME_USER', 'The Task assignee and approver cannot be the same User'),
       );
     }
   }
@@ -492,7 +493,7 @@ export class TasksService {
         startDate
     ) {
       throw new BadRequestException(
-        'Task deadline cannot be before the start date',
+        appError('TASK_DEADLINE_CANNOT_BEFORE_START_DATE', 'Task deadline cannot be before the start date'),
       );
     }
   }
@@ -523,7 +524,7 @@ export class TasksService {
         )
     ) {
       throw new BadRequestException(
-        'Money range minimum cannot exceed the maximum',
+        appError('MONEY_RANGE_MINIMUM_CANNOT_EXCEED_MAXIMUM', 'Money range minimum cannot exceed the maximum'),
       );
     }
   }
@@ -562,7 +563,7 @@ export class TasksService {
         ''
     ) {
       throw new BadRequestException(
-        'Budget minimum and maximum are required when the Task needs a budget',
+        appError('BUDGET_MINIMUM_MAXIMUM_REQUIRED_WHEN_TASK_NEEDS_BUDGET', 'Budget minimum and maximum are required when the Task needs a budget'),
       );
     }
 
@@ -592,7 +593,7 @@ export class TasksService {
       parentTask.parentTaskId
     ) {
       throw new BadRequestException(
-        'Only one level of Sub-tasks is supported',
+        appError('ONLY_ONE_LEVEL_SUB_TASKS_SUPPORTED', 'Only one level of Sub-tasks is supported'),
       );
     }
 
@@ -609,7 +610,7 @@ export class TasksService {
       )
     ) {
       throw new BadRequestException(
-        'Cannot add Sub-tasks to a completed, finished, or archived Parent Task',
+        appError('CANNOT_ADD_SUB_TASKS_COMPLETED_FINISHED_ARCHIVED_PARENT_TASK', 'Cannot add Sub-tasks to a completed, finished, or archived Parent Task'),
       );
     }
 
@@ -653,7 +654,7 @@ export class TasksService {
 
 
     throw new ForbiddenException(
-      'Only the Parent Task creator, Admin, or the User who accepted the Parent Task may create Sub-tasks',
+      appError('ONLY_PARENT_TASK_CREATOR_ADMIN_USER_WHO_ACCEPTED_PARENT_TASK_MAY_CREATE_SUB_TASKS', 'Only the Parent Task creator, Admin, or the User who accepted the Parent Task may create Sub-tasks'),
     );
   }
 
@@ -707,7 +708,7 @@ export class TasksService {
       0
     ) {
       throw new ConflictException(
-        `Cannot complete this Parent Task while ${openSubTasks.length} Sub-task(s) are still open`,
+        appError('CANNOT_COMPLETE_PARENT_TASK_WHILE_VALUE_SUB_TASK_S_STILL_OPEN', `Cannot complete this Parent Task while ${openSubTasks.length} Sub-task(s) are still open`),
       );
     }
   }
@@ -740,7 +741,7 @@ export class TasksService {
         query.dueDateFrom
     ) {
       throw new BadRequestException(
-        'Deadline "to" date cannot be before the "from" date',
+        appError('DEADLINE_DATE_CANNOT_BEFORE_FROM_DATE', 'Deadline "to" date cannot be before the "from" date'),
       );
     }
 
@@ -752,7 +753,7 @@ export class TasksService {
         query.startDateFrom
     ) {
       throw new BadRequestException(
-        'Start date "to" cannot be before the "from" date',
+        appError('START_DATE_CANNOT_BEFORE_FROM_DATE', 'Start date "to" cannot be before the "from" date'),
       );
     }
 
@@ -764,7 +765,7 @@ export class TasksService {
         query.createdDateFrom
     ) {
       throw new BadRequestException(
-        'Created date "to" cannot be before the "from" date',
+        appError('CREATED_DATE_CANNOT_BEFORE_FROM_DATE', 'Created date "to" cannot be before the "from" date'),
       );
     }
 
@@ -2162,7 +2163,7 @@ export class TasksService {
       !task
     ) {
       throw new NotFoundException(
-        'Task not found',
+        appError('TASK_NOT_FOUND', 'Task not found'),
       );
     }
 
@@ -2258,7 +2259,7 @@ export class TasksService {
         !parentTask
       ) {
         throw new NotFoundException(
-          'Parent Task not found',
+          appError('PARENT_TASK_NOT_FOUND', 'Parent Task not found'),
         );
       }
 
@@ -2274,7 +2275,7 @@ export class TasksService {
         parentTask.departmentId
       ) {
         throw new BadRequestException(
-          'Sub-task Department must match its Parent Task',
+          appError('SUB_TASK_DEPARTMENT_MUST_MATCH_PARENT_TASK', 'Sub-task Department must match its Parent Task'),
         );
       }
 
@@ -2290,7 +2291,7 @@ export class TasksService {
         )
       ) {
         throw new BadRequestException(
-          'Sub-task Branch must match its Parent Task',
+          appError('SUB_TASK_BRANCH_MUST_MATCH_PARENT_TASK', 'Sub-task Branch must match its Parent Task'),
         );
       }
 
@@ -2306,7 +2307,7 @@ export class TasksService {
         )
       ) {
         throw new BadRequestException(
-          'Sub-task Project must match its Parent Task',
+          appError('SUB_TASK_PROJECT_MUST_MATCH_PARENT_TASK', 'Sub-task Project must match its Parent Task'),
         );
       }
 
@@ -2318,7 +2319,7 @@ export class TasksService {
           parentTask.startDate
       ) {
         throw new BadRequestException(
-          "Sub-task start date cannot be before its Parent Task's start date",
+          appError('SUB_TASK_START_DATE_CANNOT_BEFORE_PARENT_TASK_S_START_DATE', "Sub-task start date cannot be before its Parent Task's start date"),
         );
       }
 
@@ -2330,7 +2331,7 @@ export class TasksService {
           parentTask.deadlineDate
       ) {
         throw new BadRequestException(
-          "Sub-task deadline cannot exceed its Parent Task's deadline",
+          appError('SUB_TASK_DEADLINE_CANNOT_EXCEED_PARENT_TASK_S_DEADLINE', "Sub-task deadline cannot exceed its Parent Task's deadline"),
         );
       }
     }
@@ -2356,7 +2357,7 @@ export class TasksService {
       !dto.approverId
     ) {
       throw new BadRequestException(
-        'An approver is required when the Task needs approval',
+        appError('APPROVER_REQUIRED_WHEN_TASK_NEEDS_APPROVAL', 'An approver is required when the Task needs approval'),
       );
     }
 
@@ -2564,7 +2565,7 @@ export class TasksService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'Only the Task creator or Admin may edit this Task',
+        appError('ONLY_TASK_CREATOR_ADMIN_MAY_EDIT_TASK', 'Only the Task creator or Admin may edit this Task'),
       );
     }
 
@@ -2575,7 +2576,7 @@ export class TasksService {
         TaskStatus.ARCHIVED
     ) {
       throw new BadRequestException(
-        'Cannot edit an archived Task',
+        appError('CANNOT_EDIT_ARCHIVED_TASK', 'Cannot edit an archived Task'),
       );
     }
 
@@ -2586,7 +2587,7 @@ export class TasksService {
       !isAdmin
     ) {
       throw new ForbiddenException(
-        'Task is pending approval and cannot be edited until a decision is made',
+        appError('TASK_PENDING_APPROVAL_CANNOT_EDITED_UNTIL_DECISION_MADE', 'Task is pending approval and cannot be edited until a decision is made'),
       );
     }
 
@@ -2688,7 +2689,7 @@ export class TasksService {
         !isAdmin
       ) {
         throw new ForbiddenException(
-          'Moving the deadline earlier than today requires Admin override',
+          appError('MOVING_DEADLINE_EARLIER_THAN_TODAY_REQUIRES_ADMIN_OVERRIDE', 'Moving the deadline earlier than today requires Admin override'),
         );
       }
     }
@@ -2702,7 +2703,7 @@ export class TasksService {
         !dto.departmentId
       ) {
         throw new BadRequestException(
-          'Department is required',
+          appError('DEPARTMENT_REQUIRED', 'Department is required'),
         );
       }
 
@@ -2757,7 +2758,7 @@ export class TasksService {
         !parent
       ) {
         throw new NotFoundException(
-          'Parent Task not found',
+          appError('PARENT_TASK_NOT_FOUND', 'Parent Task not found'),
         );
       }
 
@@ -2768,7 +2769,7 @@ export class TasksService {
           TaskStatus.ARCHIVED
       ) {
         throw new BadRequestException(
-          'Cannot attach a Task to an archived Parent Task',
+          appError('CANNOT_ATTACH_TASK_ARCHIVED_PARENT_TASK', 'Cannot attach a Task to an archived Parent Task'),
         );
       }
 
@@ -2780,7 +2781,7 @@ export class TasksService {
           parent.deadlineDate
       ) {
         throw new BadRequestException(
-          "Sub-task deadline cannot exceed its Parent Task's deadline",
+          appError('SUB_TASK_DEADLINE_CANNOT_EXCEED_PARENT_TASK_S_DEADLINE', "Sub-task deadline cannot exceed its Parent Task's deadline"),
         );
       }
     }
@@ -2811,7 +2812,7 @@ export class TasksService {
       )
     ) {
       throw new BadRequestException(
-        'Cannot enable approval on a completed or finished Task',
+        appError('CANNOT_ENABLE_APPROVAL_ON_COMPLETED_FINISHED_TASK', 'Cannot enable approval on a completed or finished Task'),
       );
     }
 
@@ -2821,7 +2822,7 @@ export class TasksService {
       !effectiveApproverId
     ) {
       throw new BadRequestException(
-        'An approver is required when the Task needs approval',
+        appError('APPROVER_REQUIRED_WHEN_TASK_NEEDS_APPROVAL', 'An approver is required when the Task needs approval'),
       );
     }
 
@@ -3059,7 +3060,7 @@ export class TasksService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'Only the Task creator or Admin may change attachment download permissions',
+        appError('ONLY_TASK_CREATOR_ADMIN_MAY_CHANGE_ATTACHMENT_DOWNLOAD_PERMISSIONS', 'Only the Task creator or Admin may change attachment download permissions'),
       );
     }
 
@@ -3130,7 +3131,7 @@ export class TasksService {
       newParentId
     ) {
       throw new BadRequestException(
-        'A Task cannot reference itself as its own parent',
+        appError('TASK_CANNOT_REFERENCE_ITSELF_AS_OWN_PARENT', 'A Task cannot reference itself as its own parent'),
       );
     }
 
@@ -3152,7 +3153,7 @@ export class TasksService {
         taskId
       ) {
         throw new BadRequestException(
-          'This change would create a circular Task hierarchy',
+          appError('CHANGE_WOULD_CREATE_CIRCULAR_TASK_HIERARCHY', 'This change would create a circular Task hierarchy'),
         );
       }
 
@@ -3220,7 +3221,7 @@ export class TasksService {
       task.archivedAt
     ) {
       throw new BadRequestException(
-        'Cannot change the status of an archived Task',
+        appError('CANNOT_CHANGE_STATUS_ARCHIVED_TASK', 'Cannot change the status of an archived Task'),
       );
     }
 
@@ -3255,7 +3256,7 @@ export class TasksService {
         RoleName.ADMIN
       ) {
         throw new ForbiddenException(
-          'A Finished Task can only be reopened by Admin',
+          appError('FINISHED_TASK_CAN_ONLY_REOPENED_BY_ADMIN', 'A Finished Task can only be reopened by Admin'),
         );
       }
     }
@@ -3306,13 +3307,13 @@ export class TasksService {
             TaskStatus.PENDING
         ) {
           throw new ConflictException(
-            'A Completed Task cannot transition back to Pending',
+            appError('COMPLETED_TASK_CANNOT_TRANSITION_BACK_PENDING', 'A Completed Task cannot transition back to Pending'),
           );
         }
 
 
         throw new ConflictException(
-          `Cannot transition Task from ${task.status} to ${dto.status}`,
+          appError('CANNOT_TRANSITION_TASK_FROM_VALUE_VALUE', `Cannot transition Task from ${task.status} to ${dto.status}`),
         );
       }
     }
@@ -3361,7 +3362,7 @@ export class TasksService {
         !task.needsApproval
       ) {
         throw new ConflictException(
-          'This Task does not require approval',
+          appError('TASK_DOES_NOT_REQUIRE_APPROVAL', 'This Task does not require approval'),
         );
       }
 
@@ -3370,7 +3371,7 @@ export class TasksService {
         !task.approverId
       ) {
         throw new BadRequestException(
-          'This Task requires approval but has no approver',
+          appError('TASK_REQUIRES_APPROVAL_BUT_HAS_NO_APPROVER', 'This Task requires approval but has no approver'),
         );
       }
 
@@ -3399,7 +3400,7 @@ export class TasksService {
         ApprovalStatus.APPROVED
     ) {
       throw new ConflictException(
-        'This Task requires approval; route it through PendingApproval and have the approver decide first',
+        appError('TASK_REQUIRES_APPROVAL_ROUTE_IT_THROUGH_PENDINGAPPROVAL_HAVE_APPROVER_DECIDE_FIRST', 'This Task requires approval; route it through PendingApproval and have the approver decide first'),
       );
     }
 
@@ -3410,7 +3411,7 @@ export class TasksService {
       !dto.reason
     ) {
       throw new BadRequestException(
-        'A reason is required to finish a Task',
+        appError('REASON_REQUIRED_FINISH_TASK', 'A reason is required to finish a Task'),
       );
     }
 
@@ -3525,7 +3526,7 @@ export class TasksService {
       !task.needsApproval
     ) {
       throw new BadRequestException(
-        'This Task does not require approval',
+        appError('TASK_DOES_NOT_REQUIRE_APPROVAL', 'This Task does not require approval'),
       );
     }
 
@@ -3537,7 +3538,7 @@ export class TasksService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'Only the designated approver or Admin may decide on this Task',
+        appError('ONLY_DESIGNATED_APPROVER_ADMIN_MAY_DECIDE_ON_TASK', 'Only the designated approver or Admin may decide on this Task'),
       );
     }
 
@@ -3547,7 +3548,7 @@ export class TasksService {
       TaskStatus.PENDING_APPROVAL
     ) {
       throw new ConflictException(
-        'This Task is not currently awaiting approval',
+        appError('TASK_NOT_AWAITING_APPROVAL', 'This Task is not currently awaiting approval'),
       );
     }
 
@@ -3557,7 +3558,7 @@ export class TasksService {
       ApprovalStatus.PENDING
     ) {
       throw new ConflictException(
-        'This approval request has already been decided',
+        appError('APPROVAL_REQUEST_HAS_ALREADY_BEEN_DECIDED', 'This approval request has already been decided'),
       );
     }
 
@@ -3712,7 +3713,7 @@ export class TasksService {
       !isAssignee
     ) {
       throw new ForbiddenException(
-        'Only the assigned User(s), the Task creator, or Admin may change status',
+        appError('ONLY_ASSIGNED_USER_S_TASK_CREATOR_ADMIN_MAY_CHANGE_STATUS', 'Only the assigned User(s), the Task creator, or Admin may change status'),
       );
     }
   }
@@ -3740,7 +3741,7 @@ export class TasksService {
       RoleName.ADMIN
     ) {
       throw new ForbiddenException(
-        'Only Admin may reopen a Task',
+        appError('ONLY_ADMIN_MAY_REOPEN_TASK', 'Only Admin may reopen a Task'),
       );
     }
 
@@ -3752,7 +3753,7 @@ export class TasksService {
         TaskStatus.FINISHED
     ) {
       throw new ConflictException(
-        'Only a Completed or Finished Task can be reopened',
+        appError('ONLY_COMPLETED_FINISHED_TASK_CAN_REOPENED', 'Only a Completed or Finished Task can be reopened'),
       );
     }
 
@@ -3853,7 +3854,7 @@ export class TasksService {
         RoleName.ADMIN
       ) {
         throw new ForbiddenException(
-          'Only Admin may permanently delete a Task',
+          appError('ONLY_ADMIN_MAY_PERMANENTLY_DELETE_TASK', 'Only Admin may permanently delete a Task'),
         );
       }
 
@@ -3903,7 +3904,7 @@ export class TasksService {
         0
       ) {
         throw new BadRequestException(
-          'Cannot permanently delete a Task that has Assignments, Comments, Attachments, or Ratings',
+          appError('CANNOT_PERMANENTLY_DELETE_TASK_THAT_HAS_ASSIGNMENTS_COMMENTS_ATTACHMENTS_RATINGS', 'Cannot permanently delete a Task that has Assignments, Comments, Attachments, or Ratings'),
         );
       }
 
@@ -3951,7 +3952,7 @@ export class TasksService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'Only the Task creator or Admin may archive this Task',
+        appError('ONLY_TASK_CREATOR_ADMIN_MAY_ARCHIVE_TASK', 'Only the Task creator or Admin may archive this Task'),
       );
     }
 
@@ -4025,7 +4026,7 @@ export class TasksService {
       RoleName.ADMIN
     ) {
       throw new ForbiddenException(
-        'Only Admin may unarchive a Task',
+        appError('ONLY_ADMIN_MAY_UNARCHIVE_TASK', 'Only Admin may unarchive a Task'),
       );
     }
 
@@ -4041,7 +4042,7 @@ export class TasksService {
       TaskStatus.ARCHIVED
     ) {
       throw new ConflictException(
-        'Only an Archived Task can be unarchived',
+        appError('ONLY_ARCHIVED_TASK_CAN_UNARCHIVED', 'Only an Archived Task can be unarchived'),
       );
     }
 

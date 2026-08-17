@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TaskRatingEntity } from './entities/task-rating.entity';
@@ -36,26 +37,26 @@ export class TaskRatingsService {
   // BR-056: upsert — one rating per rater. BR-058: cannot modify if archived.
   async rate(taskId: string, dto: RateTaskDto, actor: UserEntity): Promise<TaskRatingEntity> {
     const task = await this.taskRepo.findOne({ where: { id: taskId } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException(appError('TASK_NOT_FOUND', 'Task not found'));
 
     if (task.status !== TaskStatus.COMPLETED) {
-      throw new ConflictException('A Task can only be rated once it reaches Completed status'); // BR-054
+      throw new ConflictException(appError('TASK_CAN_ONLY_RATED_ONCE_IT_REACHES_COMPLETED_STATUS', 'A Task can only be rated once it reaches Completed status')); // BR-054
     }
     if (task.archivedAt) {
-      throw new ConflictException('Cannot modify a rating once the Task is archived'); // BR-058
+      throw new ConflictException(appError('CANNOT_MODIFY_RATING_ONCE_TASK_ARCHIVED', 'Cannot modify a rating once the Task is archived')); // BR-058
     }
 
     const isCreator = task.createdById === actor.id;
     const isAdmin = actor.role.name === RoleName.ADMIN;
     if (!isCreator && !isAdmin) {
-      throw new ForbiddenException('Only the Task creator or Admin may rate a completed Task'); // BR-055
+      throw new ForbiddenException(appError('ONLY_TASK_CREATOR_ADMIN_MAY_RATE_COMPLETED_TASK', 'Only the Task creator or Admin may rate a completed Task')); // BR-055
     }
 
     const isAssignee = await this.assignmentRepo.exist({
       where: { taskId, assigneeId: actor.id },
     });
     if (isAssignee && !isAdmin) {
-      throw new ForbiddenException('The Assignee cannot rate their own completed work'); // BR-055
+      throw new ForbiddenException(appError('ASSIGNEE_CANNOT_RATE_THEIR_OWN_COMPLETED_WORK', 'The Assignee cannot rate their own completed work')); // BR-055
     }
 
     let rating = await this.ratingRepo.findOne({ where: { taskId, ratedById: actor.id } });

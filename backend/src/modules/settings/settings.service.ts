@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -123,7 +124,7 @@ export class SettingsService {
 
     if (!setting) {
       throw new NotFoundException(
-        'Setting not found',
+        appError('SETTING_NOT_FOUND', 'Setting not found'),
       );
     }
 
@@ -169,7 +170,7 @@ export class SettingsService {
       !codeEn
     ) {
       throw new BadRequestException(
-        'Provide text in at least one language',
+        appError('PROVIDE_TEXT_IN_AT_LEAST_ONE_LANGUAGE', 'Provide text in at least one language'),
       );
     }
 
@@ -251,7 +252,7 @@ export class SettingsService {
           !valueAr
         ) {
           throw new BadRequestException(
-            'Arabic value is required when Arabic code is provided',
+            appError('ARABIC_VALUE_REQUIRED_WHEN_ARABIC_CODE_PROVIDED', 'Arabic value is required when Arabic code is provided'),
           );
         }
 
@@ -260,7 +261,7 @@ export class SettingsService {
           !valueEn
         ) {
           throw new BadRequestException(
-            'English value is required when English code is provided',
+            appError('ENGLISH_VALUE_REQUIRED_WHEN_ENGLISH_CODE_PROVIDED', 'English value is required when English code is provided'),
           );
         }
 
@@ -269,7 +270,7 @@ export class SettingsService {
           !valueEn
         ) {
           throw new BadRequestException(
-            'Provide a value in at least one language',
+            appError('PROVIDE_VALUE_IN_AT_LEAST_ONE_LANGUAGE', 'Provide a value in at least one language'),
           );
         }
       }
@@ -492,7 +493,7 @@ export class SettingsService {
       !finalCodeEn
     ) {
       throw new BadRequestException(
-        'A setting must have text in at least one language',
+        appError('SETTING_MUST_HAVE_TEXT_IN_AT_LEAST_ONE_LANGUAGE', 'A setting must have text in at least one language'),
       );
     }
 
@@ -514,7 +515,7 @@ export class SettingsService {
         !finalValueAr
       ) {
         throw new BadRequestException(
-          'Arabic value is required when Arabic code is provided',
+          appError('ARABIC_VALUE_REQUIRED_WHEN_ARABIC_CODE_PROVIDED', 'Arabic value is required when Arabic code is provided'),
         );
       }
 
@@ -523,7 +524,7 @@ export class SettingsService {
         !finalValueEn
       ) {
         throw new BadRequestException(
-          'English value is required when English code is provided',
+          appError('ENGLISH_VALUE_REQUIRED_WHEN_ENGLISH_CODE_PROVIDED', 'English value is required when English code is provided'),
         );
       }
     }
@@ -576,7 +577,7 @@ export class SettingsService {
       setting.isSystem
     ) {
       throw new BadRequestException(
-        'This is a built-in status/type used by the app\'s workflow and cannot be deleted — you can still edit its Arabic/English text.',
+        appError('SETTINGS_BUSINESS_RULE_VIOLATION', 'This is a built-in status/type used by the app\'s workflow and cannot be deleted — you can still edit its Arabic/English text.'),
       );
     }
 

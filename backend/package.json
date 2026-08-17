@@ -18,7 +18,8 @@
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "seed": "ts-node src/database/seeds/run-seed.ts",
-    "test": "jest"
+    "test": "jest",
+    "verify:i18n": "node scripts/verify-error-localization.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.1",

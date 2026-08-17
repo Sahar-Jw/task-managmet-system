@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BranchEntity } from './entities/branch.entity';
@@ -30,13 +31,13 @@ export class BranchesService {
 
   async findOne(id: string): Promise<BranchEntity> {
     const branch = await this.branchRepo.findOne({ where: { id } });
-    if (!branch) throw new NotFoundException('Branch not found');
+    if (!branch) throw new NotFoundException(appError('BRANCH_NOT_FOUND', 'Branch not found'));
     return branch;
   }
 
   async create(dto: CreateBranchDto, actor: User): Promise<BranchEntity> {
     const existingCode = await this.branchRepo.findOne({ where: { code: dto.code } });
-    if (existingCode) throw new ConflictException('Branch code must be unique');
+    if (existingCode) throw new ConflictException(appError('BRANCH_CODE_MUST_UNIQUE', 'Branch code must be unique'));
 
     const branch = await this.branchRepo.save(
       this.branchRepo.create({ ...dto, createdById: actor.id, isActive: true }),

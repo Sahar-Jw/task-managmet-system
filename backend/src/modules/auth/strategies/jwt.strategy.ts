@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { appError } from '../../../common/errors/app-error';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -44,7 +45,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   async validate(payload: JwtPayload) {
     const user = await this.usersService.findByIdWithRelations(payload.sub);
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Account is inactive or does not exist');
+      throw new UnauthorizedException(appError('ACCOUNT_INACTIVE_DOES_NOT_EXIST', 'Account is inactive or does not exist'));
     }
     return user;
   }

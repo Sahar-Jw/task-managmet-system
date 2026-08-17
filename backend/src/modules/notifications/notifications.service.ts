@@ -4,6 +4,7 @@ import {
   MessageEvent,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -776,7 +777,7 @@ export class NotificationsService {
       !notification
     ) {
       throw new NotFoundException(
-        'Notification not found',
+        appError('NOTIFICATION_NOT_FOUND', 'Notification not found'),
       );
     }
 
@@ -786,7 +787,7 @@ export class NotificationsService {
       userId
     ) {
       throw new ForbiddenException(
-        'You may only manage your own Notifications',
+        appError('YOU_MAY_ONLY_MANAGE_OWN_NOTIFICATIONS', 'You may only manage your own Notifications'),
       );
     }
 
@@ -892,7 +893,7 @@ export class NotificationsService {
       !notification
     ) {
       throw new NotFoundException(
-        'Notification not found',
+        appError('NOTIFICATION_NOT_FOUND', 'Notification not found'),
       );
     }
 
@@ -902,7 +903,7 @@ export class NotificationsService {
       userId
     ) {
       throw new ForbiddenException(
-        'You may only manage your own Notifications',
+        appError('YOU_MAY_ONLY_MANAGE_OWN_NOTIFICATIONS', 'You may only manage your own Notifications'),
       );
     }
 

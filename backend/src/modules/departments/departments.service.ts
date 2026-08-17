@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DepartmentEntity } from './entities/department.entity';
@@ -28,13 +29,13 @@ export class DepartmentsService {
 
   async findOne(id: string): Promise<DepartmentEntity> {
     const department = await this.departmentRepo.findOne({ where: { id } });
-    if (!department) throw new NotFoundException('Department not found');
+    if (!department) throw new NotFoundException(appError('DEPARTMENT_NOT_FOUND', 'Department not found'));
     return department;
   }
 
   async create(dto: CreateDepartmentDto, actor: UserEntity): Promise<DepartmentEntity> {
     const existing = await this.departmentRepo.findOne({ where: { code: dto.code } });
-    if (existing) throw new ConflictException('Department code must be unique');
+    if (existing) throw new ConflictException(appError('DEPARTMENT_CODE_MUST_UNIQUE', 'Department code must be unique'));
 
     const department = await this.departmentRepo.save(
       this.departmentRepo.create({ ...dto, createdById: actor.id, isActive: true }),

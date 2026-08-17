@@ -3,6 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -46,24 +47,24 @@ export class AuthService {
     const user = await this.usersService.findByEmail(dto.email);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException(appError('INVALID_EMAIL_PASSWORD', 'Invalid email or password'));
     }
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       throw new ForbiddenException(
-        `Account is locked until ${user.lockedUntil.toISOString()}. Contact your Admin or wait for the cool-down.`,
+        appError('ACCOUNT_LOCKED_UNTIL_VALUE_CONTACT_ADMIN_WAIT_COOL_DOWN', `Account is locked until ${user.lockedUntil.toISOString()}. Contact your Admin or wait for the cool-down.`),
       );
     }
 
     if (!user.isActive) {
       // BR-017: a deactivated User cannot authenticate.
-      throw new ForbiddenException('This account has been deactivated');
+      throw new ForbiddenException(appError('ACCOUNT_HAS_BEEN_DEACTIVATED', 'This account has been deactivated'));
     }
 
     const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordMatches) {
       await this.registerFailedLogin(user, ipAddress);
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException(appError('INVALID_EMAIL_PASSWORD', 'Invalid email or password'));
     }
 
     // Successful login resets the failure counter.
@@ -125,7 +126,7 @@ export class AuthService {
     !user.role
   ) {
     throw new UnauthorizedException(
-      'This account does not have a valid Role.',
+      appError('ACCOUNT_DOES_NOT_HAVE_VALID_ROLE', 'This account does not have a valid Role.'),
     );
   }
 
@@ -283,7 +284,7 @@ export class AuthService {
     });
 
     if (!existing) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException(appError('INVALID_EXPIRED_REFRESH_TOKEN', 'Invalid or expired refresh token'));
     }
 
     existing.revokedAt = new Date();
@@ -291,7 +292,7 @@ export class AuthService {
 
     const user = await this.usersService.findByIdWithRelations(existing.userId);
     if (!user || !user.isActive) {
-      throw new UnauthorizedException('Account is inactive or does not exist');
+      throw new UnauthorizedException(appError('ACCOUNT_INACTIVE_DOES_NOT_EXIST', 'Account is inactive or does not exist'));
     }
 
     return this.issueTokens(user);
@@ -348,7 +349,7 @@ export class AuthService {
     });
 
     if (!resetToken) {
-      throw new UnauthorizedException('Invalid or expired reset token');
+      throw new UnauthorizedException(appError('INVALID_EXPIRED_RESET_TOKEN', 'Invalid or expired reset token'));
     }
 
     const user = await this.usersService.findById(resetToken.userId);

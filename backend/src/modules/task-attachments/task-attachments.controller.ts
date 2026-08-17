@@ -12,6 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   FilesInterceptor,
@@ -136,7 +137,7 @@ export class TaskAttachmentsController {
         0
     ) {
       throw new BadRequestException(
-        'At least one file is required',
+        appError('AT_LEAST_ONE_FILE_REQUIRED', 'At least one file is required'),
       );
     }
 
@@ -210,7 +211,7 @@ export class TaskAttachmentsController {
         0
     ) {
       throw new BadRequestException(
-        'At least one file is required',
+        appError('AT_LEAST_ONE_FILE_REQUIRED', 'At least one file is required'),
       );
     }
 
@@ -288,7 +289,7 @@ export class TaskAttachmentsController {
       attachment.deletedAt
     ) {
       throw new NotFoundException(
-        'Attachment not found',
+        appError('ATTACHMENT_NOT_FOUND', 'Attachment not found'),
       );
     }
 
@@ -307,7 +308,7 @@ export class TaskAttachmentsController {
         !attachment.fileUrl
       ) {
         throw new NotFoundException(
-          'Attachment image path is missing',
+          appError('ATTACHMENT_IMAGE_PATH_MISSING', 'Attachment image path is missing'),
         );
       }
 
@@ -325,7 +326,7 @@ export class TaskAttachmentsController {
         )
       ) {
         throw new NotFoundException(
-          'Attachment image not found',
+          appError('ATTACHMENT_IMAGE_NOT_FOUND', 'Attachment image not found'),
         );
       }
 
@@ -377,7 +378,7 @@ export class TaskAttachmentsController {
         !attachment.fileData
       ) {
         throw new NotFoundException(
-          'Attachment data not found',
+          appError('ATTACHMENT_DATA_NOT_FOUND', 'Attachment data not found'),
         );
       }
 
@@ -416,7 +417,7 @@ export class TaskAttachmentsController {
 
 
     throw new NotFoundException(
-      'Unknown attachment storage type',
+      appError('UNKNOWN_ATTACHMENT_STORAGE_TYPE', 'Unknown attachment storage type'),
     );
   }
 

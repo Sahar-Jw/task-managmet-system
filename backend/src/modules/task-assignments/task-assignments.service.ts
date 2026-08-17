@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import { InjectRepository } from '@nestjs/typeorm';
 
@@ -94,7 +95,7 @@ export class TaskAssignmentsService {
 
     if (!assignment) {
       throw new NotFoundException(
-        'Assignment not found',
+        appError('ASSIGNMENT_NOT_FOUND', 'Assignment not found'),
       );
     }
 
@@ -117,13 +118,13 @@ export class TaskAssignmentsService {
 
     if (!user) {
       throw new NotFoundException(
-        'Assignee not found',
+        appError('ASSIGNEE_NOT_FOUND', 'Assignee not found'),
       );
     }
 
     if (!user.isActive) {
       throw new BadRequestException(
-        'Cannot assign a Task to a deactivated User',
+        appError('CANNOT_ASSIGN_TASK_DEACTIVATED_USER', 'Cannot assign a Task to a deactivated User'),
       );
     }
 
@@ -132,7 +133,7 @@ export class TaskAssignmentsService {
       RoleName.ADMIN
     ) {
       throw new BadRequestException(
-        'Cannot assign a Task to an Admin',
+        appError('CANNOT_ASSIGN_TASK_ADMIN', 'Cannot assign a Task to an Admin'),
       );
     }
 
@@ -164,7 +165,7 @@ export class TaskAssignmentsService {
 
     if (!task) {
       throw new NotFoundException(
-        'Task not found',
+        appError('TASK_NOT_FOUND', 'Task not found'),
       );
     }
 
@@ -174,7 +175,7 @@ export class TaskAssignmentsService {
         TaskStatus.ARCHIVED
     ) {
       throw new BadRequestException(
-        'Cannot assign an archived Task',
+        appError('CANNOT_ASSIGN_ARCHIVED_TASK', 'Cannot assign an archived Task'),
       );
     }
 
@@ -188,7 +189,7 @@ export class TaskAssignmentsService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'Only an Admin or the Task creator may assign this Task',
+        appError('ONLY_ADMIN_TASK_CREATOR_MAY_ASSIGN_TASK', 'Only an Admin or the Task creator may assign this Task'),
       );
     }
 
@@ -204,7 +205,7 @@ export class TaskAssignmentsService {
         task.deadlineDate
     ) {
       throw new BadRequestException(
-        "Assignment due date cannot exceed the parent Task's due date",
+        appError('ASSIGNMENT_DUE_DATE_CANNOT_EXCEED_PARENT_TASK_S_DUE_DATE', "Assignment due date cannot exceed the parent Task's due date"),
       );
     }
 
@@ -230,7 +231,7 @@ export class TaskAssignmentsService {
 
     if (existingActive) {
       throw new ConflictException(
-        'This Task already has an active Assignment. Reassign it instead of creating a new one.',
+        appError('TASK_ALREADY_HAS_ACTIVE_ASSIGNMENT_REASSIGN_IT_INSTEAD_CREATING_NEW_ONE', 'This Task already has an active Assignment. Reassign it instead of creating a new one.'),
       );
     }
 
@@ -341,7 +342,7 @@ export class TaskAssignmentsService {
       actor.id
     ) {
       throw new ForbiddenException(
-        'Only the assigned User may accept this Assignment',
+        appError('ONLY_ASSIGNED_USER_MAY_ACCEPT_ASSIGNMENT', 'Only the assigned User may accept this Assignment'),
       );
     }
 
@@ -350,7 +351,7 @@ export class TaskAssignmentsService {
       AssignmentStatus.PENDING_ACCEPTANCE
     ) {
       throw new ConflictException(
-        'Assignment is not in PendingAcceptance status',
+        appError('ASSIGNMENT_NOT_IN_PENDINGACCEPTANCE_STATUS', 'Assignment is not in PendingAcceptance status'),
       );
     }
 
@@ -470,7 +471,7 @@ export class TaskAssignmentsService {
       AssignmentStatus.PENDING_ACCEPTANCE
     ) {
       throw new ConflictException(
-        'An accepted Assignment cannot be rejected directly; ask an Admin or the Task creator to reassign the Task',
+        appError('ACCEPTED_ASSIGNMENT_CANNOT_REJECTED_DIRECTLY_ASK_ADMIN_TASK_CREATOR_REASSIGN_TASK', 'An accepted Assignment cannot be rejected directly; ask an Admin or the Task creator to reassign the Task'),
       );
     }
 
@@ -481,7 +482,7 @@ export class TaskAssignmentsService {
         RoleName.ADMIN
     ) {
       throw new ForbiddenException(
-        'Only the assigned User may reject this Assignment',
+        appError('ONLY_ASSIGNED_USER_MAY_REJECT_ASSIGNMENT', 'Only the assigned User may reject this Assignment'),
       );
     }
 
@@ -609,7 +610,7 @@ export class TaskAssignmentsService {
 
   if (!task) {
     throw new NotFoundException(
-      'Task not found',
+      appError('TASK_NOT_FOUND', 'Task not found'),
     );
   }
 
@@ -619,7 +620,7 @@ export class TaskAssignmentsService {
       TaskStatus.ARCHIVED
   ) {
     throw new BadRequestException(
-      'Cannot reassign an archived Task',
+      appError('CANNOT_REASSIGN_ARCHIVED_TASK', 'Cannot reassign an archived Task'),
     );
   }
 
@@ -633,7 +634,7 @@ export class TaskAssignmentsService {
       actor.id
   ) {
     throw new ForbiddenException(
-      'Only an Admin or the Task creator may reassign this Assignment',
+      appError('ONLY_ADMIN_TASK_CREATOR_MAY_REASSIGN_ASSIGNMENT', 'Only an Admin or the Task creator may reassign this Assignment'),
     );
   }
 
@@ -696,7 +697,7 @@ export class TaskAssignmentsService {
       AssignmentStatus.ACCEPTED
     ) {
       throw new ConflictException(
-        'An accepted Assignment cannot be reassigned',
+        appError('ACCEPTED_ASSIGNMENT_CANNOT_REASSIGNED', 'An accepted Assignment cannot be reassigned'),
       );
     }
 
@@ -714,12 +715,12 @@ export class TaskAssignmentsService {
         );
 
       throw new ConflictException(
-        `This Assignment is still waiting for a response. It can be reassigned after ${REASSIGN_AFTER_DAYS} days. ${remainingDays} day(s) remaining.`,
+        appError('TASK_ASSIGNMENTS_BUSINESS_RULE_VIOLATION', `This Assignment is still waiting for a response. It can be reassigned after ${REASSIGN_AFTER_DAYS} days. ${remainingDays} day(s) remaining.`),
       );
     }
 
     throw new ConflictException(
-      'This Assignment is not eligible for reassignment',
+      appError('ASSIGNMENT_NOT_ELIGIBLE_REASSIGNMENT', 'This Assignment is not eligible for reassignment'),
     );
   }
 
@@ -739,7 +740,7 @@ export class TaskAssignmentsService {
     previous.assigneeId
   ) {
     throw new BadRequestException(
-      'Choose a different User for reassignment',
+      appError('CHOOSE_DIFFERENT_USER_REASSIGNMENT', 'Choose a different User for reassignment'),
     );
   }
 
@@ -750,7 +751,7 @@ export class TaskAssignmentsService {
       task.deadlineDate
   ) {
     throw new BadRequestException(
-      "Assignment due date cannot exceed the parent Task's due date",
+      appError('ASSIGNMENT_DUE_DATE_CANNOT_EXCEED_PARENT_TASK_S_DUE_DATE', "Assignment due date cannot exceed the parent Task's due date"),
     );
   }
 

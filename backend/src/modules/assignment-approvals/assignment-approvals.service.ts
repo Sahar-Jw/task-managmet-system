@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AssignmentApprovalEntity } from './entities/assignment-approval.entity';
@@ -37,13 +38,13 @@ export class AssignmentApprovalsService {
   // Submits the Task (via its Assignment) for approval.
   async submitForApproval(assignmentId: string, actor: UserEntity): Promise<TaskEntity> {
     const assignment = await this.assignmentRepo.findOne({ where: { id: assignmentId } });
-    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (!assignment) throw new NotFoundException(appError('ASSIGNMENT_NOT_FOUND', 'Assignment not found'));
     if (assignment.assigneeId !== actor.id) {
-      throw new ForbiddenException('Only the Assignee may submit this Task for approval');
+      throw new ForbiddenException(appError('ONLY_ASSIGNEE_MAY_SUBMIT_TASK_APPROVAL', 'Only the Assignee may submit this Task for approval'));
     }
 
     const task = await this.taskRepo.findOne({ where: { id: assignment.taskId } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException(appError('TASK_NOT_FOUND', 'Task not found'));
 
     task.status = TaskStatus.PENDING_APPROVAL;
     const saved = await this.taskRepo.save(task);
@@ -77,16 +78,16 @@ export class AssignmentApprovalsService {
     actor: UserEntity,
   ): Promise<AssignmentApprovalEntity> {
     if (actor.role.name !== RoleName.ADMIN) {
-      throw new ForbiddenException('Only Admin (or a delegated approver) may approve or reject'); // BR-050
+      throw new ForbiddenException(appError('ONLY_ADMIN_DELEGATED_APPROVER_MAY_APPROVE_REJECT', 'Only Admin (or a delegated approver) may approve or reject')); // BR-050
     }
 
     const assignment = await this.assignmentRepo.findOne({ where: { id: assignmentId } });
-    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (!assignment) throw new NotFoundException(appError('ASSIGNMENT_NOT_FOUND', 'Assignment not found'));
 
     const task = await this.taskRepo.findOne({ where: { id: assignment.taskId } });
-    if (!task) throw new NotFoundException('Task not found');
+    if (!task) throw new NotFoundException(appError('TASK_NOT_FOUND', 'Task not found'));
     if (task.status !== TaskStatus.PENDING_APPROVAL) {
-      throw new ConflictException('Task is not currently pending approval');
+      throw new ConflictException(appError('TASK_NOT_PENDING_APPROVAL', 'Task is not currently pending approval'));
     }
 
     // BR-051: an approval decision, once recorded, is immutable; a reversal

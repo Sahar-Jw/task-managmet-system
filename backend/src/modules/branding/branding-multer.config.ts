@@ -1,6 +1,7 @@
 import {
   BadRequestException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   diskStorage,
@@ -125,7 +126,7 @@ export const brandingMulterConfig =
       ) {
         return callback(
           new BadRequestException(
-            'File must be an image (png, jpg, jpeg, webp, gif, svg, ico)',
+            appError('FILE_MUST_IMAGE_PNG_JPG_JPEG_WEBP_GIF_SVG_ICO', 'File must be an image (png, jpg, jpeg, webp, gif, svg, ico)'),
           ),
 
           false,

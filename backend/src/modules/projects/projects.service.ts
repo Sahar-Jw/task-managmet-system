@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -138,7 +139,7 @@ export class ProjectsService {
       endDate < startDate
     ) {
       throw new BadRequestException(
-        'Project end date cannot be before the start date',
+        appError('PROJECT_END_DATE_CANNOT_BEFORE_START_DATE', 'Project end date cannot be before the start date'),
       );
     }
   }
@@ -159,7 +160,7 @@ export class ProjectsService {
       to < from
     ) {
       throw new BadRequestException(
-        `${label} "to" date cannot be before the "from" date`,
+        appError('VALUE_DATE_CANNOT_BEFORE_FROM_DATE', `${label} "to" date cannot be before the "from" date`),
       );
     }
   }
@@ -642,7 +643,7 @@ export class ProjectsService {
       !project
     ) {
       throw new NotFoundException(
-        'Project not found',
+        appError('PROJECT_NOT_FOUND', 'Project not found'),
       );
     }
 
@@ -658,7 +659,7 @@ export class ProjectsService {
         actor.id
     ) {
       throw new ForbiddenException(
-        'You do not have access to this project',
+        appError('YOU_DO_NOT_HAVE_ACCESS_PROJECT', 'You do not have access to this project'),
       );
     }
 
@@ -852,7 +853,7 @@ export class ProjectsService {
 
     if (!name) {
       throw new BadRequestException(
-        'Project name is required',
+        appError('PROJECT_NAME_REQUIRED', 'Project name is required'),
       );
     }
 
@@ -879,7 +880,7 @@ export class ProjectsService {
       existing
     ) {
       throw new ConflictException(
-        'Project name must be unique',
+        appError('PROJECT_NAME_MUST_UNIQUE', 'Project name must be unique'),
       );
     }
 
@@ -953,7 +954,7 @@ export class ProjectsService {
     ProjectStatus.ARCHIVED
   ) {
     throw new BadRequestException(
-      'Cannot edit an archived Project',
+      appError('CANNOT_EDIT_ARCHIVED_PROJECT', 'Cannot edit an archived Project'),
     );
   }
 
@@ -1003,7 +1004,7 @@ export class ProjectsService {
       !normalizedName
     ) {
       throw new BadRequestException(
-        'Project name is required',
+        appError('PROJECT_NAME_REQUIRED', 'Project name is required'),
       );
     }
 
@@ -1026,7 +1027,7 @@ export class ProjectsService {
           id
       ) {
         throw new ConflictException(
-          'Project name must be unique',
+          appError('PROJECT_NAME_MUST_UNIQUE', 'Project name must be unique'),
         );
       }
     }
@@ -1136,8 +1137,8 @@ export class ProjectsService {
       0
     ) {
       throw new BadRequestException(
-        `Cannot delete this Project: it still has ${taskCount} task(s) attached to it. ` +
-          'Remove or reassign those Tasks first, or archive the Project instead.',
+        appError('PROJECTS_BUSINESS_RULE_VIOLATION', `Cannot delete this Project: it still has ${taskCount} task(s) attached to it. ` +
+          'Remove or reassign those Tasks first, or archive the Project instead.'),
       );
     }
 
@@ -1192,7 +1193,7 @@ export class ProjectsService {
       ProjectStatus.ARCHIVED
     ) {
       throw new ConflictException(
-        'Project is already archived',
+        appError('PROJECT_ALREADY_ARCHIVED', 'Project is already archived'),
       );
     }
 
@@ -1261,7 +1262,7 @@ export class ProjectsService {
       ProjectStatus.ARCHIVED
     ) {
       throw new BadRequestException(
-        'Only an Archived Project can be unarchived',
+        appError('ONLY_ARCHIVED_PROJECT_CAN_UNARCHIVED', 'Only an Archived Project can be unarchived'),
       );
     }
 

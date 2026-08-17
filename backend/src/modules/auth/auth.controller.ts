@@ -7,6 +7,7 @@ import {
   UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
@@ -76,7 +77,7 @@ export class AuthController {
   @Post('refresh')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (!token) throw new UnauthorizedException('Missing refresh token');
+    if (!token) throw new UnauthorizedException(appError('MISSING_REFRESH_TOKEN', 'Missing refresh token'));
 
     const { accessToken, refreshToken, user } = await this.authService.refresh(token);
     res.cookie(REFRESH_COOKIE_NAME, refreshToken, REFRESH_COOKIE_OPTIONS);

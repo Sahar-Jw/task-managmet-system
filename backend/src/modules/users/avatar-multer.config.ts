@@ -1,6 +1,7 @@
 import {
   BadRequestException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   diskStorage,
@@ -113,7 +114,7 @@ export const avatarMulterConfig =
       ) {
         return callback(
           new BadRequestException(
-            'Avatar must be an image (png, jpg, jpeg, webp, gif)',
+            appError('AVATAR_MUST_IMAGE_PNG_JPG_JPEG_WEBP_GIF', 'Avatar must be an image (png, jpg, jpeg, webp, gif)'),
           ),
 
           false,

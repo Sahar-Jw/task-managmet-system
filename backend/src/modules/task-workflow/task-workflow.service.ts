@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -492,7 +493,7 @@ export class TaskWorkflowService {
       incomingKeys.length
     ) {
       throw new BadRequestException(
-        'Workflow actions cannot contain duplicate entries',
+        appError('WORKFLOW_ACTIONS_CANNOT_CONTAIN_DUPLICATE_ENTRIES', 'Workflow actions cannot contain duplicate entries'),
       );
     }
 
@@ -510,7 +511,7 @@ export class TaskWorkflowService {
         )
       ) {
         throw new BadRequestException(
-          `Workflow action "${key}" is missing`,
+          appError('WORKFLOW_ACTION_VALUE_MISSING', `Workflow action "${key}" is missing`),
         );
       }
     }
@@ -529,7 +530,7 @@ export class TaskWorkflowService {
         )
       ) {
         throw new BadRequestException(
-          `Unknown Workflow action "${key}"`,
+          appError('UNKNOWN_WORKFLOW_ACTION_VALUE', `Unknown Workflow action "${key}"`),
         );
       }
     }
@@ -584,7 +585,7 @@ export class TaskWorkflowService {
       !startAction?.enabled
     ) {
       throw new BadRequestException(
-        'Start Task cannot be disabled',
+        appError('START_TASK_CANNOT_DISABLED', 'Start Task cannot be disabled'),
       );
     }
 
@@ -738,7 +739,7 @@ export class TaskWorkflowService {
       !requestedConfig.enabled
     ) {
       throw new ConflictException(
-        `"${requestedAction.labelEn}" is disabled in Task Workflow settings`,
+        appError('VALUE_DISABLED_IN_TASK_WORKFLOW_SETTINGS', `"${requestedAction.labelEn}" is disabled in Task Workflow settings`),
       );
     }
 
@@ -838,9 +839,9 @@ export class TaskWorkflowService {
 
 
       throw new ConflictException(
-        definition
+        appError('TASK_WORKFLOW_BUSINESS_RULE_VIOLATION', definition
           ? `The next configured Workflow action is "${definition.labelEn}"`
-          : 'This Workflow action is not currently available',
+          : 'This Workflow action is not currently available'),
       );
     }
   }

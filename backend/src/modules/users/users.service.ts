@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { appError } from '../../common/errors/app-error';
 
 import {
   InjectRepository,
@@ -109,7 +110,7 @@ export class UsersService {
         query.joinDateFrom
     ) {
       throw new BadRequestException(
-        'Join date "to" cannot be before the "from" date',
+        appError('JOIN_DATE_CANNOT_BEFORE_FROM_DATE', 'Join date "to" cannot be before the "from" date'),
       );
     }
 
@@ -343,7 +344,7 @@ export class UsersService {
       !user
     ) {
       throw new NotFoundException(
-        'User not found',
+        appError('USER_NOT_FOUND', 'User not found'),
       );
     }
 
@@ -507,7 +508,7 @@ export class UsersService {
         emailTaken
       ) {
         throw new ConflictException(
-          'Email already in use',
+          appError('EMAIL_ALREADY_IN_USE', 'Email already in use'),
         );
       }
     }
@@ -620,7 +621,7 @@ export class UsersService {
         !newRole
       ) {
         throw new BadRequestException(
-          'Selected role does not exist',
+          appError('SELECTED_ROLE_DOES_NOT_EXIST', 'Selected role does not exist'),
         );
       }
 
@@ -652,7 +653,7 @@ export class UsersService {
       !finalDepartmentId
     ) {
       throw new BadRequestException(
-        'Department is required for non-Admin Users',
+        appError('DEPARTMENT_REQUIRED_NON_ADMIN_USERS', 'Department is required for non-Admin Users'),
       );
     }
   }
@@ -682,7 +683,7 @@ export class UsersService {
       id
     ) {
       throw new BadRequestException(
-        'You cannot deactivate your own account',
+        appError('YOU_CANNOT_DEACTIVATE_OWN_ACCOUNT', 'You cannot deactivate your own account'),
       );
     }
 
@@ -696,7 +697,7 @@ export class UsersService {
       !user.isActive
     ) {
       throw new ConflictException(
-        'User is already deactivated',
+        appError('USER_ALREADY_DEACTIVATED', 'User is already deactivated'),
       );
     }
 
@@ -780,7 +781,7 @@ export class UsersService {
       id
     ) {
       throw new BadRequestException(
-        'You cannot permanently delete your own account',
+        appError('YOU_CANNOT_PERMANENTLY_DELETE_OWN_ACCOUNT', 'You cannot permanently delete your own account'),
       );
     }
 
@@ -836,7 +837,7 @@ export class UsersService {
           '23503'
       ) {
         throw new BadRequestException(
-          'This user has related records (tasks, comments, audit history, etc.) and cannot be permanently deleted. Deactivate the account instead.',
+          appError('USERS_BUSINESS_RULE_VIOLATION', 'This user has related records (tasks, comments, audit history, etc.) and cannot be permanently deleted. Deactivate the account instead.'),
         );
       }
 
@@ -896,7 +897,7 @@ export class UsersService {
       1
     ) {
       throw new BadRequestException(
-        'Cannot deactivate the last remaining active Admin account',
+        appError('CANNOT_DEACTIVATE_LAST_REMAINING_ACTIVE_ADMIN_ACCOUNT', 'Cannot deactivate the last remaining active Admin account'),
       );
     }
   }
@@ -988,7 +989,7 @@ export class UsersService {
       !user
     ) {
       throw new NotFoundException(
-        'User not found',
+        appError('USER_NOT_FOUND', 'User not found'),
       );
     }
 
@@ -1004,7 +1005,7 @@ export class UsersService {
       !matches
     ) {
       throw new ForbiddenException(
-        'Current password is incorrect',
+        appError('CURRENT_PASSWORD_INCORRECT', 'Current password is incorrect'),
       );
     }
 
@@ -1070,7 +1071,7 @@ export class UsersService {
       existing
     ) {
       throw new ConflictException(
-        'A User with this email already exists',
+        appError('USER_WITH_EMAIL_ALREADY_EXISTS', 'A User with this email already exists'),
       );
     }
 
@@ -1085,7 +1086,7 @@ export class UsersService {
       !role
     ) {
       throw new BadRequestException(
-        'Default USER role is not configured',
+        appError('DEFAULT_USER_ROLE_NOT_CONFIGURED', 'Default USER role is not configured'),
       );
     }
 
@@ -1203,7 +1204,7 @@ export class UsersService {
       !file
     ) {
       throw new BadRequestException(
-        'No file uploaded',
+        appError('NO_FILE_UPLOADED', 'No file uploaded'),
       );
     }
 

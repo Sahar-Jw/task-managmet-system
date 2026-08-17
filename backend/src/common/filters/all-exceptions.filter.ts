@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import {
+  localizeErrorLabel,
   localizeMessages,
   resolveRequestLocale,
 } from './http-exception.filter';
@@ -46,7 +47,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       response.status(status).json({
         statusCode: status,
         code: suppliedCode || localized.code,
-        error,
+        error: localizeErrorLabel(error, locale),
         message: localized.message,
         locale,
         path: request.originalUrl,

@@ -381,7 +381,19 @@ const HIDDEN_AUDIT_FIELDS = new Set([
   'createdAt',
   'updatedAt',
   'version',
+  'fileUrl',
+  'mimeType',
+  'storageType',
+  'fileSize',
 ]);
+
+
+function isHiddenAuditField(key: string) {
+  return (
+    HIDDEN_AUDIT_FIELDS.has(key) ||
+    /id$/i.test(key)
+  );
+}
 
 
 const AUDIT_VALUE_LABELS:
@@ -484,7 +496,7 @@ function changedAuditFields(log: AuditLogEntry) {
 
   return Object.keys({ ...oldValue, ...newValue })
     .filter((key) =>
-      !HIDDEN_AUDIT_FIELDS.has(key) &&
+      !isHiddenAuditField(key) &&
       JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
     )
     .map((key) => ({
@@ -765,15 +777,6 @@ function AuditItem({
             )}
 
 
-            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-slate-400">
-              <span>
-                {uiText(isArabic, 'text0777')}: <span dir="ltr">{log.entityId}</span>
-              </span>
-
-              {log.ipAddress && (
-                <span dir="ltr">IP: {log.ipAddress}</span>
-              )}
-            </div>
           </div>
         </div>
 

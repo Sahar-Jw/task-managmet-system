@@ -195,7 +195,7 @@ export default function DictionarySettingsTab() {
           <table className="min-w-[980px] w-full border-collapse">
             <thead className="bg-slate-50 text-start text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="w-[28%] px-5 py-3 text-start">{uiText(isArabic, 'text0828')}</th>
+                <th className="w-[28%] px-5 py-3 text-start">{uiText(isArabic, 'text1023')}</th>
                 <th className="w-[36%] px-5 py-3 text-start">{uiText(isArabic, 'text0829')}</th>
                 <th className="w-[36%] px-5 py-3 text-start">{uiText(isArabic, 'text0830')}</th>
               </tr>
@@ -207,9 +207,6 @@ export default function DictionarySettingsTab() {
                     <div className="text-sm font-medium text-slate-800">
                       {readableKey(row, isArabic)}
                     </div>
-                    <code className="mt-1 block break-all text-[10px] text-slate-400" dir="ltr">
-                      {row.key}
-                    </code>
                   </td>
                   <td className="px-5 py-4">
                     <textarea className="input min-h-20 resize-y" dir="ltr" lang="en" value={row.textEn} onChange={(event) => update(row.key, 'textEn', event.target.value)} />

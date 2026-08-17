@@ -699,11 +699,8 @@ export default function Navbar() {
             shrink-0
             items-center
             gap-2.5
-            rounded-xl
-            outline-none
             transition
-            focus:ring-2
-            focus:ring-brand-200
+            hover:opacity-80
           "
         >
           {branding?.logoUrl ? (

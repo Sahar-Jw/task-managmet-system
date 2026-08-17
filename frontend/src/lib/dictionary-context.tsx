@@ -19,6 +19,8 @@ interface MessageTree {
   [key: string]: string | MessageTree;
 }
 
+const DICTIONARY_CACHE_KEY = 'bilingualDictionaryCache.v1';
+
 function flattenMessages(
   tree: MessageTree,
   prefix = '',
@@ -69,17 +71,36 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
 
   const reload = useCallback(async () => {
     try {
-      applyEntries(await DictionaryApi.getAll());
+      const rows = await DictionaryApi.getAll();
+      applyEntries(rows);
+      try {
+        localStorage.setItem(DICTIONARY_CACHE_KEY, JSON.stringify(rows));
+      } catch {
+        // Storage can be disabled or full; in-memory translations still work.
+      }
     } catch {
-      applyEntries([]);
+      // Preserve cached/default translations if the refresh is unavailable.
     } finally {
       setLoading(false);
     }
   }, [applyEntries]);
 
   useEffect(() => {
+    try {
+      const cached = localStorage.getItem(DICTIONARY_CACHE_KEY);
+      if (cached) {
+        const rows = JSON.parse(cached) as DictionaryEntry[];
+        if (Array.isArray(rows)) {
+          applyEntries(rows);
+          setLoading(false);
+        }
+      }
+    } catch {
+      localStorage.removeItem(DICTIONARY_CACHE_KEY);
+    }
+
     void reload();
-  }, [reload]);
+  }, [applyEntries, reload]);
 
   const overrides = useMemo(
     () => new Map(entries.map((entry) => [entry.key, entry])),

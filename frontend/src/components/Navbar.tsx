@@ -759,12 +759,15 @@ export default function Navbar() {
             className="
               hidden
               min-w-0
+              sm:block
+              xl:hidden
               2xl:block
             "
           >
             <div
               className="
-                max-w-[190px]
+                max-w-[120px]
+                2xl:max-w-[190px]
                 truncate
                 text-sm
                 font-bold
@@ -893,7 +896,7 @@ export default function Navbar() {
 
         <div
           className="
-            ml-auto
+            ms-auto
             flex
             shrink-0
             items-center
@@ -910,7 +913,7 @@ export default function Navbar() {
               toggleLanguage
             }
             className="
-              hidden
+              flex
               h-9
               min-w-9
               items-center
@@ -928,7 +931,6 @@ export default function Navbar() {
               hover:border-brand-200
               hover:bg-brand-50
               hover:text-brand-700
-              sm:flex
             "
             aria-label={dictionaryText('generatedUi.text0849')}
           >
@@ -988,7 +990,7 @@ export default function Navbar() {
               <span
                 className="
                   absolute
-                  -right-0.5
+                  -end-0.5
                   -top-0.5
                   flex
                   h-[18px]
@@ -1055,7 +1057,7 @@ export default function Navbar() {
                 rounded-xl
                 border
                 px-1.5
-                pr-2.5
+                pe-2.5
                 transition
                 ${
                   menuOpen
@@ -1090,7 +1092,7 @@ export default function Navbar() {
                 className="
                   hidden
                   max-w-[130px]
-                  text-left
+                  text-start
                   2xl:block
                 "
               >
@@ -1290,7 +1292,7 @@ export default function Navbar() {
                       rounded-xl
                       px-3
                       py-2.5
-                      text-left
+                      text-start
                       text-sm
                       font-medium
                       text-red-600
@@ -1339,6 +1341,7 @@ export default function Navbar() {
               )
             }
             className="
+              order-first
               flex
               h-10
               w-10
@@ -1348,6 +1351,7 @@ export default function Navbar() {
               text-slate-600
               transition
               hover:bg-slate-100
+              xl:order-none
               xl:hidden
             "
             aria-label={dictionaryText('generatedUi.text0850')}
@@ -1472,7 +1476,7 @@ export default function Navbar() {
                 rounded-xl
                 px-3
                 py-3
-                text-left
+                text-start
                 text-sm
                 font-semibold
                 text-slate-600

@@ -424,6 +424,21 @@ export async function api<
     false,
 ):
   Promise<T> {
+  const requestMethod =
+    options.method ||
+    'GET';
+
+
+  /*
+   * Pages provide their own loading and empty states. Blocking the whole
+   * application for every parallel GET makes navigation feel much slower
+   * than the request itself. Mutations remain globally tracked unless a
+   * caller explicitly opts out.
+   */
+  const wantsLoader =
+    options.showLoader ??
+    requestMethod !== 'GET';
+
   /*
    * Only the original call owns the Loader.
    *
@@ -432,8 +447,7 @@ export async function api<
    */
   const shouldTrack =
     !_isRetry &&
-    options.showLoader !==
-      false &&
+    wantsLoader &&
     !isBackgroundRequest(
       path,
     );
@@ -491,8 +505,7 @@ export async function api<
         `${API_URL}${path}`,
         {
           method:
-            options.method ||
-            'GET',
+            requestMethod,
 
           headers,
 

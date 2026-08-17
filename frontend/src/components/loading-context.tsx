@@ -54,7 +54,7 @@ export const GLOBAL_LOADING_END_EVENT =
  * Do not flash the loader for requests that complete instantly.
  */
 const SHOW_DELAY_MS =
-  180;
+  120;
 
 
 /*
@@ -64,7 +64,7 @@ const SHOW_DELAY_MS =
  * permanently blocked.
  */
 const MAX_LOADING_MS =
-  30_000;
+  8_000;
 
 
 /*
@@ -676,8 +676,7 @@ export function LoadingProvider({
             flex
             items-center
             justify-center
-            bg-slate-950/10
-            backdrop-blur-[2px]
+            pointer-events-none
           "
           role="status"
           aria-live="polite"
@@ -687,7 +686,7 @@ export function LoadingProvider({
         >
           <div
             className="
-              flex
+              hidden
               min-w-[170px]
               flex-col
               items-center

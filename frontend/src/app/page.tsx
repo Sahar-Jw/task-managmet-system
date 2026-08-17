@@ -499,6 +499,24 @@ export default function Home() {
   }
 
 
+  function toggleLanguage() {
+    const nextLocale =
+      isArabic
+        ? 'en'
+        : 'ar';
+
+    document.cookie =
+      `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
+
+    localStorage.setItem(
+      'NEXT_LOCALE',
+      nextLocale,
+    );
+
+    window.location.reload();
+  }
+
+
   /*
    * ==========================================================
    * PHONE
@@ -860,6 +878,34 @@ export default function Home() {
 
 
           <nav className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleLanguage}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+              aria-label={uiText(locale === 'en', 'text0763')}
+              title={uiText(locale === 'en', 'text0763')}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="9" strokeWidth="1.7" />
+                <path d="M3 12h18M12 3c2.5 2.5 3.7 5.5 3.7 9S14.5 18.5 12 21M12 3C9.5 5.5 8.3 8.5 8.3 12s1.2 6.5 3.7 9" strokeWidth="1.7" />
+              </svg>
+
+              <span className="hidden sm:inline">
+                {uiText(locale === 'en', 'text0763')}
+              </span>
+
+              <span className="sm:hidden">
+                {locale === 'en' ? 'AR' : 'EN'}
+              </span>
+            </button>
+
+
             <button
               type="button"
               onClick={() =>

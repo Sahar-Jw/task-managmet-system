@@ -641,6 +641,12 @@ export default function Navbar() {
       `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000; SameSite=Lax`;
 
 
+    localStorage.setItem(
+      'NEXT_LOCALE',
+      nextLocale,
+    );
+
+
     window.location.reload();
   }
 

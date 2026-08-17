@@ -25,7 +25,12 @@ import {
 } from '@/lib/auth-context';
 
 import {
+  useBranding,
+} from '@/lib/branding-context';
+
+import {
   ApiError,
+  resolveBrandingAssetUrl,
 } from '@/lib/api';
 
 import {
@@ -72,6 +77,10 @@ export default function Home() {
     login,
     register,
   } = useAuth();
+
+  const {
+    branding,
+  } = useBranding();
 
   const router =
     useRouter();
@@ -837,37 +846,53 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-6 lg:px-8">
           <Link
-            href="/"
+            href={
+              user
+                ? '/dashboard'
+                : '/'
+            }
             className="flex items-center gap-3"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-5 w-5"
-              >
-                <path
-                  d="M7 12.5 10 15.5 17 8.5"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {branding?.logoUrl ? (
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={resolveBrandingAssetUrl(branding.logoUrl) ?? undefined}
+                  alt={branding.siteName || 'Task & Project Manager'}
+                  className="h-full w-full object-contain p-1"
                 />
+              </div>
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="h-5 w-5"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M7 12.5 10 15.5 17 8.5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
 
-                <rect
-                  x="4"
-                  y="4"
-                  width="16"
-                  height="16"
-                  rx="4"
-                  strokeWidth="1.8"
-                />
-              </svg>
-            </div>
+                  <rect
+                    x="4"
+                    y="4"
+                    width="16"
+                    height="16"
+                    rx="4"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+              </div>
+            )}
 
             <div>
               <div className="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
-                Task &amp; Project Manager
+                {branding?.siteName || 'Task & Project Manager'}
               </div>
 
               <div className="hidden text-[11px] text-slate-400 sm:block">

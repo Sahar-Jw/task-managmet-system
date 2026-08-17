@@ -691,7 +691,7 @@ export default function Navbar() {
          */}
 
         <Link
-          href="/"
+          href={user ? '/dashboard' : '/'}
           className="
             flex
             min-w-0

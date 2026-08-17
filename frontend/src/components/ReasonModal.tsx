@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 export default function ReasonModal({
   open,
   title,
   description,
   minLength = 0,
-  confirmLabel = 'Confirm',
+  confirmLabel,
   danger = false,
   onCancel,
   onConfirm,
@@ -21,6 +23,8 @@ export default function ReasonModal({
   onCancel: () => void;
   onConfirm: (reason: string) => void;
 }) {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const [value, setValue] = useState('');
   const [touched, setTouched] = useState(false);
 
@@ -62,26 +66,26 @@ export default function ReasonModal({
           rows={3}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={minLength > 0 ? `At least ${minLength} characters…` : 'Optional…'}
+          placeholder={minLength > 0 ? uiText(isArabic, 'text0939', { value0: minLength }) : uiText(isArabic, 'text0940')}
         />
         {touched && tooShort && (
           <p className="mt-1 text-sm text-red-600">
             {minLength > 0
-              ? `Please enter at least ${minLength} characters (currently ${trimmed.length}).`
-              : 'This field is required.'}
+              ? uiText(isArabic, 'text0941', { value0: minLength, value1: trimmed.length })
+              : uiText(isArabic, 'text0933')}
           </p>
         )}
 
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onCancel}>
-            Cancel
+            {uiText(isArabic, 'text0878')}
           </button>
           <button
             type="button"
             className={danger ? 'btn-danger' : 'btn-primary'}
             onClick={handleConfirm}
           >
-            {confirmLabel}
+            {confirmLabel || uiText(isArabic, 'text0932')}
           </button>
         </div>
       </div>

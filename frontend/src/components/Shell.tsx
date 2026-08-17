@@ -24,6 +24,7 @@ import {
 
 import Navbar from '@/components/Navbar';
 import { LoadingProvider } from './loading-context';
+import { DictionaryProvider } from '@/lib/dictionary-context';
 
 
 export default function Shell({
@@ -47,7 +48,8 @@ export default function Shell({
 
   return (
     <LoadingProvider>
-      <BrandingProvider>
+      <DictionaryProvider>
+        <BrandingProvider>
         <AuthProvider>
           <ListLabelsProvider>
             <NotificationsProvider>
@@ -74,7 +76,8 @@ export default function Shell({
             </NotificationsProvider>
           </ListLabelsProvider>
         </AuthProvider>
-      </BrandingProvider>
+        </BrandingProvider>
+      </DictionaryProvider>
     </LoadingProvider>
   );
 }

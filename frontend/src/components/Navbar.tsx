@@ -8,8 +8,8 @@ import {
 
 import {
   useLocale,
-  useTranslations,
 } from 'next-intl';
+import { useDictionary } from '@/lib/dictionary-context';
 
 import Link from 'next/link';
 
@@ -349,10 +349,9 @@ export default function Navbar() {
     useLocale();
 
 
-  const t =
-    useTranslations(
-      'nav',
-    );
+  const { text: dictionaryText } = useDictionary();
+
+  const t = (key: string) => dictionaryText(`nav.${key}`);
 
 
   const [
@@ -930,7 +929,7 @@ export default function Navbar() {
               hover:text-brand-700
               sm:flex
             "
-            aria-label="Toggle language"
+            aria-label={dictionaryText('generatedUi.text0849')}
           >
             {locale ===
             'en'
@@ -1350,7 +1349,7 @@ export default function Navbar() {
               hover:bg-slate-100
               lg:hidden
             "
-            aria-label="Navigation menu"
+            aria-label={dictionaryText('generatedUi.text0850')}
             aria-expanded={
               mobileOpen
             }

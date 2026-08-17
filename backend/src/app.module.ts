@@ -28,6 +28,7 @@ import { TransformInterceptor } from './common/interceptors/transform.intercepto
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TaskWorkflowModule } from './modules/task-workflow/task-workflow.module';
+import { DictionaryModule } from './modules/dictionary/dictionary.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { TaskWorkflowModule } from './modules/task-workflow/task-workflow.module
     AuditLogsModule,
     ReportsModule,
     TaskWorkflowModule,
+    DictionaryModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

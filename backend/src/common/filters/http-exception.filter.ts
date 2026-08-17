@@ -123,6 +123,7 @@ const EXACT_AR: Record<string, string> = {
   'Cannot deactivate the last remaining active Admin account': 'لا يمكن تعطيل آخر حساب مسؤول نشط.',
   'Workflow actions cannot contain duplicate entries': 'لا يمكن أن يحتوي سير العمل على إجراءات مكررة.',
   'Start Task cannot be disabled': 'لا يمكن تعطيل إجراء بدء المهمة.',
+  'Every dictionary entry requires English and Arabic text': 'يتطلب كل إدخال في القاموس نصاً باللغتين الإنجليزية والعربية.',
 };
 
 const STATUS_AR: Record<number, string> = {

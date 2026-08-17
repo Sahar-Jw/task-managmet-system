@@ -411,6 +411,28 @@ const NOTIFICATION_CONFIG:
 };
 
 
+const NOTIFICATION_LABEL_KEYS:
+  Partial<Record<NotificationType, Parameters<typeof uiText>[1]>> = {
+  TaskAssigned: 'text0706',
+  TaskReassigned: 'text0710',
+  AssignmentAccepted: 'text0711',
+  AssignmentRejected: 'text0712',
+  ApprovalRequested: 'text0713',
+  ApprovalDecision: 'text0713',
+  TaskStatusChanged: 'text0052',
+  TaskCompleted: 'text0018',
+  TaskReopened: 'text0714',
+  TaskUpdated: 'text0715',
+  DueDateChanged: 'text0148',
+  DueDateApproaching: 'text0166',
+  TaskOverdue: 'text0285',
+  NewComment: 'text0707',
+  ProjectUpdated: 'text0701',
+  ProjectArchived: 'text0716',
+  ProjectRestored: 'text0717',
+};
+
+
 /*
  * ============================================================
  * HELPERS
@@ -816,9 +838,10 @@ function NotificationRow({
                     ${config.badgeClass}
                   `}
                 >
-                  {isArabic
-                    ? config.labelAr
-                    : config.labelEn}
+                  {uiText(
+                    isArabic,
+                    NOTIFICATION_LABEL_KEYS[notification.type] ?? 'text0709',
+                  )}
                 </span>
 
 

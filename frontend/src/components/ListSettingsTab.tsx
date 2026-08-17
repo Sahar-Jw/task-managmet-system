@@ -17,6 +17,13 @@ const CATEGORIES: { value: SettingType; labelEn: string; labelAr: string }[] = [
   { value: 'project_status', labelEn: uiText(false, 'text0724'), labelAr: uiText(true, 'text0724') },
 ];
 
+const CATEGORY_LABEL_KEYS: Record<string, Parameters<typeof uiText>[1]> = {
+  task_status: 'text0141',
+  task_type: 'text0722',
+  task_priority: 'text0723',
+  project_status: 'text0724',
+};
+
 /** One row: a single input matching the active locale, plus Save/Delete. */
 function ListRow({
   row,
@@ -44,7 +51,7 @@ function ListRow({
       await SettingsApi.update(row.id, locale === 'ar' ? { codeAr: value.trim() } : { codeEn: value.trim() });
       onSaved();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save.');
+      setError(err instanceof ApiError ? err.message : uiText(locale === 'ar', 'text0919'));
     } finally {
       setBusy(false);
     }
@@ -57,7 +64,7 @@ function ListRow({
       await SettingsApi.remove(row.id);
       onDeleted();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not delete.');
+      setError(err instanceof ApiError ? err.message : uiText(locale === 'ar', 'text0920'));
     } finally {
       setBusy(false);
     }
@@ -110,7 +117,7 @@ function ListRow({
               await SettingsApi.update(row.id, { isActive: true });
               onSaved();
             } catch (err) {
-              setError(err instanceof ApiError ? err.message : 'Could not restore.');
+              setError(err instanceof ApiError ? err.message : uiText(locale === 'ar', 'text0921'));
             } finally {
               setBusy(false);
             }
@@ -145,7 +152,7 @@ export default function ListSettingsTab() {
       // just changed here, without needing a full page reload.
       refreshListLabels();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load.');
+      setError(err instanceof ApiError ? err.message : uiText(isAr, 'text0922'));
     } finally {
       setLoading(false);
     }
@@ -173,7 +180,7 @@ export default function ListSettingsTab() {
       setNewLabel('');
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not add.');
+      setError(err instanceof ApiError ? err.message : uiText(isAr, 'text0923'));
     } finally {
       setAdding(false);
     }
@@ -198,7 +205,7 @@ export default function ListSettingsTab() {
                 : 'border-transparent text-slate-500 hover:text-slate-700'
             }`}
           >
-            {isAr ? c.labelAr : c.labelEn}
+            {uiText(isAr, CATEGORY_LABEL_KEYS[c.value])}
           </button>
         ))}
       </div>

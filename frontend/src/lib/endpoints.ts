@@ -1321,6 +1321,26 @@ export const AuditLogsApi = {
     ),
 };
 
+
+export const DictionaryApi = {
+  getAll: () =>
+    api<import('./types').DictionaryEntry[]>(
+      '/dictionary',
+      { showLoader: false },
+    ),
+
+  replaceAll: (
+    entries: import('./types').DictionaryEntry[],
+  ) =>
+    api<import('./types').DictionaryEntry[]>(
+      '/dictionary',
+      {
+        method: 'PUT',
+        body: { entries },
+      },
+    ),
+};
+
 /*
  * ============================================================
  * REPORTS

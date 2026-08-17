@@ -234,7 +234,7 @@ export default function Pagination({
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={uiText(isArabic, 'text0874')}
       className="
         mt-5
         overflow-hidden

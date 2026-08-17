@@ -9,11 +9,15 @@ import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
 import { ProjectsApi, TasksApi } from '@/lib/endpoints';
 import type { Project, Task } from '@/lib/types';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 function ProjectDetailContent() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user } = useAuth();
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const isAdmin = user?.role.name === 'ADMIN';
 
   const [project, setProject] = useState<Project | null>(null);
@@ -41,18 +45,18 @@ function ProjectDetailContent() {
       setProject(p);
       setTasks(t.items);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load this project.');
+      setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0889'));
     } finally {
       setLoading(false);
     }
-  }, [id, isAdmin]);
+  }, [id, isAdmin, isArabic]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  if (loading) return <p className="text-slate-500">Loading…</p>;
-  if (!project) return <p className="text-red-600">{error || 'Project not found.'}</p>;
+  if (loading) return <p className="text-slate-500">{uiText(isArabic, 'text0875')}</p>;
+  if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
 
   const canManage = isAdmin || project.createdById === user?.id;
 
@@ -70,7 +74,7 @@ function ProjectDetailContent() {
       setProject(updated);
       setEditing(false);
     } catch (err) {
-      setEditError(err instanceof ApiError ? err.message : 'Could not update the project.');
+      setEditError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0891'));
     }
   }
 
@@ -81,7 +85,7 @@ function ProjectDetailContent() {
       await ProjectsApi.remove(id);
       router.push('/projects');
     } catch (err) {
-      setDeleteError(err instanceof ApiError ? err.message : 'Could not delete this project.');
+      setDeleteError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0892'));
       setConfirmDelete(false);
     } finally {
       setBusy(false);
@@ -98,23 +102,23 @@ function ProjectDetailContent() {
           : await ProjectsApi.archive(id);
       setProject(updated);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not update the project status.');
+      setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0893'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="card p-6">
         <button onClick={() => router.push('/projects')} className="text-sm text-brand-600 hover:underline">
-          ← Back to projects
+          {isArabic ? '→' : '←'} {uiText(isArabic, 'text0876')}
         </button>
 
         {editing ? (
           <form onSubmit={handleUpdate} className="mt-4 space-y-3">
             <div>
-              <label className="label">Name</label>
+              <label className="label">{uiText(isArabic, 'text0858')}</label>
               <input
                 className="input"
                 required
@@ -123,7 +127,7 @@ function ProjectDetailContent() {
               />
             </div>
             <div>
-              <label className="label">Description</label>
+              <label className="label">{uiText(isArabic, 'text0859')}</label>
               <textarea
                 className="input"
                 rows={3}
@@ -134,10 +138,10 @@ function ProjectDetailContent() {
             {editError && <p className="text-sm text-red-600">{editError}</p>}
             <div className="flex gap-2">
               <button type="submit" className="btn-primary">
-                Save
+                {uiText(isArabic, 'text0877')}
               </button>
               <button type="button" className="btn-secondary" onClick={() => setEditing(false)}>
-                Cancel
+                {uiText(isArabic, 'text0878')}
               </button>
             </div>
           </form>
@@ -155,20 +159,20 @@ function ProjectDetailContent() {
 
             <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div>
-                <dt className="text-slate-400">Start date</dt>
+                <dt className="text-slate-400">{uiText(isArabic, 'text0860')}</dt>
                 <dd className="text-slate-700">{project.startDate || '—'}</dd>
               </div>
               <div>
-                <dt className="text-slate-400">End date</dt>
+                <dt className="text-slate-400">{uiText(isArabic, 'text0861')}</dt>
                 <dd className="text-slate-700">{project.endDate || '—'}</dd>
               </div>
               <div>
-                <dt className="text-slate-400">Tasks</dt>
+                <dt className="text-slate-400">{uiText(isArabic, 'text0862')}</dt>
                 <dd className="text-slate-700">{tasks.length}</dd>
               </div>
               {isAdmin && (
                 <div>
-                  <dt className="text-slate-400">Owner</dt>
+                  <dt className="text-slate-400">{uiText(isArabic, 'text0863')}</dt>
                   <dd className="text-slate-700">{project.ownerName || '—'}</dd>
                 </div>
               )}
@@ -178,28 +182,28 @@ function ProjectDetailContent() {
               <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                 {canManage && (
                   <button className="btn-secondary" onClick={startEdit}>
-                    Edit
+                    {uiText(isArabic, 'text0879')}
                   </button>
                 )}
                 {isAdmin && (
                   <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
-                    {busy ? 'Archiving…' : 'Archive'}
+                    {busy ? uiText(isArabic, 'text0881') : uiText(isArabic, 'text0882')}
                   </button>
                 )}
                 {canManage &&
                   (confirmDelete ? (
                     <>
-                      <span className="self-center text-xs text-slate-500">Are you sure?</span>
+                      <span className="self-center text-xs text-slate-500">{uiText(isArabic, 'text0864')}</span>
                       <button className="btn-danger disabled:opacity-50" disabled={busy} onClick={handleDelete}>
-                        {busy ? 'Deleting…' : 'Confirm delete'}
+                        {busy ? uiText(isArabic, 'text0883') : uiText(isArabic, 'text0884')}
                       </button>
                       <button className="btn-secondary" onClick={() => setConfirmDelete(false)}>
-                        Cancel
+                        {uiText(isArabic, 'text0878')}
                       </button>
                     </>
                   ) : (
                     <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
-                      Delete
+                      {uiText(isArabic, 'text0880')}
                     </button>
                   ))}
               </div>
@@ -208,7 +212,7 @@ function ProjectDetailContent() {
             {isAdmin && project.status === 'Archived' && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
-                  {busy ? 'Unarchiving…' : 'Unarchive'}
+                  {busy ? uiText(isArabic, 'text0885') : uiText(isArabic, 'text0886')}
                 </button>
               </div>
             )}
@@ -224,13 +228,13 @@ function ProjectDetailContent() {
 
       <div className="card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Tasks in this project
+          {uiText(isArabic, 'text0887')}
         </h2>
 
         <div className="mt-3 divide-y divide-slate-100">
           {tasks.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-500">
-              No tasks in this project yet.
+              {uiText(isArabic, 'text0888')}
             </p>
           ) : (
             tasks.map((task) => (
@@ -241,8 +245,8 @@ function ProjectDetailContent() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-800">{task.titleEn}</div>
-                    {task.titleAr && (
+                    <div className="truncate font-medium text-slate-800">{isArabic ? task.titleAr || task.titleEn : task.titleEn || task.titleAr}</div>
+                    {!isArabic && task.titleAr && (
                       <div dir="rtl" className="truncate text-xs text-slate-500">
                         {task.titleAr}
                       </div>
@@ -256,19 +260,19 @@ function ProjectDetailContent() {
                 </div>
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 sm:grid-cols-4">
                   <div>
-                    <dt className="text-slate-400">For whom</dt>
-                    <dd className="text-slate-600">{task.assignedTo?.fullName || 'Unassigned'}</dd>
+                    <dt className="text-slate-400">{uiText(isArabic, 'text0865')}</dt>
+                    <dd className="text-slate-600">{task.assignedTo?.fullName || uiText(isArabic, 'text0014')}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-400">Department</dt>
-                    <dd className="text-slate-600">{task.department?.valueEn || '—'}</dd>
+                    <dt className="text-slate-400">{uiText(isArabic, 'text0866')}</dt>
+                    <dd className="text-slate-600">{(isArabic ? task.department?.valueAr : task.department?.valueEn) || '—'}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-400">Deadline</dt>
+                    <dt className="text-slate-400">{uiText(isArabic, 'text0867')}</dt>
                     <dd className="text-slate-600">{task.deadlineDate || '—'}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-400">Created by</dt>
+                    <dt className="text-slate-400">{uiText(isArabic, 'text0868')}</dt>
                     <dd className="text-slate-600">{task.createdBy?.fullName || '—'}</dd>
                   </div>
                 </dl>

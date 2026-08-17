@@ -5,6 +5,8 @@ import { downloadFile, fetchFileAsArrayBuffer, fetchFileAsBlob } from '@/lib/api
 import { AttachmentsApi } from '@/lib/endpoints';
 import { getFileKind } from '@/lib/file-kind';
 import type { TaskAttachment } from '@/lib/types';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 // 'empty' = the file itself has no usable content (0 bytes, no sheet data,
 // no visible text/images). 'unsupported' = we simply don't render a preview
@@ -21,6 +23,8 @@ export default function AttachmentPreviewModal({
   canDownload: boolean;
   onClose: () => void;
 }) {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const kind = getFileKind(attachment.mimeType, attachment.fileName);
   const [state, setState] = useState<LoadState>('loading');
   const [error, setError] = useState('');
@@ -99,14 +103,14 @@ export default function AttachmentPreviewModal({
           const XLSX = await import('xlsx');
           const workbook = XLSX.read(buffer, { type: 'array' });
           if (!workbook.SheetNames.length) {
-            setEmptyMessage('This Excel file has no sheets.');
+            setEmptyMessage(uiText(isArabic, 'text0917'));
             setState('empty');
             return;
           }
           const sheet = workbook.Sheets[workbook.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(sheet) as Record<string, any>[];
           if (!rows.length) {
-            setEmptyMessage('This Excel file is empty — the first sheet has no data.');
+            setEmptyMessage(uiText(isArabic, 'text0918'));
             setState('empty');
             return;
           }
@@ -122,7 +126,7 @@ export default function AttachmentPreviewModal({
         setState('unsupported');
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Could not load preview');
+          setError(err instanceof Error ? err.message : uiText(isArabic, 'text0916'));
           setState('error');
         }
       }
@@ -133,7 +137,7 @@ export default function AttachmentPreviewModal({
       cancelled = true;
       if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [attachment.id, kind]);
+  }, [attachment.id, kind, isArabic]);
 
   return (
     <div
@@ -148,7 +152,7 @@ export default function AttachmentPreviewModal({
           <h3 className="truncate text-sm font-semibold text-slate-800" title={attachment.fileName}>
             {attachment.fileName}
           </h3>
-          <button className="icon-btn ml-3 shrink-0" onClick={onClose} aria-label="Close">
+          <button className="icon-btn ml-3 shrink-0" onClick={onClose} aria-label={uiText(isArabic, 'text0842')}>
             ✕
           </button>
         </div>
@@ -157,19 +161,19 @@ export default function AttachmentPreviewModal({
           {state === 'loading' && (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-500">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-brand-500" />
-              <span className="text-sm">Loading preview…</span>
+              <span className="text-sm">{uiText(isArabic, 'text0843')}</span>
             </div>
           )}
 
           {state === 'error' && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-red-200 bg-red-50 py-12 text-center">
-              <p className="text-sm font-medium text-red-600">{error || 'Could not load preview'}</p>
+              <p className="text-sm font-medium text-red-600">{error || uiText(isArabic, 'text0916')}</p>
               {canDownload && (
                 <button
                   className="btn-primary"
                   onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
                 >
-                  Download {attachment.fileName}
+                  {uiText(isArabic, 'text0848', { value0: attachment.fileName })}
                 </button>
               )}
             </div>
@@ -181,22 +185,22 @@ export default function AttachmentPreviewModal({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0 3.75h.008M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
               <p className="text-sm font-medium text-amber-800">{emptyMessage}</p>
-              <p className="text-sm text-amber-700">There's nothing to preview.</p>
+              <p className="text-sm text-amber-700">{uiText(isArabic, 'text0844')}</p>
             </div>
           )}
 
           {state === 'unsupported' && (
             <div className="flex flex-col items-center justify-center gap-3 rounded-md border border-slate-200 bg-slate-50 py-12 text-center">
-              <p className="text-sm font-medium text-slate-700">No inline preview available</p>
+              <p className="text-sm font-medium text-slate-700">{uiText(isArabic, 'text0845')}</p>
               <p className="text-sm text-slate-500">
-                {canDownload ? 'Download the file to view it.' : 'Downloading is disabled for this Task.'}
+                {canDownload ? uiText(isArabic, 'text0846') : uiText(isArabic, 'text0847')}
               </p>
               {canDownload && (
                 <button
                   className="btn-primary"
                   onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
                 >
-                  Download {attachment.fileName}
+                  {uiText(isArabic, 'text0848', { value0: attachment.fileName })}
                 </button>
               )}
             </div>
@@ -252,7 +256,7 @@ export default function AttachmentPreviewModal({
               </table>
               {excelRows.length > 100 && (
                 <div className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                  Showing first 100 of {excelRows.length} rows
+                  {uiText(isArabic, 'text0895', { value0: excelRows.length })}
                 </div>
               )}
             </div>
@@ -265,15 +269,14 @@ export default function AttachmentPreviewModal({
               className="btn-secondary"
               onClick={() => downloadFile(AttachmentsApi.downloadPath(attachment.id), attachment.fileName)}
             >
-              Download
+              {uiText(isArabic, 'text0259')}
             </button>
           )}
           <button className="btn-secondary" onClick={onClose}>
-            Close
+            {uiText(isArabic, 'text0842')}
           </button>
         </div>
       </div>
     </div>
   );
 }
-

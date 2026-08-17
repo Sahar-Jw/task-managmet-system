@@ -725,6 +725,14 @@ export interface AuditLogEntry {
 }
 
 
+export interface DictionaryEntry {
+  id?: string;
+  key: string;
+  textEn: string;
+  textAr: string;
+}
+
+
 /*
  * ============================================================
  * PAGINATION

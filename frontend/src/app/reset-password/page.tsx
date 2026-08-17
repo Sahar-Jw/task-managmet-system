@@ -6,8 +6,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthApi } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
 import PasswordInput from '@/components/PasswordInput';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 function ResetPasswordForm() {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
@@ -23,7 +27,7 @@ function ResetPasswordForm() {
     setError('');
 
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(uiText(isArabic, 'text0905'));
       return;
     }
 
@@ -34,7 +38,7 @@ function ResetPasswordForm() {
       // Give the confirmation a moment on screen before sending them to sign in.
       setTimeout(() => router.push('/?auth=login'), 2000);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Unable to reset password. Please try again.');
+      setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0906'));
       setSubmitting(false);
     }
   }
@@ -43,10 +47,10 @@ function ResetPasswordForm() {
     return (
       <div className="space-y-6">
         <p className="text-sm leading-relaxed text-slate-600">
-          This reset link is missing or invalid. Request a new one below.
+          {uiText(isArabic, 'text0907')}
         </p>
         <Link href="/forgot-password" className="btn-primary inline-block">
-          Request a new link
+          {uiText(isArabic, 'text0908')}
         </Link>
       </div>
     );
@@ -55,7 +59,7 @@ function ResetPasswordForm() {
   if (done) {
     return (
       <p className="text-sm leading-relaxed text-slate-600">
-        Your password has been reset. Redirecting you to sign in…
+        {uiText(isArabic, 'text0909')}
       </p>
     );
   }
@@ -63,12 +67,12 @@ function ResetPasswordForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <p className="text-sm leading-relaxed text-slate-600">
-        Choose a new password for your account.
+        {uiText(isArabic, 'text0910')}
       </p>
 
       <div>
         <label className="label" htmlFor="newPassword">
-          New password
+          {uiText(isArabic, 'text0911')}
         </label>
         <PasswordInput
           id="newPassword"
@@ -80,12 +84,12 @@ function ResetPasswordForm() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
-        <p className="mt-1 text-xs text-slate-400">At least 8 characters.</p>
+        <p className="mt-1 text-xs text-slate-400">{uiText(isArabic, 'text0857')}</p>
       </div>
 
       <div>
         <label className="label" htmlFor="confirmPassword">
-          Confirm new password
+          {uiText(isArabic, 'text0912')}
         </label>
         <PasswordInput
           id="confirmPassword"
@@ -101,12 +105,12 @@ function ResetPasswordForm() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <button type="submit" className="btn-primary w-full" disabled={submitting}>
-        {submitting ? 'Saving…' : 'Save new password'}
+        {submitting ? uiText(isArabic, 'text0913') : uiText(isArabic, 'text0914')}
       </button>
 
       <p className="text-center text-sm text-slate-500">
         <Link href="/?auth=login" className="font-medium text-brand-600 hover:underline">
-          Back to sign in
+          {uiText(isArabic, 'text0899')}
         </Link>
       </p>
     </form>
@@ -114,18 +118,20 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Reset password
+            {uiText(isArabic, 'text0915')}
           </p>
-          <h1 className="mt-2 text-2xl font-semibold text-ink">Set a new password</h1>
+          <h1 className="mt-2 text-2xl font-semibold text-ink">{uiText(isArabic, 'text0856')}</h1>
         </div>
 
         <div className="px-6 py-8">
-          <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+          <Suspense fallback={<p className="text-sm text-slate-500">{uiText(isArabic, 'text0875')}</p>}>
             <ResetPasswordForm />
           </Suspense>
         </div>

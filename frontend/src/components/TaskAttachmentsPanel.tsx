@@ -2405,7 +2405,7 @@ export default function TaskAttachmentsPanel({
 
                   <button
                     type="button"
-                    aria-label="Close preview"
+                    aria-label={uiText(isArabic, 'text0841')}
                     onClick={
                       closePreview
                     }

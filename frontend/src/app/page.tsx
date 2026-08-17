@@ -17,8 +17,8 @@ import {
 
 import {
   useLocale,
-  useTranslations,
 } from 'next-intl';
+import { useDictionary } from '@/lib/dictionary-context';
 
 import {
   useAuth,
@@ -91,10 +91,9 @@ export default function Home() {
   const isArabic =
     locale === 'ar';
 
-  const t =
-    useTranslations(
-      'home',
-    );
+  const { text: dictionaryText } = useDictionary();
+
+  const t = (key: string) => dictionaryText(`home.${key}`);
 
 
   /*
@@ -1517,7 +1516,7 @@ export default function Home() {
                           )
                         }
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                        aria-label="Close"
+                        aria-label={uiText(isArabic, 'text0842')}
                       >
                         ✕
                       </button>

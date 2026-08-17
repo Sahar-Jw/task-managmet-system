@@ -157,16 +157,27 @@ function actionLabel(
   action: string,
   isArabic: boolean,
 ) {
-  const configured =
-    ACTION_LABELS[action];
+  const keys: Record<string, Parameters<typeof uiText>[1]> = {
+    Create: 'text0683',
+    Update: 'text0684',
+    Delete: 'text0685',
+    Approve: 'text0686',
+    Reject: 'text0687',
+    Assign: 'text0688',
+    Reassign: 'text0689',
+    StatusChange: 'text0690',
+    Login: 'text0691',
+    Logout: 'text0692',
+    LoginFailed: 'text0693',
+    AccountLocked: 'text0694',
+    AccountUnlocked: 'text0695',
+    Activate: 'text0696',
+    Deactivate: 'text0697',
+    Restore: 'text0698',
+    Archive: 'text0699',
+  };
 
-  if (!configured) {
-    return action;
-  }
-
-  return isArabic
-    ? configured.ar
-    : configured.en;
+  return keys[action] ? uiText(isArabic, keys[action]) : action;
 }
 
 
@@ -276,6 +287,11 @@ function entityLabel(
     Department: {
       en: uiText(false, 'text0445'),
       ar: uiText(true, 'text0445'),
+    },
+
+    Dictionary: {
+      en: uiText(false, 'text0831'),
+      ar: uiText(true, 'text0831'),
     },
   };
 

@@ -4,8 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { AuthApi } from '@/lib/endpoints';
 import { ApiError } from '@/lib/api';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 export default function ForgotPasswordPage() {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -21,44 +25,41 @@ export default function ForgotPasswordPage() {
       await AuthApi.forgotPassword(email);
       setSent(true);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Unable to submit. Please try again.');
+      setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0897'));
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6 py-12" dir={isArabic ? 'rtl' : 'ltr'}>
       <div className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
           <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Forgot password
+            {uiText(isArabic, 'text0896')}
           </p>
-          <h1 className="mt-2 text-2xl font-semibold text-ink">Reset your password</h1>
+          <h1 className="mt-2 text-2xl font-semibold text-ink">{uiText(isArabic, 'text0855')}</h1>
         </div>
 
         <div className="px-6 py-8">
           {sent ? (
             <div className="space-y-6">
               <p className="text-sm leading-relaxed text-slate-600">
-                If an account with that email exists, we&apos;ve sent a link to{' '}
-                <span className="font-medium text-ink">{email}</span> to reset your password.
-                The link expires in 30 minutes.
+                {uiText(isArabic, 'text0898', { value0: email })}
               </p>
               <Link href="/?auth=login" className="btn-secondary inline-block">
-                Back to sign in
+                {uiText(isArabic, 'text0899')}
               </Link>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <p className="text-sm leading-relaxed text-slate-600">
-                Enter the email address for your account and we&apos;ll send you a link to
-                reset your password.
+                {uiText(isArabic, 'text0900')}
               </p>
 
               <div>
                 <label className="label" htmlFor="email">
-                  Email
+                  {uiText(isArabic, 'text0901')}
                 </label>
                 <input
                   id="email"
@@ -74,12 +75,12 @@ export default function ForgotPasswordPage() {
               {error && <p className="text-sm text-red-600">{error}</p>}
 
               <button type="submit" className="btn-primary w-full" disabled={submitting}>
-                {submitting ? 'Sending…' : 'Send reset link'}
+                {submitting ? uiText(isArabic, 'text0902') : uiText(isArabic, 'text0903')}
               </button>
 
               <p className="text-center text-sm text-slate-500">
                 <Link href="/?auth=login" className="font-medium text-brand-600 hover:underline">
-                  Back to sign in
+                  {uiText(isArabic, 'text0899')}
                 </Link>
               </p>
             </form>

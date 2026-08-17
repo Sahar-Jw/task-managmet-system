@@ -1,11 +1,14 @@
 'use client';
 
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
+
 export default function ConfirmModal({
   open,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   danger = false,
   confirmDisabled = false,
   onCancel,
@@ -21,6 +24,8 @@ export default function ConfirmModal({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   if (!open) return null;
 
   return (
@@ -37,7 +42,7 @@ export default function ConfirmModal({
 
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onCancel}>
-            {cancelLabel}
+            {cancelLabel || uiText(isArabic, 'text0878')}
           </button>
           <button
             type="button"
@@ -45,7 +50,7 @@ export default function ConfirmModal({
             onClick={onConfirm}
             disabled={confirmDisabled}
           >
-            {confirmLabel}
+            {confirmLabel || uiText(isArabic, 'text0932')}
           </button>
         </div>
       </div>

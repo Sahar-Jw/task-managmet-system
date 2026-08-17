@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef } from 'react';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -25,6 +27,8 @@ interface FileInputProps {
  * they've picked before it's actually submitted/uploaded anywhere.
  */
 export default function FileInput({ id, accept, file, onSelect, disabled }: FileInputProps) {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const inputRef = useRef<HTMLInputElement>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -61,7 +65,7 @@ export default function FileInput({ id, accept, file, onSelect, disabled }: File
           onClick={handleRemove}
           disabled={disabled}
           className="icon-btn-danger h-7 w-7 shrink-0"
-          aria-label={`Remove ${file.name}`}
+          aria-label={uiText(isArabic, 'text0894', { value0: file.name })}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -88,8 +92,8 @@ export default function FileInput({ id, accept, file, onSelect, disabled }: File
         disabled ? 'pointer-events-none opacity-50' : 'cursor-pointer hover:border-brand-400 hover:bg-brand-50'
       }`}
     >
-      <span className="btn-secondary pointer-events-none shrink-0 !px-3 !py-1.5 text-xs">Choose file</span>
-      <span className="truncate">No file chosen</span>
+      <span className="btn-secondary pointer-events-none shrink-0 !px-3 !py-1.5 text-xs">{uiText(isArabic, 'text0853')}</span>
+      <span className="truncate">{uiText(isArabic, 'text0854')}</span>
       <input
         ref={inputRef}
         id={id}

@@ -18,9 +18,13 @@ import type {
   Branch,
   Department,
 } from '@/lib/types';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 
 function BranchesContent() {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
   const [
     branches,
     setBranches,
@@ -86,7 +90,7 @@ function BranchesContent() {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'Could not load branches and departments.',
+          : uiText(isArabic, 'text0924'),
       );
     } finally {
       setLoading(
@@ -142,7 +146,7 @@ function BranchesContent() {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'Could not create the branch.',
+          : uiText(isArabic, 'text0925'),
       );
     }
   }
@@ -185,7 +189,7 @@ function BranchesContent() {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'Could not create the department.',
+          : uiText(isArabic, 'text0926'),
       );
     }
   }
@@ -213,7 +217,7 @@ function BranchesContent() {
       setError(
         err instanceof ApiError
           ? err.message
-          : 'Could not update the branch.',
+          : uiText(isArabic, 'text0927'),
       );
     }
   }
@@ -248,10 +252,10 @@ function BranchesContent() {
 
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2" dir={isArabic ? 'rtl' : 'ltr'}>
       <div>
         <h1 className="text-xl font-semibold text-slate-800">
-          Branches
+          {uiText(isArabic, 'text0942')}
         </h1>
 
         <form
@@ -263,7 +267,7 @@ function BranchesContent() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">
-                Name
+                {uiText(isArabic, 'text0858')}
               </label>
               <input
                 className="input"
@@ -285,7 +289,7 @@ function BranchesContent() {
 
             <div>
               <label className="label">
-                Code
+                {uiText(isArabic, 'text0943')}
               </label>
               <input
                 className="input"
@@ -308,7 +312,7 @@ function BranchesContent() {
 
           <div>
             <label className="label">
-              Address (optional)
+              {uiText(isArabic, 'text0944')}
             </label>
             <input
               className="input"
@@ -331,14 +335,14 @@ function BranchesContent() {
             type="submit"
             className="btn-primary"
           >
-            Add branch
+            {uiText(isArabic, 'text0945')}
           </button>
         </form>
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
             <p className="p-6 text-center text-slate-500">
-              Loading…
+              {uiText(isArabic, 'text0875')}
             </p>
           ) : (
             branches.map(
@@ -384,8 +388,8 @@ function BranchesContent() {
                     }
                   >
                     {branch.isActive
-                      ? 'Deactivate'
-                      : 'Activate'}
+                      ? uiText(isArabic, 'text0936')
+                      : uiText(isArabic, 'text0946')}
                   </button>
                 </div>
               ),
@@ -396,7 +400,7 @@ function BranchesContent() {
 
       <div>
         <h1 className="text-xl font-semibold text-slate-800">
-          Departments
+          {uiText(isArabic, 'text0947')}
         </h1>
 
         <form
@@ -406,13 +410,13 @@ function BranchesContent() {
           className="card mt-4 space-y-3 p-6"
         >
           <p className="text-xs text-slate-400">
-            Departments are a standalone list — not tied to a specific Branch.
+            {uiText(isArabic, 'text0948')}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="label">
-                Name
+                {uiText(isArabic, 'text0858')}
               </label>
               <input
                 className="input"
@@ -434,7 +438,7 @@ function BranchesContent() {
 
             <div>
               <label className="label">
-                Code
+                {uiText(isArabic, 'text0943')}
               </label>
               <input
                 className="input"
@@ -459,14 +463,14 @@ function BranchesContent() {
             type="submit"
             className="btn-primary"
           >
-            Add department
+            {uiText(isArabic, 'text0949')}
           </button>
         </form>
 
         <div className="mt-4 card divide-y divide-slate-100">
           {loading ? (
             <p className="p-6 text-center text-slate-500">
-              Loading…
+              {uiText(isArabic, 'text0875')}
             </p>
           ) : (
             departments.map(
@@ -492,7 +496,7 @@ function BranchesContent() {
 
                   {!department.isActive && (
                     <span className="badge bg-slate-100 text-slate-500">
-                      Inactive
+                      {uiText(isArabic, 'text0092')}
                     </span>
                   )}
                 </div>

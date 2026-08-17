@@ -19,6 +19,7 @@ import BrandingTab from '@/components/BrandingTab';
 import ListSettingsTab from '@/components/ListSettingsTab';
 import ColorThemeTab from '@/components/ColorThemeTab';
 import WorkflowSettingsTab from '@/components/WorkflowSettingsTab';
+import DictionarySettingsTab from '@/components/DictionarySettingsTab';
 
 import {
   ApiError,
@@ -56,7 +57,8 @@ type PageTab =
   | 'branding'
   | 'color-theme'
   | 'lists'
-  | 'workflow';
+  | 'workflow'
+  | 'dictionary';
 
 
 type FormState = {
@@ -228,6 +230,16 @@ function ListsIcon() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+
+function DictionaryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+      <path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" strokeWidth="1.7" />
+      <path d="M8 8h7M8 12h7M8 16h4" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -2666,17 +2678,9 @@ const PAGE_TABS: {
   value:
     PageTab;
 
-  labelEn:
-    string;
+  labelKey: Parameters<typeof uiText>[1];
 
-  labelAr:
-    string;
-
-  descriptionEn:
-    string;
-
-  descriptionAr:
-    string;
+  descriptionKey: Parameters<typeof uiText>[1];
 
   icon:
     React.ReactNode;
@@ -2685,17 +2689,9 @@ const PAGE_TABS: {
     value:
       'data',
 
-    labelEn:
-      uiText(false, 'text0718'),
+    labelKey: 'text0718',
 
-    labelAr:
-      uiText(true, 'text0718'),
-
-    descriptionEn:
-      uiText(false, 'text0754'),
-
-    descriptionAr:
-      uiText(true, 'text0754'),
+    descriptionKey: 'text0754',
 
     icon:
       <DataIcon />,
@@ -2705,17 +2701,9 @@ const PAGE_TABS: {
     value:
       'branding',
 
-    labelEn:
-      uiText(false, 'text0704'),
+    labelKey: 'text0704',
 
-    labelAr:
-      uiText(true, 'text0704'),
-
-    descriptionEn:
-      uiText(false, 'text0755'),
-
-    descriptionAr:
-      uiText(true, 'text0755'),
+    descriptionKey: 'text0755',
 
     icon:
       <BrandingIcon />,
@@ -2725,17 +2713,9 @@ const PAGE_TABS: {
     value:
       'color-theme',
 
-    labelEn:
-      uiText(false, 'text0719'),
+    labelKey: 'text0719',
 
-    labelAr:
-      uiText(true, 'text0719'),
-
-    descriptionEn:
-      uiText(false, 'text0756'),
-
-    descriptionAr:
-      uiText(true, 'text0756'),
+    descriptionKey: 'text0756',
 
     icon:
       <ThemeIcon />,
@@ -2745,17 +2725,9 @@ const PAGE_TABS: {
     value:
       'lists',
 
-    labelEn:
-      uiText(false, 'text0720'),
+    labelKey: 'text0720',
 
-    labelAr:
-      uiText(true, 'text0720'),
-
-    descriptionEn:
-      uiText(false, 'text0757'),
-
-    descriptionAr:
-      uiText(true, 'text0757'),
+    descriptionKey: 'text0757',
 
     icon:
       <ListsIcon />,
@@ -2765,20 +2737,19 @@ const PAGE_TABS: {
     value:
       'workflow',
 
-    labelEn:
-      uiText(false, 'text0721'),
+    labelKey: 'text0721',
 
-    labelAr:
-      uiText(true, 'text0721'),
-
-    descriptionEn:
-      uiText(false, 'text0758'),
-
-    descriptionAr:
-      uiText(true, 'text0758'),
+    descriptionKey: 'text0758',
 
     icon:
       <WorkflowIcon />,
+  },
+
+  {
+    value: 'dictionary',
+    labelKey: 'text0825',
+    descriptionKey: 'text0826',
+    icon: <DictionaryIcon />,
   },
 ];
 
@@ -2926,7 +2897,7 @@ function SettingsPageContent() {
           gap-3
           sm:grid-cols-2
           lg:grid-cols-3
-          xl:grid-cols-5
+          xl:grid-cols-6
         "
       >
         {PAGE_TABS.map(
@@ -3006,9 +2977,7 @@ function SettingsPageContent() {
                       }
                     `}
                   >
-                    {isArabic
-                      ? item.labelAr
-                      : item.labelEn}
+                    {uiText(isArabic, item.labelKey)}
                   </div>
 
 
@@ -3020,9 +2989,7 @@ function SettingsPageContent() {
                       text-slate-400
                     "
                   >
-                    {isArabic
-                      ? item.descriptionAr
-                      : item.descriptionEn}
+                    {uiText(isArabic, item.descriptionKey)}
                   </div>
                 </div>
 
@@ -3083,6 +3050,12 @@ function SettingsPageContent() {
         {tab ===
           'workflow' && (
           <WorkflowSettingsTab />
+        )}
+
+
+        {tab ===
+          'dictionary' && (
+          <DictionarySettingsTab />
         )}
       </div>
     </div>

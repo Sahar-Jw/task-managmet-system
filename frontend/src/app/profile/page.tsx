@@ -33,6 +33,8 @@ import {
   isValidPhone,
   PHONE_VALIDATION_MESSAGE,
 } from '@/lib/validation';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 
 const MAX_AVATAR_MB =
@@ -218,6 +220,9 @@ function SectionHeader({
  */
 
 function ProfileContent() {
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
+
   const {
     user,
     refreshUser,
@@ -731,7 +736,7 @@ function ProfileContent() {
         err instanceof
           ApiError
           ? err.message
-          : 'Could not save your profile.',
+          : uiText(isArabic, 'text0928'),
       );
     } finally {
       setProfileSaving(
@@ -881,7 +886,7 @@ function ProfileContent() {
         err instanceof
           ApiError
           ? err.message
-          : 'Could not upload photo.',
+          : uiText(isArabic, 'text0929'),
       );
     } finally {
       setAvatarUploading(
@@ -912,7 +917,7 @@ function ProfileContent() {
         err instanceof
           ApiError
           ? err.message
-          : 'Could not remove photo.',
+          : uiText(isArabic, 'text0930'),
       );
     } finally {
       setAvatarUploading(
@@ -1015,7 +1020,7 @@ function ProfileContent() {
         err instanceof
           ApiError
           ? err.message
-          : 'Could not change your password.',
+          : uiText(isArabic, 'text0931'),
       );
     } finally {
       setPasswordSaving(
@@ -1127,7 +1132,7 @@ function ProfileContent() {
 
             <button
               type="button"
-              title="Change photo"
+              title={uiText(isArabic, 'text0869')}
               disabled={
                 avatarUploading
               }
@@ -1224,7 +1229,7 @@ function ProfileContent() {
                 `}
               >
                 {user.isActive
-                  ? 'Active'
+                  ? uiText(isArabic, 'text0937')
                   : 'Inactive'}
               </span>
             </div>
@@ -1520,7 +1525,7 @@ function ProfileContent() {
           >
             <SectionHeader
               eyebrow="Profile"
-              title="Personal information"
+              title={uiText(isArabic, 'text0870')}
               description="Keep your name and contact information up to date."
             />
 
@@ -1725,7 +1730,7 @@ function ProfileContent() {
           >
             <SectionHeader
               eyebrow="Security"
-              title="Change password"
+              title={uiText(isArabic, 'text0871')}
               description="Use your current password to set a new password for your account."
             />
 
@@ -1788,7 +1793,7 @@ function ProfileContent() {
                     }
                   >
                     {showCurrentPassword
-                      ? 'Hide'
+                      ? uiText(isArabic, 'text0938')
                       : 'Show'}
                   </button>
                 </div>
@@ -1857,7 +1862,7 @@ function ProfileContent() {
                       }
                     >
                       {showNewPassword
-                        ? 'Hide'
+                        ? uiText(isArabic, 'text0938')
                         : 'Show'}
                     </button>
                   </div>
@@ -2000,7 +2005,7 @@ function ProfileContent() {
           >
             <SectionHeader
               eyebrow="Organization"
-              title="Work information"
+              title={uiText(isArabic, 'text0872')}
               description="Organization details are managed by an Administrator."
             />
 
@@ -2069,7 +2074,7 @@ function ProfileContent() {
           >
             <SectionHeader
               eyebrow="Account"
-              title="Account information"
+              title={uiText(isArabic, 'text0873')}
               description="Basic information about your system account."
             />
 
@@ -2109,7 +2114,7 @@ function ProfileContent() {
                     />
 
                     {user.isActive
-                      ? 'Active'
+                      ? uiText(isArabic, 'text0937')
                       : 'Inactive'}
                   </span>
                 }

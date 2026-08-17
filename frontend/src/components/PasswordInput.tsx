@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, forwardRef } from 'react';
+import { useLocale } from 'next-intl';
+import { uiText } from '@/lib/ui-text';
 
 /**
  * A password `<input>` with a show/hide toggle, styled to match `.input`.
@@ -10,6 +12,8 @@ import { useState, forwardRef } from 'react';
  */
 const PasswordInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className = '', ...props }, ref) => {
+    const locale = useLocale();
+    const isArabic = locale === 'ar';
     const [visible, setVisible] = useState(false);
 
     return (
@@ -25,7 +29,7 @@ const PasswordInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTM
           tabIndex={-1}
           onClick={() => setVisible((v) => !v)}
           className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-slate-400 hover:text-slate-600"
-          aria-label={visible ? 'Hide password' : 'Show password'}
+          aria-label={visible ? uiText(isArabic, 'text0934') : uiText(isArabic, 'text0935')}
         >
           {visible ? (
             <svg

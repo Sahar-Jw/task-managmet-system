@@ -379,6 +379,7 @@ type ApiOptions = {
   method?:
     | 'GET'
     | 'POST'
+    | 'PUT'
     | 'PATCH'
     | 'DELETE';
 

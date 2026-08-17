@@ -1059,6 +1059,11 @@
     "text1014": "Basic information about your system account.",
     "text1015": "Full name is required.",
     "text1016": "Full name cannot exceed 150 characters.",
-    "text1017": "dictionary entries"
+    "text1017": "dictionary entries",
+    "text1018": "Navigation",
+    "text1019": "Landing page",
+    "text1020": "Tasks",
+    "text1021": "Error message",
+    "text1022": "Interface text"
   }
 }

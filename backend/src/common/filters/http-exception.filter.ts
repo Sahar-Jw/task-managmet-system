@@ -133,6 +133,7 @@ const STATUS_AR: Record<number, string> = {
   [HttpStatus.NOT_FOUND]: 'العنصر المطلوب غير موجود.',
   [HttpStatus.CONFLICT]: 'تعذر تنفيذ العملية بسبب تعارض مع البيانات الحالية.',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'تعذر معالجة البيانات المدخلة.',
+  [HttpStatus.PAYLOAD_TOO_LARGE]: 'حجم البيانات المرسلة كبير جداً. يرجى تقليل حجم الطلب والمحاولة مرة أخرى.',
   [HttpStatus.TOO_MANY_REQUESTS]: 'عدد الطلبات كبير جداً. يرجى المحاولة بعد قليل.',
   [HttpStatus.INTERNAL_SERVER_ERROR]: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.',
 };
@@ -229,6 +230,7 @@ function codeFor(status: number): string {
     404: 'NOT_FOUND',
     409: 'CONFLICT',
     422: 'UNPROCESSABLE_ENTITY',
+    413: 'PAYLOAD_TOO_LARGE',
     429: 'TOO_MANY_REQUESTS',
     500: 'INTERNAL_SERVER_ERROR',
   };
@@ -237,6 +239,10 @@ function codeFor(status: number): string {
 }
 
 function stableCode(message: string, status: number): string {
+  if (status === HttpStatus.PAYLOAD_TOO_LARGE) {
+    return 'PAYLOAD_TOO_LARGE';
+  }
+
   const normalized = message
     .replace(/"[^"]*"|'[^']*'/g, ' VALUE ')
     .replace(/\b\d{4}-\d{2}-\d{2}(?:T[^\s]+)?\b/g, ' VALUE ')
@@ -339,6 +345,8 @@ export function localizeErrorLabel(error: string, locale: AppLocale): string {
     'Not Found': 'غير موجود',
     ConflictException: 'تعارض',
     Conflict: 'تعارض',
+    PayloadTooLargeException: 'حجم الطلب كبير جداً',
+    'Payload Too Large': 'حجم الطلب كبير جداً',
   };
 
   return labels[error] || 'خطأ';

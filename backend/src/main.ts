@@ -26,6 +26,11 @@ import cookieParser
   from 'cookie-parser';
 
 import {
+  json,
+  urlencoded,
+} from 'express';
+
+import {
   mkdirSync,
 } from 'fs';
 
@@ -48,7 +53,36 @@ async function bootstrap() {
       NestExpressApplication
     >(
       AppModule,
+      {
+        bodyParser:
+          false,
+      },
     );
+
+
+  /*
+   * The editable bilingual dictionary contains the complete UI
+   * catalog and is intentionally larger than Express's 100 KB
+   * default JSON limit. Keep a bounded limit while allowing the
+   * full catalog to be saved in one atomic request.
+   */
+  app.use(
+    json({
+      limit:
+        '5mb',
+    }),
+  );
+
+
+  app.use(
+    urlencoded({
+      extended:
+        true,
+
+      limit:
+        '5mb',
+    }),
+  );
 
 
   const configService =

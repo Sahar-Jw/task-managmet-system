@@ -36,6 +36,28 @@ function defaultRows(): DictionaryEntry[] {
   }));
 }
 
+function readableKey(
+  row: DictionaryEntry,
+  isArabic: boolean,
+) {
+  const namespace = row.key.split('.')[0];
+  const namespaceKeys: Record<string, Parameters<typeof uiText>[1]> = {
+    nav: 'text1018',
+    home: 'text1019',
+    task: 'text1020',
+    errors: 'text1021',
+    generatedUi: 'text1022',
+  };
+  const category = namespaceKeys[namespace]
+    ? uiText(isArabic, namespaceKeys[namespace])
+    : namespace.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const text = (isArabic ? row.textAr : row.textEn)
+    .replace(/\{[A-Za-z0-9_]+\}/g, '…')
+    .trim();
+
+  return `${category} · ${text}`;
+}
+
 export default function DictionarySettingsTab() {
   const locale = useLocale();
   const isArabic = locale === 'ar';
@@ -181,7 +203,14 @@ export default function DictionarySettingsTab() {
             <tbody>
               {visible.map((row) => (
                 <tr key={row.key} className="border-t border-slate-100 align-top hover:bg-slate-50/50">
-                  <td className="px-5 py-4"><code className="break-all text-xs text-slate-600" dir="ltr">{row.key}</code></td>
+                  <td className="px-5 py-4">
+                    <div className="text-sm font-medium text-slate-800">
+                      {readableKey(row, isArabic)}
+                    </div>
+                    <code className="mt-1 block break-all text-[10px] text-slate-400" dir="ltr">
+                      {row.key}
+                    </code>
+                  </td>
                   <td className="px-5 py-4">
                     <textarea className="input min-h-20 resize-y" dir="ltr" lang="en" value={row.textEn} onChange={(event) => update(row.key, 'textEn', event.target.value)} />
                   </td>

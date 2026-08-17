@@ -19,6 +19,7 @@ export const API_URL =
  * not from /api/v1.
  */
 const API_ORIGIN =
+  process.env.NEXT_PUBLIC_API_ORIGIN ||
   API_URL.replace(
     /\/api\/v\d+\/?$/,
     '',

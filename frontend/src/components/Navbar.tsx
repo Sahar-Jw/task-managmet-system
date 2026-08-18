@@ -33,6 +33,10 @@ import {
   useBranding,
 } from '@/lib/branding-context';
 
+import {
+  useTheme,
+} from '@/lib/theme-context';
+
 import Avatar from './Avatar';
 
 
@@ -341,6 +345,12 @@ export default function Navbar() {
     useBranding();
 
 
+  const {
+    mode,
+    toggleMode,
+  } = useTheme();
+
+
   const pathname =
     usePathname();
 
@@ -357,15 +367,6 @@ export default function Navbar() {
   const [
     menuOpen,
     setMenuOpen,
-  ] =
-    useState(
-      false,
-    );
-
-
-  const [
-    mobileOpen,
-    setMobileOpen,
   ] =
     useState(
       false,
@@ -414,9 +415,6 @@ export default function Navbar() {
           false,
         );
 
-        setMobileOpen(
-          false,
-        );
       }
     }
 
@@ -454,9 +452,6 @@ export default function Navbar() {
       false,
     );
 
-    setMobileOpen(
-      false,
-    );
   }, [
     pathname,
   ]);
@@ -899,6 +894,16 @@ export default function Navbar() {
             gap-1.5
           "
         >
+          <button
+            type="button"
+            onClick={toggleMode}
+            className="hidden h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 xl:flex"
+            aria-label={mode === 'dark' ? (locale === 'ar' ? 'تفعيل الوضع الفاتح' : 'Use light mode') : (locale === 'ar' ? 'تفعيل الوضع الداكن' : 'Use dark mode')}
+          >
+            <span aria-hidden="true">{mode === 'dark' ? '☀️' : '🌙'}</span>
+            {mode === 'dark' ? (locale === 'ar' ? 'فاتح' : 'Light') : (locale === 'ar' ? 'داكن' : 'Dark')}
+          </button>
+
           {/*
            * LANGUAGE
            */}
@@ -1151,7 +1156,8 @@ export default function Navbar() {
                   top-[calc(100%+10px)]
                   z-50
                   w-[min(16rem,calc(100vw-1.5rem))]
-                  overflow-hidden
+                  max-h-[calc(100dvh-5.5rem)]
+                  overflow-y-auto
                   rounded-2xl
                   border
                   border-slate-200
@@ -1224,6 +1230,26 @@ export default function Navbar() {
 
 
                 <div className="mt-1">
+                  <div className="mb-1 border-b border-slate-100 pb-1 xl:hidden">
+                    {links.map((link) => {
+                      const active = isLinkActive(link.href);
+                      return (
+                        <Link
+                          key={link.href}
+                          href={link.href}
+                          role="menuitem"
+                          onClick={() => setMenuOpen(false)}
+                          className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${active ? 'bg-brand-50 text-brand-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                        >
+                          <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${active ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {link.icon}
+                          </span>
+                          {link.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+
                   <Link
                     href="/profile"
                     role="menuitem"
@@ -1268,6 +1294,21 @@ export default function Navbar() {
                       )
                     }
                   </Link>
+
+
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={toggleMode}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-base">
+                      {mode === 'dark' ? '☀️' : '🌙'}
+                    </span>
+                    {mode === 'dark'
+                      ? (locale === 'ar' ? 'الوضع الفاتح' : 'Light mode')
+                      : (locale === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
+                  </button>
 
 
                   <button
@@ -1322,193 +1363,8 @@ export default function Navbar() {
           </div>
 
 
-          {/*
-           * MOBILE MENU
-           */}
-
-          <button
-            type="button"
-            onClick={() =>
-              setMobileOpen(
-                (
-                  open,
-                ) =>
-                  !open,
-              )
-            }
-            className="
-              order-first
-              flex
-              h-10
-              w-10
-              items-center
-              justify-center
-              rounded-xl
-              text-slate-600
-              transition
-              hover:bg-slate-100
-              xl:order-none
-              xl:hidden
-            "
-            aria-label={dictionaryText('generatedUi.text0850')}
-            aria-expanded={
-              mobileOpen
-            }
-          >
-            {mobileOpen
-              ? <CloseIcon />
-              : <MenuIcon />}
-          </button>
         </div>
       </div>
-
-
-      {/*
-       * ======================================================
-       * MOBILE NAVIGATION
-       * ======================================================
-       */}
-
-      {mobileOpen && (
-        <div
-          className="
-            border-t
-            border-slate-100
-            bg-white
-            px-4
-            pb-4
-            pt-3
-            xl:hidden
-          "
-        >
-          <nav
-            className="
-              mx-auto
-              grid
-              max-w-[1500px]
-              gap-1
-              sm:grid-cols-2
-            "
-          >
-            {links.map(
-              (
-                link,
-              ) => {
-                const active =
-                  isLinkActive(
-                    link.href,
-                  );
-
-
-                return (
-                  <Link
-                    key={
-                      link.href
-                    }
-                    href={
-                      link.href
-                    }
-                    className={`
-                      flex
-                      items-center
-                      gap-3
-                      rounded-xl
-                      px-3
-                      py-3
-                      text-sm
-                      font-semibold
-                      transition
-                      ${
-                        active
-                          ? `
-                            bg-brand-50
-                            text-brand-700
-                          `
-                          : `
-                            text-slate-600
-                            hover:bg-slate-50
-                          `
-                      }
-                    `}
-                  >
-                    <span
-                      className={`
-                        flex
-                        h-8
-                        w-8
-                        items-center
-                        justify-center
-                        rounded-lg
-                        ${
-                          active
-                            ? 'bg-brand-100 text-brand-700'
-                            : 'bg-slate-100 text-slate-500'
-                        }
-                      `}
-                    >
-                      {
-                        link.icon
-                      }
-                    </span>
-
-                    {
-                      link.label
-                    }
-                  </Link>
-                );
-              },
-            )}
-
-
-            <button
-              type="button"
-              onClick={
-                toggleLanguage
-              }
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-start
-                text-sm
-                font-semibold
-                text-slate-600
-                transition
-                hover:bg-slate-50
-                sm:hidden
-              "
-            >
-              <span
-                className="
-                  flex
-                  h-8
-                  w-8
-                  items-center
-                  justify-center
-                  rounded-lg
-                  bg-slate-100
-                  text-[10px]
-                  font-bold
-                  text-slate-500
-                "
-              >
-                {locale ===
-                'en'
-                  ? 'AR'
-                  : 'EN'}
-              </span>
-
-              {locale ===
-              'en'
-                ? 'العربية'
-                : 'English'}
-            </button>
-          </nav>
-        </div>
-      )}
     </header>
   );
 }

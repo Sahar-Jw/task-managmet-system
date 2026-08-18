@@ -26,12 +26,18 @@ export const DEFAULT_THEME: ThemeColors = {
 };
 
 const STORAGE_KEY = 'task-manager-theme';
+const MODE_STORAGE_KEY = 'task-manager-color-mode';
+
+export type ColorMode = 'light' | 'dark';
 
 type ThemeContextValue = {
   colors: ThemeColors;
   setColors: (colors: ThemeColors) => void;
   updateColor: (key: keyof ThemeColors, value: string) => void;
   resetTheme: () => void;
+  mode: ColorMode;
+  setMode: (mode: ColorMode) => void;
+  toggleMode: () => void;
 };
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
@@ -66,14 +72,26 @@ function mixColor(hex: string, target: string, amount: number) {
   );
 }
 
-function applyTheme(colors: ThemeColors) {
+function applyTheme(colors: ThemeColors, mode: ColorMode) {
   const root = document.documentElement;
 
-  root.style.setProperty('--theme-primary', colors.primary);
-  root.style.setProperty('--theme-primary-text', colors.primaryText);
-  root.style.setProperty('--theme-page-background', colors.pageBackground);
-  root.style.setProperty('--theme-surface', colors.surface);
-  root.style.setProperty('--theme-body-text', colors.bodyText);
+  root.dataset.colorMode = mode;
+  root.style.colorScheme = mode;
+
+  const visibleColors = mode === 'dark'
+    ? {
+        ...colors,
+        pageBackground: '#0f172a',
+        surface: '#1e293b',
+        bodyText: '#e2e8f0',
+      }
+    : colors;
+
+  root.style.setProperty('--theme-primary', visibleColors.primary);
+  root.style.setProperty('--theme-primary-text', visibleColors.primaryText);
+  root.style.setProperty('--theme-page-background', visibleColors.pageBackground);
+  root.style.setProperty('--theme-surface', visibleColors.surface);
+  root.style.setProperty('--theme-body-text', visibleColors.bodyText);
 
   /*
    * Your website already uses Tailwind classes such as:
@@ -123,13 +141,17 @@ function applyTheme(colors: ThemeColors) {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [colors, setColorsState] = useState<ThemeColors>(DEFAULT_THEME);
+  const [mode, setModeState] = useState<ColorMode>('light');
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
 
+      const storedMode = localStorage.getItem(MODE_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+      setModeState(storedMode);
+
       if (!stored) {
-        applyTheme(DEFAULT_THEME);
+        applyTheme(DEFAULT_THEME, storedMode);
         return;
       }
 
@@ -167,7 +189,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       };
 
       setColorsState(savedColors);
-      applyTheme(savedColors);
+      applyTheme(savedColors, storedMode);
 
       /*
        * Rewrite localStorage using the new clean structure.
@@ -177,13 +199,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         JSON.stringify(savedColors),
       );
     } catch {
-      applyTheme(DEFAULT_THEME);
+      applyTheme(DEFAULT_THEME, 'light');
     }
   }, []);
 
   function setColors(nextColors: ThemeColors) {
     setColorsState(nextColors);
-    applyTheme(nextColors);
+    applyTheme(nextColors, mode);
 
     try {
       localStorage.setItem(
@@ -208,7 +230,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         [key]: value,
       };
 
-      applyTheme(nextColors);
+      applyTheme(nextColors, mode);
 
       try {
         localStorage.setItem(
@@ -227,14 +249,31 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setColors(DEFAULT_THEME);
   }
 
+  function setMode(nextMode: ColorMode) {
+    setModeState(nextMode);
+    applyTheme(colors, nextMode);
+    try {
+      localStorage.setItem(MODE_STORAGE_KEY, nextMode);
+    } catch {
+      // The selected mode still works for the current session.
+    }
+  }
+
+  function toggleMode() {
+    setMode(mode === 'dark' ? 'light' : 'dark');
+  }
+
   const value = useMemo(
     () => ({
       colors,
       setColors,
       updateColor,
       resetTheme,
+      mode,
+      setMode,
+      toggleMode,
     }),
-    [colors],
+    [colors, mode],
   );
 
   return (

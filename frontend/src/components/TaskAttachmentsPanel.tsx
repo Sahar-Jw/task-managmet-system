@@ -475,11 +475,11 @@ export default function TaskAttachmentsPanel({
 
 
   const [
-    previewBusy,
-    setPreviewBusy,
+    previewBusyId,
+    setPreviewBusyId,
   ] =
-    useState(
-      false,
+    useState<string | null>(
+      null,
     );
 
 
@@ -1172,7 +1172,7 @@ export default function TaskAttachmentsPanel({
       TaskAttachment,
   ) {
     if (
-      previewBusy
+      previewBusyId
     ) {
       return;
     }
@@ -1208,8 +1208,8 @@ export default function TaskAttachmentsPanel({
     }
 
 
-    setPreviewBusy(
-      true,
+    setPreviewBusyId(
+      attachment.id,
     );
 
 
@@ -1276,8 +1276,8 @@ export default function TaskAttachmentsPanel({
             ),
       );
     } finally {
-      setPreviewBusy(
-        false,
+      setPreviewBusyId(
+        null,
       );
     }
   }
@@ -2133,7 +2133,8 @@ export default function TaskAttachmentsPanel({
                         type="button"
                         disabled={
                           busy ||
-                          previewBusy
+                          previewBusyId !==
+                            null
                         }
                         onClick={() =>
                           previewAttachment(
@@ -2155,7 +2156,8 @@ export default function TaskAttachmentsPanel({
                           disabled:opacity-50
                         "
                       >
-                        {previewBusy
+                        {previewBusyId ===
+                        attachment.id
                           ? (
                               uiText(isArabic, 'text0258')
                             )

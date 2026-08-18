@@ -77,6 +77,12 @@ html[data-color-mode='dark'] th {
   border-color: #334155;
 }
 
+/* Brand artwork should keep its intended colors in both modes. */
+html[data-color-mode='dark'] [data-brand-logo] {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
 html[dir='rtl'] body {
   text-align: right;
 }

@@ -699,10 +699,11 @@ export default function Navbar() {
         >
           {branding?.logoUrl ? (
             <div
+              data-brand-logo
               className="
                 flex
-                h-9
-                w-9
+                h-10
+                w-10
                 items-center
                 justify-center
                 overflow-hidden
@@ -725,7 +726,7 @@ export default function Navbar() {
                   h-full
                   w-full
                   object-contain
-                  p-1
+                  p-0.5
                 "
               />
             </div>
@@ -1300,7 +1301,7 @@ export default function Navbar() {
                     type="button"
                     role="menuitem"
                     onClick={toggleMode}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-start text-sm font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 xl:hidden"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-base">
                       {mode === 'dark' ? '☀️' : '🌙'}

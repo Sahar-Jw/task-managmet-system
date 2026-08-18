@@ -231,11 +231,30 @@ async function bootstrap() {
    * ==========================================================
    */
 
+  const configuredCorsOrigin =
+    configService.get<string>(
+      'corsOrigin',
+    ) || '*';
+
+
+  /*
+   * CORS_ORIGIN accepts a comma- or whitespace-separated allowlist.
+   * Using `true` for `*` reflects the requesting origin, which remains
+   * compatible with credentials (browsers reject credentials with a
+   * literal Access-Control-Allow-Origin: * response).
+   */
+  const corsOrigin =
+    configuredCorsOrigin.trim() === '*'
+      ? true
+      : configuredCorsOrigin
+          .split(/[\s,]+/)
+          .map((origin) => origin.trim())
+          .filter(Boolean);
+
+
   app.enableCors({
     origin:
-      configService.get<string>(
-        'corsOrigin',
-      ),
+      corsOrigin,
 
     credentials:
       true,

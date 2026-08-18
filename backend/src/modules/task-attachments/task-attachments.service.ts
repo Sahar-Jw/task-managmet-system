@@ -178,6 +178,11 @@ export class TaskAttachmentsService {
     }
 
 
+    this.assertFilesHaveData(
+      files,
+    );
+
+
     const attachments:
       TaskAttachmentEntity[] =
       [];
@@ -291,6 +296,11 @@ export class TaskAttachmentsService {
     }
 
 
+    this.assertFilesHaveData(
+      files,
+    );
+
+
     const attachments:
       TaskAttachmentEntity[] =
       [];
@@ -311,6 +321,39 @@ export class TaskAttachmentsService {
 
 
     return attachments;
+  }
+
+
+  /*
+   * ==========================================================
+   * FILE VALIDATION
+   * ==========================================================
+   */
+
+  private assertFilesHaveData(
+    files:
+      Express.Multer.File[],
+  ): void {
+    const hasEmptyFile =
+      files.some(
+        (
+          file,
+        ) =>
+          file.size ===
+            0 ||
+          !file.buffer ||
+          file.buffer.length ===
+            0,
+      );
+
+
+    if (
+      hasEmptyFile
+    ) {
+      throw new BadRequestException(
+        appError('EMPTY_FILE_NOT_ALLOWED', 'Empty files cannot be uploaded'),
+      );
+    }
   }
 
 

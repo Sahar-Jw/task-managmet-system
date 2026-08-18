@@ -68,6 +68,7 @@ type PreviewMode =
   | 'text'
   | 'excel'
   | 'docx'
+  | 'empty'
   | 'unsupported';
 
 
@@ -713,12 +714,46 @@ export default function TaskAttachmentsPanel({
       );
 
 
+    const emptyFiles =
+      incomingFiles.filter(
+        (
+          file,
+        ) =>
+          file.size ===
+          0,
+      );
+
+
+    if (
+      emptyFiles.length >
+      0
+    ) {
+      setError(
+        isArabic
+          ? `لا يمكن رفع ملف فارغ: ${emptyFiles.map((file) => file.name).join('، ')}`
+          : `Empty files cannot be uploaded: ${emptyFiles.map((file) => file.name).join(', ')}`,
+      );
+    } else {
+      setError('');
+    }
+
+
+    const nonEmptyFiles =
+      incomingFiles.filter(
+        (
+          file,
+        ) =>
+          file.size >
+          0,
+      );
+
+
     setSelectedFiles(
       (
         current,
       ) => {
         const unique =
-          incomingFiles.filter(
+          nonEmptyFiles.filter(
             (
               file,
             ) =>
@@ -777,6 +812,25 @@ export default function TaskAttachmentsPanel({
         0 ||
       busy
     ) {
+      return;
+    }
+
+
+    if (
+      selectedFiles.some(
+        (
+          file,
+        ) =>
+          file.size ===
+          0,
+      )
+    ) {
+      setError(
+        isArabic
+          ? 'لا يمكن رفع ملف فارغ.'
+          : 'Empty files cannot be uploaded.',
+      );
+
       return;
     }
 
@@ -1211,6 +1265,22 @@ export default function TaskAttachmentsPanel({
     setError('');
 
     closePreview();
+
+
+    if (
+      Number(
+        attachment.fileSize,
+      ) ===
+      0
+    ) {
+      setPreview({
+        attachment,
+        mode:
+          'empty',
+      });
+
+      return;
+    }
 
 
     const mode =
@@ -2148,6 +2218,17 @@ export default function TaskAttachmentsPanel({
                           ),
                         )}
                       </div>
+
+
+                      {Number(
+                        attachment.fileSize,
+                      ) === 0 && (
+                        <div className="mt-1 text-xs font-semibold text-amber-600">
+                          {isArabic
+                            ? 'هذا المرفق فارغ.'
+                            : 'This attachment is empty.'}
+                        </div>
+                      )}
                     </div>
 
 
@@ -2757,6 +2838,34 @@ export default function TaskAttachmentsPanel({
                         '',
                     }}
                   />
+                </div>
+              )}
+
+
+              {/*
+               * ===============================================
+               * EMPTY FILE
+               * ===============================================
+               */}
+
+              {preview.mode ===
+                'empty' && (
+                <div className="flex min-h-0 flex-1 items-center justify-center bg-slate-50 p-8">
+                  <div className="max-w-md text-center">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl">
+                      ⚠️
+                    </div>
+                    <h3 className="mt-5 text-base font-semibold text-slate-800">
+                      {isArabic
+                        ? 'المرفق فارغ'
+                        : 'Empty attachment'}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      {isArabic
+                        ? 'لا يحتوي هذا الملف على أي بيانات لعرضها.'
+                        : 'This file contains no data to preview.'}
+                    </p>
+                  </div>
                 </div>
               )}
 

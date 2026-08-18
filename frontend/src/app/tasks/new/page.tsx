@@ -1185,17 +1185,45 @@ function NewTaskContent() {
       | FileList
       | File[],
   ) {
+    const incomingFiles =
+      Array.from(
+        incoming,
+      );
+
+
+    const emptyFiles =
+      incomingFiles.filter(
+        (
+          file,
+        ) =>
+          file.size ===
+          0,
+      );
+
+
+    if (
+      emptyFiles.length >
+      0
+    ) {
+      setError(
+        isArabic
+          ? `لا يمكن رفع ملف فارغ: ${emptyFiles.map((file) => file.name).join('، ')}`
+          : `Empty files cannot be uploaded: ${emptyFiles.map((file) => file.name).join(', ')}`,
+      );
+    }
+
+
     setFiles(
       (
         current,
       ) => {
         const next =
-          Array.from(
-            incoming,
-          ).filter(
+          incomingFiles.filter(
             (
               file,
             ) =>
+              file.size >
+                0 &&
               !current.some(
                 (
                   existing,

@@ -71,6 +71,7 @@ const EXACT_AR: Record<string, string> = {
   'File type is not permitted': 'نوع الملف غير مسموح به.',
   'At least one file is required': 'مطلوب ملف واحد على الأقل.',
   'Uploaded file data is missing': 'بيانات الملف المرفوع مفقودة.',
+  'Empty files cannot be uploaded': 'لا يمكن رفع ملفات فارغة.',
   'Attachment not found': 'المرفق غير موجود.',
   'Attachment data not found': 'بيانات المرفق غير موجودة.',
   'Attachment image path is missing': 'مسار صورة المرفق مفقود.',

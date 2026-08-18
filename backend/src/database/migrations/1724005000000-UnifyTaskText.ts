@@ -30,15 +30,24 @@ export class UnifyTaskText1724005000000
     await queryRunner.query(`
       UPDATE tasks
       SET
-        title = COALESCE(
-          NULLIF(title_ar, ''),
-          NULLIF(title_en, ''),
-          ''
-        ),
-        description = COALESCE(
-          NULLIF(description_ar, ''),
-          NULLIF(description_en, '')
-        )
+        title = CASE
+          WHEN NULLIF(TRIM(title_ar), '') IS NOT NULL
+            AND title_ar NOT REGEXP '^[?[:space:]]+$'
+            THEN title_ar
+          WHEN NULLIF(TRIM(title_en), '') IS NOT NULL
+            AND title_en NOT REGEXP '^[?[:space:]]+$'
+            THEN title_en
+          ELSE COALESCE(NULLIF(title_ar, ''), NULLIF(title_en, ''), '')
+        END,
+        description = CASE
+          WHEN NULLIF(TRIM(description_ar), '') IS NOT NULL
+            AND description_ar NOT REGEXP '^[?[:space:]]+$'
+            THEN description_ar
+          WHEN NULLIF(TRIM(description_en), '') IS NOT NULL
+            AND description_en NOT REGEXP '^[?[:space:]]+$'
+            THEN description_en
+          ELSE COALESCE(NULLIF(description_ar, ''), NULLIF(description_en, ''))
+        END
     `);
 
 

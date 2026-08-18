@@ -1593,7 +1593,7 @@ function MyTasksContent() {
 
           {canEditTask(task, user) && (
             <Link
-              href={`/tasks/${task.id}/edit`}
+              href={`/tasks/${task.id}?edit=1`}
               onClick={(event) => event.stopPropagation()}
               className="btn-secondary px-3 py-1.5 text-xs"
             >
@@ -1634,7 +1634,7 @@ function MyTasksContent() {
 
         {canEditTask(task, user) && (
           <Link
-            href={`/tasks/${task.id}/edit`}
+            href={`/tasks/${task.id}?edit=1`}
             onClick={(event) => event.stopPropagation()}
             className="btn-secondary px-3 py-1.5 text-xs"
           >

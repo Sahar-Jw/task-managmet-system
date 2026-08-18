@@ -14,6 +14,7 @@ import Link from 'next/link';
 import {
   useParams,
   useRouter,
+  useSearchParams,
 } from 'next/navigation';
 
 import {
@@ -51,6 +52,7 @@ import type {
 } from '@/lib/types';
 import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
 import { canEditTask } from '@/lib/task-permissions';
+import TaskEditPanel from '@/components/TaskEditPanel';
 
 
 /*
@@ -421,6 +423,10 @@ function TaskDetailContent() {
     useRouter();
 
 
+  const searchParams =
+    useSearchParams();
+
+
   const {
     user,
   } =
@@ -511,6 +517,14 @@ function TaskDetailContent() {
     setNotice,
   ] =
     useState('');
+
+
+  const [
+    isEditing,
+    setIsEditing,
+  ] = useState(
+    searchParams.get('edit') === '1',
+  );
 
 
   /*
@@ -1930,12 +1944,16 @@ function TaskDetailContent() {
                 />
 
                 {canEditTask(task, user) && (
-                  <Link
-                    href={`/tasks/${task.id}/edit`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditing(true);
+                      window.setTimeout(() => document.getElementById('task-edit-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+                    }}
                     className="btn-secondary px-3 py-1.5 text-xs"
                   >
                     {uiText(isArabic, 'text0068')}
-                  </Link>
+                  </button>
                 )}
 
                 {overdue && (
@@ -2249,6 +2267,24 @@ function TaskDetailContent() {
         >
           {notice}
         </div>
+      )}
+
+
+      {isEditing && canEditTask(task, user) && user && (
+        <TaskEditPanel
+          task={task}
+          user={user}
+          onCancel={() => {
+            setIsEditing(false);
+            router.replace(`/tasks/${task.id}`, { scroll: false });
+          }}
+          onSaved={async () => {
+            await refreshTask();
+            setIsEditing(false);
+            setNotice(isArabic ? 'تم حفظ تغييرات المهمة.' : 'Task changes saved.');
+            router.replace(`/tasks/${task.id}`, { scroll: false });
+          }}
+        />
       )}
 
 

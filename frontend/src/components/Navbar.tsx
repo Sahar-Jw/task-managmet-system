@@ -759,14 +759,12 @@ export default function Navbar() {
             className="
               hidden
               min-w-0
-              sm:block
+              md:block
             "
           >
             <div
               className="
-                max-w-[120px]
-                2xl:max-w-[190px]
-                truncate
+                whitespace-nowrap
                 text-sm
                 font-bold
                 tracking-[-0.02em]

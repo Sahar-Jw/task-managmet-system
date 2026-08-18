@@ -28,44 +28,44 @@ body {
 /* Application-wide dark mode. It complements the configurable brand color. */
 html[data-color-mode='dark'] [class~='bg-white'],
 html[data-color-mode='dark'] [class*='bg-white/'] {
-  background-color: #1e293b !important;
+  background-color: var(--theme-surface) !important;
 }
 
 html[data-color-mode='dark'] [class~='bg-slate-50'],
 html[data-color-mode='dark'] [class*='bg-slate-50/'],
 html[data-color-mode='dark'] [class~='bg-slate-100'] {
-  background-color: #162033 !important;
+  background-color: color-mix(in srgb, var(--theme-surface) 72%, var(--theme-page-background)) !important;
 }
 
 html[data-color-mode='dark'] [class~='text-slate-950'],
 html[data-color-mode='dark'] [class~='text-slate-900'],
 html[data-color-mode='dark'] [class~='text-slate-800'] {
-  color: #f8fafc !important;
+  color: var(--theme-body-text) !important;
 }
 
 html[data-color-mode='dark'] [class~='text-slate-700'],
 html[data-color-mode='dark'] [class~='text-slate-600'] {
-  color: #cbd5e1 !important;
+  color: color-mix(in srgb, var(--theme-body-text) 82%, var(--theme-page-background)) !important;
 }
 
 html[data-color-mode='dark'] [class~='text-slate-500'],
 html[data-color-mode='dark'] [class~='text-slate-400'] {
-  color: #94a3b8 !important;
+  color: color-mix(in srgb, var(--theme-body-text) 62%, var(--theme-page-background)) !important;
 }
 
 html[data-color-mode='dark'] [class~='border-slate-100'],
 html[data-color-mode='dark'] [class~='border-slate-200'],
 html[data-color-mode='dark'] [class~='border-slate-300'],
 html[data-color-mode='dark'] [class*='border-slate-200/'] {
-  border-color: #334155 !important;
+  border-color: color-mix(in srgb, var(--theme-body-text) 22%, var(--theme-surface)) !important;
 }
 
 html[data-color-mode='dark'] input,
 html[data-color-mode='dark'] textarea,
 html[data-color-mode='dark'] select {
-  background-color: #172033;
-  color: #f8fafc;
-  border-color: #475569;
+  background-color: var(--theme-surface);
+  color: var(--theme-body-text);
+  border-color: color-mix(in srgb, var(--theme-body-text) 28%, var(--theme-surface));
 }
 
 html[data-color-mode='dark'] table,
@@ -74,7 +74,7 @@ html[data-color-mode='dark'] tbody,
 html[data-color-mode='dark'] tr,
 html[data-color-mode='dark'] td,
 html[data-color-mode='dark'] th {
-  border-color: #334155;
+  border-color: color-mix(in srgb, var(--theme-body-text) 22%, var(--theme-surface));
 }
 
 /* Brand artwork should keep its intended colors in both modes. */

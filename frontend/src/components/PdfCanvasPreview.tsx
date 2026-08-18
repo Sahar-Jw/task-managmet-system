@@ -47,7 +47,9 @@ export default function PdfCanvasPreview({
 
       try {
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+        /* The previously uploaded local worker was truncated by cPanel. */
+        pdfjs.GlobalWorkerOptions.workerSrc =
+          'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/legacy/build/pdf.worker.min.mjs';
 
         // PDF.js may transfer its input buffer to the worker, so give it a copy.
         const bytes = new Uint8Array(data.slice(0));

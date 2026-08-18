@@ -25,7 +25,16 @@ export const DEFAULT_THEME: ThemeColors = {
   bodyText: '#0f172a',
 };
 
+export const DEFAULT_DARK_THEME: ThemeColors = {
+  primary: '#4f83db',
+  primaryText: '#ffffff',
+  pageBackground: '#0f172a',
+  surface: '#1e293b',
+  bodyText: '#e2e8f0',
+};
+
 const STORAGE_KEY = 'task-manager-theme';
+const DARK_STORAGE_KEY = 'task-manager-theme-dark';
 const MODE_STORAGE_KEY = 'task-manager-color-mode';
 
 export type ColorMode = 'light' | 'dark';
@@ -78,20 +87,11 @@ function applyTheme(colors: ThemeColors, mode: ColorMode) {
   root.dataset.colorMode = mode;
   root.style.colorScheme = mode;
 
-  const visibleColors = mode === 'dark'
-    ? {
-        ...colors,
-        pageBackground: '#0f172a',
-        surface: '#1e293b',
-        bodyText: '#e2e8f0',
-      }
-    : colors;
-
-  root.style.setProperty('--theme-primary', visibleColors.primary);
-  root.style.setProperty('--theme-primary-text', visibleColors.primaryText);
-  root.style.setProperty('--theme-page-background', visibleColors.pageBackground);
-  root.style.setProperty('--theme-surface', visibleColors.surface);
-  root.style.setProperty('--theme-body-text', visibleColors.bodyText);
+  root.style.setProperty('--theme-primary', colors.primary);
+  root.style.setProperty('--theme-primary-text', colors.primaryText);
+  root.style.setProperty('--theme-page-background', colors.pageBackground);
+  root.style.setProperty('--theme-surface', colors.surface);
+  root.style.setProperty('--theme-body-text', colors.bodyText);
 
   /*
    * Your website already uses Tailwind classes such as:
@@ -139,77 +139,53 @@ function applyTheme(colors: ThemeColors, mode: ColorMode) {
   );
 }
 
+function normalizeColors(value: string | null, fallback: ThemeColors): ThemeColors {
+  if (!value) return { ...fallback };
+
+  const parsed = JSON.parse(value) as Partial<ThemeColors>;
+  return {
+    primary: typeof parsed.primary === 'string' ? parsed.primary : fallback.primary,
+    primaryText: typeof parsed.primaryText === 'string' ? parsed.primaryText : fallback.primaryText,
+    pageBackground: typeof parsed.pageBackground === 'string' ? parsed.pageBackground : fallback.pageBackground,
+    surface: typeof parsed.surface === 'string' ? parsed.surface : fallback.surface,
+    bodyText: typeof parsed.bodyText === 'string' ? parsed.bodyText : fallback.bodyText,
+  };
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [colors, setColorsState] = useState<ThemeColors>(DEFAULT_THEME);
+  const [lightColors, setLightColors] = useState<ThemeColors>(DEFAULT_THEME);
+  const [darkColors, setDarkColors] = useState<ThemeColors>(DEFAULT_DARK_THEME);
   const [mode, setModeState] = useState<ColorMode>('light');
+  const colors = mode === 'dark' ? darkColors : lightColors;
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-
       const storedMode = localStorage.getItem(MODE_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+      const savedLightColors = normalizeColors(localStorage.getItem(STORAGE_KEY), DEFAULT_THEME);
+      const savedDarkColors = normalizeColors(localStorage.getItem(DARK_STORAGE_KEY), DEFAULT_DARK_THEME);
+
+      setLightColors(savedLightColors);
+      setDarkColors(savedDarkColors);
       setModeState(storedMode);
-
-      if (!stored) {
-        applyTheme(DEFAULT_THEME, storedMode);
-        return;
-      }
-
-      const parsed = JSON.parse(stored) as Partial<ThemeColors>;
-
-      /*
-       * This also cleans up themes saved by the previous version.
-       * For example, the old "secondary" property is simply ignored.
-       */
-      const savedColors: ThemeColors = {
-        primary:
-          typeof parsed.primary === 'string'
-            ? parsed.primary
-            : DEFAULT_THEME.primary,
-
-        primaryText:
-          typeof parsed.primaryText === 'string'
-            ? parsed.primaryText
-            : DEFAULT_THEME.primaryText,
-
-        pageBackground:
-          typeof parsed.pageBackground === 'string'
-            ? parsed.pageBackground
-            : DEFAULT_THEME.pageBackground,
-
-        surface:
-          typeof parsed.surface === 'string'
-            ? parsed.surface
-            : DEFAULT_THEME.surface,
-
-        bodyText:
-          typeof parsed.bodyText === 'string'
-            ? parsed.bodyText
-            : DEFAULT_THEME.bodyText,
-      };
-
-      setColorsState(savedColors);
-      applyTheme(savedColors, storedMode);
-
-      /*
-       * Rewrite localStorage using the new clean structure.
-       */
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(savedColors),
-      );
+      applyTheme(storedMode === 'dark' ? savedDarkColors : savedLightColors, storedMode);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedLightColors));
+      localStorage.setItem(DARK_STORAGE_KEY, JSON.stringify(savedDarkColors));
     } catch {
       applyTheme(DEFAULT_THEME, 'light');
     }
   }, []);
 
   function setColors(nextColors: ThemeColors) {
-    setColorsState(nextColors);
+    if (mode === 'dark') {
+      setDarkColors(nextColors);
+    } else {
+      setLightColors(nextColors);
+    }
     applyTheme(nextColors, mode);
 
     try {
       localStorage.setItem(
-        STORAGE_KEY,
+        mode === 'dark' ? DARK_STORAGE_KEY : STORAGE_KEY,
         JSON.stringify(nextColors),
       );
     } catch {
@@ -224,34 +200,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     key: keyof ThemeColors,
     value: string,
   ) {
-    setColorsState((currentColors) => {
-      const nextColors: ThemeColors = {
-        ...currentColors,
-        [key]: value,
-      };
-
-      applyTheme(nextColors, mode);
-
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(nextColors),
-        );
-      } catch {
-        // Ignore storage failure.
-      }
-
-      return nextColors;
-    });
+    setColors({ ...colors, [key]: value });
   }
 
   function resetTheme() {
-    setColors(DEFAULT_THEME);
+    setColors(mode === 'dark' ? DEFAULT_DARK_THEME : DEFAULT_THEME);
   }
 
   function setMode(nextMode: ColorMode) {
     setModeState(nextMode);
-    applyTheme(colors, nextMode);
+    applyTheme(nextMode === 'dark' ? darkColors : lightColors, nextMode);
     try {
       localStorage.setItem(MODE_STORAGE_KEY, nextMode);
     } catch {

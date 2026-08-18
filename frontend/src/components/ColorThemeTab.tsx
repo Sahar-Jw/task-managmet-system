@@ -6,6 +6,7 @@ import {
 } from 'react';
 
 import {
+  DEFAULT_DARK_THEME,
   DEFAULT_THEME,
   type ThemeColors,
   useTheme,
@@ -216,7 +217,7 @@ export default function ColorThemeTab() {
      * The website remains unchanged until Save Theme is clicked.
      */
     setDraftColors({
-      ...DEFAULT_THEME,
+      ...(mode === 'dark' ? DEFAULT_DARK_THEME : DEFAULT_THEME),
     });
 
     setSavedMessage(false);
@@ -289,7 +290,7 @@ export default function ColorThemeTab() {
               {isArabic ? 'مظهر الموقع' : 'Site appearance'}
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              {isArabic ? 'اختر الوضع الفاتح أو الداكن. يتم حفظ اختيارك تلقائياً.' : 'Choose light or dark mode. Your selection is saved automatically.'}
+              {isArabic ? 'اختر لوحة الألوان التي تريد تعديلها. تُحفظ ألوان الوضع الفاتح والداكن بشكل مستقل.' : 'Select the color palette to edit. Light and dark colors are saved independently.'}
             </p>
           </div>
 
@@ -314,6 +315,12 @@ export default function ColorThemeTab() {
               {isArabic ? 'الوضع الداكن' : 'Dark theme'}
             </button>
           </div>
+
+          <p className="mt-3 text-xs font-medium text-brand-700">
+            {mode === 'dark'
+              ? (isArabic ? 'أنت تعدّل الآن ألوان الوضع الداكن.' : 'You are now editing the dark theme colors.')
+              : (isArabic ? 'أنت تعدّل الآن ألوان الوضع الفاتح.' : 'You are now editing the light theme colors.')}
+          </p>
         </div>
 
         {/* Color fields */}

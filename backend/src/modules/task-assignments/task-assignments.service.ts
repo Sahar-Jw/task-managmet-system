@@ -316,6 +316,21 @@ export class TaskAssignmentsService {
 
         assignmentId:
           assignment.id,
+
+        actorName:
+          actor.fullName,
+
+        taskTitleAr:
+          task.titleAr,
+
+        taskTitleEn:
+          task.titleEn,
+
+        priority:
+          task.priority,
+
+        dueDate:
+          task.deadlineDate,
       },
     });
 
@@ -438,6 +453,15 @@ export class TaskAssignmentsService {
 
           assignmentId:
             saved.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitleAr:
+            task.titleAr,
+
+          taskTitleEn:
+            task.titleEn,
         },
       });
     }
@@ -567,6 +591,18 @@ export class TaskAssignmentsService {
 
           assignmentId:
             saved.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitleAr:
+            task.titleAr,
+
+          taskTitleEn:
+            task.titleEn,
+
+          reason:
+            dto.reason,
         },
       });
     }
@@ -879,6 +915,21 @@ export class TaskAssignmentsService {
 
       assignmentId:
         newAssignment.id,
+
+      actorName:
+        actor.fullName,
+
+      taskTitleAr:
+        task.titleAr,
+
+      taskTitleEn:
+        task.titleEn,
+
+      priority:
+        task.priority,
+
+      dueDate:
+        task.deadlineDate,
     },
   });
 

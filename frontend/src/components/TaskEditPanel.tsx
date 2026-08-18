@@ -14,10 +14,8 @@ import {
 import type { Project, Setting, Task, User } from '@/lib/types';
 
 type FormState = {
-  titleAr: string;
-  titleEn: string;
-  descriptionAr: string;
-  descriptionEn: string;
+  title: string;
+  description: string;
   taskType: string;
   priority: string;
   color: string;
@@ -36,12 +34,12 @@ type FormState = {
   assigneeCanDownloadAttachments: boolean;
 };
 
-function fromTask(task: Task): FormState {
+function fromTask(task: Task, isArabic: boolean): FormState {
   return {
-    titleAr: task.titleAr || '',
-    titleEn: task.titleEn || '',
-    descriptionAr: task.descriptionAr || '',
-    descriptionEn: task.descriptionEn || '',
+    title: isArabic ? task.titleAr || task.titleEn || '' : task.titleEn || task.titleAr || '',
+    description: isArabic
+      ? task.descriptionAr || task.descriptionEn || ''
+      : task.descriptionEn || task.descriptionAr || '',
     taskType: task.taskType || 'General',
     priority: task.priority || 'Medium',
     color: task.color || '#2563eb',
@@ -90,7 +88,7 @@ export default function TaskEditPanel({
   const locale = useLocale();
   const isArabic = locale === 'ar';
   const isAdmin = user.role.name === 'ADMIN';
-  const [form, setForm] = useState<FormState>(() => fromTask(task));
+  const [form, setForm] = useState<FormState>(() => fromTask(task, isArabic));
   const [branches, setBranches] = useState<Setting[]>([]);
   const [departments, setDepartments] = useState<Setting[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -102,7 +100,7 @@ export default function TaskEditPanel({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => setForm(fromTask(task)), [task]);
+  useEffect(() => setForm(fromTask(task, isArabic)), [isArabic, task]);
 
   useEffect(() => {
     let cancelled = false;
@@ -179,7 +177,7 @@ export default function TaskEditPanel({
     event.preventDefault();
     if (saving) return;
 
-    if (!form.titleAr.trim() || !form.titleEn.trim() || !form.taskType || !form.priority || !form.departmentId) {
+    if (!form.title.trim() || !form.taskType || !form.priority || !form.departmentId) {
       setError(isArabic ? 'أكمل جميع الحقول المطلوبة.' : 'Complete all required fields.');
       return;
     }
@@ -204,10 +202,13 @@ export default function TaskEditPanel({
     setError('');
     try {
       await TasksApi.update(task.id, {
-        titleAr: form.titleAr.trim(),
-        titleEn: form.titleEn.trim(),
-        descriptionAr: form.descriptionAr.trim() || null,
-        descriptionEn: form.descriptionEn.trim() || null,
+        // Task creation uses one language-neutral Title and Description.
+        // Keep editing consistent and mirror the value so switching the UI
+        // language never makes a task appear blank or stale.
+        titleAr: form.title.trim(),
+        titleEn: form.title.trim(),
+        descriptionAr: form.description.trim() || null,
+        descriptionEn: form.description.trim() || null,
         taskType: form.taskType,
         priority: form.priority,
         color: form.color || null,
@@ -250,11 +251,9 @@ export default function TaskEditPanel({
           <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{isArabic ? 'إلغاء' : 'Cancel'}</button>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className={field}><label className="label">Title (English) *</label><input required maxLength={255} className="input" dir="ltr" value={form.titleEn} onChange={(e) => set('titleEn', e.target.value)} /></div>
-          <div className={field}><label className="label">العنوان (العربية) *</label><input required maxLength={255} className="input" dir="rtl" value={form.titleAr} onChange={(e) => set('titleAr', e.target.value)} /></div>
-          <div className={field}><label className="label">Description (English)</label><textarea rows={4} className="input" dir="ltr" value={form.descriptionEn} onChange={(e) => set('descriptionEn', e.target.value)} /></div>
-          <div className={field}><label className="label">الوصف (العربية)</label><textarea rows={4} className="input" dir="rtl" value={form.descriptionAr} onChange={(e) => set('descriptionAr', e.target.value)} /></div>
+        <div className="grid gap-4">
+          <div className={field}><label className="label">{isArabic ? 'العنوان *' : 'Title *'}</label><input required maxLength={255} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.title} onChange={(e) => set('title', e.target.value)} /></div>
+          <div className={field}><label className="label">{isArabic ? 'الوصف' : 'Description'}</label><textarea rows={5} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.description} onChange={(e) => set('description', e.target.value)} /></div>
         </div>
       </section>
 

@@ -196,6 +196,8 @@ export class NotificationsService {
       new Set([
         'taskId',
         'taskTitle',
+        'taskTitleAr',
+        'taskTitleEn',
 
         'projectId',
         'projectName',
@@ -208,6 +210,9 @@ export class NotificationsService {
 
         'actorId',
         'actorName',
+
+        'decision',
+        'priority',
 
         'status',
         'previousStatus',

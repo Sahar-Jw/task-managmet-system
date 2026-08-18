@@ -216,7 +216,7 @@ export class ApiError
 }
 
 function activeLocale(): 'en' | 'ar' {
-  if (typeof document === 'undefined') return 'en';
+  if (typeof document === 'undefined') return 'ar';
   return document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=(ar|en)(?:;|$)/)?.[1] === 'ar'
     ? 'ar'
     : document.documentElement.lang === 'ar'

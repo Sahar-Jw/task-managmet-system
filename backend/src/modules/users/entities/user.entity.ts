@@ -61,7 +61,7 @@ export class UserEntity extends VersionedEntity {
   @Column({ name: 'locked_until', type: 'timestamp', nullable: true })
   lockedUntil?: Date;
 
-  @Column({ type: 'varchar', length: 10, default: 'en' })
+  @Column({ type: 'varchar', length: 10, default: 'ar' })
   locale!: string;
 
   @Column({ type: 'varchar', length: 50, default: 'UTC' })

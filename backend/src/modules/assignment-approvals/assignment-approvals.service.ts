@@ -120,7 +120,15 @@ export class AssignmentApprovalsService {
       type: NotificationType.APPROVAL_DECISION,
       title: `Task ${decision === ApprovalDecision.APPROVED ? 'approved' : 'rejected'}`,
       message: `${actor.fullName} ${decision.toLowerCase()} your submission for "${task.titleEn}".${formatTaskDetails(task)}${reason ? ` Reason: ${reason}` : ''}`,
-      metadata: { taskId: task.id, assignmentId },
+      metadata: {
+        taskId: task.id,
+        assignmentId,
+        actorName: actor.fullName,
+        taskTitleAr: task.titleAr,
+        taskTitleEn: task.titleEn,
+        decision,
+        reason,
+      },
     });
 
     return approval;

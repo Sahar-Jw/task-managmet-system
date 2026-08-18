@@ -609,6 +609,12 @@ export interface NotificationMetadata {
   taskTitle?:
     string;
 
+  taskTitleAr?:
+    string;
+
+  taskTitleEn?:
+    string;
+
   projectId?:
     string;
 
@@ -628,6 +634,12 @@ export interface NotificationMetadata {
     string;
 
   actorName?:
+    string;
+
+  decision?:
+    string;
+
+  priority?:
     string;
 
   status?:

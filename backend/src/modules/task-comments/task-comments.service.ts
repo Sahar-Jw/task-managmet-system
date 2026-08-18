@@ -87,7 +87,13 @@ export class TaskCommentsService {
         type: NotificationType.NEW_COMMENT,
         title: 'New comment on a Task',
         message: `${actor.fullName} commented on "${task.titleEn}".`,
-        metadata: { taskId: task.id, commentId: comment.id },
+        metadata: {
+          taskId: task.id,
+          commentId: comment.id,
+          actorName: actor.fullName,
+          taskTitleAr: task.titleAr,
+          taskTitleEn: task.titleEn,
+        },
       });
     }
 

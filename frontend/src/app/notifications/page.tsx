@@ -39,6 +39,10 @@ import type {
   NotificationType,
 } from '@/lib/types';
 
+import {
+  localizedNotificationContent,
+} from '@/lib/notification-content';
+
 
 /*
  * ============================================================
@@ -685,6 +689,13 @@ function NotificationRow({
     );
 
 
+  const content =
+    localizedNotificationContent(
+      notification,
+      isArabic,
+    );
+
+
   return (
     <article
       className={`
@@ -878,7 +889,7 @@ function NotificationRow({
                 `}
               >
                 {
-                  notification.title
+                  content.title
                 }
               </h2>
             </div>
@@ -913,7 +924,7 @@ function NotificationRow({
             "
           >
             {
-              notification.message
+              content.message
             }
           </p>
 

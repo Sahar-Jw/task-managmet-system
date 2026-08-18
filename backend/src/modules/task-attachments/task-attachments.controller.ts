@@ -469,6 +469,12 @@ export class TaskAttachmentsController {
         .replace(
           /[\r\n"]/g,
           '_',
+        )
+        // The legacy filename parameter must contain header-safe ASCII.
+        // Keep the real Unicode name in filename*=UTF-8'' below.
+        .replace(
+          /[^\x20-\x7E]/g,
+          '_',
         );
 
 

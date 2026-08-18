@@ -152,6 +152,8 @@ export default function ColorThemeTab() {
   const {
     colors,
     setColors,
+    mode,
+    setMode,
   } = useTheme();
 
   /*
@@ -277,6 +279,41 @@ export default function ColorThemeTab() {
           >
             {uiText(isArabic, 'text0837')}
           </button>
+        </div>
+
+        {/* Light / dark appearance */}
+
+        <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold text-slate-900">
+              {isArabic ? 'مظهر الموقع' : 'Site appearance'}
+            </h3>
+            <p className="mt-1 text-xs text-slate-500">
+              {isArabic ? 'اختر الوضع الفاتح أو الداكن. يتم حفظ اختيارك تلقائياً.' : 'Choose light or dark mode. Your selection is saved automatically.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:max-w-md">
+            <button
+              type="button"
+              onClick={() => setMode('light')}
+              aria-pressed={mode === 'light'}
+              className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition ${mode === 'light' ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-200'}`}
+            >
+              <span aria-hidden="true">☀️</span>
+              {isArabic ? 'الوضع الفاتح' : 'Light theme'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMode('dark')}
+              aria-pressed={mode === 'dark'}
+              className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition ${mode === 'dark' ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-200'}`}
+            >
+              <span aria-hidden="true">🌙</span>
+              {isArabic ? 'الوضع الداكن' : 'Dark theme'}
+            </button>
+          </div>
         </div>
 
         {/* Color fields */}

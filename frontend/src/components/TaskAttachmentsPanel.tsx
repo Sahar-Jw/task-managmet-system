@@ -1119,6 +1119,72 @@ export default function TaskAttachmentsPanel({
     }
 
 
+    const nonEmptySheetNames =
+      workbook.SheetNames.filter(
+        (
+          sheetName,
+        ) => {
+          const worksheet =
+            workbook.Sheets[
+              sheetName
+            ];
+
+
+          return Boolean(
+            worksheet &&
+            Object.keys(
+              worksheet,
+            ).some(
+              (
+                cellAddress,
+              ) => {
+                if (
+                  cellAddress.startsWith(
+                    '!',
+                  )
+                ) {
+                  return false;
+                }
+
+
+                const cell =
+                  worksheet[
+                    cellAddress
+                  ];
+
+
+                return Boolean(
+                  cell &&
+                  (
+                    cell.f ||
+                    cell.v !== undefined &&
+                    cell.v !== null &&
+                    String(
+                      cell.v,
+                    ).trim() !== ''
+                  )
+                );
+              },
+            )
+          );
+        },
+      );
+
+
+    if (
+      nonEmptySheetNames.length ===
+      0
+    ) {
+      setPreview({
+        attachment,
+        mode:
+          'empty',
+      });
+
+      return;
+    }
+
+
     const workbookHtml:
       Record<
         string,
@@ -1127,7 +1193,7 @@ export default function TaskAttachmentsPanel({
       {};
 
 
-    workbook.SheetNames.forEach(
+    nonEmptySheetNames.forEach(
       (
         sheetName,
       ) => {
@@ -1161,7 +1227,7 @@ export default function TaskAttachmentsPanel({
 
 
     const firstSheet =
-      workbook.SheetNames[
+      nonEmptySheetNames[
         0
       ];
 
@@ -1173,7 +1239,7 @@ export default function TaskAttachmentsPanel({
         'excel',
 
       sheetNames:
-        workbook.SheetNames,
+        nonEmptySheetNames,
 
       activeSheet:
         firstSheet,

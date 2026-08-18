@@ -1229,7 +1229,8 @@ function UsersContent() {
 
 
     try {
-      await UsersApi.adminUpdate(
+      const updatedUser =
+        await UsersApi.adminUpdate(
         editingUser.id,
         {
           fullName:
@@ -1249,6 +1250,23 @@ function UsersContent() {
               ? null
               : editForm.departmentId,
         },
+      );
+
+
+      /* Show the saved values immediately, even before the list refresh. */
+      setUsers(
+        (
+          current,
+        ) =>
+          current.map(
+            (
+              listedUser,
+            ) =>
+              listedUser.id ===
+              updatedUser.id
+                ? updatedUser
+                : listedUser,
+          ),
       );
 
 

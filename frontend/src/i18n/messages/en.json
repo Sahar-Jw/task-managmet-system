@@ -1073,6 +1073,11 @@
     "text1028": "Enter your current password.",
     "text1029": "New password must contain at least 8 characters.",
     "text1030": "Your new password must be different from your current password.",
-    "text1031": "New passwords do not match."
+    "text1031": "New passwords do not match.",
+    "text1032": "Latest tasks assigned by me",
+    "text1033": "The newest tasks you created and assigned to other users.",
+    "text1034": "View all assigned by me",
+    "text1035": "No assigned tasks yet",
+    "text1036": "Tasks you assign to other users will appear here."
   }
 }

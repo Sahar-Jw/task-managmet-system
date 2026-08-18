@@ -351,6 +351,13 @@ function DashboardContent() {
   );
 
   const [
+    assignedByMeTasks,
+    setAssignedByMeTasks,
+  ] = useState<Task[]>(
+    [],
+  );
+
+  const [
     projects,
     setProjects,
   ] = useState<Project[]>(
@@ -491,6 +498,29 @@ function DashboardContent() {
         () => {
           setLoading(
             false,
+          );
+        },
+      );
+
+
+    TasksApi.assignedByMe({
+      limit: '5',
+      sortBy: 'createdAt',
+      sortDir: 'desc',
+    })
+      .then(
+        (
+          response,
+        ) => {
+          setAssignedByMeTasks(
+            response.items,
+          );
+        },
+      )
+      .catch(
+        () => {
+          setAssignedByMeTasks(
+            [],
           );
         },
       );
@@ -1292,6 +1322,101 @@ function DashboardContent() {
             </Link>
           </div>
         </div>
+      </section>
+
+
+      {/*
+       * ======================================================
+       * LATEST TASKS ASSIGNED BY ME
+       * ======================================================
+       */}
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 p-5 sm:p-6">
+          <SectionHeader
+            title={
+              uiText(isAr, 'text1032')
+            }
+            description={
+              uiText(isAr, 'text1033')
+            }
+            action={
+              <Link
+                href="/tasks/mine?tab=assignedByMe"
+                className="text-xs font-medium text-brand-600 hover:text-brand-800"
+              >
+                {uiText(isAr, 'text1034')}
+              </Link>
+            }
+          />
+        </div>
+
+
+        {assignedByMeTasks.length ===
+        0 ? (
+          <EmptyState
+            title={
+              uiText(isAr, 'text1035')
+            }
+            description={
+              uiText(isAr, 'text1036')
+            }
+          />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {assignedByMeTasks.map(
+              (
+                task,
+              ) => (
+                <Link
+                  key={
+                    task.id
+                  }
+                  href={`/tasks/${task.id}`}
+                  className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
+                >
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-slate-800 group-hover:text-brand-700">
+                      {taskTitle(
+                        task,
+                      )}
+                    </div>
+
+                    <div className="mt-1 text-xs text-slate-400">
+                      {uiText(isAr, 'text0032')}{' '}
+
+                      {new Date(
+                        task.createdAt,
+                      ).toLocaleDateString(
+                        locale,
+                      )}
+                    </div>
+                  </div>
+
+
+                  <div className="flex sm:justify-center">
+                    <StatusBadge
+                      value={
+                        task.priority
+                      }
+                      listType="task_priority"
+                    />
+                  </div>
+
+
+                  <div className="flex sm:justify-end">
+                    <StatusBadge
+                      value={
+                        task.status
+                      }
+                      listType="task_status"
+                    />
+                  </div>
+                </Link>
+              ),
+            )}
+          </div>
+        )}
       </section>
 
 

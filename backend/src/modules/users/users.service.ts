@@ -628,6 +628,21 @@ export class UsersService {
 
       finalRoleName =
         newRole.name;
+
+
+      /*
+       * Keep the eager relation and its scalar foreign key in sync.
+       *
+       * `findById` loads `user.role` eagerly. If only `roleId` is changed,
+       * TypeORM can persist the still-attached old relation and effectively
+       * undo the requested role change. Updating both values makes the admin
+       * edit deterministic and also makes the response show the new role.
+       */
+      user.role =
+        newRole;
+
+      user.roleId =
+        newRole.id;
     }
 
 

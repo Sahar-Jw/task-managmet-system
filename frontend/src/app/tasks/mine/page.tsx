@@ -512,7 +512,11 @@ function MyTasksContent() {
     setTab,
   ] =
     useState<Tab>(
-      'assignedToMe',
+      searchParams.get(
+        'tab',
+      ) === 'assignedByMe'
+        ? 'assignedByMe'
+        : 'assignedToMe',
     );
 
 
@@ -662,7 +666,11 @@ function MyTasksContent() {
     setSortBy,
   ] =
     useState<SortBy>(
-      'deadline',
+      searchParams.get(
+        'tab',
+      ) === 'assignedByMe'
+        ? 'createdAt'
+        : 'deadline',
     );
 
 
@@ -671,7 +679,11 @@ function MyTasksContent() {
     setSortDir,
   ] =
     useState<SortDir>(
-      'asc',
+      searchParams.get(
+        'tab',
+      ) === 'assignedByMe'
+        ? 'desc'
+        : 'asc',
     );
 
 

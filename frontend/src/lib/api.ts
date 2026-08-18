@@ -508,6 +508,13 @@ export async function api<
           method:
             requestMethod,
 
+          /*
+           * User and task lists must reflect mutations immediately. Shared
+           * hosts/proxies can otherwise reuse a stale authenticated GET.
+           */
+          cache:
+            'no-store',
+
           headers,
 
           credentials:

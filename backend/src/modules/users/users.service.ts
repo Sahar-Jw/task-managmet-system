@@ -16,7 +16,7 @@ import {
 } from 'typeorm';
 
 import * as bcrypt
-  from 'bcrypt';
+  from 'bcryptjs';
 
 import {
   ConfigService,

@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 import {
   randomUUID,

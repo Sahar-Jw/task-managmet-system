@@ -85,7 +85,7 @@ Swagger UI: `http://localhost:3000/api/v1/docs`
 ### Environment variables
 
 See `.env.example` for the full list (DB connection, JWT secrets/expiry,
-bcrypt cost, account-lock threshold, max upload size, CORS origin).
+bcryptjs cost, account-lock threshold, max upload size, CORS origin).
 
 ### Useful scripts
 

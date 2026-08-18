@@ -2478,21 +2478,70 @@ export default function TaskAttachmentsPanel({
               {preview.mode ===
                 'pdf' &&
                 preview.objectUrl && (
-                <iframe
-                  src={
-                    preview.objectUrl
-                  }
-                  title={
-                    preview.attachment.fileName
-                  }
-                  className="
-                    min-h-0
-                    w-full
-                    flex-1
-                    border-0
-                    bg-white
-                  "
-                />
+                <>
+                  <div
+                    className="
+                      flex
+                      min-h-0
+                      flex-1
+                      flex-col
+                      items-center
+                      justify-center
+                      gap-4
+                      bg-slate-50
+                      p-6
+                      text-center
+                      md:hidden
+                    "
+                  >
+                    <p
+                      className="
+                        text-sm
+                        font-medium
+                        text-slate-700
+                      "
+                    >
+                      {uiText(
+                        isArabic,
+                        'text0845',
+                      )}
+                    </p>
+
+
+                    <a
+                      href={
+                        preview.objectUrl
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary"
+                    >
+                      {uiText(
+                        isArabic,
+                        'text0004',
+                      )}
+                    </a>
+                  </div>
+
+
+                  <iframe
+                    src={
+                      preview.objectUrl
+                    }
+                    title={
+                      preview.attachment.fileName
+                    }
+                    className="
+                      hidden
+                      min-h-0
+                      w-full
+                      flex-1
+                      border-0
+                      bg-white
+                      md:block
+                    "
+                  />
+                </>
               )}
 
 

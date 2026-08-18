@@ -215,11 +215,26 @@ export default function AttachmentPreviewModal({
           )}
 
           {kind === 'pdf' && objectUrl && state === 'ready' && (
-            <iframe
-              src={objectUrl}
-              title={attachment.fileName}
-              className="h-[65vh] w-full rounded-md border border-slate-200"
-            />
+            <>
+              <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-md border border-slate-200 bg-slate-50 p-6 text-center md:hidden">
+                <p className="text-sm font-medium text-slate-700">
+                  {uiText(isArabic, 'text0845')}
+                </p>
+                <a
+                  href={objectUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  {uiText(isArabic, 'text0004')}
+                </a>
+              </div>
+              <iframe
+                src={objectUrl}
+                title={attachment.fileName}
+                className="hidden h-[65vh] w-full rounded-md border border-slate-200 md:block"
+              />
+            </>
           )}
 
           {kind === 'docx' && (

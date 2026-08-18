@@ -944,10 +944,8 @@ export class TasksService {
 
       qb.andWhere(
         `(
-          task.titleEn LIKE :search
-          OR task.titleAr LIKE :search
-          OR task.descriptionEn LIKE :search
-          OR task.descriptionAr LIKE :search
+          task.title LIKE :search
+          OR task.description LIKE :search
           OR createdBy.fullName LIKE :search
           OR assignedTo.fullName LIKE :search
           OR project.name LIKE :search
@@ -1103,7 +1101,7 @@ export class TasksService {
         'task.startDate',
 
       title:
-        'task.titleEn',
+        'task.title',
 
       status:
         'task.status',
@@ -1386,10 +1384,8 @@ export class TasksService {
   ) {
     idQb.andWhere(
       `(
-        task.titleEn LIKE :search
-        OR task.titleAr LIKE :search
-        OR task.descriptionEn LIKE :search
-        OR task.descriptionAr LIKE :search
+        task.title LIKE :search
+        OR task.description LIKE :search
       )`,
       {
         search:
@@ -1856,10 +1852,8 @@ export class TasksService {
   ) {
     idQb.andWhere(
       `(
-        task.titleEn LIKE :search
-        OR task.titleAr LIKE :search
-        OR task.descriptionEn LIKE :search
-        OR task.descriptionAr LIKE :search
+        task.title LIKE :search
+        OR task.description LIKE :search
       )`,
       {
         search:
@@ -2415,17 +2409,11 @@ export class TasksService {
     const task =
       await this.taskRepo.save(
         this.taskRepo.create({
-          titleAr:
-            dto.titleAr,
+          title:
+            dto.title,
 
-          titleEn:
-            dto.titleEn,
-
-          descriptionAr:
-            dto.descriptionAr,
-
-          descriptionEn:
-            dto.descriptionEn,
+          description:
+            dto.description,
 
           taskType:
             dto.taskType,

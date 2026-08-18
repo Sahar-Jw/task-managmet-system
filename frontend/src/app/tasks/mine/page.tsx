@@ -1092,11 +1092,7 @@ function MyTasksContent() {
     task:
       Task,
   ) {
-    return isArabic
-      ? task.titleAr ||
-          task.titleEn
-      : task.titleEn ||
-          task.titleAr;
+    return task.title;
   }
 
 
@@ -1104,11 +1100,7 @@ function MyTasksContent() {
     task:
       Task,
   ) {
-    return isArabic
-      ? task.descriptionAr ||
-          task.descriptionEn
-      : task.descriptionEn ||
-          task.descriptionAr;
+    return task.description;
   }
 
 

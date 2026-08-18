@@ -308,7 +308,7 @@ export class TaskAssignmentsService {
         'New Task assigned to you',
 
       message:
-        `${actor.fullName} assigned you to "${task.titleEn}".${formatTaskDetails(task)}`,
+        `${actor.fullName} assigned you to "${task.title}".${formatTaskDetails(task)}`,
 
       metadata: {
         taskId:
@@ -320,11 +320,8 @@ export class TaskAssignmentsService {
         actorName:
           actor.fullName,
 
-        taskTitleAr:
-          task.titleAr,
-
-        taskTitleEn:
-          task.titleEn,
+        taskTitle:
+          task.title,
 
         priority:
           task.priority,
@@ -445,7 +442,7 @@ export class TaskAssignmentsService {
           'Assignment accepted',
 
         message:
-          `${actor.fullName} accepted the assignment for "${task.titleEn}".${formatTaskDetails(task)}`,
+          `${actor.fullName} accepted the assignment for "${task.title}".${formatTaskDetails(task)}`,
 
         metadata: {
           taskId:
@@ -457,11 +454,8 @@ export class TaskAssignmentsService {
           actorName:
             actor.fullName,
 
-          taskTitleAr:
-            task.titleAr,
-
-          taskTitleEn:
-            task.titleEn,
+          taskTitle:
+            task.title,
         },
       });
     }
@@ -583,7 +577,7 @@ export class TaskAssignmentsService {
           'Assignment rejected',
 
         message:
-          `${actor.fullName} rejected the assignment for "${task.titleEn}".${formatTaskDetails(task)} Reason: ${dto.reason}`,
+          `${actor.fullName} rejected the assignment for "${task.title}".${formatTaskDetails(task)} Reason: ${dto.reason}`,
 
         metadata: {
           taskId:
@@ -595,11 +589,8 @@ export class TaskAssignmentsService {
           actorName:
             actor.fullName,
 
-          taskTitleAr:
-            task.titleAr,
-
-          taskTitleEn:
-            task.titleEn,
+          taskTitle:
+            task.title,
 
           reason:
             dto.reason,
@@ -907,7 +898,7 @@ export class TaskAssignmentsService {
       'Task reassigned to you',
 
     message:
-      `${actor.fullName} reassigned "${task.titleEn}" to you.${formatTaskDetails(task)}`,
+      `${actor.fullName} reassigned "${task.title}" to you.${formatTaskDetails(task)}`,
 
     metadata: {
       taskId:
@@ -919,11 +910,8 @@ export class TaskAssignmentsService {
       actorName:
         actor.fullName,
 
-      taskTitleAr:
-        task.titleAr,
-
-      taskTitleEn:
-        task.titleEn,
+      taskTitle:
+        task.title,
 
       priority:
         task.priority,

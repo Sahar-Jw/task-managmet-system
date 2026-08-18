@@ -246,12 +246,7 @@ function ProjectDetailContent() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="truncate font-medium text-slate-800">{isArabic ? task.titleAr || task.titleEn : task.titleEn || task.titleAr}</div>
-                    {!isArabic && task.titleAr && (
-                      <div dir="rtl" className="truncate text-xs text-slate-500">
-                        {task.titleAr}
-                      </div>
-                    )}
+                    <div className="truncate font-medium text-slate-800">{task.title}</div>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
                     <StatusBadge value={task.taskType} listType="task_type" />

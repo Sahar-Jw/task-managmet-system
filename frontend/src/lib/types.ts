@@ -229,20 +229,12 @@ export interface Task {
     string;
 
 
-  /*
-   * Bilingual content
-   */
+  /* Language-neutral task content */
 
-  titleAr:
+  title:
     string;
 
-  titleEn:
-    string;
-
-  descriptionAr?:
-    string;
-
-  descriptionEn?:
+  description?:
     string;
 
 

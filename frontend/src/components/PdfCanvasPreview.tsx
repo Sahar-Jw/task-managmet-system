@@ -46,14 +46,17 @@ export default function PdfCanvasPreview({
       setError('');
 
       try {
-        const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+        const pdfjs = await import('pdfjs-dist/build/pdf.mjs');
         /* Served by our same-origin Next route from the installed package. */
         pdfjs.GlobalWorkerOptions.workerSrc =
           '/pdf.worker.min.mjs?v=4.10.38';
 
         // PDF.js may transfer its input buffer to the worker, so give it a copy.
         const bytes = new Uint8Array(data.slice(0));
-        loadingTask = pdfjs.getDocument({ data: bytes, isEvalSupported: false });
+        loadingTask = pdfjs.getDocument({
+          data: bytes,
+          useSystemFonts: true,
+        });
         loadedDocument = await loadingTask.promise;
 
         if (cancelled) {
@@ -131,7 +134,7 @@ export default function PdfCanvasPreview({
   }, [containerWidth, pageNumber, status]);
 
   return (
-    <div ref={containerRef} className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-100">
+    <div ref={containerRef} dir="ltr" className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-100">
       {status === 'loading' && (
         <div className="flex min-h-48 flex-1 items-center justify-center text-sm text-slate-600">
           {isArabic ? 'جارٍ تحميل ملف PDF…' : 'Loading PDF…'}

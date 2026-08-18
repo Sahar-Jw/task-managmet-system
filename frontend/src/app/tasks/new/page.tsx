@@ -1688,17 +1688,10 @@ function NewTaskContent() {
 
       const task =
         await TasksApi.create({
-          titleAr:
+          title:
             form.title.trim(),
 
-          titleEn:
-            form.title.trim(),
-
-          descriptionAr:
-            form.description.trim() ||
-            undefined,
-
-          descriptionEn:
+          description:
             form.description.trim() ||
             undefined,
 
@@ -3630,11 +3623,7 @@ function NewTaskContent() {
                             item.id
                           }
                         >
-                          {isArabic
-                            ? item.titleAr ||
-                              item.titleEn
-                            : item.titleEn ||
-                              item.titleAr}
+                          {item.title}
                         </option>
                       ),
                     )}

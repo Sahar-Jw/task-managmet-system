@@ -34,12 +34,10 @@ type FormState = {
   assigneeCanDownloadAttachments: boolean;
 };
 
-function fromTask(task: Task, isArabic: boolean): FormState {
+function fromTask(task: Task): FormState {
   return {
-    title: isArabic ? task.titleAr || task.titleEn || '' : task.titleEn || task.titleAr || '',
-    description: isArabic
-      ? task.descriptionAr || task.descriptionEn || ''
-      : task.descriptionEn || task.descriptionAr || '',
+    title: task.title || '',
+    description: task.description || '',
     taskType: task.taskType || 'General',
     priority: task.priority || 'Medium',
     color: task.color || '#2563eb',
@@ -88,7 +86,7 @@ export default function TaskEditPanel({
   const locale = useLocale();
   const isArabic = locale === 'ar';
   const isAdmin = user.role.name === 'ADMIN';
-  const [form, setForm] = useState<FormState>(() => fromTask(task, isArabic));
+  const [form, setForm] = useState<FormState>(() => fromTask(task));
   const [branches, setBranches] = useState<Setting[]>([]);
   const [departments, setDepartments] = useState<Setting[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -100,7 +98,7 @@ export default function TaskEditPanel({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => setForm(fromTask(task, isArabic)), [isArabic, task]);
+  useEffect(() => setForm(fromTask(task)), [task]);
 
   useEffect(() => {
     let cancelled = false;
@@ -202,13 +200,8 @@ export default function TaskEditPanel({
     setError('');
     try {
       await TasksApi.update(task.id, {
-        // Task creation uses one language-neutral Title and Description.
-        // Keep editing consistent and mirror the value so switching the UI
-        // language never makes a task appear blank or stale.
-        titleAr: form.title.trim(),
-        titleEn: form.title.trim(),
-        descriptionAr: form.description.trim() || null,
-        descriptionEn: form.description.trim() || null,
+        title: form.title.trim(),
+        description: form.description.trim() || null,
         taskType: form.taskType,
         priority: form.priority,
         color: form.color || null,
@@ -266,7 +259,7 @@ export default function TaskEditPanel({
           <div className={field}><label className="label">{isArabic ? 'الفرع' : 'Branch'}</label><select className="input" value={form.branchId} onChange={(e) => set('branchId', e.target.value)}><option value="">{isArabic ? 'بدون فرع' : 'No branch'}</option>{branches.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
           <div className={field}><label className="label">{isArabic ? 'القسم *' : 'Department *'}</label><select required className="input" value={form.departmentId} onChange={(e) => set('departmentId', e.target.value)}><option value="">{isArabic ? 'اختر القسم' : 'Choose department'}</option>{departments.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
           <div className={field}><label className="label">{isArabic ? 'المشروع' : 'Project'}</label><select className="input" value={form.projectId} onChange={(e) => set('projectId', e.target.value)}><option value="">{isArabic ? 'بدون مشروع' : 'No project'}</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'المهمة الرئيسية' : 'Parent task'}</label><select className="input" value={form.parentTaskId} onChange={(e) => changeParent(e.target.value)}><option value="">{isArabic ? 'بدون مهمة رئيسية' : 'No parent task'}</option>{parentTasks.map((item) => <option key={item.id} value={item.id}>{isArabic ? item.titleAr || item.titleEn : item.titleEn || item.titleAr}</option>)}</select></div>
+          <div className={field}><label className="label">{isArabic ? 'المهمة الرئيسية' : 'Parent task'}</label><select className="input" value={form.parentTaskId} onChange={(e) => changeParent(e.target.value)}><option value="">{isArabic ? 'بدون مهمة رئيسية' : 'No parent task'}</option>{parentTasks.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>
           <div className={field}><label className="label">{isArabic ? 'تاريخ البدء' : 'Start date'}</label><input type="date" className="input" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} /></div>
           <div className={field}><label className="label">{isArabic ? 'الموعد النهائي' : 'Deadline'}</label><input type="date" min={form.startDate || undefined} className="input" value={form.deadlineDate} onChange={(e) => set('deadlineDate', e.target.value)} /></div>
         </div>

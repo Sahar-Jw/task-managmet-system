@@ -687,11 +687,9 @@ export const ProjectsApi = {
  */
 
 export interface CreateTaskPayload {
-  titleAr: string;
-  titleEn: string;
+  title: string;
 
-  descriptionAr?: string;
-  descriptionEn?: string;
+  description?: string;
 
   taskType?: string;
   priority: string;
@@ -723,11 +721,9 @@ export interface CreateTaskPayload {
  * null      -> clear
  */
 export interface UpdateTaskPayload {
-  titleAr?: string | null;
-  titleEn?: string | null;
+  title?: string | null;
 
-  descriptionAr?: string | null;
-  descriptionEn?: string | null;
+  description?: string | null;
 
   taskType?: string | null;
   priority?: string | null;

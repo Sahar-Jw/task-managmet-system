@@ -312,14 +312,10 @@ function languageTaskTitle(
   task:
     Task,
 
-  isArabic:
+  _isArabic:
     boolean,
 ) {
-  return isArabic
-    ? task.titleAr ||
-        task.titleEn
-    : task.titleEn ||
-        task.titleAr;
+  return task.title;
 }
 
 
@@ -1081,11 +1077,7 @@ function TaskDetailContent() {
 
 
   const description =
-    isArabic
-      ? task.descriptionAr ||
-        task.descriptionEn
-      : task.descriptionEn ||
-        task.descriptionAr;
+    task.description;
 
 
   /*

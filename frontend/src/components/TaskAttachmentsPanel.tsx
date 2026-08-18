@@ -1031,18 +1031,38 @@ export default function TaskAttachmentsPanel({
       );
 
 
-    const arrayBuffer =
-      await blob.arrayBuffer();
+    const bytes =
+      new Uint8Array(
+        await blob.arrayBuffer(),
+      );
 
 
     const workbook =
       XLSX.read(
-        arrayBuffer,
+        bytes,
         {
+          type:
+            'array',
+
           cellFormula:
+            true,
+
+          cellDates:
             true,
         },
       );
+
+
+    if (
+      workbook.SheetNames.length ===
+      0
+    ) {
+      throw new Error(
+        isArabic
+          ? 'لا يحتوي ملف Excel على أوراق قابلة للعرض.'
+          : 'This Excel file has no worksheets to preview.',
+      );
+    }
 
 
     const workbookHtml:

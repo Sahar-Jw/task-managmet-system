@@ -265,11 +265,7 @@ export default function SubtasksPanel({
     value:
       Task,
   ) {
-    return isArabic
-      ? value.titleAr ||
-          value.titleEn
-      : value.titleEn ||
-          value.titleAr;
+    return value.title;
   }
 
 
@@ -606,17 +602,10 @@ export default function SubtasksPanel({
     try {
       createdTask =
         await TasksApi.create({
-          titleAr:
+          title:
             form.title.trim(),
 
-          titleEn:
-            form.title.trim(),
-
-          descriptionAr:
-            form.description.trim() ||
-            undefined,
-
-          descriptionEn:
+          description:
             form.description.trim() ||
             undefined,
 

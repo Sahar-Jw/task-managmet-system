@@ -38,18 +38,12 @@ import { ApprovalStatus } from '../../../shared/enums/approval-status.enum';
 @Index(['assignedToId'])
 @Index(['deadlineDate'])
 export class TaskEntity extends VersionedEntity {
-  // ---------- Bilingual title & description ----------
-  @Column({ name: 'title_ar', type: 'varchar', length: 255 })
-  titleAr!: string;
+  // ---------- Language-neutral task content ----------
+  @Column({ type: 'varchar', length: 255 })
+  title!: string;
 
-  @Column({ name: 'title_en', type: 'varchar', length: 255 })
-  titleEn!: string;
-
-  @Column({ name: 'description_ar', type: 'text', nullable: true })
-  descriptionAr?: string;
-
-  @Column({ name: 'description_en', type: 'text', nullable: true })
-  descriptionEn?: string;
+  @Column({ type: 'text', nullable: true })
+  description?: string;
 
   // ---------- Classification ----------
   // These three are plain varchar (not a Postgres enum) storing the `key`

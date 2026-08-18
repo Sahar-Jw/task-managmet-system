@@ -648,11 +648,7 @@ function DashboardContent() {
   function taskTitle(
     task: Task,
   ) {
-    return isAr
-      ? task.titleAr ||
-          task.titleEn
-      : task.titleEn ||
-          task.titleAr;
+    return task.title;
   }
 
 

@@ -32,23 +32,12 @@ export class CreateTaskDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)
-  titleAr!: string;
-
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  titleEn!: string;
+  title!: string;
 
 
   @IsOptional()
   @IsString()
-  descriptionAr?: string;
-
-
-  @IsOptional()
-  @IsString()
-  descriptionEn?: string;
+  description?: string;
 
 
   @IsOptional()
@@ -169,23 +158,12 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  titleAr?: string | null;
+  title?: string | null;
 
 
   @IsOptional()
   @IsString()
-  @MaxLength(255)
-  titleEn?: string | null;
-
-
-  @IsOptional()
-  @IsString()
-  descriptionAr?: string | null;
-
-
-  @IsOptional()
-  @IsString()
-  descriptionEn?: string | null;
+  description?: string | null;
 
 
   @IsOptional()

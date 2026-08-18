@@ -8,6 +8,7 @@ import type { TaskAttachment } from '@/lib/types';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
+import PdfCanvasPreview from '@/components/PdfCanvasPreview';
 
 // 'empty' = the file itself has no usable content (0 bytes, no sheet data,
 // no visible text/images). 'unsupported' = we simply don't render a preview
@@ -31,6 +32,7 @@ export default function AttachmentPreviewModal({
   const [error, setError] = useState('');
   const [emptyMessage, setEmptyMessage] = useState('This file is empty.');
   const [objectUrl, setObjectUrl] = useState<string | null>(null);
+  const [pdfData, setPdfData] = useState<ArrayBuffer | null>(null);
   const [excelRows, setExcelRows] = useState<Record<string, any>[]>([]);
   const [excelColumns, setExcelColumns] = useState<string[]>([]);
   const docxContainerRef = useRef<HTMLDivElement>(null);
@@ -56,9 +58,13 @@ export default function AttachmentPreviewModal({
             setState('empty');
             return;
           }
-          const url = URL.createObjectURL(blob);
-          createdUrl = url;
-          setObjectUrl(url);
+          if (kind === 'pdf') {
+            setPdfData(await blob.arrayBuffer());
+          } else {
+            const url = URL.createObjectURL(blob);
+            createdUrl = url;
+            setObjectUrl(url);
+          }
           setState('ready');
           return;
         }
@@ -214,27 +220,10 @@ export default function AttachmentPreviewModal({
             />
           )}
 
-          {kind === 'pdf' && objectUrl && state === 'ready' && (
-            <>
-              <div className="flex min-h-48 flex-col items-center justify-center gap-3 rounded-md border border-slate-200 bg-slate-50 p-6 text-center md:hidden">
-                <p className="text-sm font-medium text-slate-700">
-                  {uiText(isArabic, 'text0845')}
-                </p>
-                <a
-                  href={objectUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-primary"
-                >
-                  {uiText(isArabic, 'text0004')}
-                </a>
-              </div>
-              <iframe
-                src={objectUrl}
-                title={attachment.fileName}
-                className="hidden h-[65vh] w-full rounded-md border border-slate-200 md:block"
-              />
-            </>
+          {kind === 'pdf' && pdfData && state === 'ready' && (
+            <div className="flex h-[65vh] min-h-0">
+              <PdfCanvasPreview data={pdfData} isArabic={isArabic} />
+            </div>
           )}
 
           {kind === 'docx' && (

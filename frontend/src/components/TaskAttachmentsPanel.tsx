@@ -46,6 +46,9 @@ import {
   getFileTypeLabel,
 } from '@/lib/file-kind';
 
+import PdfCanvasPreview
+  from '@/components/PdfCanvasPreview';
+
 import type {
   Task,
   TaskAttachment,
@@ -77,6 +80,9 @@ interface PreviewState {
 
   objectUrl?:
     string;
+
+  pdfData?:
+    ArrayBuffer;
 
   html?:
     string;
@@ -949,19 +955,23 @@ export default function TaskAttachmentsPanel({
     attachment:
       TaskAttachment,
   ) {
-    const objectUrl =
-      await fetchFileAsObjectUrl(
+    const blob =
+      await fetchFileAsBlob(
         AttachmentsApi.previewPath(
           attachment.id,
         ),
       );
 
 
+    const pdfData =
+      await blob.arrayBuffer();
+
+
     setPreview({
       attachment,
       mode:
         'pdf',
-      objectUrl,
+      pdfData,
     });
   }
 
@@ -2479,71 +2489,11 @@ export default function TaskAttachmentsPanel({
 
               {preview.mode ===
                 'pdf' &&
-                preview.objectUrl && (
-                <>
-                  <div
-                    className="
-                      flex
-                      min-h-0
-                      flex-1
-                      flex-col
-                      items-center
-                      justify-center
-                      gap-4
-                      bg-slate-50
-                      p-6
-                      text-center
-                      md:hidden
-                    "
-                  >
-                    <p
-                      className="
-                        text-sm
-                        font-medium
-                        text-slate-700
-                      "
-                    >
-                      {uiText(
-                        isArabic,
-                        'text0845',
-                      )}
-                    </p>
-
-
-                    <a
-                      href={
-                        preview.objectUrl
-                      }
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-primary"
-                    >
-                      {uiText(
-                        isArabic,
-                        'text0004',
-                      )}
-                    </a>
-                  </div>
-
-
-                  <iframe
-                    src={
-                      preview.objectUrl
-                    }
-                    title={
-                      preview.attachment.fileName
-                    }
-                    className="
-                      hidden
-                      min-h-0
-                      w-full
-                      flex-1
-                      border-0
-                      bg-white
-                      md:block
-                    "
-                  />
-                </>
+                preview.pdfData && (
+                <PdfCanvasPreview
+                  data={preview.pdfData}
+                  isArabic={isArabic}
+                />
               )}
 
 

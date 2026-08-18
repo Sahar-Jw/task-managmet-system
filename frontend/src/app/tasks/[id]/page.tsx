@@ -50,6 +50,7 @@ import type {
   User,
 } from '@/lib/types';
 import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
+import { canEditTask } from '@/lib/task-permissions';
 
 
 /*
@@ -1927,6 +1928,15 @@ function TaskDetailContent() {
                   }
                   listType="task_type"
                 />
+
+                {canEditTask(task, user) && (
+                  <Link
+                    href={`/tasks/${task.id}/edit`}
+                    className="btn-secondary px-3 py-1.5 text-xs"
+                  >
+                    {uiText(isArabic, 'text0068')}
+                  </Link>
+                )}
 
                 {overdue && (
                   <span

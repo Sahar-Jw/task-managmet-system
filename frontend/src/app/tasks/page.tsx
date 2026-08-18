@@ -26,6 +26,14 @@ import StatusBadge from '@/components/StatusBadge';
 import Pagination from '@/components/Pagination';
 
 import {
+  useAuth,
+} from '@/lib/auth-context';
+
+import {
+  canEditTask,
+} from '@/lib/task-permissions';
+
+import {
   useListLabels,
 } from '@/lib/list-labels-context';
 
@@ -469,6 +477,11 @@ function TasksContent() {
   const isArabic =
     locale ===
     'ar';
+
+
+  const {
+    user,
+  } = useAuth();
 
 
   const {
@@ -1759,6 +1772,17 @@ function TasksContent() {
         >
           {uiText(isArabic, 'text0158')}
         </Link>
+
+
+        {canEditTask(task, user) && (
+          <Link
+            href={`/tasks/${task.id}/edit`}
+            onClick={(event) => event.stopPropagation()}
+            className="btn-secondary px-3 py-1.5 text-xs"
+          >
+            {uiText(isArabic, 'text0068')}
+          </Link>
+        )}
 
 
         {pageView ===

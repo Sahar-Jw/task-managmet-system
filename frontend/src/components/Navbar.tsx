@@ -760,8 +760,6 @@ export default function Navbar() {
               hidden
               min-w-0
               sm:block
-              xl:hidden
-              2xl:block
             "
           >
             <div

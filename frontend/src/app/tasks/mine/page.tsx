@@ -35,6 +35,10 @@ import {
 } from '@/lib/auth-context';
 
 import {
+  canEditTask,
+} from '@/lib/task-permissions';
+
+import {
   ApiError,
 } from '@/lib/api';
 
@@ -1578,17 +1582,25 @@ function MyTasksContent() {
       'assignedToMe'
     ) {
       return (
-        <Link
-          href={`/tasks/${task.id}`}
-          onClick={(
-            event,
-          ) =>
-            event.stopPropagation()
-          }
-          className="btn-secondary px-3 py-1.5 text-xs"
-        >
-          {uiText(isArabic, 'text0158')}
-        </Link>
+        <div className="relative z-20 flex flex-wrap items-center gap-2">
+          <Link
+            href={`/tasks/${task.id}`}
+            onClick={(event) => event.stopPropagation()}
+            className="btn-secondary px-3 py-1.5 text-xs"
+          >
+            {uiText(isArabic, 'text0158')}
+          </Link>
+
+          {canEditTask(task, user) && (
+            <Link
+              href={`/tasks/${task.id}/edit`}
+              onClick={(event) => event.stopPropagation()}
+              className="btn-secondary px-3 py-1.5 text-xs"
+            >
+              {uiText(isArabic, 'text0068')}
+            </Link>
+          )}
+        </div>
       );
     }
 
@@ -1618,6 +1630,17 @@ function MyTasksContent() {
         >
           {uiText(isArabic, 'text0158')}
         </Link>
+
+
+        {canEditTask(task, user) && (
+          <Link
+            href={`/tasks/${task.id}/edit`}
+            onClick={(event) => event.stopPropagation()}
+            className="btn-secondary px-3 py-1.5 text-xs"
+          >
+            {uiText(isArabic, 'text0068')}
+          </Link>
+        )}
 
 
         {canFinish && (

@@ -544,6 +544,63 @@ export default function TaskAttachmentsPanel({
     );
 
 
+  /* Upload/preview banners should not remain until a page reload. */
+  useEffect(
+    () => {
+      if (
+        !error
+      ) {
+        return;
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () =>
+            setError(''),
+          5000,
+        );
+
+
+      return () =>
+        window.clearTimeout(
+          timer,
+        );
+    },
+    [
+      error,
+    ],
+  );
+
+
+  useEffect(
+    () => {
+      if (
+        !notice
+      ) {
+        return;
+      }
+
+
+      const timer =
+        window.setTimeout(
+          () =>
+            setNotice(''),
+          5000,
+        );
+
+
+      return () =>
+        window.clearTimeout(
+          timer,
+        );
+    },
+    [
+      notice,
+    ],
+  );
+
+
   /*
    * ==========================================================
    * MODAL PAGE LOCK
@@ -1052,6 +1109,20 @@ export default function TaskAttachmentsPanel({
       await blob.text();
 
 
+    if (
+      text.trim() ===
+      ''
+    ) {
+      setPreview({
+        attachment,
+        mode:
+          'empty',
+      });
+
+      return;
+    }
+
+
     setPreview({
       attachment,
       mode:
@@ -1299,6 +1370,38 @@ export default function TaskAttachmentsPanel({
           },
         },
       );
+
+
+    const parsedDocument =
+      new DOMParser()
+        .parseFromString(
+          safeHtml,
+          'text/html',
+        );
+
+
+    const hasMeaningfulContent =
+      Boolean(
+        parsedDocument.body
+          .textContent
+          ?.trim() ||
+        parsedDocument.querySelector(
+          'img, table, svg, video, audio',
+        )
+      );
+
+
+    if (
+      !hasMeaningfulContent
+    ) {
+      setPreview({
+        attachment,
+        mode:
+          'empty',
+      });
+
+      return;
+    }
 
 
     setPreview({

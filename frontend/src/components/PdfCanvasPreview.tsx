@@ -21,7 +21,7 @@ export default function PdfCanvasPreview({
   const [pageNumber, setPageNumber] = useState(1);
   const [pageCount, setPageCount] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'empty' | 'error'>('loading');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -61,6 +61,112 @@ export default function PdfCanvasPreview({
 
         if (cancelled) {
           await loadedDocument.destroy();
+          return;
+        }
+
+
+        const meaningfulOperators =
+          new Set(
+            [
+              pdfjs.OPS.stroke,
+              pdfjs.OPS.closeStroke,
+              pdfjs.OPS.fill,
+              pdfjs.OPS.eoFill,
+              pdfjs.OPS.fillStroke,
+              pdfjs.OPS.eoFillStroke,
+              pdfjs.OPS.closeFillStroke,
+              pdfjs.OPS.closeEOFillStroke,
+              pdfjs.OPS.showText,
+              pdfjs.OPS.showSpacedText,
+              pdfjs.OPS.nextLineShowText,
+              pdfjs.OPS.nextLineSetSpacingShowText,
+              pdfjs.OPS.shadingFill,
+              pdfjs.OPS.paintXObject,
+              pdfjs.OPS.paintImageMaskXObject,
+              pdfjs.OPS.paintImageMaskXObjectGroup,
+              pdfjs.OPS.paintImageXObject,
+              pdfjs.OPS.paintInlineImageXObject,
+              pdfjs.OPS.paintInlineImageXObjectGroup,
+              pdfjs.OPS.paintImageXObjectRepeat,
+              pdfjs.OPS.paintImageMaskXObjectRepeat,
+              pdfjs.OPS.paintSolidColorImageMask,
+            ].filter(
+              (
+                value,
+              ): value is number =>
+                typeof value ===
+                'number',
+            ),
+          );
+
+
+        let hasMeaningfulContent =
+          false;
+
+
+        for (
+          let pageIndex = 1;
+          pageIndex <= loadedDocument.numPages &&
+          !hasMeaningfulContent;
+          pageIndex += 1
+        ) {
+          const page =
+            await loadedDocument.getPage(
+              pageIndex,
+            );
+
+
+          const textContent =
+            await page.getTextContent();
+
+
+          hasMeaningfulContent =
+            textContent.items.some(
+              (
+                item:
+                  any,
+              ) =>
+                typeof item?.str ===
+                  'string' &&
+                item.str.trim() !==
+                  '',
+            );
+
+
+          if (
+            !hasMeaningfulContent
+          ) {
+            const operatorList =
+              await page.getOperatorList();
+
+
+            hasMeaningfulContent =
+              operatorList.fnArray.some(
+                (
+                  operator:
+                    number,
+                ) =>
+                  meaningfulOperators.has(
+                    operator,
+                  ),
+              );
+          }
+
+
+          page.cleanup?.();
+        }
+
+
+        if (
+          !hasMeaningfulContent
+        ) {
+          setPageCount(
+            loadedDocument.numPages,
+          );
+          setStatus(
+            'empty',
+          );
+
           return;
         }
 
@@ -144,6 +250,24 @@ export default function PdfCanvasPreview({
       {status === 'error' && (
         <div className="flex min-h-48 flex-1 items-center justify-center p-6 text-center text-sm font-medium text-red-600">
           {isArabic ? 'تعذّر عرض ملف PDF.' : 'Unable to display this PDF.'} {error}
+        </div>
+      )}
+
+      {status === 'empty' && (
+        <div className="flex min-h-48 flex-1 items-center justify-center p-6 text-center">
+          <div>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-50 text-3xl">
+              ⚠️
+            </div>
+            <h3 className="mt-5 text-base font-semibold text-slate-800">
+              {isArabic ? 'المرفق فارغ' : 'Empty attachment'}
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              {isArabic
+                ? 'لا يحتوي ملف PDF على محتوى قابل للعرض.'
+                : 'This PDF contains no displayable content.'}
+            </p>
+          </div>
         </div>
       )}
 

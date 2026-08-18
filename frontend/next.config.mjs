@@ -1,9 +1,15 @@
-import createNextIntlPlugin from 'next-intl/plugin';
+import path from 'node:path';
+
+import {
+  fileURLToPath,
+} from 'node:url';
 
 
-const withNextIntl =
-  createNextIntlPlugin(
-    './src/i18n/request.ts',
+const currentDirectory =
+  path.dirname(
+    fileURLToPath(
+      import.meta.url,
+    ),
   );
 
 
@@ -11,9 +17,20 @@ const withNextIntl =
 const nextConfig = {
   reactStrictMode:
     true,
+
+  webpack(
+    config,
+  ) {
+    config.resolve.alias[
+      'next-intl/config'
+    ] = path.resolve(
+      currentDirectory,
+      'src/i18n/request.ts',
+    );
+
+    return config;
+  },
 };
 
 
-export default withNextIntl(
-  nextConfig,
-);
+export default nextConfig;

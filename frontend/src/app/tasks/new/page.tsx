@@ -6,6 +6,7 @@ import { uiText } from '@/lib/ui-text';
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -87,6 +88,60 @@ const COLORS = [
     value: '#64748B',
   },
 ];
+
+
+function formatLocalDate(
+  date:
+    Date,
+) {
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(
+      date.getMonth() + 1,
+    ).padStart(
+      2,
+      '0',
+    );
+
+  const day =
+    String(
+      date.getDate(),
+    ).padStart(
+      2,
+      '0',
+    );
+
+  return `${year}-${month}-${day}`;
+}
+
+
+function getDefaultTaskDates() {
+  const startDate =
+    new Date();
+
+  const deadlineDate =
+    new Date(
+      startDate,
+    );
+
+  deadlineDate.setDate(
+    deadlineDate.getDate() + 7,
+  );
+
+  return {
+    startDate:
+      formatLocalDate(
+        startDate,
+      ),
+
+    deadlineDate:
+      formatLocalDate(
+        deadlineDate,
+      ),
+  };
+}
 
 
 /*
@@ -538,7 +593,11 @@ function NewTaskContent() {
     form,
     setForm,
   ] =
-    useState({
+    useState(() => {
+      const defaultDates =
+        getDefaultTaskDates();
+
+      return {
       title:
         '',
 
@@ -606,11 +665,51 @@ function NewTaskContent() {
         'SAR',
 
       startDate:
-        '',
+        defaultDates.startDate,
 
       deadlineDate:
-        '',
+        defaultDates.deadlineDate,
+      };
     });
+
+
+  const creatorOrganizationApplied =
+    useRef(
+      false,
+    );
+
+
+  useEffect(() => {
+    if (
+      !user ||
+      creatorOrganizationApplied.current
+    ) {
+      return;
+    }
+
+
+    creatorOrganizationApplied.current =
+      true;
+
+
+    setForm(
+      (
+        current,
+      ) => ({
+        ...current,
+
+        branchId:
+          current.branchId ||
+          user.branchId ||
+          '',
+
+        departmentId:
+          current.departmentId ||
+          user.departmentId ||
+          '',
+      }),
+    );
+  }, [user]);
 
 
   function set<

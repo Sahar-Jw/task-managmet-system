@@ -2932,7 +2932,7 @@ function NewTaskContent() {
                         }
                       >
                         <option value="SAR">
-                          SAR
+                          {uiText(isArabic, 'text1040')}
                         </option>
 
                         <option value="SYP">
@@ -2940,15 +2940,15 @@ function NewTaskContent() {
                         </option>
 
                         <option value="USD">
-                          USD
+                          {uiText(isArabic, 'text1041')}
                         </option>
 
                         <option value="EUR">
-                          EUR
+                          {uiText(isArabic, 'text1042')}
                         </option>
 
                         <option value="AED">
-                          AED
+                          {uiText(isArabic, 'text1043')}
                         </option>
                       </select>
                     </div>

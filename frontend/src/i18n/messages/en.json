@@ -1081,6 +1081,10 @@
     "text1036": "Tasks you assign to other users will appear here.",
     "text1037": "Include the country code without + or 00. Syria example: 963912345678.",
     "text1038": "Enter 8 to 15 digits including the country code.",
-    "text1039": "SYP — Syrian pound"
+    "text1039": "SYP — Syrian pound",
+    "text1040": "SAR — Saudi riyal",
+    "text1041": "USD — US dollar",
+    "text1042": "EUR — Euro",
+    "text1043": "AED — UAE dirham"
   }
 }

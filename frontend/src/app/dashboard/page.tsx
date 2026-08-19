@@ -88,6 +88,57 @@ interface DepartmentRow
 }
 
 
+function formatProjectDate(
+  value:
+    string | undefined,
+
+  locale:
+    string,
+) {
+  if (!value) {
+    return '—';
+  }
+
+
+  return new Date(
+    `${value}T00:00:00`,
+  ).toLocaleDateString(
+    locale,
+  );
+}
+
+
+function dashboardProjectIsOverdue(
+  project:
+    Project,
+) {
+  if (
+    !project.endDate ||
+    project.status ===
+      'Completed' ||
+    project.status ===
+      'Archived'
+  ) {
+    return false;
+  }
+
+
+  const today =
+    new Date()
+      .toISOString()
+      .slice(
+        0,
+        10,
+      );
+
+
+  return (
+    project.endDate <
+    today
+  );
+}
+
+
 /*
  * ============================================================
  * SMALL UI COMPONENTS
@@ -1014,6 +1065,37 @@ function DashboardContent() {
       );
 
 
+  const latestProjects =
+    [
+      ...projects,
+    ]
+      .sort(
+        (
+          a,
+          b,
+        ) =>
+          new Date(
+            b.createdAt,
+          ).getTime() -
+          new Date(
+            a.createdAt,
+          ).getTime(),
+      )
+      .slice(
+        0,
+        5,
+      );
+
+
+  const todayDate =
+    new Date()
+      .toISOString()
+      .slice(
+        0,
+        10,
+      );
+
+
   const upcoming =
     tasks
       .filter(
@@ -1023,6 +1105,8 @@ function DashboardContent() {
           Boolean(
             task.deadlineDate,
           ) &&
+          task.deadlineDate! >=
+            todayDate &&
           !completedTaskKeys.has(
             task.status,
           ) &&
@@ -1041,6 +1125,37 @@ function DashboardContent() {
       .slice(
         0,
         6,
+      );
+
+
+  const upcomingProjects =
+    projects
+      .filter(
+        (
+          project,
+        ) =>
+          Boolean(
+            project.endDate,
+          ) &&
+          project.endDate! >=
+            todayDate &&
+          project.status !==
+            'Completed' &&
+          project.status !==
+            'Archived',
+      )
+      .sort(
+        (
+          a,
+          b,
+        ) =>
+          a.endDate!.localeCompare(
+            b.endDate!,
+          ),
+      )
+      .slice(
+        0,
+        5,
       );
 
 
@@ -1063,6 +1178,26 @@ function DashboardContent() {
           ).localeCompare(
             b.deadlineDate ??
               '',
+          ),
+      )
+      .slice(
+        0,
+        4,
+      );
+
+
+  const attentionProjects =
+    projects
+      .filter(
+        dashboardProjectIsOverdue,
+      )
+      .sort(
+        (
+          a,
+          b,
+        ) =>
+          a.endDate!.localeCompare(
+            b.endDate!,
           ),
       )
       .slice(
@@ -1712,7 +1847,9 @@ function DashboardContent() {
 
 
           {attentionTasks.length ===
-          0 ? (
+            0 &&
+          attentionProjects.length ===
+            0 ? (
             <EmptyState
               title={
                 uiText(isAr, 'text0290')
@@ -1738,6 +1875,14 @@ function DashboardContent() {
             />
           ) : (
             <div className="divide-y divide-slate-100">
+              {attentionTasks.length >
+                0 && (
+                <div className="bg-slate-50 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  {uiText(isAr, 'text1020')}
+                </div>
+              )}
+
+
               {attentionTasks.map(
                 (
                   task,
@@ -1798,6 +1943,69 @@ function DashboardContent() {
                   </Link>
                 ),
               )}
+
+
+              {attentionProjects.length >
+                0 && (
+                <div className="bg-slate-50 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  {uiText(isAr, 'text0405')}
+                </div>
+              )}
+
+
+              {attentionProjects.map(
+                (
+                  project,
+                ) => (
+                  <Link
+                    key={
+                      project.id
+                    }
+                    href={`/projects/${project.id}`}
+                    className="group flex items-center gap-4 px-5 py-4 transition hover:bg-red-50/40 sm:px-6"
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          d="M4 7h16v12H4zM8 7V5h8v2"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-slate-800">
+                        {
+                          project.name
+                        }
+                      </div>
+
+                      <div className="mt-1 text-xs text-red-500">
+                        {uiText(isAr, 'text0026')}{' '}
+                        {
+                          project.endDate
+                        }
+                      </div>
+                    </div>
+
+
+                    <StatusBadge
+                      value={
+                        project.status
+                      }
+                      listType="project_status"
+                    />
+                  </Link>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -1821,7 +2029,9 @@ function DashboardContent() {
 
 
           {upcoming.length ===
-          0 ? (
+            0 &&
+          upcomingProjects.length ===
+            0 ? (
             <EmptyState
               title={
                 uiText(isAr, 'text0028')
@@ -1832,6 +2042,14 @@ function DashboardContent() {
             />
           ) : (
             <div className="divide-y divide-slate-100">
+              {upcoming.length >
+                0 && (
+                <div className="bg-slate-50 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  {uiText(isAr, 'text1020')}
+                </div>
+              )}
+
+
               {upcoming
                 .slice(
                   0,
@@ -1900,6 +2118,72 @@ function DashboardContent() {
                     </Link>
                   ),
                 )}
+
+
+              {upcomingProjects.length >
+                0 && (
+                <div className="bg-slate-50 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  {uiText(isAr, 'text0405')}
+                </div>
+              )}
+
+
+              {upcomingProjects.map(
+                (
+                  project,
+                ) => (
+                  <Link
+                    key={
+                      project.id
+                    }
+                    href={`/projects/${project.id}`}
+                    className="group flex items-center gap-4 px-5 py-4 transition hover:bg-slate-50 sm:px-6"
+                  >
+                    <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-100">
+                      <span className="text-[9px] font-semibold uppercase text-slate-400">
+                        {project.endDate
+                          ? new Intl.DateTimeFormat(
+                              locale,
+                              {
+                                month:
+                                  'short',
+                              },
+                            ).format(
+                              new Date(
+                                `${project.endDate}T00:00:00`,
+                              ),
+                            )
+                          : ''}
+                      </span>
+
+                      <span className="text-sm font-semibold text-slate-700">
+                        {project.endDate
+                          ? new Date(
+                              `${project.endDate}T00:00:00`,
+                            ).getDate()
+                          : ''}
+                      </span>
+                    </div>
+
+
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-slate-800">
+                        {
+                          project.name
+                        }
+                      </div>
+                    </div>
+
+
+                    <StatusBadge
+                      value={
+                        project.status
+                      }
+                      listType="project_status"
+                    />
+                  </Link>
+                ),
+              )}
             </div>
           )}
         </div>
@@ -1997,6 +2281,115 @@ function DashboardContent() {
                   </div>
                 </Link>
               ),
+            )}
+          </div>
+        )}
+      </section>
+
+
+      {/*
+       * ======================================================
+       * RECENT PROJECTS
+       * ======================================================
+       */}
+
+      <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 p-5 sm:p-6">
+          <SectionHeader
+            title={
+              uiText(isAr, 'text1044')
+            }
+            description={
+              uiText(isAr, 'text1045')
+            }
+            action={
+              <Link
+                href="/projects"
+                className="text-xs font-medium text-brand-600 hover:text-brand-800"
+              >
+                {uiText(isAr, 'text1046')}
+              </Link>
+            }
+          />
+        </div>
+
+
+        {latestProjects.length ===
+        0 ? (
+          <EmptyState
+            title={
+              uiText(isAr, 'text1047')
+            }
+            description={
+              uiText(isAr, 'text1048')
+            }
+          />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {latestProjects.map(
+              (
+                project,
+              ) => {
+                const overdue =
+                  dashboardProjectIsOverdue(
+                    project,
+                  );
+
+
+                return (
+                  <Link
+                    key={
+                      project.id
+                    }
+                    href={`/projects/${project.id}`}
+                    className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
+                  >
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-slate-800 group-hover:text-brand-700">
+                        {
+                          project.name
+                        }
+                      </div>
+
+                      <div className="mt-1 text-xs text-slate-400">
+                        {uiText(isAr, 'text0032')}{' '}
+
+                        {new Date(
+                          project.createdAt,
+                        ).toLocaleDateString(
+                          locale,
+                        )}
+                      </div>
+                    </div>
+
+
+                    <div className="flex sm:justify-center">
+                      {overdue ? (
+                        <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+                          {uiText(isAr, 'text0075')}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500">
+                          {formatProjectDate(
+                            project.endDate,
+                            locale,
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+
+                    <div className="flex sm:justify-end">
+                      <StatusBadge
+                        value={
+                          project.status
+                        }
+                        listType="project_status"
+                      />
+                    </div>
+                  </Link>
+                );
+              },
             )}
           </div>
         )}

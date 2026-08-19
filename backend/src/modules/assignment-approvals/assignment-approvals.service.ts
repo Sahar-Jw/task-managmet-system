@@ -81,7 +81,10 @@ export class AssignmentApprovalsService {
       throw new ForbiddenException(appError('ONLY_ADMIN_DELEGATED_APPROVER_MAY_APPROVE_REJECT', 'Only Admin (or a delegated approver) may approve or reject')); // BR-050
     }
 
-    const assignment = await this.assignmentRepo.findOne({ where: { id: assignmentId } });
+    const assignment = await this.assignmentRepo.findOne({
+      where: { id: assignmentId },
+      relations: ['assignee'],
+    });
     if (!assignment) throw new NotFoundException(appError('ASSIGNMENT_NOT_FOUND', 'Assignment not found'));
 
     const task = await this.taskRepo.findOne({ where: { id: assignment.taskId } });
@@ -112,7 +115,13 @@ export class AssignmentApprovalsService {
       entityId: approval.id,
       action: decision === ApprovalDecision.APPROVED ? AuditAction.APPROVE : AuditAction.REJECT,
       reason,
-      newValue: approval,
+      newValue: {
+        taskId: task.id,
+        taskTitle: task.title,
+        assigneeId: assignment.assigneeId,
+        assigneeName: assignment.assignee?.fullName,
+        decision,
+      },
     });
 
     await this.notificationsService.dispatch({

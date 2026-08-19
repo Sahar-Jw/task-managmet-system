@@ -293,8 +293,36 @@ export class TaskAssignmentsService {
       action:
         AuditAction.ASSIGN,
 
-      newValue:
-        assignment,
+      /*
+       * Store resolved names, not just IDs, so the Audit Log can say
+       * exactly which Task was assigned and to whom without the reader
+       * having to look anything up.
+       */
+      newValue: {
+        taskId:
+          task.id,
+
+        taskTitle:
+          task.title,
+
+        assigneeId:
+          assignee.id,
+
+        assigneeName:
+          assignee.fullName,
+
+        assignedById:
+          actor.id,
+
+        assignedByName:
+          actor.fullName,
+
+        dueDate:
+          assignment.dueDate,
+
+        status:
+          assignment.status,
+      },
     });
 
     if (assignee.id !== actor.id) {
@@ -424,9 +452,26 @@ export class TaskAssignmentsService {
         saved.id,
 
       action:
-        AuditAction.UPDATE,
+        AuditAction.ACCEPT,
+
+      oldValue: {
+        status:
+          AssignmentStatus.PENDING_ACCEPTANCE,
+      },
 
       newValue: {
+        taskId:
+          task?.id,
+
+        taskTitle:
+          task?.title,
+
+        assigneeId:
+          actor.id,
+
+        assigneeName:
+          actor.fullName,
+
         status:
           saved.status,
       },
@@ -562,6 +607,18 @@ export class TaskAssignmentsService {
         dto.reason,
 
       newValue: {
+        taskId:
+          task?.id,
+
+        taskTitle:
+          task?.title,
+
+        assigneeId:
+          assignment.assigneeId,
+
+        assigneeName:
+          assignment.assignee?.fullName,
+
         status:
           saved.status,
       },
@@ -853,6 +910,11 @@ export class TaskAssignmentsService {
    * =========================================================
    */
 
+  const reassignmentReason =
+    wasRejected
+      ? 'Previous assignment rejected'
+      : `No response for ${REASSIGN_AFTER_DAYS} days`;
+
   await this.auditLogsService.record({
     actorId:
       actor.id,
@@ -866,6 +928,14 @@ export class TaskAssignmentsService {
     action:
       AuditAction.REASSIGN,
 
+    reason:
+      reassignmentReason,
+
+    /*
+     * Resolved names on both sides of the reassignment, so the log reads
+     * "reassigned <Task> from <old assignee> to <new assignee>" without
+     * needing to cross-reference User IDs.
+     */
     oldValue: {
       previousAssignmentId:
         previous.id,
@@ -873,14 +943,37 @@ export class TaskAssignmentsService {
       previousAssigneeId:
         previous.assigneeId,
 
-      reassignmentReason:
-        wasRejected
-          ? 'Previous assignment rejected'
-          : `No response for ${REASSIGN_AFTER_DAYS} days`,
+      previousAssigneeName:
+        previous.assignee?.fullName,
+
+      reassignmentReason,
     },
 
-    newValue:
-      newAssignment,
+    newValue: {
+      taskId:
+        task.id,
+
+      taskTitle:
+        task.title,
+
+      assigneeId:
+        newAssignee.id,
+
+      assigneeName:
+        newAssignee.fullName,
+
+      assignedById:
+        actor.id,
+
+      assignedByName:
+        actor.fullName,
+
+      dueDate:
+        newAssignment.dueDate,
+
+      status:
+        newAssignment.status,
+    },
   });
 
   /*

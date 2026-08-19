@@ -542,6 +542,32 @@ export class UsersService {
       );
 
 
+    /*
+     * Resolve Role names for the Audit Log. `user.role` is an eager
+     * relation loaded once at the top of this method, so it goes stale
+     * the moment roleId changes — fetch fresh names by id instead.
+     */
+    const [
+      oldRole,
+      newRole,
+    ] =
+      oldValue.roleId !==
+      saved.roleId
+        ? await Promise.all([
+            this.rolesService.findById(
+              oldValue.roleId,
+            ),
+
+            this.rolesService.findById(
+              saved.roleId,
+            ),
+          ])
+        : [
+            undefined,
+            undefined,
+          ];
+
+
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -565,6 +591,12 @@ export class UsersService {
 
         passwordHash:
           undefined,
+
+        role:
+          undefined,
+
+        roleName:
+          oldRole?.name,
       },
 
       newValue: {
@@ -572,6 +604,12 @@ export class UsersService {
 
         passwordHash:
           undefined,
+
+        role:
+          undefined,
+
+        roleName:
+          newRole?.name,
       },
 
       reason:
@@ -1057,6 +1095,11 @@ export class UsersService {
       action:
         AuditAction.UPDATE,
 
+      newValue: {
+        fullName:
+          user.fullName,
+      },
+
       reason:
         'Password changed by user',
     });
@@ -1285,6 +1328,9 @@ export class UsersService {
         AuditAction.UPDATE,
 
       newValue: {
+        fullName:
+          saved.fullName,
+
         avatarUrl:
           saved.avatarUrl,
       },
@@ -1366,11 +1412,17 @@ export class UsersService {
         AuditAction.UPDATE,
 
       oldValue: {
+        fullName:
+          saved.fullName,
+
         avatarUrl:
           previousUrl,
       },
 
       newValue: {
+        fullName:
+          saved.fullName,
+
         avatarUrl:
           null,
       },

@@ -1268,6 +1268,9 @@ export class ProjectsService {
 
 
     const oldValue = {
+      name:
+        project.name,
+
       status:
         project.status,
 
@@ -1305,6 +1308,9 @@ export class ProjectsService {
       oldValue,
 
       newValue: {
+        name:
+          saved.name,
+
         status:
           saved.status,
       },
@@ -1423,6 +1429,9 @@ export class ProjectsService {
 
 
     const oldValue = {
+      name:
+        project.name,
+
       status:
         project.status,
     };
@@ -1453,6 +1462,9 @@ export class ProjectsService {
       oldValue,
 
       newValue: {
+        name:
+          project.name,
+
         status:
           newStatus,
       },

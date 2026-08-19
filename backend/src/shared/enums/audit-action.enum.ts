@@ -5,6 +5,7 @@ export enum AuditAction {
   APPROVE = 'Approve',
   REJECT = 'Reject',
   ASSIGN = 'Assign',
+  ACCEPT = 'Accept',
   REASSIGN = 'Reassign',
   STATUS_CHANGE = 'StatusChange',
   LOGIN = 'Login',

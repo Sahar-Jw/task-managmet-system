@@ -571,6 +571,16 @@ export class AuditLogsService {
           OR actor.email LIKE :search
 
           OR log.ipAddress LIKE :search
+
+          OR CAST(
+            log.oldValue
+            AS CHAR
+          ) LIKE :search
+
+          OR CAST(
+            log.newValue
+            AS CHAR
+          ) LIKE :search
         )`,
         {
           search,

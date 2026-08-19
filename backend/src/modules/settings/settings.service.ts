@@ -628,6 +628,12 @@ export class SettingsService {
           AuditAction.DELETE,
 
         newValue: {
+          valueEn:
+            setting.valueEn,
+
+          valueAr:
+            setting.valueAr,
+
           isActive:
             false,
 

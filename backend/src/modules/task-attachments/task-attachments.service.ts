@@ -685,6 +685,13 @@ export class TaskAttachmentsService {
     actor:
       UserEntity,
   ): Promise<void> {
+    const task =
+      await this.taskRepo.findOne({
+        where: {
+          id: attachment.taskId,
+        },
+      });
+
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -702,11 +709,17 @@ export class TaskAttachmentsService {
         taskId:
           attachment.taskId,
 
+        taskTitle:
+          task?.title,
+
         assignmentId:
           attachment.assignmentId,
 
         uploadedById:
           attachment.uploadedById,
+
+        uploadedByName:
+          actor.fullName,
 
         fileName:
           attachment.fileName,
@@ -1052,6 +1065,12 @@ export class TaskAttachmentsService {
 
 
     const oldValue = {
+      taskId:
+        task.id,
+
+      taskTitle:
+        task.title,
+
       fileName:
         attachment.fileName,
 
@@ -1139,6 +1158,12 @@ export class TaskAttachmentsService {
       oldValue,
 
       newValue: {
+        taskId:
+          task.id,
+
+        taskTitle:
+          task.title,
+
         deletedAt:
           attachment.deletedAt,
 

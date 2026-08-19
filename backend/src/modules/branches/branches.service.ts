@@ -85,8 +85,8 @@ export class BranchesService {
       entityType: 'Branch',
       entityId: branch.id,
       action: AuditAction.DELETE,
-      oldValue: { isActive: true },
-      newValue: { isActive: false, archivedAt: branch.archivedAt },
+      oldValue: { name: branch.name, isActive: true },
+      newValue: { name: branch.name, isActive: false, archivedAt: branch.archivedAt },
     });
   }
 }

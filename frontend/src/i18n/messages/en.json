@@ -1090,6 +1090,19 @@
     "text1045": "The most recently created projects you can access.",
     "text1046": "View all projects",
     "text1047": "No projects yet",
-    "text1048": "Projects you can access will appear here."
+    "text1048": "Projects you can access will appear here.",
+    "text1049": "Accepted",
+    "text1050": "Task",
+    "text1051": "Assigned by",
+    "text1052": "Previous assignee",
+    "text1053": "Due date",
+    "text1054": "Created by",
+    "text1055": "Uploaded by",
+    "text1056": "Rated by",
+    "text1057": "Comment",
+    "text1058": "Decision",
+    "text1059": "Archived at",
+    "text1060": "Score",
+    "text1061": "Feedback"
   }
 }

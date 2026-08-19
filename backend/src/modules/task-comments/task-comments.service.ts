@@ -72,7 +72,11 @@ export class TaskCommentsService {
       entityType: 'TaskComment',
       entityId: comment.id,
       action: AuditAction.CREATE,
-      newValue: comment,
+      newValue: {
+        taskId: task.id,
+        taskTitle: task.title,
+        content: comment.content,
+      },
     });
 
     // BR-070: notify relevant parties on new comment (creator + assignees, excluding the author).
@@ -102,17 +106,29 @@ export class TaskCommentsService {
   // BR-061: a User cannot edit another User's comment. BR-062: edited indicator + timestamp.
   async update(id: string, dto: UpdateCommentDto, actor: UserEntity): Promise<TaskCommentEntity> {
     const comment = await this.findOwnedOrThrow(id, actor, 'edit');
+    const oldContent = comment.content;
     comment.content = dto.content;
     comment.isEdited = true;
     comment.editedAt = new Date();
     const saved = await this.commentRepo.save(comment);
+
+    const task = await this.taskRepo.findOne({ where: { id: saved.taskId } });
 
     await this.auditLogsService.record({
       actorId: actor.id,
       entityType: 'TaskComment',
       entityId: saved.id,
       action: AuditAction.UPDATE,
-      newValue: saved,
+      oldValue: {
+        taskId: saved.taskId,
+        taskTitle: task?.title,
+        content: oldContent,
+      },
+      newValue: {
+        taskId: saved.taskId,
+        taskTitle: task?.title,
+        content: saved.content,
+      },
     });
 
     return saved;
@@ -132,12 +148,19 @@ export class TaskCommentsService {
     comment.deletedAt = new Date();
     await this.commentRepo.save(comment);
 
+    const task = await this.taskRepo.findOne({ where: { id: comment.taskId } });
+
     await this.auditLogsService.record({
       actorId: actor.id,
       entityType: 'TaskComment',
       entityId: comment.id,
       action: AuditAction.DELETE,
       reason: isAdmin && !isOwner ? 'Moderated by Admin' : undefined,
+      oldValue: {
+        taskId: comment.taskId,
+        taskTitle: task?.title,
+        content: comment.content,
+      },
     });
   }
 

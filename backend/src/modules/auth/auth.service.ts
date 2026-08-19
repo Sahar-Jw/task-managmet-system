@@ -77,6 +77,7 @@ export class AuthService {
       entityType: 'User',
       entityId: user.id,
       action: AuditAction.LOGIN,
+      newValue: { fullName: user.fullName, email: user.email },
       ipAddress,
     });
 
@@ -104,6 +105,7 @@ export class AuthService {
         entityId: user.id,
         action: AuditAction.ACCOUNT_LOCKED,
         reason: `Locked after ${user.failedLoginAttempts} consecutive failed login attempts`,
+        newValue: { fullName: user.fullName, email: user.email, lockedUntil: user.lockedUntil },
         ipAddress,
       });
     }
@@ -114,6 +116,7 @@ export class AuthService {
       entityType: 'User',
       entityId: user.id,
       action: AuditAction.LOGIN_FAILED,
+      newValue: { fullName: user.fullName, email: user.email, failedLoginAttempts: user.failedLoginAttempts },
       ipAddress,
     });
   }
@@ -377,6 +380,7 @@ export class AuthService {
       entityId: user.id,
       action: AuditAction.UPDATE,
       reason: 'Password reset via forgot-password flow',
+      newValue: { fullName: user.fullName, email: user.email },
     });
 
     return { message: 'Password has been reset. You can now sign in.' };

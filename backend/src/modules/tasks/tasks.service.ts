@@ -2331,12 +2331,17 @@ export class TasksService {
     }
 
 
+    let createAssignee:
+      UserEntity |
+      undefined;
+
     if (
       dto.assignedToId
     ) {
-      await this.assertValidAssignee(
-        dto.assignedToId,
-      );
+      createAssignee =
+        await this.assertValidAssignee(
+          dto.assignedToId,
+        );
     }
 
 
@@ -2356,13 +2361,18 @@ export class TasksService {
     }
 
 
+    let createApprover:
+      UserEntity |
+      undefined;
+
     if (
       needsApproval &&
       dto.approverId
     ) {
-      await this.assertValidApprover(
-        dto.approverId,
-      );
+      createApprover =
+        await this.assertValidApprover(
+          dto.approverId,
+        );
     }
 
 
@@ -2499,8 +2509,18 @@ export class TasksService {
       action:
         AuditAction.CREATE,
 
-      newValue:
-        task,
+      newValue: {
+        ...task,
+
+        createdByName:
+          actor.fullName,
+
+        assigneeName:
+          createAssignee?.fullName,
+
+        approverName:
+          createApprover?.fullName,
+      },
     });
 
 
@@ -2775,12 +2795,17 @@ export class TasksService {
     }
 
 
+    let updateAssignee:
+      UserEntity |
+      undefined;
+
     if (
       effectiveAssigneeId
     ) {
-      await this.assertValidAssignee(
-        effectiveAssigneeId,
-      );
+      updateAssignee =
+        await this.assertValidAssignee(
+          effectiveAssigneeId,
+        );
     }
 
 
@@ -2815,13 +2840,18 @@ export class TasksService {
     }
 
 
+    let updateApprover:
+      UserEntity |
+      undefined;
+
     if (
       effectiveNeedsApproval &&
       effectiveApproverId
     ) {
-      await this.assertValidApprover(
-        effectiveApproverId,
-      );
+      updateApprover =
+        await this.assertValidApprover(
+          effectiveApproverId,
+        );
     }
 
 
@@ -2968,6 +2998,42 @@ export class TasksService {
       );
 
 
+    /*
+     * Resolve human-readable names for any changed User references so the
+     * Audit Log reads "assignee: X -> Y" instead of two opaque UUIDs (the
+     * Audit Log UI hides raw *Id fields on purpose).
+     */
+    const oldAssigneeChanged =
+      oldValue.assignedToId !==
+      saved.assignedToId;
+
+    const oldApproverChanged =
+      oldApproverId !==
+      saved.approverId;
+
+    const [
+      oldAssigneeForAudit,
+      oldApproverForAudit,
+    ] = await Promise.all([
+      oldAssigneeChanged &&
+      oldValue.assignedToId
+        ? this.userRepo.findOne({
+            where: {
+              id: oldValue.assignedToId,
+            },
+          })
+        : Promise.resolve(undefined),
+
+      oldApproverChanged &&
+      oldApproverId
+        ? this.userRepo.findOne({
+            where: {
+              id: oldApproverId,
+            },
+          })
+        : Promise.resolve(undefined),
+    ]);
+
     await this.auditLogsService.record({
       actorId:
         actor.id,
@@ -2981,10 +3047,29 @@ export class TasksService {
       action:
         AuditAction.UPDATE,
 
-      oldValue,
+      oldValue: {
+        ...oldValue,
 
-      newValue:
-        saved,
+        assigneeName:
+          oldAssigneeForAudit?.fullName,
+
+        approverName:
+          oldApproverForAudit?.fullName,
+      },
+
+      newValue: {
+        ...saved,
+
+        assigneeName:
+          oldAssigneeChanged
+            ? updateAssignee?.fullName
+            : undefined,
+
+        approverName:
+          oldApproverChanged
+            ? updateApprover?.fullName
+            : undefined,
+      },
     });
 
 
@@ -3090,6 +3175,9 @@ export class TasksService {
       oldValue,
 
       newValue: {
+        taskTitle:
+          saved.title,
+
         assigneeCanDownloadAttachments:
           saved.assigneeCanDownloadAttachments,
       },
@@ -3405,6 +3493,9 @@ export class TasksService {
 
 
     const oldValue = {
+      taskTitle:
+        task.title,
+
       status:
         task.status,
 
@@ -3460,6 +3551,9 @@ export class TasksService {
       oldValue,
 
       newValue: {
+        taskTitle:
+          saved.title,
+
         status:
           saved.status,
 
@@ -3561,6 +3655,9 @@ export class TasksService {
 
 
     const oldValue = {
+      taskTitle:
+        task.title,
+
       approvalStatus:
         task.approvalStatus,
 
@@ -3626,6 +3723,9 @@ export class TasksService {
       oldValue,
 
       newValue: {
+        taskTitle:
+          saved.title,
+
         approvalStatus:
           saved.approvalStatus,
 
@@ -3747,6 +3847,9 @@ export class TasksService {
 
 
     const oldValue = {
+      taskTitle:
+        task.title,
+
       status:
         task.status,
     };
@@ -3784,6 +3887,9 @@ export class TasksService {
       oldValue,
 
       newValue: {
+        taskTitle:
+          saved.title,
+
         status:
           saved.status,
       },
@@ -3917,6 +4023,14 @@ export class TasksService {
 
         reason:
           'Hard delete',
+
+        oldValue: {
+          taskTitle:
+            task.title,
+
+          status:
+            task.status,
+        },
       });
 
 
@@ -3982,6 +4096,22 @@ export class TasksService {
 
       action:
         AuditAction.ARCHIVE,
+
+      oldValue: {
+        taskTitle:
+          task.title,
+
+        status:
+          task.statusBeforeArchive,
+      },
+
+      newValue: {
+        taskTitle:
+          task.title,
+
+        status:
+          task.status,
+      },
     });
 
 
@@ -4036,6 +4166,9 @@ export class TasksService {
 
 
     const oldValue = {
+      taskTitle:
+        task.title,
+
       status:
         task.status,
 
@@ -4079,6 +4212,9 @@ export class TasksService {
       oldValue,
 
       newValue: {
+        taskTitle:
+          saved.title,
+
         status:
           saved.status,
       },

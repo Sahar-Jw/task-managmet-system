@@ -91,6 +91,11 @@ const ACTION_LABELS:
     ar: uiText(true, 'text0688'),
   },
 
+  Accept: {
+    en: uiText(false, 'text1049'),
+    ar: uiText(true, 'text1049'),
+  },
+
   Reassign: {
     en: uiText(false, 'text0689'),
     ar: uiText(true, 'text0689'),
@@ -165,6 +170,7 @@ function actionLabel(
     Approve: 'text0686',
     Reject: 'text0687',
     Assign: 'text0688',
+    Accept: 'text1049',
     Reassign: 'text0689',
     StatusChange: 'text0690',
     Login: 'text0691',
@@ -199,6 +205,7 @@ function actionClasses(
     case 'Reassign':
       return 'bg-violet-50 text-violet-700 ring-violet-100';
 
+    case 'Accept':
     case 'Approve':
       return 'bg-emerald-50 text-emerald-700 ring-emerald-100';
 
@@ -270,6 +277,11 @@ function entityLabel(
       ar: uiText(true, 'text0706'),
     },
 
+    AssignmentApproval: {
+      en: uiText(false, 'text0706'),
+      ar: uiText(true, 'text0706'),
+    },
+
     TaskComment: {
       en: uiText(false, 'text0707'),
       ar: uiText(true, 'text0707'),
@@ -336,6 +348,15 @@ function getEntityLink(
     case 'Project':
       return `/projects/${log.entityId}`;
 
+    case 'TaskAssignment':
+    case 'AssignmentApproval': {
+      const taskId =
+        (log.newValue?.taskId as string | undefined) ||
+        (log.oldValue?.taskId as string | undefined);
+
+      return taskId ? `/tasks/${taskId}` : null;
+    }
+
     default:
       return null;
   }
@@ -374,6 +395,20 @@ const AUDIT_FIELD_LABELS:
   valueAr: 'text0807',
   codeEn: 'text0808',
   codeAr: 'text0809',
+  taskTitle: 'text1050',
+  assigneeName: 'text0791',
+  assignedByName: 'text1051',
+  previousAssigneeName: 'text1052',
+  dueDate: 'text1053',
+  createdByName: 'text1054',
+  approverName: 'text0792',
+  uploadedByName: 'text1055',
+  ratedByName: 'text1056',
+  content: 'text1057',
+  decision: 'text1058',
+  archivedAt: 'text1059',
+  score: 'text1060',
+  feedback: 'text1061',
 };
 
 
@@ -481,10 +516,10 @@ function entityDisplayName(
   } as Record<string, unknown>;
 
   const candidates = isArabic
-    ? [values.titleAr, values.valueAr, values.nameAr, values.fullName, values.fileName,
-        values.siteName, values.titleEn, values.valueEn, values.nameEn]
-    : [values.titleEn, values.valueEn, values.nameEn, values.fullName, values.fileName,
-        values.siteName, values.titleAr, values.valueAr, values.nameAr];
+    ? [values.titleAr, values.title, values.nameAr, values.name, values.valueAr, values.fullName, values.taskTitle,
+        values.fileName, values.siteName, values.titleEn, values.valueEn, values.nameEn]
+    : [values.titleEn, values.title, values.nameEn, values.name, values.valueEn, values.fullName, values.taskTitle,
+        values.fileName, values.siteName, values.titleAr, values.valueAr, values.nameAr];
 
   const match = candidates.find((value) => typeof value === 'string' && value.trim());
   return match ? String(match) : entityLabel(log.entityType, isArabic);

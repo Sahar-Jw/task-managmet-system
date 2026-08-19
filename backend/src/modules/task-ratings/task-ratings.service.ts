@@ -81,7 +81,14 @@ export class TaskRatingsService {
       entityType: 'TaskRating',
       entityId: saved.id,
       action: isUpdate ? AuditAction.UPDATE : AuditAction.CREATE,
-      newValue: saved,
+      newValue: {
+        taskId: task.id,
+        taskTitle: task.title,
+        ratedById: actor.id,
+        ratedByName: actor.fullName,
+        score: saved.score,
+        feedback: saved.feedback,
+      },
     });
 
     // BR-059: rating a Task does not alter the Task's status — intentionally

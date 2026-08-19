@@ -82,7 +82,8 @@ export class DepartmentsService {
       entityType: 'Department',
       entityId: department.id,
       action: AuditAction.DELETE,
-      newValue: { isActive: false, archivedAt: department.archivedAt },
+      oldValue: { name: department.name, isActive: true },
+      newValue: { name: department.name, isActive: false, archivedAt: department.archivedAt },
     });
   }
 }

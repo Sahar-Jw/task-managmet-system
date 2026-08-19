@@ -186,7 +186,7 @@ function ProjectDetailContent() {
                     {uiText(isArabic, 'text0879')}
                   </button>
                 )}
-                {isAdmin && (
+                {canManage && (
                   <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
                     {busy ? uiText(isArabic, 'text0881') : uiText(isArabic, 'text0882')}
                   </button>
@@ -210,7 +210,7 @@ function ProjectDetailContent() {
               </div>
             )}
 
-            {isAdmin && project.status === 'Archived' && (
+            {canManage && project.status === 'Archived' && (
               <div className="mt-5 border-t border-slate-100 pt-4">
                 <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
                   {busy ? uiText(isArabic, 'text0885') : uiText(isArabic, 'text0886')}

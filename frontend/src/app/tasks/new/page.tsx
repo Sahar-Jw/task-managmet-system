@@ -753,10 +753,54 @@ function NewTaskContent() {
             excludeArchived:
               'true',
           })
-        : TasksApi.mine({
-            limit:
-              '100',
-          });
+        : Promise.all([
+            TasksApi.mine({
+              limit:
+                '100',
+            }),
+
+            TasksApi.assignedByMe({
+              limit:
+                '100',
+            }),
+          ]).then(
+            ([
+              assignedToMe,
+              createdByMe,
+            ]) => {
+              const byId =
+                new Map(
+                  [
+                    ...assignedToMe.items,
+                    ...createdByMe.items,
+                  ].map(
+                    (
+                      item,
+                    ) => [
+                      item.id,
+                      item,
+                    ],
+                  ),
+                );
+
+
+              const items =
+                Array.from(
+                  byId.values(),
+                );
+
+
+              return {
+                items,
+                total:
+                  items.length,
+                page:
+                  1,
+                limit:
+                  100,
+              };
+            },
+          );
 
 
     tasksRequest
@@ -2792,6 +2836,10 @@ function NewTaskContent() {
                           SAR
                         </option>
 
+                        <option value="SYP">
+                          {uiText(isArabic, 'text1039')}
+                        </option>
+
                         <option value="USD">
                           USD
                         </option>
@@ -2854,20 +2902,16 @@ function NewTaskContent() {
                       isArabic
                     }
                     action={
-                      isAdmin
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'task_type',
-                                )
-                              }
-                            />
+                      <AddButton
+                        isArabic={
+                          isArabic
+                        }
+                        onClick={() =>
+                          openQuickAdd(
+                            'task_type',
                           )
-                        : undefined
+                        }
+                      />
                     }
                   >
                     {uiText(isArabic, 'text0163')}
@@ -2923,20 +2967,16 @@ function NewTaskContent() {
                       isArabic
                     }
                     action={
-                      isAdmin
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'task_priority',
-                                )
-                              }
-                            />
+                      <AddButton
+                        isArabic={
+                          isArabic
+                        }
+                        onClick={() =>
+                          openQuickAdd(
+                            'task_priority',
                           )
-                        : undefined
+                        }
+                      />
                     }
                   >
                     {uiText(isArabic, 'text0297')}

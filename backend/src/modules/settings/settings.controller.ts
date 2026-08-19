@@ -33,7 +33,7 @@ export class SettingsController {
   }
 
   @Post()
-  @Roles(RoleName.ADMIN)
+  @Roles(RoleName.ADMIN, RoleName.USER)
   create(@Body() dto: CreateSettingDto, @CurrentUser() user: UserEntity) {
     return this.settingsService.create(dto, user);
   }

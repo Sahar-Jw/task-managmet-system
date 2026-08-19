@@ -125,6 +125,7 @@ const EXACT_AR: Record<string, string> = {
   'Workflow actions cannot contain duplicate entries': 'لا يمكن أن يحتوي سير العمل على إجراءات مكررة.',
   'Start Task cannot be disabled': 'لا يمكن تعطيل إجراء بدء المهمة.',
   'Every dictionary entry requires English and Arabic text': 'يتطلب كل إدخال في القاموس نصاً باللغتين الإنجليزية والعربية.',
+  'Only Admin may create organization settings': 'يمكن للمسؤول فقط إنشاء إعدادات الفروع والأقسام والمؤسسة.',
 };
 
 const STATUS_AR: Record<number, string> = {
@@ -218,7 +219,7 @@ function translateValidation(message: string): string | null {
   match = message.match(/^(.+) must be a valid enum value$/i);
   if (match) return `قيمة حقل ${arabicFieldName(match[1])} غير مدعومة.`;
 
-  if (/phone must be 12 digits/i.test(message)) return 'يجب أن يتكون رقم الهاتف من 12 رقماً فقط، مثل 091234567890.';
+  if (/phone must contain 8 to 15 digits/i.test(message)) return 'أدخل من 8 إلى 15 رقماً متضمناً رمز الدولة، مثل 963912345678.';
 
   return null;
 }
@@ -263,7 +264,19 @@ function translateBusinessError(message: string): string | null {
   if (match) return `لا يمكن إكمال المهمة الرئيسية لوجود ${match[1]} من المهام الفرعية المفتوحة.`;
 
   match = message.match(/^Cannot transition Task from (.+) to (.+)$/i);
-  if (match) return `لا يمكن تغيير حالة المهمة من ${match[1]} إلى ${match[2]}.`;
+  if (match) {
+    const statusAr: Record<string, string> = {
+      Pending: 'قيد الانتظار',
+      Unassigned: 'غير مسندة',
+      InProgress: 'قيد التنفيذ',
+      PendingApproval: 'بانتظار الموافقة',
+      Completed: 'مكتملة',
+      Reopened: 'أعيد فتحها',
+      Finished: 'منتهية',
+      Archived: 'مؤرشفة',
+    };
+    return `لا يمكن تغيير حالة المهمة من ${statusAr[match[1]] || match[1]} إلى ${statusAr[match[2]] || match[2]}.`;
+  }
 
   match = message.match(/^This Assignment is still waiting for a response\. It can be reassigned after (\d+) days\. (\d+) day\(s\) remaining\.$/i);
   if (match) return `لا يزال التكليف بانتظار الرد. يمكن إعادة التكليف بعد ${match[1]} يوماً، والمتبقي ${match[2]} يوماً.`;

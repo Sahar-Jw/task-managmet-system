@@ -48,16 +48,13 @@ export class ProjectsController {
     return this.projectsService.remove(id, user);
   }
 
-  // BR-024: archive instead of delete once a Project has real work on it.
-  // Admin-only.
+  // Admin can archive any Project; a User can archive only their own.
   @Post(':id/archive')
-  @Roles(RoleName.ADMIN)
   archive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.projectsService.archive(id, user);
   }
 
   @Post(':id/unarchive')
-  @Roles(RoleName.ADMIN)
   unarchive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.projectsService.unarchive(id, user);
   }

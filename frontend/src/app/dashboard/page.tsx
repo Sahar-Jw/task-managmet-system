@@ -2403,8 +2403,7 @@ function DashboardContent() {
              * =================================================
              */}
 
-            {isAdmin && (
-              <div className="mt-6 grid gap-6 xl:grid-cols-2">
+            <div className="mt-6 grid gap-6 xl:grid-cols-2">
                 {/*
                  * BRANCH
                  */}
@@ -2761,8 +2760,7 @@ function DashboardContent() {
                     </div>
                   )}
                 </div>
-              </div>
-            )}
+            </div>
           </>
         )}
       </section>

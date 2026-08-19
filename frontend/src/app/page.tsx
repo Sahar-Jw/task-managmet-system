@@ -35,7 +35,6 @@ import {
 
 import {
   isValidPhone,
-  PHONE_VALIDATION_MESSAGE,
 } from '@/lib/validation';
 
 import PasswordInput from '@/components/PasswordInput';
@@ -543,7 +542,7 @@ export default function Home() {
         )
         .slice(
           0,
-          12,
+          15,
         );
 
     setPhone(
@@ -586,7 +585,7 @@ export default function Home() {
       )
     ) {
       setPhoneError(
-        PHONE_VALIDATION_MESSAGE,
+        uiText(isArabic, 'text1038'),
       );
 
       setSubmitting(
@@ -1625,9 +1624,9 @@ export default function Home() {
                               type="tel"
                               inputMode="numeric"
                               maxLength={
-                                12
+                                15
                               }
-                              placeholder="091234567890"
+                              placeholder="963912345678"
                               className="input"
                               value={
                                 phone
@@ -1645,7 +1644,7 @@ export default function Home() {
                               </p>
                             ) : (
                               <p className="mt-1.5 text-xs text-slate-400">
-                                {uiText(isArabic, 'text0063')}
+                                {uiText(isArabic, 'text1037')}
                               </p>
                             )}
                           </div>

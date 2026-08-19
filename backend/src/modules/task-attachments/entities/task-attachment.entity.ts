@@ -1,4 +1,7 @@
 import {
+  AfterLoad,
+  BeforeInsert,
+  BeforeUpdate,
   Check,
   Column,
   CreateDateColumn,
@@ -163,6 +166,24 @@ export class TaskAttachmentEntity {
   })
   fileName!:
     string;
+
+
+  /* Normalize UTF-8 filenames that multipart parsers decoded as latin1. */
+  @AfterLoad()
+  @BeforeInsert()
+  @BeforeUpdate()
+  normalizeUnicodeFileName() {
+    if (
+      !this.fileName ||
+      !/[ÃÂØÙÐÑ]/.test(this.fileName)
+    ) return;
+
+    const decoded = Buffer.from(this.fileName, 'latin1').toString('utf8');
+
+    if (!decoded.includes('\uFFFD')) {
+      this.fileName = decoded;
+    }
+  }
 
 
   @Column({

@@ -1866,7 +1866,7 @@ function ProjectsContent() {
           )}
 
 
-        {isAdmin &&
+        {manageable &&
           project.status !==
             'Archived' && (
             <button
@@ -1895,7 +1895,7 @@ function ProjectsContent() {
           )}
 
 
-        {isAdmin &&
+        {manageable &&
           project.status ===
             'Archived' && (
             <button

@@ -209,6 +209,14 @@ export const multerConfig =
             boolean,
         ) => void,
     ) => {
+      if (/[ÃÂØÙÐÑ]/.test(file.originalname)) {
+        const decodedName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+
+        if (!decodedName.includes('\uFFFD')) {
+          file.originalname = decodedName;
+        }
+      }
+
       const extension =
         extname(
           file.originalname,

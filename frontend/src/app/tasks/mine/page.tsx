@@ -1610,10 +1610,13 @@ function MyTasksContent() {
 
 
     const canFinish =
-      task.status !==
-        'Archived' &&
-      task.status !==
-        'Finished';
+      [
+        'Pending',
+        'Unassigned',
+        'InProgress',
+      ].includes(
+        task.status,
+      );
 
 
     const canArchive =

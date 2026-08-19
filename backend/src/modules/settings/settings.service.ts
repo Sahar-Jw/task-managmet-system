@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -42,6 +43,10 @@ import {
 import {
   AuditAction,
 } from '../../shared/enums/audit-action.enum';
+
+import {
+  RoleName,
+} from '../../shared/enums/role.enum';
 
 @Injectable()
 export class SettingsService {
@@ -141,6 +146,23 @@ export class SettingsService {
     dto: CreateSettingDto,
     actor: UserEntity,
   ): Promise<SettingEntity> {
+    const userCreatableTypes = [
+      SettingType.TASK_TYPE,
+      SettingType.TASK_PRIORITY,
+    ];
+
+    if (
+      actor.role.name !== RoleName.ADMIN &&
+      !userCreatableTypes.includes(dto.type)
+    ) {
+      throw new ForbiddenException(
+        appError(
+          'ONLY_ADMIN_MAY_CREATE_ORGANIZATION_SETTINGS',
+          'Only Admin may create organization settings',
+        ),
+      );
+    }
+
     const isListType =
       LIST_SETTING_TYPES.includes(
         dto.type,

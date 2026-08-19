@@ -297,9 +297,10 @@ export class TaskAssignmentsService {
         assignment,
     });
 
-    await this.notificationsService.dispatch({
-      recipientId:
-        assignee.id,
+    if (assignee.id !== actor.id) {
+      await this.notificationsService.dispatch({
+        recipientId:
+          assignee.id,
 
       type:
         NotificationType.TASK_ASSIGNED,
@@ -329,7 +330,8 @@ export class TaskAssignmentsService {
         dueDate:
           task.deadlineDate,
       },
-    });
+      });
+    }
 
     return assignment;
   }
@@ -430,7 +432,7 @@ export class TaskAssignmentsService {
       },
     });
 
-    if (task) {
+    if (task && task.createdById !== actor.id) {
       await this.notificationsService.dispatch({
         recipientId:
           task.createdById,
@@ -887,9 +889,10 @@ export class TaskAssignmentsService {
    * =========================================================
    */
 
-  await this.notificationsService.dispatch({
-    recipientId:
-      newAssignee.id,
+  if (newAssignee.id !== actor.id) {
+    await this.notificationsService.dispatch({
+      recipientId:
+        newAssignee.id,
 
     type:
       NotificationType.TASK_REASSIGNED,
@@ -919,7 +922,8 @@ export class TaskAssignmentsService {
       dueDate:
         task.deadlineDate,
     },
-  });
+    });
+  }
 
   return newAssignment;
 }

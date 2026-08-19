@@ -31,7 +31,6 @@ import type {
 
 import {
   isValidPhone,
-  PHONE_VALIDATION_MESSAGE,
 } from '@/lib/validation';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
@@ -633,7 +632,7 @@ function ProfileContent() {
         )
         .slice(
           0,
-          12,
+          15,
         );
 
 
@@ -704,7 +703,7 @@ function ProfileContent() {
       )
     ) {
       setPhoneError(
-        PHONE_VALIDATION_MESSAGE,
+        uiText(isArabic, 'text1038'),
       );
 
       return;
@@ -1586,9 +1585,9 @@ function ProfileContent() {
                   inputMode="numeric"
                   autoComplete="tel"
                   maxLength={
-                    12
+                    15
                   }
-                  placeholder="963912345690"
+                  placeholder="963912345678"
                   onChange={
                     handlePhoneChange
                   }
@@ -1614,7 +1613,7 @@ function ProfileContent() {
                       text-slate-400
                     "
                   >
-                    {uiText(isArabic, 'text0959')}
+                    {uiText(isArabic, 'text1037')}
                   </p>
                 )}
               </div>

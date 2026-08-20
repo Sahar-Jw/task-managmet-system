@@ -628,6 +628,9 @@ export interface NotificationMetadata {
   actorName?:
     string;
 
+  actorAvatarUrl?:
+    string | null;
+
   decision?:
     string;
 

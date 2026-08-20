@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { appError } from '../../common/errors/app-error';
+import { UserEntity } from '../users/entities/user.entity';
 
 import {
   InjectRepository,
@@ -45,6 +46,29 @@ import {
  * ============================================================
  */
 
+export interface NotificationMetadata {
+  taskId?: string;
+  taskTitle?: string;
+  taskTitleAr?: string;
+  taskTitleEn?: string;
+  projectId?: string;
+  projectName?: string;
+  assignmentId?: string;
+  commentId?: string;
+  approvalId?: string;
+  actorId?: string;
+  actorName?: string;
+  actorAvatarUrl?: string;
+  decision?: string;
+  priority?: string;
+  status?: string;
+  previousStatus?: string;
+  dueDate?: string;
+  previousDueDate?: string;
+  reason?: string;
+  dedupeKey?: string;
+}
+
 export interface DispatchNotificationParams {
   recipientId: string;
 
@@ -54,11 +78,7 @@ export interface DispatchNotificationParams {
 
   message: string;
 
-  metadata?:
-    Record<
-      string,
-      any
-    >;
+  metadata?: NotificationMetadata;
 
   /*
    * Optional protection against accidentally creating the same
@@ -87,11 +107,7 @@ export interface DispatchManyNotificationParams {
   message:
     string;
 
-  metadata?:
-    Record<
-      string,
-      any
-    >;
+  metadata?: NotificationMetadata;
 
   dedupeKey?:
     string;
@@ -159,6 +175,10 @@ export class NotificationsService {
     )
     private readonly notificationRepo:
       Repository<NotificationEntity>,
+
+    @InjectRepository(UserEntity)
+    private readonly userRepo:
+      Repository<UserEntity>,
   ) {}
 
 
@@ -210,6 +230,7 @@ export class NotificationsService {
 
         'actorId',
         'actorName',
+        'actorAvatarUrl',
 
         'decision',
         'priority',
@@ -436,17 +457,25 @@ export class NotificationsService {
      * ========================================================
      */
 
-    const metadata =
-      this.sanitizeMetadata({
-        ...params.metadata,
+    const notificationMetadata: NotificationMetadata = {
+      ...(params.metadata ?? {}),
+      ...(params.dedupeKey
+        ? { dedupeKey: params.dedupeKey }
+        : {}),
+    };
 
-        ...(params.dedupeKey
-          ? {
-              dedupeKey:
-                params.dedupeKey,
-            }
-          : {}),
+    if (notificationMetadata.actorId && !notificationMetadata.actorAvatarUrl) {
+      const actor = await this.userRepo.findOne({
+        where: { id: notificationMetadata.actorId },
       });
+
+      if (actor?.avatarUrl) {
+        notificationMetadata.actorAvatarUrl = actor.avatarUrl;
+      }
+    }
+
+    const metadata =
+      this.sanitizeMetadata(notificationMetadata);
 
 
     /*

@@ -4,6 +4,7 @@
 
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
+import Avatar from '@/components/Avatar';
 
 import {
   useEffect,
@@ -1406,7 +1407,15 @@ function DashboardContent() {
 
 
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
+          <div className="flex min-w-0 items-start gap-3">
+            <Avatar
+              name={user?.fullName || firstName || 'User'}
+              avatarUrl={user?.avatarUrl}
+              size="md"
+              className="shrink-0"
+            />
+
+            <div>
             <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
               {uiText(isAr, 'text0279')}
             </div>
@@ -1422,6 +1431,7 @@ function DashboardContent() {
                 ? uiText(isAr, 'text0280')
                 : uiText(isAr, 'text0281')}
             </p>
+            </div>
           </div>
 
 

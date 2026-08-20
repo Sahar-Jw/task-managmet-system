@@ -54,6 +54,7 @@ import type {
 import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
 import { canEditTask } from '@/lib/task-permissions';
 import TaskEditPanel from '@/components/TaskEditPanel';
+import AvatarSelect from '@/components/AvatarSelect';
 
 
 /*
@@ -3179,48 +3180,14 @@ function TaskDetailContent() {
                         sm:flex-row
                       "
                     >
-                      <select
-                        className="input"
-                        value={
-                          reassignUserId
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          setReassignUserId(
-                            event.target.value,
-                          )
-                        }
-                      >
-                        <option value="">
-                          {uiText(isArabic, 'text0132')}
-                        </option>
-
-                        {assignableUsers
-                          .filter(
-                            (
-                              item,
-                            ) =>
-                              item.id !==
-                              assignmentToReassign.assigneeId,
-                          )
-                          .map(
-                            (
-                              item,
-                            ) => (
-                              <option
-                                key={
-                                  item.id
-                                }
-                                value={
-                                  item.id
-                                }
-                              >
-                                {item.fullName}
-                              </option>
-                            ),
-                          )}
-                      </select>
+                      <AvatarSelect
+                        users={assignableUsers.filter(
+                          (item) => item.id !== assignmentToReassign.assigneeId,
+                        )}
+                        value={reassignUserId}
+                        onChange={setReassignUserId}
+                        placeholder={uiText(isArabic, 'text0132')}
+                      />
 
                       <button
                         type="button"

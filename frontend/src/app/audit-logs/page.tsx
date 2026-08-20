@@ -18,6 +18,7 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Pagination from '@/components/Pagination';
+import Avatar from '@/components/Avatar';
 
 import {
   ApiError,
@@ -649,23 +650,12 @@ function AuditItem({
            * USER AVATAR
            */}
 
-          <div
-            className="
-              flex
-              h-11
-              w-11
-              shrink-0
-              items-center
-              justify-center
-              rounded-xl
-              bg-brand-50
-              text-sm
-              font-semibold
-              text-brand-700
-            "
-          >
-            {initial}
-          </div>
+          <Avatar
+            name={actorName}
+            avatarUrl={log.actor?.avatarUrl}
+            size="sm"
+            className="shrink-0 rounded-xl"
+          />
 
 
           <div className="min-w-0">

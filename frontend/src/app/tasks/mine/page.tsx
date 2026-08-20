@@ -23,6 +23,7 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import Avatar from '@/components/Avatar';
 import ReasonModal from '@/components/ReasonModal';
 import Pagination from '@/components/Pagination';
 
@@ -2482,18 +2483,23 @@ function MyTasksContent() {
                               )}
                         </div>
 
-                        <div className="mt-1 truncate text-xs font-medium text-slate-700">
-                          {tab ===
-                          'assignedToMe'
-                            ? task.createdBy
-                                ?.fullName ||
-                              '—'
-                            : task.assignedTo
-                                ?.fullName ||
-                              (
-                                uiText(isArabic, 'text0115')
-                              )}
-                        </div>
+                        {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo) ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName || '—'}
+                              avatarUrl={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate text-xs font-medium text-slate-700">
+                              {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                            {uiText(isArabic, 'text0115')}
+                          </div>
+                        )}
                       </div>
 
 
@@ -2719,18 +2725,23 @@ function MyTasksContent() {
                       </div>
 
 
-                      <div className="truncate text-xs font-medium text-slate-700">
-                        {tab ===
-                        'assignedToMe'
-                          ? task.createdBy
-                              ?.fullName ||
-                            '—'
-                          : task.assignedTo
-                              ?.fullName ||
-                            (
-                              uiText(isArabic, 'text0115')
-                            )}
-                      </div>
+                      {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo) ? (
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Avatar
+                            name={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName || '—'}
+                            avatarUrl={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.avatarUrl}
+                            size="sm"
+                            className="shrink-0"
+                          />
+                          <span className="truncate text-xs font-medium text-slate-700">
+                            {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="truncate text-xs font-medium text-slate-700">
+                          {uiText(isArabic, 'text0115')}
+                        </div>
+                      )}
 
 
                       <div className="truncate text-xs font-medium text-slate-700">

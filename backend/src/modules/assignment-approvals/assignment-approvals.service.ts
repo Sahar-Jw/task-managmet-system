@@ -132,6 +132,7 @@ export class AssignmentApprovalsService {
       metadata: {
         taskId: task.id,
         assignmentId,
+        actorId: actor.id,
         actorName: actor.fullName,
         taskTitle: task.title,
         decision,

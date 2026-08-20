@@ -94,6 +94,7 @@ export class TaskCommentsService {
         metadata: {
           taskId: task.id,
           commentId: comment.id,
+          actorId: actor.id,
           actorName: actor.fullName,
           taskTitle: task.title,
         },

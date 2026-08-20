@@ -346,6 +346,9 @@ export class TaskAssignmentsService {
         assignmentId:
           assignment.id,
 
+        actorId:
+          actor.id,
+
         actorName:
           actor.fullName,
 
@@ -498,6 +501,9 @@ export class TaskAssignmentsService {
           assignmentId:
             saved.id,
 
+          actorId:
+            actor.id,
+
           actorName:
             actor.fullName,
 
@@ -644,6 +650,9 @@ export class TaskAssignmentsService {
 
           assignmentId:
             saved.id,
+
+          actorId:
+            actor.id,
 
           actorName:
             actor.fullName,
@@ -1002,6 +1011,9 @@ export class TaskAssignmentsService {
 
       assignmentId:
         newAssignment.id,
+
+      actorId:
+        actor.id,
 
       actorName:
         actor.fullName,

@@ -21,6 +21,7 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Pagination from '@/components/Pagination';
+import Avatar from '@/components/Avatar';
 
 import {
   ApiError,
@@ -801,24 +802,31 @@ function NotificationRow({
          * ====================================================
          */}
 
-        <div
-          className={`
-            flex
-            h-11
-            w-11
-            shrink-0
-            items-center
-            justify-center
-            rounded-xl
-            text-base
-            font-bold
-            ${config.iconClass}
-          `}
-        >
-          {
-            config.icon
-          }
-        </div>
+        {notification.metadata?.actorName ? (
+          <Avatar
+            name={notification.metadata.actorName}
+            avatarUrl={notification.metadata.actorAvatarUrl}
+            size="sm"
+            className="shrink-0"
+          />
+        ) : (
+          <div
+            className={`
+              flex
+              h-11
+              w-11
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              text-base
+              font-bold
+              ${config.iconClass}
+            `}
+          >
+            {config.icon}
+          </div>
+        )}
 
 
         {/*

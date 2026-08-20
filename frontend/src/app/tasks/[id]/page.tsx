@@ -1997,7 +1997,6 @@ function TaskDetailContent() {
                   font-semibold
                   tracking-tight
                   text-slate-950
-                  sm:text-2xl
                 "
               >
                 {title}

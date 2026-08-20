@@ -1722,7 +1722,7 @@ function MyTasksContent() {
             </div>
 
 
-            <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-950">
               {uiText(isArabic, 'text0159')}
             </h1>
 

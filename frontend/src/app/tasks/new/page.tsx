@@ -20,6 +20,7 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import AvatarSelect from '@/components/AvatarSelect';
 
 import {
   useAuth,
@@ -3508,43 +3509,23 @@ function NewTaskContent() {
                   </FieldLabel>
 
 
-                  <select
-                    className="input"
+                  <AvatarSelect
+                    users={
+                      assignableUsers
+                    }
                     value={
                       form.assignmentUserId
                     }
                     onChange={(
-                      event,
+                      value,
                     ) =>
                       set(
                         'assignmentUserId',
-
-                        event.target.value,
+                        value,
                       )
                     }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0189')}
-                    </option>
-
-
-                    {assignableUsers.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.id
-                          }
-                        >
-                          {item.fullName}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                    placeholder={uiText(isArabic, 'text0189')}
+                  />
 
 
                   {form.assignmentUserId ? (

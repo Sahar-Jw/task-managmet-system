@@ -138,9 +138,9 @@ export class CreateTaskDto {
   startDate?: string;
 
 
-  @IsOptional()
+  @IsNotEmpty()
   @IsDateString()
-  deadlineDate?: string;
+  deadlineDate!: string;
 }
 
 

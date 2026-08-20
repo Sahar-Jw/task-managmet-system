@@ -1,14 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
 import { ApiError } from '@/lib/api';
-import { ProjectsApi, TasksApi } from '@/lib/endpoints';
-import type { Project, Task } from '@/lib/types';
+import { ProjectsApi, TasksApi, UsersApi } from '@/lib/endpoints';
+import type { Project, Task, User } from '@/lib/types';
+import Avatar from '@/components/Avatar';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
@@ -23,6 +24,7 @@ function ProjectDetailContent() {
 
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -32,6 +34,11 @@ function ProjectDetailContent() {
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [taskSearch, setTaskSearch] = useState('');
+  const [taskStatus, setTaskStatus] = useState('');
+  const [taskPriority, setTaskPriority] = useState('');
+  const [taskType, setTaskType] = useState('');
+  const [taskAssigneeId, setTaskAssigneeId] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -42,9 +49,14 @@ function ProjectDetailContent() {
       const fetchTasks = isAdmin
         ? TasksApi.list({ projectId: id, limit: '100' })
         : TasksApi.mine({ projectId: id, limit: '100' });
-      const [p, t] = await Promise.all([ProjectsApi.get(id), fetchTasks]);
+      const [p, t, u] = await Promise.all([
+        ProjectsApi.get(id),
+        fetchTasks,
+        UsersApi.list({ limit: '100' }).catch(() => ({ items: [], total: 0, page: 1, limit: 100 })),
+      ]);
       setProject(p);
       setTasks(t.items);
+      setUsers(u.items.filter((item) => item.isActive));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0889'));
     } finally {
@@ -60,6 +72,31 @@ function ProjectDetailContent() {
   if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
 
   const canManage = isAdmin || project.createdById === user?.id;
+  const filteredTasks = useMemo(() => {
+    const term = taskSearch.trim().toLowerCase();
+
+    return tasks.filter((task) => {
+      const matchesSearch =
+        !term ||
+        task.title.toLowerCase().includes(term) ||
+        (task.description || '').toLowerCase().includes(term) ||
+        (task.assignedTo?.fullName || '').toLowerCase().includes(term) ||
+        (task.createdBy?.fullName || '').toLowerCase().includes(term) ||
+        ((isArabic ? task.department?.valueAr : task.department?.valueEn) || '').toLowerCase().includes(term);
+
+      return (
+        matchesSearch &&
+        (!taskStatus || task.status === taskStatus) &&
+        (!taskPriority || task.priority === taskPriority) &&
+        (!taskType || task.taskType === taskType) &&
+        (!taskAssigneeId || task.assignedToId === taskAssigneeId)
+      );
+    });
+  }, [isArabic, taskAssigneeId, taskPriority, taskSearch, taskStatus, taskType, tasks]);
+
+  const taskStatuses = Array.from(new Set(tasks.map((task) => task.status))).filter(Boolean);
+  const taskPriorities = Array.from(new Set(tasks.map((task) => task.priority))).filter(Boolean);
+  const taskTypes = Array.from(new Set(tasks.map((task) => task.taskType))).filter(Boolean);
 
   function startEdit() {
     setEditForm({ name: project!.name, description: project!.description || '' });
@@ -228,17 +265,45 @@ function ProjectDetailContent() {
       </div>
 
       <div className="card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          {uiText(isArabic, 'text0887')}
-        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            {uiText(isArabic, 'text0887')}
+          </h2>
+          <span className="text-xs text-slate-400">{filteredTasks.length} / {tasks.length}</span>
+        </div>
+
+        <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <input
+            className="input xl:col-span-2"
+            placeholder={uiText(isArabic, 'text1063')}
+            value={taskSearch}
+            onChange={(event) => setTaskSearch(event.target.value)}
+          />
+          <select className="input" value={taskStatus} onChange={(event) => setTaskStatus(event.target.value)}>
+            <option value="">{uiText(isArabic, 'text1064')}</option>
+            {taskStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+          </select>
+          <select className="input" value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)}>
+            <option value="">{uiText(isArabic, 'text1065')}</option>
+            {taskPriorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+          </select>
+          <select className="input" value={taskAssigneeId} onChange={(event) => setTaskAssigneeId(event.target.value)}>
+            <option value="">{uiText(isArabic, 'text1066')}</option>
+            {users.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.fullName}</option>)}
+          </select>
+          <select className="input md:col-span-2 xl:col-span-1" value={taskType} onChange={(event) => setTaskType(event.target.value)}>
+            <option value="">{uiText(isArabic, 'text1067')}</option>
+            {taskTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+        </div>
 
         <div className="mt-3 divide-y divide-slate-100">
-          {tasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <p className="py-6 text-center text-sm text-slate-500">
               {uiText(isArabic, 'text0888')}
             </p>
           ) : (
-            tasks.map((task) => (
+            filteredTasks.map((task) => (
               <Link
                 key={task.id}
                 href={`/tasks/${task.id}`}
@@ -257,7 +322,16 @@ function ProjectDetailContent() {
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 sm:grid-cols-4">
                   <div>
                     <dt className="text-slate-400">{uiText(isArabic, 'text0865')}</dt>
-                    <dd className="text-slate-600">{task.assignedTo?.fullName || uiText(isArabic, 'text0014')}</dd>
+                    <dd className="text-slate-600">
+                      {task.assignedTo ? (
+                        <span className="flex min-w-0 items-center gap-2">
+                          <Avatar name={task.assignedTo.fullName} avatarUrl={task.assignedTo.avatarUrl} size="sm" className="shrink-0" />
+                          <span className="truncate">{task.assignedTo.fullName}</span>
+                        </span>
+                      ) : (
+                        uiText(isArabic, 'text0014')
+                      )}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-slate-400">{uiText(isArabic, 'text0866')}</dt>

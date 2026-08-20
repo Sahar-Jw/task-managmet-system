@@ -24,6 +24,7 @@ import {
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import Pagination from '@/components/Pagination';
+import Avatar from '@/components/Avatar';
 
 import {
   useAuth,
@@ -1861,7 +1862,7 @@ function TasksContent() {
             </div>
 
 
-            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
               {uiText(isArabic, 'text0195')}
             </h1>
 
@@ -2896,7 +2897,7 @@ function TasksContent() {
                     </div>
 
 
-                    <h2 className="mt-4 line-clamp-2 text-lg font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
+                    <h2 className="mt-4 line-clamp-2 text-base font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
                       {taskTitle(
                         task,
                       )}
@@ -2927,13 +2928,23 @@ function TasksContent() {
                           {uiText(isArabic, 'text0051')}
                         </div>
 
-                        <div className="mt-1 truncate text-xs font-medium text-slate-700">
-                          {task.assignedTo
-                            ?.fullName ||
-                            (
-                              uiText(isArabic, 'text0115')
-                            )}
-                        </div>
+                        {task.assignedTo ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={task.assignedTo.fullName}
+                              avatarUrl={task.assignedTo.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate text-xs font-medium text-slate-700">
+                              {task.assignedTo.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                            {uiText(isArabic, 'text0115')}
+                          </div>
+                        )}
                       </div>
 
 
@@ -3212,13 +3223,23 @@ function TasksContent() {
                        */}
 
                       <div className="min-w-0">
-                        <div className="truncate text-xs font-medium text-slate-700">
-                          {task.assignedTo
-                            ?.fullName ||
-                            (
-                              uiText(isArabic, 'text0115')
-                            )}
-                        </div>
+                        {task.assignedTo ? (
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={task.assignedTo.fullName}
+                              avatarUrl={task.assignedTo.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate text-xs font-medium text-slate-700">
+                              {task.assignedTo.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="truncate text-xs font-medium text-slate-700">
+                            {uiText(isArabic, 'text0115')}
+                          </div>
+                        )}
 
                         <div className="mt-1 truncate text-[10px] text-slate-400">
                           {uiText(isArabic, 'text0200')}{' '}

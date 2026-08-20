@@ -1,8 +1,8 @@
-import { IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsDateString, IsNotEmpty, IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreateAssignmentDto {
   @IsUUID() assigneeId!: string;
-  @IsOptional() @IsDateString() dueDate?: string;
+  @IsNotEmpty() @IsDateString() dueDate!: string;
 }
 
 // BR-042: rejection requires a reason with a minimum length.
@@ -13,5 +13,5 @@ export class RejectAssignmentDto {
 
 export class ReassignAssignmentDto {
   @IsUUID() newAssigneeId!: string;
-  @IsOptional() @IsDateString() dueDate?: string;
+  @IsNotEmpty() @IsDateString() dueDate!: string;
 }

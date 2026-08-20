@@ -711,7 +711,7 @@ export interface CreateTaskPayload {
   budgetCurrency?: string;
 
   startDate?: string;
-  deadlineDate?: string;
+  deadlineDate: string;
 }
 
 /*
@@ -934,7 +934,7 @@ export const AssignmentsApi = {
     assigneeId:
       string,
 
-    dueDate?:
+    dueDate:
       string,
   ) =>
     api<TaskAssignment>(
@@ -991,7 +991,7 @@ export const AssignmentsApi = {
     newAssigneeId:
       string,
 
-    dueDate?:
+    dueDate:
       string,
   ) =>
     api<TaskAssignment>(

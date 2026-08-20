@@ -19,6 +19,7 @@ import {
 
 import Pagination from '@/components/Pagination';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import Avatar from '@/components/Avatar';
 
 import {
   useAuth,
@@ -74,49 +75,6 @@ type SortDir =
  * HELPERS
  * ============================================================
  */
-
-function getInitials(
-  name: string,
-) {
-  const parts =
-    name
-      .trim()
-      .split(/\s+/)
-      .filter(
-        Boolean,
-      );
-
-
-  if (
-    parts.length ===
-    0
-  ) {
-    return '?';
-  }
-
-
-  if (
-    parts.length ===
-    1
-  ) {
-    return parts[0]
-      .slice(
-        0,
-        2,
-      )
-      .toUpperCase();
-  }
-
-
-  return (
-    parts[0][0] +
-    parts[
-      parts.length -
-      1
-    ][0]
-  ).toUpperCase();
-}
-
 
 function formatDate(
   value?: string | null,
@@ -2126,11 +2084,12 @@ function UsersContent() {
                   <div className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-sm font-semibold text-brand-700 ring-1 ring-brand-100">
-                          {getInitials(
-                            target.fullName,
-                          )}
-                        </div>
+                        <Avatar
+                          name={target.fullName}
+                          avatarUrl={target.avatarUrl}
+                          size="md"
+                          className="shrink-0 ring-1 ring-brand-100"
+                        />
 
 
                         <div className="min-w-0">
@@ -2352,11 +2311,12 @@ function UsersContent() {
                        */}
 
                       <div className="flex min-w-0 items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xs font-semibold text-brand-700">
-                          {getInitials(
-                            target.fullName,
-                          )}
-                        </div>
+                        <Avatar
+                          name={target.fullName}
+                          avatarUrl={target.avatarUrl}
+                          size="md"
+                          className="shrink-0"
+                        />
 
 
                         <div className="min-w-0">

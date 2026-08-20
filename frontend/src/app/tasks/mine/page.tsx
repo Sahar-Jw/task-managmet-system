@@ -1721,7 +1721,7 @@ function MyTasksContent() {
             </div>
 
 
-            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
               {uiText(isArabic, 'text0159')}
             </h1>
 
@@ -2444,7 +2444,7 @@ function MyTasksContent() {
                     </div>
 
 
-                    <h2 className="mt-4 line-clamp-2 text-lg font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
+                    <h2 className="mt-4 line-clamp-2 text-base font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
                       {taskTitle(
                         task,
                       )}

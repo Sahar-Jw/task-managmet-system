@@ -1103,6 +1103,12 @@
     "text1058": "Decision",
     "text1059": "Archived at",
     "text1060": "Score",
-    "text1061": "Feedback"
+    "text1061": "Feedback",
+    "text1062": "Choose a deadline.",
+    "text1063": "Search name, description, assignee...",
+    "text1064": "All statuses",
+    "text1065": "All priorities",
+    "text1066": "All assignees",
+    "text1067": "All types"
   }
 }

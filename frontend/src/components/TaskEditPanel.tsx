@@ -185,7 +185,7 @@ export default function TaskEditPanel({
     event.preventDefault();
     if (saving) return;
 
-    if (!form.title.trim() || !form.taskType || !form.priority || !form.departmentId) {
+    if (!form.title.trim() || !form.taskType || !form.priority || !form.departmentId || !form.deadlineDate) {
       setError(isArabic ? 'أكمل جميع الحقول المطلوبة.' : 'Complete all required fields.');
       return;
     }
@@ -248,7 +248,7 @@ export default function TaskEditPanel({
       <section className={section}>
         <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-950">{isArabic ? 'تعديل المهمة' : 'Edit task'}</h2>
+            <h2 className="text-base font-semibold text-slate-950">{isArabic ? 'تعديل المهمة' : 'Edit task'}</h2>
             <p className="mt-1 text-sm text-slate-500">{isArabic ? 'يمكنك تعديل جميع معلومات المهمة وتفعيل الميزانية أو الموافقة.' : 'Edit all task information and enable budget or approval when needed.'}</p>
           </div>
           <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{isArabic ? 'إلغاء' : 'Cancel'}</button>
@@ -271,7 +271,7 @@ export default function TaskEditPanel({
           <div className={field}><label className="label">{isArabic ? 'المشروع' : 'Project'}</label><select className="input" value={form.projectId} onChange={(e) => set('projectId', e.target.value)}><option value="">{isArabic ? 'بدون مشروع' : 'No project'}</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
           <div className={field}><label className="label">{isArabic ? 'المهمة الرئيسية' : 'Parent task'}</label><select className="input" value={form.parentTaskId} onChange={(e) => changeParent(e.target.value)}><option value="">{isArabic ? 'بدون مهمة رئيسية' : 'No parent task'}</option>{parentTasks.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>
           <div className={field}><label className="label">{isArabic ? 'تاريخ البدء' : 'Start date'}</label><input type="date" className="input" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} /></div>
-          <div className={field}><label className="label">{isArabic ? 'الموعد النهائي' : 'Deadline'}</label><input type="date" min={form.startDate || undefined} className="input" value={form.deadlineDate} onChange={(e) => set('deadlineDate', e.target.value)} /></div>
+          <div className={field}><label className="label">{isArabic ? 'الموعد النهائي *' : 'Deadline *'}</label><input required type="date" min={form.startDate || undefined} className="input" value={form.deadlineDate} onChange={(e) => set('deadlineDate', e.target.value)} /></div>
         </div>
         {loadingLookups && <p className="mt-3 text-xs text-slate-400">{isArabic ? 'جارٍ تحميل الخيارات…' : 'Loading options…'}</p>}
       </section>
@@ -310,3 +310,4 @@ export default function TaskEditPanel({
     </form>
   );
 }
+

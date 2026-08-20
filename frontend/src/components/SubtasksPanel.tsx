@@ -16,6 +16,7 @@ import {
 } from 'next-intl';
 
 import StatusBadge from '@/components/StatusBadge';
+import Avatar from '@/components/Avatar';
 
 import {
   useAuth,
@@ -1132,13 +1133,23 @@ export default function SubtasksPanel({
                                   {uiText(isArabic, 'text0051')}
                                 </div>
 
-                                <div className="mt-1 truncate text-xs font-medium text-slate-700">
-                                  {child.assignedTo
-                                    ?.fullName ||
-                                    (
-                                      uiText(isArabic, 'text0115')
-                                    )}
-                                </div>
+                                {child.assignedTo ? (
+                                  <div className="mt-1 flex min-w-0 items-center gap-2">
+                                    <Avatar
+                                      name={child.assignedTo.fullName}
+                                      avatarUrl={child.assignedTo.avatarUrl}
+                                      size="sm"
+                                      className="shrink-0"
+                                    />
+                                    <span className="truncate text-xs font-medium text-slate-700">
+                                      {child.assignedTo.fullName}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                                    {uiText(isArabic, 'text0115')}
+                                  </div>
+                                )}
                               </div>
 
 

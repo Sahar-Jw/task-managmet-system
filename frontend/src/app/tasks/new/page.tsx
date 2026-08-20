@@ -121,15 +121,6 @@ function getDefaultTaskDates() {
   const startDate =
     new Date();
 
-  const deadlineDate =
-    new Date(
-      startDate,
-    );
-
-  deadlineDate.setDate(
-    deadlineDate.getDate() + 7,
-  );
-
   return {
     startDate:
       formatLocalDate(
@@ -137,9 +128,7 @@ function getDefaultTaskDates() {
       ),
 
     deadlineDate:
-      formatLocalDate(
-        deadlineDate,
-      ),
+      '',
   };
 }
 
@@ -1727,6 +1716,12 @@ function NewTaskContent() {
       return uiText(isArabic, 'text0544');
     }
 
+    if (
+      !form.deadlineDate
+    ) {
+      return uiText(isArabic, 'text1062');
+    }
+
 
     if (
       form.startDate &&
@@ -1922,8 +1917,7 @@ function NewTaskContent() {
             undefined,
 
           deadlineDate:
-            form.deadlineDate ||
-            undefined,
+            form.deadlineDate,
         });
 
 
@@ -1990,8 +1984,7 @@ function NewTaskContent() {
 
             form.assignmentUserId,
 
-            form.deadlineDate ||
-              undefined,
+            form.deadlineDate,
           );
         } catch (
           assignmentError
@@ -2174,7 +2167,7 @@ function NewTaskContent() {
 
           <h1
             className="
-              text-2xl
+              text-xl
               font-semibold
               tracking-tight
               text-slate-900
@@ -2340,7 +2333,6 @@ function NewTaskContent() {
 
                 <div>
                   <FieldLabel
-                    optional
                     isArabic={
                       isArabic
                     }
@@ -3549,8 +3541,6 @@ function NewTaskContent() {
                           }
                         >
                           {item.fullName}
-                          {' — '}
-                          {item.email}
                         </option>
                       ),
                     )}
@@ -3896,6 +3886,7 @@ function NewTaskContent() {
                   <input
                     type="date"
                     className="input"
+                    required
                     min={
                       form.startDate ||
                       selectedParent?.startDate ||
@@ -4538,3 +4529,4 @@ export default function NewTaskPage() {
     </ProtectedRoute>
   );
 }
+

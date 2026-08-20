@@ -23,6 +23,7 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import Avatar from '@/components/Avatar';
 import ReasonModal from '@/components/ReasonModal';
 import SubtasksPanel from '@/components/SubtasksPanel';
 
@@ -1490,8 +1491,7 @@ function TaskDetailContent() {
           AssignmentsApi.assign(
             task.id,
             assignmentUserId,
-            task.deadlineDate ||
-              undefined,
+            task.deadlineDate || '',
           ),
 
         uiText(isArabic, 'text0480'),
@@ -1533,8 +1533,7 @@ function TaskDetailContent() {
           AssignmentsApi.reassign(
             assignmentToReassign.id,
             reassignUserId,
-            task.deadlineDate ||
-              undefined,
+            task.deadlineDate || '',
           ),
 
         uiText(isArabic, 'text0481'),
@@ -1993,11 +1992,11 @@ function TaskDetailContent() {
                   mt-4
                   max-w-4xl
                   break-words
-                  text-2xl
+                  text-xl
                   font-semibold
-                  tracking-[-0.03em]
+                  tracking-tight
                   text-slate-950
-                  sm:text-3xl
+                  sm:text-2xl
                 "
               >
                 {title}
@@ -2091,22 +2090,23 @@ function TaskDetailContent() {
                   {uiText(isArabic, 'text0114')}
                 </div>
 
-                <div
-                  className="
-                    mt-1
-                    truncate
-                    text-xs
-                    font-semibold
-                    text-slate-700
-                  "
-                >
-                  {currentAssignment
-                    ?.assignee
-                    ?.fullName ||
-                    (
-                      uiText(isArabic, 'text0115')
-                    )}
-                </div>
+                {currentAssignment?.assignee ? (
+                  <div className="mt-1 flex min-w-0 items-center gap-2">
+                    <Avatar
+                      name={currentAssignment.assignee.fullName}
+                      avatarUrl={currentAssignment.assignee.avatarUrl}
+                      size="sm"
+                      className="shrink-0"
+                    />
+                    <span className="truncate text-xs font-semibold text-slate-700">
+                      {currentAssignment.assignee.fullName}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-1 truncate text-xs font-semibold text-slate-700">
+                    {uiText(isArabic, 'text0115')}
+                  </div>
+                )}
               </div>
 
 
@@ -3037,8 +3037,6 @@ function TaskDetailContent() {
                             }
                           >
                             {item.fullName}
-                            {' — '}
-                            {item.email}
                           </option>
                         ),
                       )}
@@ -3099,18 +3097,19 @@ function TaskDetailContent() {
                       {uiText(isArabic, 'text0499')}
                     </div>
 
-                    <div
-                      className="
-                        mt-1
-                        text-sm
-                        text-red-700
-                      "
-                    >
-                      {latestRejectedAssignment
-                        .assignee
-                        ?.fullName ||
-                        'User'}
-                    </div>
+                    {latestRejectedAssignment.assignee ? (
+                      <div className="mt-2 flex items-center gap-2 text-sm font-medium text-red-700">
+                        <Avatar
+                          name={latestRejectedAssignment.assignee.fullName}
+                          avatarUrl={latestRejectedAssignment.assignee.avatarUrl}
+                          size="sm"
+                          className="shrink-0"
+                        />
+                        <span>{latestRejectedAssignment.assignee.fullName}</span>
+                      </div>
+                    ) : (
+                      <div className="mt-1 text-sm text-red-700">User</div>
+                    )}
 
                     {latestRejectedAssignment
                       .rejectionReason && (
@@ -3218,8 +3217,6 @@ function TaskDetailContent() {
                                 }
                               >
                                 {item.fullName}
-                                {' — '}
-                                {item.email}
                               </option>
                             ),
                           )}
@@ -3305,30 +3302,26 @@ function TaskDetailContent() {
                               sm:justify-between
                             "
                           >
-                            <div>
-                              <div
-                                className="
-                                  text-sm
-                                  font-semibold
-                                  text-slate-700
-                                "
-                              >
-                                {assignment
-                                  .assignee
-                                  ?.fullName ||
-                                  'Unknown user'}
-                              </div>
+                            <div className="flex min-w-0 items-center gap-3">
+                              {assignment.assignee && (
+                                <Avatar
+                                  name={assignment.assignee.fullName}
+                                  avatarUrl={assignment.assignee.avatarUrl}
+                                  size="sm"
+                                  className="shrink-0"
+                                />
+                              )}
 
-                              <div
-                                className="
-                                  mt-1
-                                  text-xs
-                                  text-slate-400
-                                "
-                              >
-                                {formatAssignmentDate(
-                                  assignment.createdAt,
-                                )}
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-semibold text-slate-700">
+                                  {assignment.assignee?.fullName || 'Unknown user'}
+                                </div>
+
+                                <div className="mt-1 text-xs text-slate-400">
+                                  {formatAssignmentDate(
+                                    assignment.createdAt,
+                                  )}
+                                </div>
                               </div>
                             </div>
 
@@ -4672,3 +4665,4 @@ export default function TaskDetailPage() {
     </ProtectedRoute>
   );
 }
+

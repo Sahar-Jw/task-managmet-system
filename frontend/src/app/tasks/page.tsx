@@ -1,17 +1,20 @@
 'use client';
 
 import { uiText } from '@/lib/ui-text';
+import InlineLoader from '@/components/InlineLoader';
 
 
 import {
+  useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
+import Link from 'next/link';
+
 import {
-  useRouter,
+  useSearchParams,
 } from 'next/navigation';
 
 import {
@@ -20,18 +23,26 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
+import Pagination from '@/components/Pagination';
+import Avatar from '@/components/Avatar';
 
 import {
   useAuth,
 } from '@/lib/auth-context';
 
 import {
+  canEditTask,
+} from '@/lib/task-permissions';
+
+import {
+  useListLabels,
+} from '@/lib/list-labels-context';
+
+import {
   ApiError,
 } from '@/lib/api';
 
 import {
-  AssignmentsApi,
-  AttachmentsApi,
   BranchesApi,
   DepartmentsApi,
   ProjectsApi,
@@ -39,12 +50,6 @@ import {
   TasksApi,
   UsersApi,
 } from '@/lib/endpoints';
-
-import {
-  ATTACHMENT_ACCEPT,
-  formatFileSize,
-  getFileTypeLabel,
-} from '@/lib/file-kind';
 
 import type {
   Branch,
@@ -54,674 +59,851 @@ import type {
   Task,
   User,
 } from '@/lib/types';
-import AvatarSelect from '@/components/AvatarSelect';
 
 
 /*
  * ============================================================
- * COLORS
+ * CONFIG
  * ============================================================
  */
 
-const COLORS = [
-  {
-    label: 'Blue',
-    value: '#3B82F6',
-  },
-  {
-    label: 'Green',
-    value: '#22C55E',
-  },
-  {
-    label: 'Amber',
-    value: '#F59E0B',
-  },
-  {
-    label: 'Red',
-    value: '#EF4444',
-  },
-  {
-    label: 'Purple',
-    value: '#8B5CF6',
-  },
-  {
-    label: 'Slate',
-    value: '#64748B',
-  },
-];
+const PAGE_SIZE =
+  12;
 
 
-function formatLocalDate(
-  date:
-    Date,
-) {
-  const year =
-    date.getFullYear();
+type PageView =
+  | 'tasks'
+  | 'archived';
 
-  const month =
-    String(
-      date.getMonth() + 1,
-    ).padStart(
-      2,
-      '0',
+
+type ViewMode =
+  | 'cards'
+  | 'list';
+
+
+type SortBy =
+  | 'createdAt'
+  | 'deadline'
+  | 'startDate'
+  | 'title'
+  | 'status'
+  | 'taskType';
+
+
+type SortDir =
+  | 'asc'
+  | 'desc';
+
+
+/*
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
+
+function avgRating(
+  task: Task,
+): number | null {
+  if (
+    !task.ratings ||
+    task.ratings.length ===
+      0
+  ) {
+    return null;
+  }
+
+
+  const sum =
+    task.ratings.reduce(
+      (
+        total,
+        rating,
+      ) =>
+        total +
+        rating.score,
+      0,
     );
 
-  const day =
-    String(
-      date.getDate(),
-    ).padStart(
-      2,
-      '0',
-    );
 
-  return `${year}-${month}-${day}`;
+  return (
+    sum /
+    task.ratings.length
+  );
 }
 
 
-function getDefaultTaskDates() {
-  const startDate =
+function Stars({
+  value,
+}: {
+  value: number | null;
+}) {
+  if (
+    value ===
+    null
+  ) {
+    return null;
+  }
+
+
+  const rounded =
+    Math.round(
+      value,
+    );
+
+
+  return (
+    <span
+      className="whitespace-nowrap text-xs text-amber-500"
+      title={`${value.toFixed(1)} / 5`}
+    >
+      {'★'.repeat(
+        rounded,
+      )}
+
+      <span className="text-slate-300">
+        {'★'.repeat(
+          5 -
+          rounded,
+        )}
+      </span>
+    </span>
+  );
+}
+
+
+function formatDate(
+  value?: string | null,
+  locale?: string,
+) {
+  if (!value) {
+    return '—';
+  }
+
+
+  /*
+   * date-only values should remain date-only and avoid timezone shifting.
+   */
+  const parsed =
+    /^\d{4}-\d{2}-\d{2}$/.test(
+      value,
+    )
+      ? new Date(
+          `${value}T00:00:00`,
+        )
+      : new Date(
+          value,
+        );
+
+
+  return parsed.toLocaleDateString(
+    locale,
+    {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    },
+  );
+}
+
+
+function isTaskDone(
+  task: Task,
+) {
+  return [
+    'Completed',
+    'Finished',
+    'Archived',
+  ].includes(
+    task.status,
+  );
+}
+
+
+function isOverdue(
+  task: Task,
+) {
+  if (
+    !task.deadlineDate ||
+    isTaskDone(
+      task,
+    )
+  ) {
+    return false;
+  }
+
+
+  const today =
+    new Date()
+      .toISOString()
+      .slice(
+        0,
+        10,
+      );
+
+
+  return (
+    task.deadlineDate <
+    today
+  );
+}
+
+
+function isDueSoon(
+  task: Task,
+) {
+  if (
+    !task.deadlineDate ||
+    isTaskDone(
+      task,
+    )
+  ) {
+    return false;
+  }
+
+
+  const today =
     new Date();
 
-  return {
-    startDate:
-      formatLocalDate(
-        startDate,
-      ),
-
-    deadlineDate:
-      '',
-  };
-}
-
-
-/*
- * ============================================================
- * QUICK ADD
- * ============================================================
- */
-
-type QuickAddType =
-  | 'task_type'
-  | 'task_priority'
-  | 'department'
-  | 'branch';
-
-
-type QuickAddState = {
-  open: boolean;
-
-  type:
-    QuickAddType | null;
-
-  label: string;
-
-  code: string;
-
-  address: string;
-
-  saving: boolean;
-
-  error: string;
-};
-
-
-const EMPTY_QUICK_ADD:
-  QuickAddState = {
-  open: false,
-
-  type: null,
-
-  label: '',
-
-  code: '',
-
-  address: '',
-
-  saving: false,
-
-  error: '',
-};
-
-
-/*
- * ============================================================
- * SHARED UI
- * ============================================================
- */
-
-function SectionHeader({
-  title,
-  description,
-}: {
-  title: string;
-
-  description?: string;
-}) {
-  return (
-    <div>
-      <h2
-        className="
-          text-base
-          font-semibold
-          text-slate-900
-        "
-      >
-        {title}
-      </h2>
-
-      {description && (
-        <p
-          className="
-            mt-1
-            text-sm
-            leading-6
-            text-slate-500
-          "
-        >
-          {description}
-        </p>
-      )}
-    </div>
+  today.setHours(
+    0,
+    0,
+    0,
+    0,
   );
-}
 
 
-function FieldLabel({
-  children,
-  optional,
-  action,
-  isArabic,
-}: {
-  children:
-    React.ReactNode;
-
-  optional?:
-    boolean;
-
-  action?:
-    React.ReactNode;
-
-  isArabic?:
-    boolean;
-}) {
-  return (
-    <div
-      className="
-        mb-1.5
-        flex
-        items-center
-        justify-between
-        gap-3
-      "
-    >
-      <label
-        className="
-          text-sm
-          font-medium
-          text-slate-700
-        "
-      >
-        {children}
-
-        {optional && (
-          <span
-            className="
-              ms-1
-              font-normal
-              text-slate-400
-            "
-          >
-            {uiText(isArabic, 'text0062')}
-          </span>
-        )}
-      </label>
-
-      {action}
-    </div>
-  );
-}
+  const deadline =
+    new Date(
+      `${task.deadlineDate}T00:00:00`,
+    );
 
 
-function AddButton({
-  onClick,
-  isArabic,
-}: {
-  onClick:
-    () => void;
-
-  isArabic:
-    boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={
-        onClick
-      }
-      className="
-        inline-flex
-        items-center
-        gap-1
-        rounded-lg
-        px-2
-        py-1
-        text-xs
-        font-semibold
-        text-brand-700
-        transition
-        hover:bg-brand-50
-        hover:text-brand-900
-      "
-    >
-      +{' '}
-      {uiText(isArabic, 'text0169')}
-    </button>
-  );
-}
+  const difference =
+    deadline.getTime() -
+    today.getTime();
 
 
-/*
- * ============================================================
- * TOGGLE SWITCH
- * ============================================================
- *
- * All boolean options on this page use this component.
- * No native checkboxes.
- * ============================================================
- */
-
-function ToggleSwitch({
-  checked,
-  onChange,
-  disabled = false,
-  label,
-}: {
-  checked:
-    boolean;
-
-  onChange:
+  const days =
+    difference /
     (
-      value:
-        boolean,
-    ) => void;
+      1000 *
+      60 *
+      60 *
+      24
+    );
 
-  disabled?:
-    boolean;
 
-  label:
-    string;
-}) {
   return (
-    <button
-      type="button"
-      role="switch"
-      aria-label={
-        label
-      }
-      aria-checked={
-        checked
-      }
-      disabled={
-        disabled
-      }
-      onClick={() =>
-        onChange(
-          !checked,
-        )
-      }
-      className={`
-        relative
-        inline-flex
-        h-7
-        w-12
-        shrink-0
-        items-center
-        rounded-full
-        transition-all
-        duration-200
-        focus:outline-none
-        focus:ring-2
-        focus:ring-brand-200
-        focus:ring-offset-2
-        disabled:cursor-not-allowed
-        disabled:opacity-50
-        ${
-          checked
-            ? 'bg-brand-600'
-            : 'bg-slate-200'
-        }
-      `}
-    >
-      <span
-        className={`
-          absolute
-          top-1
-          h-5
-          w-5
-          rounded-full
-          bg-white
-          shadow-sm
-          transition-all
-          duration-200
-          ${
-            checked
-              ? 'end-1'
-              : 'start-1'
-          }
-        `}
-      />
-    </button>
+    days >= 0 &&
+    days <= 7
   );
 }
 
 
 /*
  * ============================================================
- * MAIN
+ * SMALL COMPONENTS
  * ============================================================
  */
 
-function NewTaskContent() {
-  const router =
-    useRouter();
+function ViewToggle({
+  value,
+  onChange,
+  isArabic,
+}: {
+  value: ViewMode;
+
+  onChange: (
+    next: ViewMode,
+  ) => void;
+
+  isArabic: boolean;
+}) {
+  return (
+    <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+      <button
+        type="button"
+        title={
+          uiText(isArabic, 'text0389')
+        }
+        onClick={() =>
+          onChange(
+            'cards',
+          )
+        }
+        className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
+          value ===
+          'cards'
+            ? 'bg-slate-100 text-slate-900'
+            : 'text-slate-400 hover:text-slate-700'
+        }`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <rect
+            x="4"
+            y="4"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+
+          <rect
+            x="14"
+            y="4"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+
+          <rect
+            x="4"
+            y="14"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+
+          <rect
+            x="14"
+            y="14"
+            width="6"
+            height="6"
+            rx="1"
+            strokeWidth="1.8"
+          />
+        </svg>
+      </button>
 
 
-  const {
-    user,
-  } =
-    useAuth();
+      <button
+        type="button"
+        title={
+          uiText(isArabic, 'text0067')
+        }
+        onClick={() =>
+          onChange(
+            'list',
+          )
+        }
+        className={`flex h-8 w-9 items-center justify-center rounded-lg transition ${
+          value ===
+          'list'
+            ? 'bg-slate-100 text-slate-900'
+            : 'text-slate-400 hover:text-slate-700'
+        }`}
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-4 w-4"
+        >
+          <path
+            d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+
+function EmptyState({
+  isArabic,
+}: {
+  isArabic: boolean;
+}) {
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          className="h-6 w-6"
+        >
+          <path
+            d="M8 7h11M8 12h11M8 17h7"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+          />
+
+          <path
+            d="m3 7 1 1 2-2m-3 6 1 1 2-2m-3 6 1 1 2-2"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+
+      <h3 className="mt-4 text-sm font-semibold text-slate-800">
+        {uiText(isArabic, 'text0194')}
+      </h3>
+
+
+      <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
+        {uiText(isArabic, 'text0521')}
+      </p>
+    </div>
+  );
+}
+
+
+/*
+ * ============================================================
+ * MAIN CONTENT
+ * ============================================================
+ */
+
+function TasksContent() {
+  const searchParams =
+    useSearchParams();
 
 
   const locale =
     useLocale();
-
 
   const isArabic =
     locale ===
     'ar';
 
 
-  const isAdmin =
-    user?.role.name ===
-    'ADMIN';
+  const {
+    user,
+  } = useAuth();
+
+
+  const {
+    getLabel,
+  } = useListLabels();
 
 
   /*
    * ==========================================================
-   * LOOKUP DATA
+   * INITIAL URL FILTERS
+   * ==========================================================
+   */
+
+  const startsInArchive =
+    searchParams.get(
+      'status',
+    ) ===
+    'Archived';
+
+
+  /*
+   * ==========================================================
+   * PAGE / VIEW
    * ==========================================================
    */
 
   const [
-    branches,
-    setBranches,
-  ] =
-    useState<Branch[]>(
-      [],
-    );
+    pageView,
+    setPageView,
+  ] = useState<PageView>(
+    startsInArchive
+      ? 'archived'
+      : 'tasks',
+  );
 
+
+  const [
+    viewMode,
+    setViewMode,
+  ] = useState<ViewMode>(
+    'cards',
+  );
+
+
+  const [
+    showFilters,
+    setShowFilters,
+  ] = useState(false);
+
+
+  /*
+   * ==========================================================
+   * FILTERS
+   * ==========================================================
+   */
+
+  const [
+    status,
+    setStatus,
+  ] = useState(
+    startsInArchive
+      ? ''
+      : searchParams.get(
+          'status',
+        ) ||
+        '',
+  );
+
+
+  const [
+    taskType,
+    setTaskType,
+  ] = useState(
+    searchParams.get(
+      'taskType',
+    ) ||
+    '',
+  );
+
+
+  const [
+    priority,
+    setPriority,
+  ] = useState(
+    searchParams.get(
+      'priority',
+    ) ||
+    '',
+  );
+
+
+  const [
+    search,
+    setSearch,
+  ] = useState('');
+
+
+  const [
+    debouncedSearch,
+    setDebouncedSearch,
+  ] = useState('');
+
+
+  const [
+    dueDateFrom,
+    setDueDateFrom,
+  ] = useState('');
+
+
+  const [
+    dueDateTo,
+    setDueDateTo,
+  ] = useState('');
+
+
+  const [
+    startDateFrom,
+    setStartDateFrom,
+  ] = useState('');
+
+
+  const [
+    startDateTo,
+    setStartDateTo,
+  ] = useState('');
+
+
+  const [
+    createdDateFrom,
+    setCreatedDateFrom,
+  ] = useState('');
+
+
+  const [
+    createdDateTo,
+    setCreatedDateTo,
+  ] = useState('');
+
+
+  const [
+    departmentId,
+    setDepartmentId,
+  ] = useState('');
+
+
+  const [
+    branchId,
+    setBranchId,
+  ] = useState('');
+
+
+  const [
+    projectId,
+    setProjectId,
+  ] = useState(
+    searchParams.get(
+      'projectId',
+    ) ||
+    '',
+  );
+
+
+  const [
+    ownerId,
+    setOwnerId,
+  ] = useState(
+    searchParams.get(
+      'ownerId',
+    ) ||
+    '',
+  );
+
+
+  const [
+    assignedToId,
+    setAssignedToId,
+  ] = useState(
+    searchParams.get(
+      'assignedToId',
+    ) ||
+    '',
+  );
+
+
+  const [
+    overdueOnly,
+    setOverdueOnly,
+  ] = useState(
+    searchParams.get(
+      'overdueOnly',
+    ) === 'true',
+  );
+
+
+  const [
+    hasDeadline,
+    setHasDeadline,
+  ] = useState('');
+
+
+  /*
+   * ==========================================================
+   * SORT
+   * ==========================================================
+   */
+
+  const [
+    sortBy,
+    setSortBy,
+  ] = useState<SortBy>(
+    'createdAt',
+  );
+
+
+  const [
+    sortDir,
+    setSortDir,
+  ] = useState<SortDir>(
+    'desc',
+  );
+
+
+  /*
+   * ==========================================================
+   * LOOKUPS
+   * ==========================================================
+   */
 
   const [
     departments,
     setDepartments,
-  ] =
-    useState<
-      Department[]
-    >(
-      [],
-    );
+  ] = useState<
+    Department[]
+  >([]);
+
+
+  const [
+    branches,
+    setBranches,
+  ] = useState<
+    Branch[]
+  >([]);
 
 
   const [
     projects,
     setProjects,
-  ] =
-    useState<Project[]>(
-      [],
-    );
+  ] = useState<
+    Project[]
+  >([]);
 
 
   const [
-    users,
-    setUsers,
-  ] =
-    useState<User[]>(
-      [],
-    );
+    owners,
+    setOwners,
+  ] = useState<
+    User[]
+  >([]);
 
 
   const [
-    tasks,
-    setTasks,
-  ] =
-    useState<Task[]>(
-      [],
-    );
+    taskStatuses,
+    setTaskStatuses,
+  ] = useState<
+    Setting[]
+  >([]);
 
 
   const [
     taskTypes,
     setTaskTypes,
-  ] =
-    useState<Setting[]>(
-      [],
-    );
+  ] = useState<
+    Setting[]
+  >([]);
 
 
   const [
-    priorities,
-    setPriorities,
-  ] =
-    useState<Setting[]>(
-      [],
-    );
+    taskPriorities,
+    setTaskPriorities,
+  ] = useState<
+    Setting[]
+  >([]);
 
 
   /*
    * ==========================================================
-   * PAGE STATE
+   * TASK DATA
    * ==========================================================
    */
+
+  const [
+    tasks,
+    setTasks,
+  ] = useState<
+    Task[]
+  >([]);
+
+
+  const [
+    loading,
+    setLoading,
+  ] = useState(
+    true,
+  );
+
 
   const [
     error,
     setError,
-  ] =
-    useState('');
+  ] = useState('');
 
 
   const [
-    peopleError,
-    setPeopleError,
-  ] =
-    useState('');
+    page,
+    setPage,
+  ] = useState(
+    1,
+  );
 
 
   const [
-    submitting,
-    setSubmitting,
-  ] =
-    useState(
-      false,
-    );
+    total,
+    setTotal,
+  ] = useState(
+    0,
+  );
 
 
   const [
-    files,
-    setFiles,
-  ] =
-    useState<File[]>(
-      [],
-    );
+    busyId,
+    setBusyId,
+  ] = useState<
+    string | null
+  >(null);
 
 
   const [
-    dragOver,
-    setDragOver,
-  ] =
-    useState(
-      false,
-    );
+    rowError,
+    setRowError,
+  ] = useState<{
+    id: string;
+    message: string;
+  } | null>(
+    null,
+  );
 
 
   const [
-    quickAdd,
-    setQuickAdd,
-  ] =
-    useState<QuickAddState>(
-      EMPTY_QUICK_ADD,
-    );
+    confirmArchive,
+    setConfirmArchive,
+  ] = useState<
+    Task | null
+  >(null);
 
 
   /*
    * ==========================================================
-   * FORM
+   * SAVED VIEW MODE
    * ==========================================================
    */
 
-  const [
-    form,
-    setForm,
-  ] =
-    useState(() => {
-      const defaultDates =
-        getDefaultTaskDates();
-
-      return {
-      title:
-        '',
-
-      description:
-        '',
-
-      taskType:
-        '',
-
-      priority:
-        '',
-
-      color:
-        COLORS[0].value,
-
-      branchId:
-        '',
-
-      departmentId:
-        '',
-
-      projectId:
-        '',
-
-      parentTaskId:
-        '',
-
-      /*
-       * Assignment is intentionally separate from Task creation.
-       */
-      assignmentUserId:
-        '',
-
-
-      /*
-       * ======================================================
-       * ATTACHMENT DOWNLOAD PERMISSION
-       * ======================================================
-       *
-       * Preview is always available to the assigned user.
-       *
-       * This controls DOWNLOAD only.
-       * ======================================================
-       */
-      assigneeCanDownloadAttachments:
-        true,
-
-
-      needsApproval:
-        false,
-
-      approverId:
-        '',
-
-      needsBudget:
-        false,
-
-      budgetMin:
-        '',
-
-      budgetMax:
-        '',
-
-      budgetCurrency:
-        'SAR',
-
-      startDate:
-        defaultDates.startDate,
-
-      deadlineDate:
-        defaultDates.deadlineDate,
-      };
-    });
-
-
-  const creatorOrganizationApplied =
-    useRef(
-      false,
-    );
-
-
   useEffect(() => {
+    const stored =
+      window.localStorage.getItem(
+        'admin-tasks-view-mode',
+      );
+
+
     if (
-      !user ||
-      creatorOrganizationApplied.current
+      stored ===
+        'cards' ||
+      stored ===
+        'list'
     ) {
-      return;
+      setViewMode(
+        stored,
+      );
     }
+  }, []);
 
 
-    creatorOrganizationApplied.current =
-      true;
-
-
-    setForm(
-      (
-        current,
-      ) => ({
-        ...current,
-
-        branchId:
-          current.branchId ||
-          user.branchId ||
-          '',
-
-        departmentId:
-          current.departmentId ||
-          user.departmentId ||
-          '',
-      }),
-    );
-  }, [user]);
-
-
-  function set<
-    K extends keyof typeof form
-  >(
-    key:
-      K,
-
-    value:
-      (typeof form)[K],
+  function changeViewMode(
+    next: ViewMode,
   ) {
-    setForm(
-      (
-        current,
-      ) => ({
-        ...current,
+    setViewMode(
+      next,
+    );
 
-        [key]:
-          value,
-      }),
+
+    window.localStorage.setItem(
+      'admin-tasks-view-mode',
+      next,
     );
   }
+
+
+  /*
+   * ==========================================================
+   * DEBOUNCE SEARCH
+   * ==========================================================
+   */
+
+  useEffect(() => {
+    const timer =
+      window.setTimeout(
+        () => {
+          setDebouncedSearch(
+            search.trim(),
+          );
+        },
+        350,
+      );
+
+
+    return () =>
+      window.clearTimeout(
+        timer,
+      );
+  }, [
+    search,
+  ]);
 
 
   /*
@@ -730,71 +912,36 @@ function NewTaskContent() {
    * ==========================================================
    */
 
-  async function loadBranches() {
-    try {
-      setBranches(
-        await BranchesApi.list(),
-      );
-    } catch {}
-  }
-
-
-  async function loadDepartments() {
-    try {
-      setDepartments(
-        await DepartmentsApi.list(),
-      );
-    } catch {}
-  }
-
-
-  async function loadTaskTypes() {
-    try {
-      setTaskTypes(
-        await SettingsApi.list(
-          'task_type',
-          true,
-        ),
-      );
-    } catch {}
-  }
-
-
-  async function loadPriorities() {
-    try {
-      setPriorities(
-        await SettingsApi.list(
-          'task_priority',
-          true,
-        ),
-      );
-    } catch {}
-  }
-
-
   useEffect(() => {
-    loadBranches();
+    DepartmentsApi.list()
+      .then(
+        setDepartments,
+      )
+      .catch(
+        () => {},
+      );
 
-    loadDepartments();
 
-    loadTaskTypes();
-
-    loadPriorities();
+    BranchesApi.list()
+      .then(
+        setBranches,
+      )
+      .catch(
+        () => {},
+      );
 
 
     ProjectsApi.list({
-      limit:
-        '100',
-
+      limit: '100',
       excludeArchived:
         'true',
     })
       .then(
         (
-          result,
+          response,
         ) =>
           setProjects(
-            result.items,
+            response.items,
           ),
       )
       .catch(
@@ -803,393 +950,76 @@ function NewTaskContent() {
 
 
     UsersApi.list({
-      limit:
-        '100',
+      limit: '100',
     })
       .then(
         (
-          result,
-        ) => {
-          setUsers(
-            result.items,
-          );
-
-          setPeopleError(
-            '',
-          );
-        },
-      )
-      .catch(
-        (
-          err,
-        ) => {
-          setPeopleError(
-            err instanceof
-              ApiError
-              ? err.message
-              : uiText(isArabic, 'text0537'),
-          );
-        },
-      );
-
-
-    const tasksRequest =
-      isAdmin
-        ? TasksApi.list({
-            limit:
-              '100',
-
-            excludeArchived:
-              'true',
-          })
-        : Promise.all([
-            TasksApi.mine({
-              limit:
-                '100',
-            }),
-
-            TasksApi.assignedByMe({
-              limit:
-                '100',
-            }),
-          ]).then(
-            ([
-              assignedToMe,
-              createdByMe,
-            ]) => {
-              const byId =
-                new Map(
-                  [
-                    ...assignedToMe.items,
-                    ...createdByMe.items,
-                  ].map(
-                    (
-                      item,
-                    ) => [
-                      item.id,
-                      item,
-                    ],
-                  ),
-                );
-
-
-              const items =
-                Array.from(
-                  byId.values(),
-                );
-
-
-              return {
-                items,
-                total:
-                  items.length,
-                page:
-                  1,
-                limit:
-                  100,
-              };
-            },
-          );
-
-
-    tasksRequest
-      .then(
-        (
-          result,
+          response,
         ) =>
-          setTasks(
-            result.items,
+          setOwners(
+            response.items
+              .filter(
+                (
+                  owner,
+                ) =>
+                  owner.isActive,
+              )
+              .sort(
+                (
+                  a,
+                  b,
+                ) =>
+                  a.fullName.localeCompare(
+                    b.fullName,
+                  ),
+              ),
           ),
       )
       .catch(
         () => {},
       );
-  }, [
-    isAdmin,
-  ]);
 
 
-  /*
-   * ==========================================================
-   * DEFAULT TYPE
-   * ==========================================================
-   */
-
-  useEffect(() => {
-    if (
-      !form.taskType &&
-      taskTypes.length >
-        0
-    ) {
-      const normal =
-        taskTypes.find(
-          (
-            item,
-          ) =>
-            item.key ===
-            'General',
-        );
-
-
-      set(
-        'taskType',
-
-        normal?.key ||
-          taskTypes[0]
-            .key ||
-          '',
+    SettingsApi.list(
+      'task_status',
+      true,
+    )
+      .then(
+        setTaskStatuses,
+      )
+      .catch(
+        () => {},
       );
-    }
-  }, [
-    taskTypes,
-  ]);
 
 
-  /*
-   * ==========================================================
-   * DEFAULT PRIORITY
-   * ==========================================================
-   */
-
-  useEffect(() => {
-    if (
-      !form.priority &&
-      priorities.length >
-        0
-    ) {
-      const normal =
-        priorities.find(
-          (
-            item,
-          ) =>
-            item.key ===
-            'Medium',
-        );
-
-
-      set(
-        'priority',
-
-        normal?.key ||
-          priorities[0]
-            .key ||
-          '',
+    SettingsApi.list(
+      'task_type',
+      true,
+    )
+      .then(
+        setTaskTypes,
+      )
+      .catch(
+        () => {},
       );
-    }
-  }, [
-    priorities,
-  ]);
 
 
-  /*
-   * ==========================================================
-   * LANGUAGE-SPECIFIC OPTIONS
-   * ==========================================================
-   */
-
-  const visibleTaskTypes =
-    useMemo(
-      () =>
-        taskTypes.filter(
-          (
-            item,
-          ) =>
-            Boolean(
-              isArabic
-                ? item.codeAr?.trim()
-                : item.codeEn?.trim(),
-            ),
-        ),
-
-      [
-        taskTypes,
-        isArabic,
-      ],
-    );
-
-
-  const visiblePriorities =
-    useMemo(
-      () =>
-        priorities.filter(
-          (
-            item,
-          ) =>
-            Boolean(
-              isArabic
-                ? item.codeAr?.trim()
-                : item.codeEn?.trim(),
-            ),
-        ),
-
-      [
-        priorities,
-        isArabic,
-      ],
-    );
-
-
-  const visibleDepartments =
-    useMemo(
-      () =>
-        departments.filter(
-          (
-            item,
-          ) =>
-            item.isActive !==
-              false &&
-            Boolean(
-              isArabic
-                ? item.codeAr?.trim()
-                : item.codeEn?.trim(),
-            ),
-        ),
-
-      [
-        departments,
-        isArabic,
-      ],
-    );
-
-
-  const visibleBranches =
-    useMemo(
-      () =>
-        branches.filter(
-          (
-            item,
-          ) =>
-            item.isActive !==
-              false &&
-            Boolean(
-              isArabic
-                ? item.codeAr?.trim()
-                : item.codeEn?.trim(),
-            ),
-        ),
-
-      [
-        branches,
-        isArabic,
-      ],
-    );
-
-
-  /*
-   * ==========================================================
-   * USERS
-   * ==========================================================
-   */
-
-  const activeUsers =
-    useMemo(
-      () =>
-        users
-          .filter(
-            (
-              item,
-            ) =>
-              item.isActive,
-          )
-          .sort(
-            (
-              a,
-              b,
-            ) =>
-              a.fullName.localeCompare(
-                b.fullName,
-              ),
-          ),
-
-      [
-        users,
-      ],
-    );
-
-
-  /*
-   * Admins cannot be task assignees.
-   */
-  const assignableUsers =
-    activeUsers.filter(
-      (
-        item,
-      ) =>
-        item.role.name !==
-        'ADMIN',
-    );
-
-
-  /*
-   * Admins ARE allowed to approve.
-   */
-  const approvers =
-    activeUsers.filter(
-      (
-        item,
-      ) =>
-        item.id !==
-        form.assignmentUserId,
-    );
-
-
-  /*
-   * ==========================================================
-   * MAIN TASKS ONLY FOR PARENT OPTIONS
-   * ==========================================================
-   *
-   * Prevent creating Sub-subtasks from this page.
-   * ==========================================================
-   */
-
-  const parentTaskOptions =
-    useMemo(
-      () =>
-        tasks.filter(
-          (
-            item,
-          ) =>
-            !item.parentTaskId &&
-            ![
-              'Completed',
-              'Finished',
-              'Archived',
-            ].includes(
-              item.status,
-            ),
-        ),
-
-      [
-        tasks,
-      ],
-    );
-
-
-  /*
-   * ==========================================================
-   * APPROVER / ASSIGNEE CONFLICT
-   * ==========================================================
-   */
-
-  useEffect(() => {
-    if (
-      form.assignmentUserId &&
-      form.approverId ===
-        form.assignmentUserId
-    ) {
-      set(
-        'approverId',
-        '',
+    SettingsApi.list(
+      'task_priority',
+      true,
+    )
+      .then(
+        setTaskPriorities,
+      )
+      .catch(
+        () => {},
       );
-    }
-  }, [
-    form.assignmentUserId,
-  ]);
+  }, []);
 
 
   /*
    * ==========================================================
-   * LABEL
+   * CURRENT LANGUAGE
    * ==========================================================
    */
 
@@ -1203,877 +1033,614 @@ function NewTaskContent() {
     }
 
 
-    return (
+    if (
       isArabic
-        ? item.valueAr ||
-          item.codeAr ||
-          item.valueEn ||
-          item.codeEn
-        : item.valueEn ||
-          item.codeEn ||
-          item.valueAr ||
-          item.codeAr
-    ) || '—';
-  }
-
-
-  /*
-   * ==========================================================
-   * PARENT TASK
-   * ==========================================================
-   */
-
-  function handleParentTaskChange(
-    parentTaskId:
-      string,
-  ) {
-    if (
-      !parentTaskId
     ) {
-      set(
-        'parentTaskId',
-        '',
+      return (
+        item.valueAr ||
+        item.codeAr ||
+        item.valueEn ||
+        item.codeEn ||
+        '—'
       );
-
-      return;
     }
 
 
-    const parent =
-      parentTaskOptions.find(
-        (
-          item,
-        ) =>
-          item.id ===
-          parentTaskId,
-      );
-
-
-    if (!parent) {
-      set(
-        'parentTaskId',
-        parentTaskId,
-      );
-
-      return;
-    }
-
-
-    /*
-     * Subtasks must stay in the Parent's organization.
-     *
-     * This matches the backend validation.
-     */
-    setForm(
-      (
-        current,
-      ) => ({
-        ...current,
-
-        parentTaskId:
-          parent.id,
-
-        departmentId:
-          parent.departmentId ||
-          '',
-
-        branchId:
-          parent.branchId ||
-          '',
-
-        projectId:
-          parent.projectId ||
-          '',
-
-        startDate:
-          parent.startDate ||
-          current.startDate,
-
-        deadlineDate:
-          parent.deadlineDate ||
-          current.deadlineDate,
-      }),
+    return (
+      item.valueEn ||
+      item.codeEn ||
+      item.valueAr ||
+      item.codeAr ||
+      '—'
     );
   }
 
 
-  const selectedParent =
-    parentTaskOptions.find(
-      (
-        item,
-      ) =>
-        item.id ===
-        form.parentTaskId,
+  function taskTitle(
+    task: Task,
+  ) {
+    return task.title;
+  }
+
+
+  function taskDescription(
+    task: Task,
+  ) {
+    return task.description;
+  }
+
+
+  const visibleDepartments =
+    useMemo(
+      () =>
+        departments.filter(
+          (
+            department,
+          ) =>
+            department.isActive &&
+            Boolean(
+              isArabic
+                ? department.valueAr ||
+                    department.codeAr
+                : department.valueEn ||
+                    department.codeEn,
+            ),
+        ),
+      [
+        departments,
+        isArabic,
+      ],
     );
 
 
-  /*
-   * ==========================================================
-   * FILES
-   * ==========================================================
-   */
-
-  function addFiles(
-    incoming:
-      | FileList
-      | File[],
-  ) {
-    const incomingFiles =
-      Array.from(
-        incoming,
-      );
-
-
-    const emptyFiles =
-      incomingFiles.filter(
-        (
-          file,
-        ) =>
-          file.size ===
-          0,
-      );
+  const visibleBranches =
+    useMemo(
+      () =>
+        branches.filter(
+          (
+            branch,
+          ) =>
+            branch.isActive &&
+            Boolean(
+              isArabic
+                ? branch.valueAr ||
+                    branch.codeAr
+                : branch.valueEn ||
+                    branch.codeEn,
+            ),
+        ),
+      [
+        branches,
+        isArabic,
+      ],
+    );
 
 
-    if (
-      emptyFiles.length >
-      0
-    ) {
-      setError(
-        isArabic
-          ? `لا يمكن رفع ملف فارغ: ${emptyFiles.map((file) => file.name).join('، ')}`
-          : `Empty files cannot be uploaded: ${emptyFiles.map((file) => file.name).join(', ')}`,
-      );
-    }
-
-
-    setFiles(
-      (
-        current,
-      ) => {
-        const next =
-          incomingFiles.filter(
-            (
-              file,
-            ) =>
-              file.size >
-                0 &&
-              !current.some(
+  const visibleStatuses =
+    useMemo(
+      () =>
+        taskStatuses.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
                 (
-                  existing,
-                ) =>
-                  existing.name ===
-                    file.name &&
-                  existing.size ===
-                    file.size &&
-                  existing.lastModified ===
-                    file.lastModified,
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskStatuses,
+        isArabic,
+      ],
+    );
+
+
+  const visibleTypes =
+    useMemo(
+      () =>
+        taskTypes.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
+                (
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskTypes,
+        isArabic,
+      ],
+    );
+
+
+  const visiblePriorities =
+    useMemo(
+      () =>
+        taskPriorities.filter(
+          (
+            setting,
+          ) =>
+            Boolean(
+              setting.key &&
+                (
+                  isArabic
+                    ? setting.codeAr
+                    : setting.codeEn
+                ),
+            ),
+        ),
+      [
+        taskPriorities,
+        isArabic,
+      ],
+    );
+
+
+  /*
+   * Admin users cannot normally be assignees.
+   */
+  const assignableUsers =
+    owners.filter(
+      (
+        owner,
+      ) =>
+        owner.role.name !==
+        'ADMIN',
+    );
+
+
+  /*
+   * ==========================================================
+   * LOAD TASKS
+   * ==========================================================
+   */
+
+  const load =
+    useCallback(
+      async () => {
+        setLoading(
+          true,
+        );
+
+        setError('');
+
+
+        try {
+          const params: Record<
+            string,
+            string
+          > = {
+            limit:
+              String(
+                PAGE_SIZE,
               ),
+
+            page:
+              String(
+                page,
+              ),
+
+            sortBy,
+
+            sortDir,
+          };
+
+
+          if (
+            pageView ===
+            'archived'
+          ) {
+            params.status =
+              'Archived';
+          } else {
+            params.excludeArchived =
+              'true';
+
+
+            if (
+              status
+            ) {
+              params.status =
+                status;
+            }
+          }
+
+
+          if (
+            taskType
+          ) {
+            params.taskType =
+              taskType;
+          }
+
+
+          if (
+            priority
+          ) {
+            params.priority =
+              priority;
+          }
+
+
+          if (
+            debouncedSearch
+          ) {
+            params.search =
+              debouncedSearch;
+          }
+
+
+          if (
+            dueDateFrom
+          ) {
+            params.dueDateFrom =
+              dueDateFrom;
+          }
+
+
+          if (
+            dueDateTo
+          ) {
+            params.dueDateTo =
+              dueDateTo;
+          }
+
+
+          if (
+            startDateFrom
+          ) {
+            params.startDateFrom =
+              startDateFrom;
+          }
+
+
+          if (
+            startDateTo
+          ) {
+            params.startDateTo =
+              startDateTo;
+          }
+
+
+          if (
+            createdDateFrom
+          ) {
+            params.createdDateFrom =
+              createdDateFrom;
+          }
+
+
+          if (
+            createdDateTo
+          ) {
+            params.createdDateTo =
+              createdDateTo;
+          }
+
+
+          if (
+            departmentId
+          ) {
+            params.departmentId =
+              departmentId;
+          }
+
+
+          if (
+            branchId
+          ) {
+            params.branchId =
+              branchId;
+          }
+
+
+          if (
+            projectId
+          ) {
+            params.projectId =
+              projectId;
+          }
+
+
+          if (
+            ownerId
+          ) {
+            params.createdById =
+              ownerId;
+          }
+
+
+          if (
+            assignedToId
+          ) {
+            params.assignedToId =
+              assignedToId;
+          }
+
+
+          if (
+            overdueOnly
+          ) {
+            params.overdueOnly =
+              'true';
+          }
+
+
+          if (
+            hasDeadline
+          ) {
+            params.hasDeadline =
+              hasDeadline;
+          }
+
+
+          const response =
+            await TasksApi.list(
+              params,
+            );
+
+
+          setTasks(
+            response.items,
           );
 
-
-        return [
-          ...current,
-          ...next,
-        ];
+          setTotal(
+            response.total,
+          );
+        } catch (
+          err
+        ) {
+          setError(
+            err instanceof ApiError
+              ? err.message
+              : uiText(isArabic, 'text0156'),
+          );
+        } finally {
+          setLoading(
+            false,
+          );
+        }
       },
+      [
+        pageView,
+        status,
+        taskType,
+        priority,
+        debouncedSearch,
+        dueDateFrom,
+        dueDateTo,
+        startDateFrom,
+        startDateTo,
+        createdDateFrom,
+        createdDateTo,
+        departmentId,
+        branchId,
+        projectId,
+        ownerId,
+        assignedToId,
+        overdueOnly,
+        hasDeadline,
+        sortBy,
+        sortDir,
+        page,
+        isArabic,
+      ],
     );
-  }
 
 
-  function removeFile(
-    index:
-      number,
-  ) {
-    setFiles(
-      (
-        current,
-      ) =>
-        current.filter(
-          (
-            _,
-            currentIndex,
-          ) =>
-            currentIndex !==
-            index,
-        ),
+  useEffect(() => {
+    load();
+  }, [
+    load,
+  ]);
+
+
+  /*
+   * Reset pagination when filtering changes.
+   */
+  useEffect(() => {
+    setPage(
+      1,
     );
+  }, [
+    pageView,
+    status,
+    taskType,
+    priority,
+    debouncedSearch,
+    dueDateFrom,
+    dueDateTo,
+    startDateFrom,
+    startDateTo,
+    createdDateFrom,
+    createdDateTo,
+    departmentId,
+    branchId,
+    projectId,
+    ownerId,
+    assignedToId,
+    overdueOnly,
+    hasDeadline,
+    sortBy,
+    sortDir,
+  ]);
+
+
+  /*
+   * ==========================================================
+   * FILTER STATE
+   * ==========================================================
+   */
+
+  const hasFilters =
+    Boolean(
+      search ||
+      status ||
+      taskType ||
+      priority ||
+      dueDateFrom ||
+      dueDateTo ||
+      startDateFrom ||
+      startDateTo ||
+      createdDateFrom ||
+      createdDateTo ||
+      departmentId ||
+      branchId ||
+      projectId ||
+      ownerId ||
+      assignedToId ||
+      overdueOnly ||
+      hasDeadline,
+    );
+
+
+  const filterCount =
+    [
+      Boolean(
+        search,
+      ),
+
+      Boolean(
+        status,
+      ),
+
+      Boolean(
+        taskType,
+      ),
+
+      Boolean(
+        priority,
+      ),
+
+      Boolean(
+        dueDateFrom ||
+        dueDateTo,
+      ),
+
+      Boolean(
+        startDateFrom ||
+        startDateTo,
+      ),
+
+      Boolean(
+        createdDateFrom ||
+        createdDateTo,
+      ),
+
+      Boolean(
+        departmentId,
+      ),
+
+      Boolean(
+        branchId,
+      ),
+
+      Boolean(
+        projectId,
+      ),
+
+      Boolean(
+        ownerId,
+      ),
+
+      Boolean(
+        assignedToId,
+      ),
+
+      overdueOnly,
+
+      Boolean(
+        hasDeadline,
+      ),
+    ].filter(
+      Boolean,
+    ).length;
+
+
+  function clearFilters() {
+    setSearch('');
+    setStatus('');
+    setTaskType('');
+    setPriority('');
+    setDueDateFrom('');
+    setDueDateTo('');
+    setStartDateFrom('');
+    setStartDateTo('');
+    setCreatedDateFrom('');
+    setCreatedDateTo('');
+    setDepartmentId('');
+    setBranchId('');
+    setProjectId('');
+    setOwnerId('');
+    setAssignedToId('');
+    setOverdueOnly(
+      false,
+    );
+    setHasDeadline('');
   }
 
 
   /*
    * ==========================================================
-   * QUICK ADD
+   * ARCHIVE
    * ==========================================================
    */
 
-  function openQuickAdd(
-    type:
-      QuickAddType,
+  async function archiveTask(
+    id: string,
   ) {
-    setQuickAdd({
-      ...EMPTY_QUICK_ADD,
-
-      open:
-        true,
-
-      type,
-    });
-  }
-
-
-  function closeQuickAdd() {
-    if (
-      quickAdd.saving
-    ) {
-      return;
-    }
-
-
-    setQuickAdd(
-      EMPTY_QUICK_ADD,
+    setBusyId(
+      id,
     );
-  }
 
-
-  function quickAddTitle() {
-    switch (
-      quickAdd.type
-    ) {
-      case 'task_type':
-        return uiText(isArabic, 'text0170');
-
-      case 'task_priority':
-        return uiText(isArabic, 'text0538');
-
-      case 'department':
-        return uiText(isArabic, 'text0539');
-
-      case 'branch':
-        return uiText(isArabic, 'text0540');
-
-      default:
-        return '';
-    }
-  }
-
-
-  async function saveQuickAdd() {
-    if (
-      !quickAdd.type
-    ) {
-      return;
-    }
-
-
-    const label =
-      quickAdd.label.trim();
-
-
-    if (!label) {
-      setQuickAdd(
-        (
-          current,
-        ) => ({
-          ...current,
-
-          error:
-            uiText(isArabic, 'text0541'),
-        }),
-      );
-
-      return;
-    }
-
-
-    setQuickAdd(
-      (
-        current,
-      ) => ({
-        ...current,
-
-        saving:
-          true,
-
-        error:
-          '',
-      }),
+    setRowError(
+      null,
     );
 
 
     try {
       /*
-       * ======================================================
-       * TYPE / PRIORITY
-       * ======================================================
+       * Your DELETE endpoint soft-archives by default.
        */
-
-      if (
-        quickAdd.type ===
-          'task_type' ||
-        quickAdd.type ===
-          'task_priority'
-      ) {
-        const created =
-          await SettingsApi.create({
-            type:
-              quickAdd.type,
-
-            ...(isArabic
-              ? {
-                  codeAr:
-                    label,
-                }
-              : {
-                  codeEn:
-                    label,
-                }),
-          });
-
-
-        if (
-          quickAdd.type ===
-          'task_type'
-        ) {
-          await loadTaskTypes();
-
-          set(
-            'taskType',
-
-            created.key ||
-              '',
-          );
-        } else {
-          await loadPriorities();
-
-          set(
-            'priority',
-
-            created.key ||
-              '',
-          );
-        }
-      }
-
-
-      /*
-       * ======================================================
-       * DEPARTMENT
-       * ======================================================
-       */
-
-      if (
-        quickAdd.type ===
-        'department'
-      ) {
-        const code =
-          quickAdd.code.trim() ||
-          label;
-
-
-        const created =
-          await DepartmentsApi.create({
-            valueType:
-              'string',
-
-            ...(isArabic
-              ? {
-                  codeAr:
-                    code,
-
-                  valueAr:
-                    label,
-                }
-              : {
-                  codeEn:
-                    code,
-
-                  valueEn:
-                    label,
-                }),
-          });
-
-
-        await loadDepartments();
-
-
-        set(
-          'departmentId',
-
-          created.id,
-        );
-      }
-
-
-      /*
-       * ======================================================
-       * BRANCH
-       * ======================================================
-       */
-
-      if (
-        quickAdd.type ===
-        'branch'
-      ) {
-        const code =
-          quickAdd.code.trim() ||
-          label;
-
-
-        const created =
-          await BranchesApi.create({
-            valueType:
-              'string',
-
-            ...(isArabic
-              ? {
-                  codeAr:
-                    code,
-
-                  valueAr:
-                    label,
-                }
-              : {
-                  codeEn:
-                    code,
-
-                  valueEn:
-                    label,
-                }),
-
-            address:
-              quickAdd.address.trim() ||
-              undefined,
-          });
-
-
-        await loadBranches();
-
-
-        set(
-          'branchId',
-
-          created.id,
-        );
-      }
-
-
-      setQuickAdd(
-        EMPTY_QUICK_ADD,
+      await TasksApi.remove(
+        id,
       );
+
+
+      setConfirmArchive(
+        null,
+      );
+
+
+      await load();
     } catch (
       err
     ) {
-      setQuickAdd(
-        (
-          current,
-        ) => ({
-          ...current,
+      setRowError({
+        id,
 
-          saving:
-            false,
-
-          error:
-            err instanceof
-              ApiError
-              ? err.message
-              : uiText(isArabic, 'text0171'),
-        }),
-      );
-    }
-  }
-
-
-  /*
-   * ==========================================================
-   * VALIDATION
-   * ==========================================================
-   */
-
-  function validate() {
-    if (
-      !form.title.trim()
-    ) {
-      return uiText(isArabic, 'text0542');
-    }
-
-
-    if (
-      !form.taskType
-    ) {
-      return uiText(isArabic, 'text0172');
-    }
-
-
-    if (
-      !form.priority
-    ) {
-      return uiText(isArabic, 'text0543');
-    }
-
-
-    if (
-      !form.departmentId
-    ) {
-      return uiText(isArabic, 'text0544');
-    }
-
-    if (
-      !form.deadlineDate
-    ) {
-      return uiText(isArabic, 'text1062');
-    }
-
-
-    if (
-      form.startDate &&
-      form.deadlineDate &&
-      form.deadlineDate <
-        form.startDate
-    ) {
-      return uiText(isArabic, 'text0545');
-    }
-
-
-    if (
-      selectedParent?.startDate &&
-      form.startDate &&
-      form.startDate <
-        selectedParent.startDate
-    ) {
-      return uiText(isArabic, 'text0546');
-    }
-
-
-    if (
-      selectedParent?.deadlineDate &&
-      form.deadlineDate &&
-      form.deadlineDate >
-        selectedParent.deadlineDate
-    ) {
-      return uiText(isArabic, 'text0547');
-    }
-
-
-    if (
-      form.needsApproval &&
-      !form.approverId
-    ) {
-      return uiText(isArabic, 'text0548');
-    }
-
-
-    if (
-      form.needsApproval &&
-      form.assignmentUserId &&
-      form.approverId ===
-        form.assignmentUserId
-    ) {
-      return uiText(isArabic, 'text0549');
-    }
-
-
-    if (
-      form.needsBudget &&
-      (
-        !form.budgetMin ||
-        !form.budgetMax
-      )
-    ) {
-      return uiText(isArabic, 'text0550');
-    }
-
-
-    if (
-      form.needsBudget &&
-      Number(
-        form.budgetMin,
-      ) >
-        Number(
-          form.budgetMax,
-        )
-    ) {
-      return uiText(isArabic, 'text0173');
-    }
-
-
-    return '';
-  }
-
-
-  /*
-   * ==========================================================
-   * SUBMIT
-   * ==========================================================
-   */
-
-  async function handleSubmit(
-    event:
-      React.FormEvent,
-  ) {
-    event.preventDefault();
-
-
-    setError('');
-
-
-    const validation =
-      validate();
-
-
-    if (
-      validation
-    ) {
-      setError(
-        validation,
-      );
-
-
-      window.scrollTo({
-        top:
-          0,
-
-        behavior:
-          'smooth',
+        message:
+          err instanceof ApiError
+            ? err.message
+            : uiText(isArabic, 'text0522'),
       });
 
 
-      return;
-    }
-
-
-    setSubmitting(
-      true,
-    );
-
-
-    try {
-      /*
-       * ======================================================
-       * CREATE TASK
-       * ======================================================
-       */
-
-      const task =
-        await TasksApi.create({
-          title:
-            form.title.trim(),
-
-          description:
-            form.description.trim() ||
-            undefined,
-
-          taskType:
-            form.taskType,
-
-          priority:
-            form.priority,
-
-          color:
-            form.color,
-
-          branchId:
-            form.branchId ||
-            undefined,
-
-          departmentId:
-            form.departmentId,
-
-          projectId:
-            form.projectId ||
-            undefined,
-
-          parentTaskId:
-            form.parentTaskId ||
-            undefined,
-
-          needsApproval:
-            form.needsApproval,
-
-          approverId:
-            form.needsApproval
-              ? form.approverId
-              : undefined,
-
-          needsBudget:
-            form.needsBudget,
-
-          budgetMin:
-            form.needsBudget
-              ? form.budgetMin
-              : undefined,
-
-          budgetMax:
-            form.needsBudget
-              ? form.budgetMax
-              : undefined,
-
-          budgetCurrency:
-            form.needsBudget
-              ? form.budgetCurrency ||
-                'SAR'
-              : undefined,
-
-          startDate:
-            form.startDate ||
-            undefined,
-
-          deadlineDate:
-            form.deadlineDate,
-        });
-
-
-      /*
-       * ======================================================
-       * ATTACHMENT DOWNLOAD PERMISSION
-       * ======================================================
-       *
-       * Save this BEFORE creating the assignment and before
-       * uploading the selected attachments.
-       *
-       * Assigned users may always preview.
-       * This setting controls download only.
-       * ======================================================
-       */
-
-      try {
-        await TasksApi.updateAttachmentPermissions(
-          task.id,
-          form.assigneeCanDownloadAttachments,
-        );
-      } catch (
-        permissionError
-      ) {
-        console.error(
-          'Task created but attachment permission could not be saved:',
-
-          permissionError,
-        );
-
-
-        window.alert(
-          permissionError instanceof
-            ApiError
-            ? (
-                uiText(isArabic, 'text0740', { value0: permissionError.message })
-              )
-            : (
-                uiText(isArabic, 'text0551')
-              ),
-        );
-
-
-        router.push(
-          `/tasks/${task.id}`,
-        );
-
-        return;
-      }
-
-
-      /*
-       * ======================================================
-       * ASSIGNMENT
-       * ======================================================
-       */
-
-      if (
-        form.assignmentUserId
-      ) {
-        try {
-          await AssignmentsApi.assign(
-            task.id,
-
-            form.assignmentUserId,
-
-            form.deadlineDate,
-          );
-        } catch (
-          assignmentError
-        ) {
-          console.error(
-            'Task created but assignment failed:',
-
-            assignmentError,
-          );
-
-
-          window.alert(
-            assignmentError instanceof
-              ApiError
-              ? (
-                  uiText(isArabic, 'text0741', { value0: assignmentError.message })
-                )
-              : (
-                  uiText(isArabic, 'text0552')
-                ),
-          );
-
-
-          router.push(
-            `/tasks/${task.id}`,
-          );
-
-          return;
-        }
-      }
-
-
-      /*
-       * ======================================================
-       * ATTACHMENTS
-       * ======================================================
-       */
-
-      if (
-        files.length >
-        0
-      ) {
-        try {
-          await AttachmentsApi.uploadToTask(
-            task.id,
-
-            files,
-          );
-        } catch (
-          attachmentError
-        ) {
-          console.error(
-            'Task created but attachments failed:',
-
-            attachmentError,
-          );
-
-
-          window.alert(
-            attachmentError instanceof
-              ApiError
-              ? (
-                  uiText(isArabic, 'text0742', { value0: attachmentError.message })
-                )
-              : (
-                  uiText(isArabic, 'text0553')
-                ),
-          );
-        }
-      }
-
-
-      router.push(
-        `/tasks/${task.id}`,
+      setConfirmArchive(
+        null,
       );
-    } catch (
-      err
-    ) {
-      setError(
-        err instanceof
-          ApiError
-          ? err.message
-          : uiText(isArabic, 'text0554'),
-      );
-
-
-      setSubmitting(
-        false,
+    } finally {
+      setBusyId(
+        null,
       );
     }
   }
@@ -2081,28 +1648,186 @@ function NewTaskContent() {
 
   /*
    * ==========================================================
-   * SUMMARY
+   * UNARCHIVE
    * ==========================================================
    */
 
-  const selectedAssignee =
-    assignableUsers.find(
-      (
-        item,
-      ) =>
-        item.id ===
-        form.assignmentUserId,
+  async function unarchiveTask(
+    id: string,
+  ) {
+    setBusyId(
+      id,
+    );
+
+    setRowError(
+      null,
     );
 
 
-  const selectedApprover =
-    approvers.find(
-      (
-        item,
-      ) =>
-        item.id ===
-        form.approverId,
+    try {
+      await TasksApi.unarchive(
+        id,
+      );
+
+
+      await load();
+    } catch (
+      err
+    ) {
+      setRowError({
+        id,
+
+        message:
+          err instanceof ApiError
+            ? err.message
+            : uiText(isArabic, 'text0579'),
+      });
+    } finally {
+      setBusyId(
+        null,
+      );
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * PAGE SWITCH
+   * ==========================================================
+   */
+
+  function changePageView(
+    next: PageView,
+  ) {
+    if (
+      next ===
+      pageView
+    ) {
+      return;
+    }
+
+
+    setPageView(
+      next,
     );
+
+    setPage(
+      1,
+    );
+
+
+    if (
+      next ===
+      'archived'
+    ) {
+      setStatus('');
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * PAGINATION
+   * ==========================================================
+   */
+
+  const totalPages =
+    Math.max(
+      Math.ceil(
+        total /
+        PAGE_SIZE,
+      ),
+      1,
+    );
+
+
+  /*
+   * ==========================================================
+   * CARD / ROW ACTIONS
+   * ==========================================================
+   */
+
+  function TaskActions({
+    task,
+  }: {
+    task: Task;
+  }) {
+    return (
+      <div className="relative z-20 flex flex-wrap items-center gap-2">
+        <Link
+          href={`/tasks/${task.id}`}
+          onClick={(
+            event,
+          ) =>
+            event.stopPropagation()
+          }
+          className="btn-secondary px-3 py-1.5 text-xs"
+        >
+          {uiText(isArabic, 'text0158')}
+        </Link>
+
+
+        {canEditTask(task, user) && (
+          <Link
+            href={`/tasks/${task.id}?edit=1`}
+            onClick={(event) => event.stopPropagation()}
+            className="btn-secondary px-3 py-1.5 text-xs"
+          >
+            {uiText(isArabic, 'text0068')}
+          </Link>
+        )}
+
+
+        {pageView ===
+        'archived' ? (
+          <button
+            type="button"
+            disabled={
+              busyId ===
+              task.id
+            }
+            onClick={(
+              event,
+            ) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              unarchiveTask(
+                task.id,
+              );
+            }}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+          >
+            {busyId ===
+            task.id
+              ? uiText(isArabic, 'text0402')
+              : uiText(isArabic, 'text0403')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={
+              busyId ===
+              task.id
+            }
+            onClick={(
+              event,
+            ) => {
+              event.preventDefault();
+              event.stopPropagation();
+
+              setConfirmArchive(
+                task,
+              );
+            }}
+            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+          >
+            {uiText(isArabic, 'text0401')}
+          </button>
+        )}
+      </div>
+    );
+  }
 
 
   /*
@@ -2113,11 +1838,7 @@ function NewTaskContent() {
 
   return (
     <div
-      className="
-        mx-auto
-        max-w-7xl
-        pb-16
-      "
+      className="mx-auto max-w-[1600px] pb-12"
       dir={
         isArabic
           ? 'rtl'
@@ -2130,93 +1851,915 @@ function NewTaskContent() {
        * ======================================================
        */}
 
-      <div
-        className="
-          mb-6
-          flex
-          flex-col
-          gap-4
-          sm:flex-row
-          sm:items-end
-          sm:justify-between
-        "
-      >
-        <div>
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
+
+
+        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+              {uiText(isArabic, 'text0580')}
+            </div>
+
+
+            <h1 className="mt-2 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+              {uiText(isArabic, 'text0195')}
+            </h1>
+
+
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+              {pageView ===
+              'archived'
+                ? uiText(isArabic, 'text0581')
+                : uiText(isArabic, 'text0582')}
+            </p>
+          </div>
+
+
+          <div className="flex flex-wrap items-center gap-2">
+            <ViewToggle
+              value={
+                viewMode
+              }
+              onChange={
+                changeViewMode
+              }
+              isArabic={
+                isArabic
+              }
+            />
+
+
+            <Link
+              href="/tasks/new"
+              className="btn-primary"
+            >
+              +{' '}
+              {uiText(isArabic, 'text0016')}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+
+      {/*
+       * ======================================================
+       * ACTIVE / ARCHIVE
+       * ======================================================
+       */}
+
+      <div className="mt-5 flex max-w-full overflow-x-auto rounded-xl border border-slate-200 bg-white p-1">
+        <button
+          type="button"
+          onClick={() =>
+            changePageView(
+              'tasks',
+            )
+          }
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            pageView ===
+            'tasks'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {uiText(isArabic, 'text0195')}
+        </button>
+
+
+        <button
+          type="button"
+          onClick={() =>
+            changePageView(
+              'archived',
+            )
+          }
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            pageView ===
+            'archived'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {uiText(isArabic, 'text0412')}
+        </button>
+      </div>
+
+
+      {/*
+       * ======================================================
+       * PRIMARY FILTER BAR
+       * ======================================================
+       */}
+
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+          {/*
+           * SEARCH
+           */}
+
+          <div className="relative min-w-0 flex-1">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className={`pointer-events-none absolute top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 ${
+                isArabic
+                  ? 'right-3'
+                  : 'left-3'
+              }`}
+            >
+              <circle
+                cx="11"
+                cy="11"
+                r="6"
+                strokeWidth="1.8"
+              />
+
+              <path
+                d="m16 16 4 4"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+
+
+            <input
+              className={`input ${
+                isArabic
+                  ? 'pr-9'
+                  : 'pl-9'
+              }`}
+              placeholder={
+                uiText(isArabic, 'text0526')
+              }
+              value={
+                search
+              }
+              onChange={(
+                event,
+              ) =>
+                setSearch(
+                  event.target.value,
+                )
+              }
+            />
+          </div>
+
+
+          {/*
+           * STATUS
+           */}
+
+          {pageView !==
+            'archived' && (
+            <select
+              className="input xl:w-[190px]"
+              value={
+                status
+              }
+              onChange={(
+                event,
+              ) =>
+                setStatus(
+                  event.target.value,
+                )
+              }
+            >
+              <option value="">
+                {uiText(isArabic, 'text0069')}
+              </option>
+
+
+              {visibleStatuses
+                .filter(
+                  (
+                    item,
+                  ) =>
+                    item.key !==
+                    'Archived',
+                )
+                .map(
+                  (
+                    item,
+                  ) => (
+                    <option
+                      key={
+                        item.id
+                      }
+                      value={
+                        item.key
+                      }
+                    >
+                      {isArabic
+                        ? item.codeAr
+                        : item.codeEn}
+                    </option>
+                  ),
+                )}
+            </select>
+          )}
+
+
+          {/*
+           * PRIORITY
+           */}
+
+          <select
+            className="input xl:w-[180px]"
+            value={
+              priority
+            }
+            onChange={(
+              event,
+            ) =>
+              setPriority(
+                event.target.value,
+              )
+            }
+          >
+            <option value="">
+              {uiText(isArabic, 'text0528')}
+            </option>
+
+
+            {visiblePriorities.map(
+              (
+                item,
+              ) => (
+                <option
+                  key={
+                    item.id
+                  }
+                  value={
+                    item.key
+                  }
+                >
+                  {isArabic
+                    ? item.codeAr
+                    : item.codeEn}
+                </option>
+              ),
+            )}
+          </select>
+
+
+          {/*
+           * SORT
+           */}
+
+          <select
+            className="input xl:w-[175px]"
+            value={
+              sortBy
+            }
+            onChange={(
+              event,
+            ) =>
+              setSortBy(
+                event.target.value as
+                  SortBy,
+              )
+            }
+          >
+            <option value="createdAt">
+              {uiText(isArabic, 'text0529')}
+            </option>
+
+            <option value="deadline">
+              {uiText(isArabic, 'text0148')}
+            </option>
+
+            <option value="startDate">
+              {uiText(isArabic, 'text0415')}
+            </option>
+
+            <option value="title">
+              {uiText(isArabic, 'text0196')}
+            </option>
+
+            <option value="status">
+              {uiText(isArabic, 'text0052')}
+            </option>
+
+            <option value="taskType">
+              {uiText(isArabic, 'text0197')}
+            </option>
+          </select>
+
+
           <button
             type="button"
+            className="btn-secondary shrink-0"
             onClick={() =>
-              router.back()
+              setSortDir(
+                (
+                  current,
+                ) =>
+                  current ===
+                  'asc'
+                    ? 'desc'
+                    : 'asc',
+              )
             }
-            className="
-              mb-3
-              inline-flex
-              items-center
-              gap-2
-              text-sm
-              text-slate-500
-              transition
-              hover:text-brand-700
-            "
           >
-            {isArabic
-              ? '→'
-              : '←'}
+            {sortDir ===
+            'asc'
+              ? '↑'
+              : '↓'}
 
-            {uiText(isArabic, 'text0111')}
+            <span className="ml-1">
+              {sortDir ===
+              'asc'
+                ? uiText(isArabic, 'text0072')
+                : uiText(isArabic, 'text0073')}
+            </span>
           </button>
 
 
-          <h1
-            className="
-              text-xl
-              font-semibold
-              tracking-tight
-              text-slate-900
-            "
+          <button
+            type="button"
+            className="btn-secondary shrink-0"
+            onClick={() =>
+              setShowFilters(
+                (
+                  current,
+                ) =>
+                  !current,
+              )
+            }
           >
-            {uiText(isArabic, 'text0174')}
-          </h1>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="mr-1.5 h-4 w-4"
+            >
+              <path
+                d="M4 6h16M7 12h10M10 18h4"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
 
+            {uiText(isArabic, 'text0271')}
 
-          <p
-            className="
-              mt-1
-              text-sm
-              text-slate-500
-            "
-          >
-            {uiText(isArabic, 'text0555')}
-          </p>
+            {filterCount >
+              0 && (
+              <span className="ml-1.5 rounded-full bg-brand-100 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">
+                {
+                  filterCount
+                }
+              </span>
+            )}
+          </button>
         </div>
 
 
-        <div
-          className="
-            flex
-            items-center
-            gap-2
-            rounded-full
-            border
-            border-slate-200
-            bg-white
-            px-3
-            py-1.5
-          "
-        >
-          <span
-            className="
-              text-xs
-              text-slate-400
-            "
-          >
-            {uiText(isArabic, 'text0175')}
-          </span>
+        {/*
+         * ====================================================
+         * ADVANCED FILTERS
+         * ====================================================
+         */}
 
-          <StatusBadge
-            value="Pending"
-            listType="task_status"
-          />
+        {showFilters && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0163')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    taskType
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setTaskType(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0008')}
+                  </option>
+
+
+                  {visibleTypes.map(
+                    (
+                      item,
+                    ) => (
+                      <option
+                        key={
+                          item.id
+                        }
+                        value={
+                          item.key
+                        }
+                      >
+                        {isArabic
+                          ? item.codeAr
+                          : item.codeEn}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0374')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    departmentId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDepartmentId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0419')}
+                  </option>
+
+
+                  {visibleDepartments.map(
+                    (
+                      department,
+                    ) => (
+                      <option
+                        key={
+                          department.id
+                        }
+                        value={
+                          department.id
+                        }
+                      >
+                        {settingLabel(
+                          department,
+                        )}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0371')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    branchId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setBranchId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0420')}
+                  </option>
+
+
+                  {visibleBranches.map(
+                    (
+                      branch,
+                    ) => (
+                      <option
+                        key={
+                          branch.id
+                        }
+                        value={
+                          branch.id
+                        }
+                      >
+                        {settingLabel(
+                          branch,
+                        )}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0432')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    projectId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setProjectId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0410')}
+                  </option>
+
+
+                  {projects.map(
+                    (
+                      project,
+                    ) => (
+                      <option
+                        key={
+                          project.id
+                        }
+                        value={
+                          project.id
+                        }
+                      >
+                        {
+                          project.name
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0483')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    ownerId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setOwnerId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0583')}
+                  </option>
+
+
+                  {owners.map(
+                    (
+                      owner,
+                    ) => (
+                      <option
+                        key={
+                          owner.id
+                        }
+                        value={
+                          owner.id
+                        }
+                      >
+                        {
+                          owner.fullName
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0051')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    assignedToId
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setAssignedToId(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0198')}
+                  </option>
+
+
+                  {assignableUsers.map(
+                    (
+                      owner,
+                    ) => (
+                      <option
+                        key={
+                          owner.id
+                        }
+                        value={
+                          owner.id
+                        }
+                      >
+                        {
+                          owner.fullName
+                        }
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0533')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    dueDateFrom
+                  }
+                  max={
+                    dueDateTo ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDueDateFrom(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0164')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    dueDateTo
+                  }
+                  min={
+                    dueDateFrom ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setDueDateTo(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0423')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    startDateFrom
+                  }
+                  max={
+                    startDateTo ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setStartDateFrom(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0424')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    startDateTo
+                  }
+                  min={
+                    startDateFrom ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setStartDateTo(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0421')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    createdDateFrom
+                  }
+                  max={
+                    createdDateTo ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setCreatedDateFrom(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0422')}
+                </label>
+
+                <input
+                  type="date"
+                  className="input"
+                  value={
+                    createdDateTo
+                  }
+                  min={
+                    createdDateFrom ||
+                    undefined
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setCreatedDateTo(
+                      event.target.value,
+                    )
+                  }
+                />
+              </div>
+
+
+              <div>
+                <label className="label">
+                  {uiText(isArabic, 'text0148')}
+                </label>
+
+                <select
+                  className="input"
+                  value={
+                    hasDeadline
+                  }
+                  onChange={(
+                    event,
+                  ) =>
+                    setHasDeadline(
+                      event.target.value,
+                    )
+                  }
+                >
+                  <option value="">
+                    {uiText(isArabic, 'text0044')}
+                  </option>
+
+                  <option value="true">
+                    {uiText(isArabic, 'text0199')}
+                  </option>
+
+                  <option value="false">
+                    {uiText(isArabic, 'text0192')}
+                  </option>
+                </select>
+              </div>
+
+
+              <div className="flex items-end">
+                <label className="flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4">
+                  <input
+                    type="checkbox"
+                    checked={
+                      overdueOnly
+                    }
+                    onChange={(
+                      event,
+                    ) =>
+                      setOverdueOnly(
+                        event.target.checked,
+                      )
+                    }
+                  />
+
+                  <span className="text-sm font-medium text-slate-700">
+                    {uiText(isArabic, 'text0584')}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+
+            {hasFilters && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={
+                    clearFilters
+                  }
+                  className="text-sm font-medium text-red-600 hover:text-red-700"
+                >
+                  {uiText(isArabic, 'text0275')}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+
+      {/*
+       * ======================================================
+       * RESULT INFO
+       * ======================================================
+       */}
+
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-slate-500">
+          <span className="font-semibold text-slate-800">
+            {
+              total
+            }
+          </span>{' '}
+
+          {isArabic
+            ? 'مهمة'
+            : total ===
+                1
+              ? 'task'
+              : 'tasks'}
         </div>
+
+
+        {hasFilters && (
+          <button
+            type="button"
+            className="text-xs font-medium text-brand-600 hover:text-brand-800"
+            onClick={
+              clearFilters
+            }
+          >
+            {uiText(isArabic, 'text0426')}
+          </button>
+        )}
       </div>
 
 
@@ -2227,2234 +2770,684 @@ function NewTaskContent() {
        */}
 
       {error && (
-        <div
-          className="
-            mb-5
-            rounded-xl
-            border
-            border-red-200
-            bg-red-50
-            px-4
-            py-3
-            text-sm
-            text-red-700
-          "
-        >
-          {error}
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {
+            error
+          }
         </div>
       )}
 
 
-      <form
-        onSubmit={
-          handleSubmit
-        }
-      >
-        <div
-          className="
-            grid
-            gap-6
-            xl:grid-cols-[minmax(0,1fr)_380px]
-          "
-        >
-          {/*
-           * ==================================================
-           * LEFT
-           * ==================================================
-           */}
+      {/*
+       * ======================================================
+       * LOADING
+       * ======================================================
+       */}
 
-          <div
-            className="
-              space-y-6
-            "
-          >
-            {/*
-             * =================================================
-             * DETAILS
-             * =================================================
-             */}
+      {loading ? (
+        <InlineLoader className="mt-4 min-h-48" />
+      ) : tasks.length ===
+        0 ? (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-white">
+          <EmptyState
+            isArabic={
+              isArabic
+            }
+          />
+        </div>
+      ) : viewMode ===
+        'cards' ? (
+        /*
+         * ====================================================
+         * CARD VIEW
+         * ====================================================
+         */
 
-            <section
-              className="
-                card
-                p-6
-              "
-            >
-              <SectionHeader
-                title={
-                  uiText(isArabic, 'text0176')
-                }
-                description={
-                  uiText(isArabic, 'text0556')
-                }
-              />
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {tasks.map(
+            (
+              task,
+            ) => {
+              const rating =
+                avgRating(
+                  task,
+                );
 
 
-              <div
-                className="
-                  mt-6
-                  space-y-5
-                "
-              >
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0177')}
-                  </FieldLabel>
+              const overdue =
+                isOverdue(
+                  task,
+                );
 
 
-                  <input
-                    className="
-                      input
-                      text-base
-                    "
-                    required
-                    autoFocus
-                    maxLength={
-                      255
-                    }
-                    value={
-                      form.title
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'title',
+              const dueSoon =
+                isDueSoon(
+                  task,
+                );
 
-                        event.target.value,
+
+              const description =
+                taskDescription(
+                  task,
+                );
+
+
+              return (
+                <article
+                  key={
+                    task.id
+                  }
+                  className="group relative flex min-h-[300px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg"
+                  style={
+                    task.color
+                      ? {
+                          borderTop:
+                            `3px solid ${task.color}`,
+                        }
+                      : undefined
+                  }
+                >
+                  {/*
+                   * FULL CARD LINK
+                   */}
+
+                  <Link
+                    href={`/tasks/${task.id}`}
+                    className="absolute inset-0 z-10"
+                    aria-label={
+                      taskTitle(
+                        task,
                       )
                     }
                   />
-                </div>
 
 
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0438')}
-                  </FieldLabel>
-
-
-                  <textarea
-                    className="
-                      input
-                      min-h-[140px]
-                      resize-y
-                    "
-                    rows={
-                      5
-                    }
-                    value={
-                      form.description
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'description',
-
-                        event.target.value,
-                      )
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-
-
-            {/*
-             * =================================================
-             * ATTACHMENTS
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                overflow-hidden
-              "
-            >
-              <div
-                className="
-                  border-b
-                  border-slate-100
-                  p-6
-                "
-              >
-                <SectionHeader
-                  title={
-                    uiText(isArabic, 'text0178')
-                  }
-                  description={
-                    uiText(isArabic, 'text0557')
-                  }
-                />
-              </div>
-
-
-              {/*
-               * ===============================================
-               * ASSIGNEE DOWNLOAD PERMISSION
-               * ===============================================
-               */}
-
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-5
-                  border-b
-                  border-slate-100
-                  bg-slate-50/50
-                  px-6
-                  py-5
-                "
-              >
-                <div>
-                  <div
-                    className="
-                      text-sm
-                      font-semibold
-                      text-slate-800
-                    "
-                  >
-                    {uiText(isArabic, 'text0179')}
-                  </div>
-
-                  <p
-                    className="
-                      mt-1
-                      text-xs
-                      leading-5
-                      text-slate-400
-                    "
-                  >
-                    {uiText(isArabic, 'text0558')}
-                  </p>
-                </div>
-
-
-                <ToggleSwitch
-                  checked={
-                    form.assigneeCanDownloadAttachments
-                  }
-                  label={
-                    uiText(isArabic, 'text0180')
-                  }
-                  onChange={(
-                    checked,
-                  ) =>
-                    set(
-                      'assigneeCanDownloadAttachments',
-
-                      checked,
-                    )
-                  }
-                />
-              </div>
-
-
-              <div
-                className="
-                  p-6
-                "
-              >
-                <label
-                  className={`
-                    flex
-                    cursor-pointer
-                    flex-col
-                    items-center
-                    justify-center
-                    rounded-xl
-                    border-2
-                    border-dashed
-                    px-6
-                    py-10
-                    text-center
-                    transition
-                    ${
-                      dragOver
-                        ? 'border-brand-500 bg-brand-50'
-                        : 'border-slate-300 bg-slate-50/60 hover:border-brand-300 hover:bg-brand-50/30'
-                    }
-                  `}
-                  onDragOver={(
-                    event,
-                  ) => {
-                    event.preventDefault();
-
-                    setDragOver(
-                      true,
-                    );
-                  }}
-                  onDragLeave={() =>
-                    setDragOver(
-                      false,
-                    )
-                  }
-                  onDrop={(
-                    event,
-                  ) => {
-                    event.preventDefault();
-
-                    setDragOver(
-                      false,
-                    );
-
-
-                    if (
-                      event.dataTransfer.files.length
-                    ) {
-                      addFiles(
-                        event.dataTransfer.files,
-                      );
-                    }
-                  }}
-                >
-                  <div
-                    className="
-                      flex
-                      h-11
-                      w-11
-                      items-center
-                      justify-center
-                      rounded-xl
-                      bg-white
-                      text-xl
-                      text-brand-600
-                      shadow-sm
-                    "
-                  >
-                    ↑
-                  </div>
-
-
-                  <div
-                    className="
-                      mt-3
-                      text-sm
-                      font-semibold
-                      text-slate-700
-                    "
-                  >
-                    {uiText(isArabic, 'text0559')}
-                  </div>
-
-
-                  <div
-                    className="
-                      mt-1
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-                    {uiText(isArabic, 'text0560')}
-                  </div>
-
-
-                  <input
-                    type="file"
-                    multiple
-                    accept={
-                      ATTACHMENT_ACCEPT
-                    }
-                    className="hidden"
-                    onChange={(
-                      event,
-                    ) => {
-                      if (
-                        event.target.files?.length
-                      ) {
-                        addFiles(
-                          event.target.files,
-                        );
-                      }
-
-
-                      /*
-                       * Allows selecting the same file again
-                       * after it has been removed from the list.
-                       */
-                      event.target.value =
-                        '';
-                    }}
-                  />
-                </label>
-
-
-                {/*
-                 * =============================================
-                 * SELECTED FILE ROWS
-                 * =============================================
-                 *
-                 * Every selected file gets its own row,
-                 * regardless of file type.
-                 * =============================================
-                 */}
-
-                {files.length >
-                  0 && (
-                  <div
-                    className="
-                      mt-4
-                      overflow-hidden
-                      rounded-xl
-                      border
-                      border-slate-200
-                    "
-                  >
-                    {files.map(
-                      (
-                        file,
-                        index,
-                      ) => (
-                        <div
-                          key={`${file.name}-${file.size}-${file.lastModified}`}
-                          className="
-                            flex
-                            items-center
-                            gap-3
-                            border-b
-                            border-slate-100
-                            bg-white
-                            px-4
-                            py-3
-                            last:border-0
-                          "
-                        >
-                          <span
-                            className="
-                              badge
-                              shrink-0
-                              bg-slate-100
-                              text-slate-600
-                            "
-                          >
-                            {getFileTypeLabel(
-                              file.type,
-
-                              file.name,
-                            )}
-                          </span>
-
-
-                          <div
-                            className="
-                              min-w-0
-                              flex-1
-                            "
-                          >
-                            <div
-                              className="
-                                truncate
-                                text-sm
-                                font-medium
-                                text-slate-700
-                              "
-                              title={
-                                file.name
-                              }
-                            >
-                              {
-                                file.name
-                              }
-                            </div>
-
-                            <div
-                              className="
-                                mt-0.5
-                                text-xs
-                                text-slate-400
-                              "
-                            >
-                              {formatFileSize(
-                                file.size,
-                              )}
-                            </div>
-                          </div>
-
-
-                          <button
-                            type="button"
-                            disabled={
-                              submitting
-                            }
-                            onClick={() =>
-                              removeFile(
-                                index,
-                              )
-                            }
-                            title={
-                              uiText(isArabic, 'text0181')
-                            }
-                            className="
-                              flex
-                              h-8
-                              w-8
-                              shrink-0
-                              items-center
-                              justify-center
-                              rounded-lg
-                              text-red-500
-                              transition
-                              hover:bg-red-50
-                              hover:text-red-700
-                              disabled:cursor-not-allowed
-                              disabled:opacity-40
-                            "
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ),
-                    )}
-                  </div>
-                )}
-
-
-                {files.length >
-                  0 && (
-                  <div
-                    className="
-                      mt-3
-                      text-xs
-                      text-slate-400
-                    "
-                  >
-                    <span
-                      className="
-                        font-semibold
-                        text-slate-600
-                      "
-                    >
-                      {files.length}
-                    </span>{' '}
-
-                    {isArabic
-                      ? 'ملف محدد'
-                      : (
-                          files.length ===
-                          1
-                            ? 'file selected'
-                            : 'files selected'
-                        )}
-                  </div>
-                )}
-              </div>
-            </section>
-
-
-            {/*
-             * =================================================
-             * BUDGET — TOGGLE
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                overflow-hidden
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-5
-                  p-6
-                "
-              >
-                <SectionHeader
-                  title={
-                    uiText(isArabic, 'text0150')
-                  }
-                  description={
-                    uiText(isArabic, 'text0182')
-                  }
-                />
-
-
-                <ToggleSwitch
-                  checked={
-                    form.needsBudget
-                  }
-                  label={
-                    uiText(isArabic, 'text0183')
-                  }
-                  onChange={(
-                    checked,
-                  ) => {
-                    set(
-                      'needsBudget',
-
-                      checked,
-                    );
-
-
-                    if (
-                      !checked
-                    ) {
-                      set(
-                        'budgetMin',
-                        '',
-                      );
-
-                      set(
-                        'budgetMax',
-                        '',
-                      );
-
-                      set(
-                        'budgetCurrency',
-                        'SAR',
-                      );
-                    }
-                  }}
-                />
-              </div>
-
-
-              {form.needsBudget && (
-                <div
-                  className="
-                    border-t
-                    border-slate-100
-                    bg-slate-50/50
-                    p-6
-                  "
-                >
-                  <div
-                    className="
-                      grid
-                      gap-4
-                      sm:grid-cols-3
-                    "
-                  >
-                    <div>
-                      <FieldLabel
-                        isArabic={
-                          isArabic
-                        }
-                      >
-                        {uiText(isArabic, 'text0184')}
-                      </FieldLabel>
-
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="input"
-                        value={
-                          form.budgetMin
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          set(
-                            'budgetMin',
-
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </div>
-
-
-                    <div>
-                      <FieldLabel
-                        isArabic={
-                          isArabic
-                        }
-                      >
-                        {uiText(isArabic, 'text0185')}
-                      </FieldLabel>
-
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="input"
-                        value={
-                          form.budgetMax
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          set(
-                            'budgetMax',
-
-                            event.target.value,
-                          )
-                        }
-                      />
-                    </div>
-
-
-                    <div>
-                      <FieldLabel
-                        isArabic={
-                          isArabic
-                        }
-                      >
-                        {uiText(isArabic, 'text0561')}
-                      </FieldLabel>
-
-                      <select
-                        className="input"
-                        value={
-                          form.budgetCurrency
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          set(
-                            'budgetCurrency',
-
-                            event.target.value,
-                          )
-                        }
-                      >
-                        <option value="SAR">
-                          {uiText(isArabic, 'text1040')}
-                        </option>
-
-                        <option value="SYP">
-                          {uiText(isArabic, 'text1039')}
-                        </option>
-
-                        <option value="USD">
-                          {uiText(isArabic, 'text1041')}
-                        </option>
-
-                        <option value="EUR">
-                          {uiText(isArabic, 'text1042')}
-                        </option>
-
-                        <option value="AED">
-                          {uiText(isArabic, 'text1043')}
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-
-
-          {/*
-           * ==================================================
-           * SIDEBAR
-           * ==================================================
-           */}
-
-          <aside
-            className="
-              space-y-6
-            "
-          >
-            {/*
-             * =================================================
-             * CLASSIFICATION
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                p-5
-              "
-            >
-              <SectionHeader
-                title={
-                  uiText(isArabic, 'text0186')
-                }
-              />
-
-
-              <div
-                className="
-                  mt-5
-                  space-y-4
-                "
-              >
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                    action={
-                      <AddButton
-                        isArabic={
-                          isArabic
-                        }
-                        onClick={() =>
-                          openQuickAdd(
-                            'task_type',
-                          )
-                        }
-                      />
-                    }
-                  >
-                    {uiText(isArabic, 'text0163')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    required
-                    value={
-                      form.taskType
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'taskType',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
-
-
-                    {visibleTaskTypes.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
+                  <div className="p-5">
+                    <div className="relative z-0 flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex flex-wrap gap-2">
+                        <StatusBadge
                           value={
-                            item.key
+                            task.status
                           }
-                        >
-                          {isArabic
-                            ? item.codeAr
-                            : item.codeEn}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
+                          listType="task_status"
+                        />
 
-
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                    action={
-                      <AddButton
-                        isArabic={
-                          isArabic
-                        }
-                        onClick={() =>
-                          openQuickAdd(
-                            'task_priority',
-                          )
-                        }
-                      />
-                    }
-                  >
-                    {uiText(isArabic, 'text0297')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    required
-                    value={
-                      form.priority
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'priority',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
-
-
-                    {visiblePriorities.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
+                        <StatusBadge
                           value={
-                            item.key
+                            task.priority
                           }
-                        >
-                          {isArabic
-                            ? item.codeAr
-                            : item.codeEn}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-
-
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0562')}
-                  </FieldLabel>
-
-
-                  <div
-                    className="
-                      grid
-                      grid-cols-3
-                      sm:grid-cols-6
-                      gap-2
-                    "
-                  >
-                    {COLORS.map(
-                      (
-                        color,
-                      ) => (
-                        <button
-                          key={
-                            color.value
-                          }
-                          type="button"
-                          title={
-                            color.label
-                          }
-                          onClick={() =>
-                            set(
-                              'color',
-
-                              color.value,
-                            )
-                          }
-                          className={`
-                            relative
-                            h-9
-                            rounded-lg
-                            border-2
-                            transition
-                            ${
-                              form.color ===
-                              color.value
-                                ? 'scale-105 border-slate-800 shadow-sm'
-                                : 'border-transparent hover:scale-105'
-                            }
-                          `}
-                          style={{
-                            backgroundColor:
-                              color.value,
-                          }}
-                        >
-                          {form.color ===
-                            color.value && (
-                            <span
-                              className="
-                                absolute
-                                inset-0
-                                flex
-                                items-center
-                                justify-center
-                                text-sm
-                                font-bold
-                                text-white
-                              "
-                            >
-                              ✓
-                            </span>
-                          )}
-                        </button>
-                      ),
-                    )}
-                  </div>
-                </div>
-              </div>
-            </section>
-
-
-            {/*
-             * =================================================
-             * ORGANIZATION
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                p-5
-              "
-            >
-              <SectionHeader
-                title={
-                  uiText(isArabic, 'text0518')
-                }
-              />
-
-
-              {selectedParent && (
-                <div
-                  className="
-                    mt-4
-                    rounded-xl
-                    border
-                    border-brand-100
-                    bg-brand-50/50
-                    px-3
-                    py-3
-                    text-xs
-                    leading-5
-                    text-brand-700
-                  "
-                >
-                  {uiText(isArabic, 'text0563')}
-                </div>
-              )}
-
-
-              <div
-                className="
-                  mt-5
-                  space-y-4
-                "
-              >
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                    action={
-                      isAdmin &&
-                      !selectedParent
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'department',
-                                )
-                              }
-                            />
-                          )
-                        : undefined
-                    }
-                  >
-                    {uiText(isArabic, 'text0374')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    required
-                    disabled={
-                      Boolean(
-                        selectedParent,
-                      )
-                    }
-                    value={
-                      form.departmentId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'departmentId',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
-
-
-                    {visibleDepartments.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.id
-                          }
-                        >
-                          {settingLabel(
-                            item,
-                          )}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-
-
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                    action={
-                      isAdmin &&
-                      !selectedParent
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'branch',
-                                )
-                              }
-                            />
-                          )
-                        : undefined
-                    }
-                  >
-                    {uiText(isArabic, 'text0371')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    disabled={
-                      Boolean(
-                        selectedParent,
-                      )
-                    }
-                    value={
-                      form.branchId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'branchId',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0430')}
-                    </option>
-
-
-                    {visibleBranches.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.id
-                          }
-                        >
-                          {settingLabel(
-                            item,
-                          )}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-
-
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0432')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    disabled={
-                      Boolean(
-                        selectedParent,
-                      )
-                    }
-                    value={
-                      form.projectId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'projectId',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0564')}
-                    </option>
-
-
-                    {projects.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.id
-                          }
-                        >
-                          {
-                            item.name
-                          }
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </div>
-              </div>
-            </section>
-
-
-            {/*
-             * =================================================
-             * PEOPLE
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                p-5
-              "
-            >
-              <SectionHeader
-                title={
-                  uiText(isArabic, 'text0145')
-                }
-                description={
-                  uiText(isArabic, 'text0565')
-                }
-              />
-
-
-              {peopleError && (
-                <div
-                  className="
-                    mt-4
-                    rounded-lg
-                    bg-red-50
-                    p-3
-                    text-xs
-                    text-red-600
-                  "
-                >
-                  {peopleError}
-                </div>
-              )}
-
-
-              <div
-                className="
-                  mt-5
-                  space-y-4
-                "
-              >
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0188')}
-                  </FieldLabel>
-
-
-                  <AvatarSelect
-                    users={assignableUsers}
-                    value={form.assignmentUserId}
-                    onChange={(value) =>
-                      set('assignmentUserId', value)
-                    }
-                    placeholder={uiText(isArabic, 'text0189')}
-                    disabled={Boolean(selectedParent)}
-                  />
-
-
-                  {form.assignmentUserId ? (
-                    <p
-                      className="
-                        mt-2
-                        text-xs
-                        leading-5
-                        text-slate-500
-                      "
-                    >
-                      {uiText(isArabic, 'text0566')}
-                    </p>
-                  ) : (
-                    <p
-                      className="
-                        mt-2
-                        text-xs
-                        text-slate-400
-                      "
-                    >
-                      {uiText(isArabic, 'text0567')}
-                    </p>
-                  )}
-                </div>
-
-
-                {/*
-                 * ===============================================
-                 * APPROVAL — TOGGLE
-                 * ===============================================
-                 */}
-
-                <div
-                  className={`
-                    overflow-hidden
-                    rounded-xl
-                    border
-                    transition
-                    ${
-                      form.needsApproval
-                        ? 'border-brand-200 bg-brand-50/20'
-                        : 'border-slate-200 bg-white'
-                    }
-                  `}
-                >
-                  <div
-                    className="
-                      flex
-                      items-center
-                      justify-between
-                      gap-4
-                      p-4
-                    "
-                  >
-                    <div>
-                      <div
-                        className="
-                          text-sm
-                          font-semibold
-                          text-slate-800
-                        "
-                      >
-                        {uiText(isArabic, 'text0568')}
+                          listType="task_priority"
+                        />
                       </div>
 
-                      <p
-                        className="
-                          mt-1
-                          text-xs
-                          leading-5
-                          text-slate-400
-                        "
-                      >
-                        {uiText(isArabic, 'text0569')}
-                      </p>
+
+                      {overdue && (
+                        <span className="rounded-full bg-red-50 px-2.5 py-1 text-[10px] font-semibold text-red-700">
+                          {uiText(isArabic, 'text0285')}
+                        </span>
+                      )}
+
+
+                      {!overdue &&
+                        dueSoon && (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
+                            {uiText(isArabic, 'text0166')}
+                          </span>
+                        )}
                     </div>
 
 
-                    <ToggleSwitch
-                      checked={
-                        form.needsApproval
-                      }
-                      label={
-                        uiText(isArabic, 'text0570')
-                      }
-                      onChange={(
-                        checked,
-                      ) => {
-                        set(
-                          'needsApproval',
-
-                          checked,
-                        );
+                    <h2 className="mt-4 line-clamp-2 text-base font-semibold tracking-tight text-slate-900 transition group-hover:text-brand-700">
+                      {taskTitle(
+                        task,
+                      )}
+                    </h2>
 
 
-                        if (
-                          !checked
-                        ) {
-                          set(
-                            'approverId',
-                            '',
-                          );
+                    <p className="mt-2 line-clamp-2 min-h-[40px] text-sm leading-5 text-slate-500">
+                      {description ||
+                        (
+                          uiText(isArabic, 'text0427')
+                        )}
+                    </p>
+
+
+                    <div className="mt-4">
+                      <StatusBadge
+                        value={
+                          task.taskType
                         }
-                      }}
-                    />
+                        listType="task_type"
+                      />
+                    </div>
+
+
+                    <div className="mt-5 grid grid-cols-2 gap-3">
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                          {uiText(isArabic, 'text0051')}
+                        </div>
+
+                        {task.assignedTo ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={task.assignedTo.fullName}
+                              avatarUrl={task.assignedTo.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate text-xs font-medium text-slate-700">
+                              {task.assignedTo.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1 truncate text-xs font-medium text-slate-700">
+                            {uiText(isArabic, 'text0115')}
+                          </div>
+                        )}
+                      </div>
+
+
+                      <div className="rounded-xl bg-slate-50 p-3">
+                        <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                          {uiText(isArabic, 'text0116')}
+                        </div>
+
+                        <div
+                          className={`mt-1 truncate text-xs font-medium ${
+                            overdue
+                              ? 'text-red-600'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          {formatDate(
+                            task.deadlineDate,
+                            locale,
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-xs">
+                      <div>
+                        <div className="text-slate-400">
+                          {uiText(isArabic, 'text0374')}
+                        </div>
+
+                        <div className="mt-1 truncate font-medium text-slate-600">
+                          {settingLabel(
+                            task.department,
+                          )}
+                        </div>
+                      </div>
+
+
+                      <div>
+                        <div className="text-slate-400">
+                          {uiText(isArabic, 'text0371')}
+                        </div>
+
+                        <div className="mt-1 truncate font-medium text-slate-600">
+                          {settingLabel(
+                            task.branch,
+                          )}
+                        </div>
+                      </div>
+
+
+                      <div>
+                        <div className="text-slate-400">
+                          {uiText(isArabic, 'text0432')}
+                        </div>
+
+                        <div className="mt-1 truncate font-medium text-slate-600">
+                          {task.project
+                            ?.name ||
+                            '—'}
+                        </div>
+                      </div>
+
+
+                      <div>
+                        <div className="text-slate-400">
+                          {uiText(isArabic, 'text0483')}
+                        </div>
+
+                        {task.createdBy ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={task.createdBy.fullName}
+                              avatarUrl={task.createdBy.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate font-medium text-slate-600">
+                              {task.createdBy.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="mt-1 truncate font-medium text-slate-600">
+                            —
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
 
-                  {form.needsApproval && (
-                    <div
-                      className="
-                        border-t
-                        border-brand-100
-                        bg-white
-                        p-4
-                      "
-                    >
-                      <FieldLabel
-                        isArabic={
-                          isArabic
-                        }
-                      >
-                        {uiText(isArabic, 'text0511')}
-                      </FieldLabel>
+                  <div className="relative z-20 mt-auto border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(
+                            task.createdAt,
+                          ).toLocaleDateString(
+                            locale,
+                          )}
+                        </span>
 
-
-                      <select
-                        className="input"
-                        required
-                        value={
-                          form.approverId
-                        }
-                        onChange={(
-                          event,
-                        ) =>
-                          set(
-                            'approverId',
-
-                            event.target.value,
-                          )
-                        }
-                      >
-                        <option value="">
-                          {uiText(isArabic, 'text0571')}
-                        </option>
-
-
-                        {approvers.map(
-                          (
-                            item,
-                          ) => (
-                            <option
-                              key={
-                                item.id
-                              }
-                              value={
-                                item.id
-                              }
-                            >
-                              {
-                                item.fullName
-                              }
-
-                              {item.role.name ===
-                              'ADMIN'
-                                ? ' — Admin'
-                                : ''}
-                            </option>
-                          ),
-                        )}
-                      </select>
-
-
-                      <p
-                        className="
-                          mt-2
-                          text-xs
-                          text-slate-400
-                        "
-                      >
-                        {uiText(isArabic, 'text0572')}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-
-                {/*
-                 * ===============================================
-                 * PARENT TASK
-                 * ===============================================
-                 */}
-
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0519')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    value={
-                      form.parentTaskId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      handleParentTaskChange(
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0190')}
-                    </option>
-
-
-                    {parentTaskOptions.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
+                        <Stars
                           value={
-                            item.id
+                            rating
                           }
-                        >
-                          {item.title}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                        />
+                      </div>
 
 
-                  {selectedParent && (
-                    <div
-                      className="
-                        mt-2
-                        rounded-lg
-                        bg-brand-50
-                        px-3
-                        py-2
-                        text-xs
-                        leading-5
-                        text-brand-700
-                      "
-                    >
-                      {uiText(isArabic, 'text0573')}
+                      <TaskActions
+                        task={
+                          task
+                        }
+                      />
                     </div>
-                  )}
-                </div>
-              </div>
-            </section>
 
 
-            {/*
-             * =================================================
-             * SCHEDULE
-             * =================================================
-             */}
-
-            <section
-              className="
-                card
-                p-5
-              "
-            >
-              <SectionHeader
-                title={
-                  uiText(isArabic, 'text0147')
-                }
-              />
-
-
-              <div
-                className="
-                  mt-5
-                  space-y-4
-                "
-              >
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0415')}
-                  </FieldLabel>
-
-
-                  <input
-                    type="date"
-                    className="input"
-                    min={
-                      selectedParent?.startDate ||
-                      undefined
-                    }
-                    max={
-                      form.deadlineDate ||
-                      selectedParent?.deadlineDate ||
-                      undefined
-                    }
-                    value={
-                      form.startDate
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'startDate',
-
-                        event.target.value,
-                      )
-                    }
-                  />
-                </div>
-
-
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0148')}
-                  </FieldLabel>
-
-
-                  <input
-                    type="date"
-                    className="input"
-                    required
-                    min={
-                      form.startDate ||
-                      selectedParent?.startDate ||
-                      undefined
-                    }
-                    max={
-                      selectedParent?.deadlineDate ||
-                      undefined
-                    }
-                    value={
-                      form.deadlineDate
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'deadlineDate',
-
-                        event.target.value,
-                      )
-                    }
-                  />
-
-
-                  {selectedParent?.deadlineDate && (
-                    <p
-                      className="
-                        mt-2
-                        text-xs
-                        text-slate-400
-                      "
-                    >
-                      {uiText(isArabic, 'text0743', { value0: selectedParent.deadlineDate })}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
-          </aside>
+                    {rowError?.id ===
+                      task.id && (
+                      <div className="mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
+                        {
+                          rowError.message
+                        }
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            },
+          )}
         </div>
-
-
-        {/*
+      ) : (
+        /*
          * ====================================================
-         * SUMMARY
+         * LIST VIEW
          * ====================================================
-         */}
+         */
 
-        <section
-          className="
-            card
-            mt-6
-            overflow-hidden
-          "
-        >
-          <div
-            className="
-              border-b
-              border-slate-100
-              bg-slate-50
-              px-6
-              py-4
-            "
-          >
-            <SectionHeader
-              title={
-                uiText(isArabic, 'text0574')
-              }
-            />
+        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="hidden grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+            <div>
+              {uiText(isArabic, 'text0167')}
+            </div>
+
+            <div>
+              {uiText(isArabic, 'text0052')}
+            </div>
+
+            <div>
+              {uiText(isArabic, 'text0051')}
+            </div>
+
+            <div>
+              {uiText(isArabic, 'text0518')}
+            </div>
+
+            <div>
+              {uiText(isArabic, 'text0116')}
+            </div>
+
+            <div />
           </div>
 
 
-          <div
-            className="
-              grid
-              gap-5
-              p-6
-              sm:grid-cols-2
-              sm:grid-cols-2
-              lg:grid-cols-3
-              2xl:grid-cols-6
-            "
-          >
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0191')}
-              </div>
-
-              <div
-                className="
-                  mt-2
-                "
-              >
-                <StatusBadge
-                  value="Pending"
-                  listType="task_status"
-                />
-              </div>
-            </div>
+          <div className="divide-y divide-slate-100">
+            {tasks.map(
+              (
+                task,
+              ) => {
+                const overdue =
+                  isOverdue(
+                    task,
+                  );
 
 
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0117')}
-              </div>
+                const dueSoon =
+                  isDueSoon(
+                    task,
+                  );
 
-              <div
-                className="
-                  mt-2
-                  text-sm
-                  font-medium
-                  text-slate-700
-                "
-              >
-                {selectedAssignee
-                  ? (
-                      uiText(isArabic, 'text0744', { value0: selectedAssignee.fullName })
-                    )
-                  : (
-                      uiText(isArabic, 'text0115')
+
+                const rating =
+                  avgRating(
+                    task,
+                  );
+
+
+                return (
+                  <article
+                    key={
+                      task.id
+                    }
+                    className="group relative px-5 py-4 transition hover:bg-slate-50/70"
+                  >
+                    <Link
+                      href={`/tasks/${task.id}`}
+                      className="absolute inset-0 z-10"
+                      aria-label={
+                        taskTitle(
+                          task,
+                        )
+                      }
+                    />
+
+
+                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] xl:items-center">
+                      {/*
+                       * TASK
+                       */}
+
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          {task.color && (
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  task.color,
+                              }}
+                            />
+                          )}
+
+
+                          <h2 className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-brand-700">
+                            {taskTitle(
+                              task,
+                            )}
+                          </h2>
+
+
+                          {overdue && (
+                            <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[9px] font-semibold text-red-700">
+                              {uiText(isArabic, 'text0285')}
+                            </span>
+                          )}
+
+
+                          {!overdue &&
+                            dueSoon && (
+                              <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[9px] font-semibold text-amber-700">
+                                {uiText(isArabic, 'text0079')}
+                              </span>
+                            )}
+                        </div>
+
+
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <StatusBadge
+                            value={
+                              task.priority
+                            }
+                            listType="task_priority"
+                          />
+
+                          <StatusBadge
+                            value={
+                              task.taskType
+                            }
+                            listType="task_type"
+                          />
+
+                          <Stars
+                            value={
+                              rating
+                            }
+                          />
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * STATUS
+                       */}
+
+                      <div>
+                        <StatusBadge
+                          value={
+                            task.status
+                          }
+                          listType="task_status"
+                        />
+                      </div>
+
+
+                      {/*
+                       * ASSIGNEE
+                       */}
+
+                      <div className="min-w-0">
+                        {task.assignedTo ? (
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Avatar
+                              name={task.assignedTo.fullName}
+                              avatarUrl={task.assignedTo.avatarUrl}
+                              size="sm"
+                              className="shrink-0"
+                            />
+                            <span className="truncate text-xs font-medium text-slate-700">
+                              {task.assignedTo.fullName}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="truncate text-xs font-medium text-slate-700">
+                            {uiText(isArabic, 'text0115')}
+                          </div>
+                        )}
+
+                        <div className="mt-1 truncate text-[10px] text-slate-400">
+                          {uiText(isArabic, 'text0200')}{' '}
+
+                          {task.createdBy
+                            ?.fullName ||
+                            '—'}
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * ORG
+                       */}
+
+                      <div className="min-w-0 text-xs">
+                        <div className="truncate font-medium text-slate-600">
+                          {settingLabel(
+                            task.department,
+                          )}
+                        </div>
+
+                        <div className="mt-1 truncate text-[10px] text-slate-400">
+                          {settingLabel(
+                            task.branch,
+                          )}
+
+                          {task.project
+                            ?.name
+                            ? ` · ${task.project.name}`
+                            : ''}
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * DEADLINE
+                       */}
+
+                      <div>
+                        <div
+                          className={`text-xs font-medium ${
+                            overdue
+                              ? 'text-red-600'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          {formatDate(
+                            task.deadlineDate,
+                            locale,
+                          )}
+                        </div>
+
+                        <div className="mt-1 text-[10px] text-slate-400">
+                          {uiText(isArabic, 'text0585')}{' '}
+
+                          {formatDate(
+                            task.startDate,
+                            locale,
+                          )}
+                        </div>
+                      </div>
+
+
+                      {/*
+                       * ACTIONS
+                       */}
+
+                      <div className="relative z-20 flex justify-start xl:justify-end">
+                        <TaskActions
+                          task={
+                            task
+                          }
+                        />
+                      </div>
+                    </div>
+
+
+                    {rowError?.id ===
+                      task.id && (
+                      <div className="relative z-20 mt-3 rounded-lg bg-red-50 p-2 text-xs text-red-600">
+                        {
+                          rowError.message
+                        }
+                      </div>
                     )}
-              </div>
-            </div>
-
-
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0509')}
-              </div>
-
-              <div
-                className="
-                  mt-2
-                  text-sm
-                  font-medium
-                  text-slate-700
-                "
-              >
-                {form.needsApproval
-                  ? (
-                      isArabic
-                        ? `مطلوبة · ${selectedApprover?.fullName || 'لم يتم الاختيار'}`
-                        : `Required · ${selectedApprover?.fullName || 'No approver'}`
-                    )
-                  : (
-                      uiText(isArabic, 'text0575')
-                    )}
-              </div>
-            </div>
-
-
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0148')}
-              </div>
-
-              <div
-                className="
-                  mt-2
-                  text-sm
-                  font-medium
-                  text-slate-700
-                "
-              >
-                {form.deadlineDate ||
-                  (
-                    uiText(isArabic, 'text0192')
-                  )}
-              </div>
-            </div>
-
-
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0178')}
-              </div>
-
-              <div
-                className="
-                  mt-2
-                  text-sm
-                  font-medium
-                  text-slate-700
-                "
-              >
-                {files.length}{' '}
-
-                {isArabic
-                  ? 'ملف'
-                  : (
-                      files.length ===
-                      1
-                        ? 'file'
-                        : 'files'
-                    )}
-              </div>
-
-              <div
-                className="
-                  mt-1
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {form.assigneeCanDownloadAttachments
-                  ? (
-                      uiText(isArabic, 'text0193')
-                    )
-                  : (
-                      uiText(isArabic, 'text0576')
-                    )}
-              </div>
-            </div>
-
-
-            <div>
-              <div
-                className="
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0150')}
-              </div>
-
-              <div
-                className="
-                  mt-2
-                  text-sm
-                  font-medium
-                  text-slate-700
-                "
-              >
-                {form.needsBudget
-                  ? `${form.budgetMin || '—'} – ${form.budgetMax || '—'} ${form.budgetCurrency}`
-                  : (
-                      uiText(isArabic, 'text0575')
-                    )}
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-        {/*
-         * ====================================================
-         * ACTION BAR
-         * ====================================================
-         */}
-
-        <div
-          className="
-            sticky
-            bottom-4
-            z-20
-            mt-6
-          "
-        >
-          <div
-            className="
-              flex
-              justify-end
-              gap-2
-              rounded-xl
-              border
-              border-slate-200
-              bg-white/95
-              p-4
-              shadow-lg
-              backdrop-blur
-            "
-          >
-            <button
-              type="button"
-              className="btn-secondary"
-              disabled={
-                submitting
-              }
-              onClick={() =>
-                router.back()
-              }
-            >
-              {uiText(isArabic, 'text0080')}
-            </button>
-
-
-            <button
-              type="submit"
-              className="btn-primary"
-              disabled={
-                submitting
-              }
-            >
-              {submitting
-                ? (
-                    uiText(isArabic, 'text0439')
-                  )
-                : (
-                    uiText(isArabic, 'text0577')
-                  )}
-            </button>
+                  </article>
+                );
+              },
+            )}
           </div>
         </div>
-      </form>
+      )}
 
 
       {/*
        * ======================================================
-       * QUICK ADD MODAL
+       * PAGINATION
        * ======================================================
        */}
 
-      {quickAdd.open && (
+      {!loading &&
+        !error && (
+          <Pagination
+            page={
+              page
+            }
+            totalPages={
+              totalPages
+            }
+            total={
+              total
+            }
+            onPageChange={
+              setPage
+            }
+            itemLabel={
+              uiText(isArabic, 'text0024')
+            }
+          />
+        )}
+
+
+      {/*
+       * ======================================================
+       * ARCHIVE CONFIRMATION
+       * ======================================================
+       */}
+
+      {confirmArchive && (
         <div
-          className="
-            fixed
-            inset-0
-            z-[150]
-            flex
-            items-center
-            justify-center
-            bg-slate-950/40
-            p-4
-            backdrop-blur-sm
-          "
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-sm"
           onMouseDown={(
             event,
           ) => {
             if (
               event.target ===
-              event.currentTarget
+                event.currentTarget &&
+              busyId !==
+                confirmArchive.id
             ) {
-              closeQuickAdd();
+              setConfirmArchive(
+                null,
+              );
             }
           }}
         >
-          <div
-            className="
-              w-full
-              max-w-md
-              overflow-hidden
-              rounded-2xl
-              bg-white
-              shadow-2xl
-            "
-          >
-            <div
-              className="
-                border-b
-                border-slate-100
-                p-6
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-start
-                  justify-between
-                  gap-4
-                "
-              >
-                <div>
-                  <h2
-                    className="
-                      text-lg
-                      font-semibold
-                      text-slate-900
-                    "
-                  >
-                    {quickAddTitle()}
-                  </h2>
-
-                  <p
-                    className="
-                      mt-1
-                      text-sm
-                      leading-6
-                      text-slate-500
-                    "
-                  >
-                    {uiText(isArabic, 'text0578')}
-                  </p>
-                </div>
-
-
-                <button
-                  type="button"
-                  disabled={
-                    quickAdd.saving
-                  }
-                  onClick={
-                    closeQuickAdd
-                  }
-                  className="
-                    flex
-                    h-8
-                    w-8
-                    items-center
-                    justify-center
-                    rounded-lg
-                    text-slate-400
-                    transition
-                    hover:bg-slate-100
-                    hover:text-slate-700
-                  "
+          <div className="w-full max-w-md overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+            <div className="p-6">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="h-5 w-5"
                 >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-
-            <div
-              className="
-                space-y-4
-                p-6
-              "
-            >
-              <div>
-                <FieldLabel
-                  isArabic={
-                    isArabic
-                  }
-                >
-                  {uiText(isArabic, 'text0070')}
-                </FieldLabel>
-
-
-                <input
-                  className="input"
-                  autoFocus
-                  value={
-                    quickAdd.label
-                  }
-                  onChange={(
-                    event,
-                  ) =>
-                    setQuickAdd(
-                      (
-                        current,
-                      ) => ({
-                        ...current,
-
-                        label:
-                          event.target.value,
-                      }),
-                    )
-                  }
-                />
+                  <path
+                    d="M5 8h14v12H5zM4 4h16v4H4zM9 12h6"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
 
 
-              {(
-                quickAdd.type ===
-                  'department' ||
-                quickAdd.type ===
-                  'branch'
-              ) && (
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0085')}
-                  </FieldLabel>
+              <h2 className="mt-4 text-lg font-semibold text-slate-900">
+                {uiText(isArabic, 'text0536')}
+              </h2>
 
 
-                  <input
-                    className="input"
-                    value={
-                      quickAdd.code
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setQuickAdd(
-                        (
-                          current,
-                        ) => ({
-                          ...current,
-
-                          code:
-                            event.target.value,
-                        }),
-                      )
-                    }
-                  />
-                </div>
-              )}
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {uiText(isArabic, 'text0745', { value0: taskTitle(
+                      confirmArchive,
+                    ) })}
+              </p>
 
 
-              {quickAdd.type ===
-                'branch' && (
-                <div>
-                  <FieldLabel
-                    optional
-                    isArabic={
-                      isArabic
-                    }
-                  >
-                    {uiText(isArabic, 'text0463')}
-                  </FieldLabel>
-
-
-                  <input
-                    className="input"
-                    value={
-                      quickAdd.address
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setQuickAdd(
-                        (
-                          current,
-                        ) => ({
-                          ...current,
-
-                          address:
-                            event.target.value,
-                        }),
-                      )
-                    }
-                  />
-                </div>
-              )}
-
-
-              {quickAdd.error && (
-                <div
-                  className="
-                    rounded-xl
-                    border
-                    border-red-200
-                    bg-red-50
-                    px-4
-                    py-3
-                    text-sm
-                    text-red-600
-                  "
-                >
-                  {
-                    quickAdd.error
-                  }
-                </div>
-              )}
+              <p className="mt-2 text-xs text-slate-400">
+                {uiText(isArabic, 'text0586')}
+              </p>
             </div>
 
 
-            <div
-              className="
-                flex
-                justify-end
-                gap-2
-                border-t
-                border-slate-100
-                bg-slate-50/70
-                p-4
-              "
-            >
+            <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4">
               <button
                 type="button"
                 className="btn-secondary"
                 disabled={
-                  quickAdd.saving
+                  busyId ===
+                  confirmArchive.id
                 }
-                onClick={
-                  closeQuickAdd
+                onClick={() =>
+                  setConfirmArchive(
+                    null,
+                  )
                 }
               >
                 {uiText(isArabic, 'text0080')}
@@ -4465,20 +3458,19 @@ function NewTaskContent() {
                 type="button"
                 className="btn-primary"
                 disabled={
-                  quickAdd.saving ||
-                  !quickAdd.label.trim()
+                  busyId ===
+                  confirmArchive.id
                 }
-                onClick={
-                  saveQuickAdd
+                onClick={() =>
+                  archiveTask(
+                    confirmArchive.id,
+                  )
                 }
               >
-                {quickAdd.saving
-                  ? (
-                      uiText(isArabic, 'text0090')
-                    )
-                  : (
-                      uiText(isArabic, 'text0169')
-                    )}
+                {busyId ===
+                confirmArchive.id
+                  ? uiText(isArabic, 'text0400')
+                  : uiText(isArabic, 'text0477')}
               </button>
             </div>
           </div>
@@ -4495,11 +3487,12 @@ function NewTaskContent() {
  * ============================================================
  */
 
-export default function NewTaskPage() {
+export default function TasksPage() {
   return (
-    <ProtectedRoute>
-      <NewTaskContent />
+    <ProtectedRoute
+      adminOnly
+    >
+      <TasksContent />
     </ProtectedRoute>
   );
 }
-

@@ -20,7 +20,6 @@ import {
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
-import AvatarSelect from '@/components/AvatarSelect';
 
 import {
   useAuth,
@@ -55,6 +54,7 @@ import type {
   Task,
   User,
 } from '@/lib/types';
+import AvatarSelect from '@/components/AvatarSelect';
 
 
 /*
@@ -3510,21 +3510,13 @@ function NewTaskContent() {
 
 
                   <AvatarSelect
-                    users={
-                      assignableUsers
-                    }
-                    value={
-                      form.assignmentUserId
-                    }
-                    onChange={(
-                      value,
-                    ) =>
-                      set(
-                        'assignmentUserId',
-                        value,
-                      )
+                    users={assignableUsers}
+                    value={form.assignmentUserId}
+                    onChange={(value) =>
+                      set('assignmentUserId', value)
                     }
                     placeholder={uiText(isArabic, 'text0189')}
+                    disabled={Boolean(selectedParent)}
                   />
 
 

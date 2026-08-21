@@ -425,9 +425,7 @@ export default function SubtasksPanel({
             (
               item,
             ) =>
-              item.isActive &&
-              item.role.name !==
-                'ADMIN',
+              item.isActive,
           )
           .sort(
             (

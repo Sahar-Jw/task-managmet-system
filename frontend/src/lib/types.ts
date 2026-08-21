@@ -365,6 +365,17 @@ export interface Task {
 
 
   /*
+   * Archive
+   */
+
+  archivedAt?:
+    string;
+
+  statusBeforeArchive?:
+    string;
+
+
+  /*
    * Attachment permissions
    */
 

@@ -1007,8 +1007,6 @@ function MyTasksContent() {
               item,
             ) =>
               item.isActive &&
-              item.role.name !==
-                'ADMIN' &&
               item.id !==
                 user?.id,
           )

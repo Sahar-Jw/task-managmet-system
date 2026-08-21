@@ -38,6 +38,7 @@ import {
 import {
   AssignmentsApi,
   CommentsApi,
+  RatingsApi,
   TaskWorkflowApi,
   TasksApi,
   UsersApi,
@@ -47,6 +48,7 @@ import type {
   Task,
   TaskAssignment,
   TaskComment,
+  TaskRating,
   TaskWorkflowAction,
   TaskWorkflowConfig,
   User,
@@ -578,6 +580,35 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
+   * RATING STATE
+   * ==========================================================
+   */
+
+  const [
+    ratingScore,
+    setRatingScore,
+  ] =
+    useState(5);
+
+
+  const [
+    ratingFeedback,
+    setRatingFeedback,
+  ] =
+    useState('');
+
+
+  const [
+    ratingBusy,
+    setRatingBusy,
+  ] =
+    useState(
+      false,
+    );
+
+
+  /*
+   * ==========================================================
    * REASON MODAL
    * ==========================================================
    */
@@ -915,6 +946,67 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
+   * RATING
+   * ==========================================================
+   */
+
+  // BR-055: creator or Admin may rate; the current Assignee may not rate their own work.
+  const isCurrentAssignee =
+    !!user?.id &&
+    task.assignments?.some(
+      (
+        assignment,
+      ) =>
+        assignment.assigneeId ===
+          user.id &&
+        (assignment.status ===
+          'Accepted' ||
+          assignment.status ===
+            'Completed'),
+    );
+
+  const canRate =
+    task.status ===
+      'Completed' &&
+    !task.archivedAt &&
+    (isAdmin ||
+      isCreator) &&
+    !isCurrentAssignee;
+
+  const myRating: TaskRating | undefined =
+    task.ratings?.find(
+      (
+        r,
+      ) =>
+        r.ratedById ===
+        user?.id,
+    );
+
+
+  useEffect(
+    () => {
+      if (
+        myRating
+      ) {
+        setRatingScore(
+          myRating.score,
+        );
+        setRatingFeedback(
+          myRating.feedback ||
+            '',
+        );
+      }
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [
+      myRating?.id,
+    ],
+  );
+
+
+  /*
+   * ==========================================================
    * USERS
    * ==========================================================
    */
@@ -925,9 +1017,7 @@ function TaskDetailContent() {
         (
           item,
         ) =>
-          item.isActive &&
-          item.role.name !==
-            'ADMIN',
+          item.isActive,
       )
       .sort(
         (
@@ -1544,6 +1634,46 @@ function TaskDetailContent() {
       setReassignUserId('');
     } finally {
       setAssignmentBusy(
+        false,
+      );
+    }
+  }
+
+
+  /*
+   * ==========================================================
+   * RATING
+   * ==========================================================
+   */
+
+  async function submitRating() {
+    if (
+      !canRate ||
+      ratingBusy
+    ) {
+      return;
+    }
+
+
+    setRatingBusy(
+      true,
+    );
+
+
+    try {
+      await withFeedback(
+        () =>
+          RatingsApi.rate(
+            task.id,
+            ratingScore,
+            ratingFeedback.trim() ||
+              undefined,
+          ),
+
+        uiText(isArabic, 'text1068'),
+      );
+    } finally {
+      setRatingBusy(
         false,
       );
     }
@@ -3327,6 +3457,223 @@ function TaskDetailContent() {
               )}
             </div>
           </section>
+
+
+          {/*
+           * ==================================================
+           * EVALUATION
+           * ==================================================
+           */}
+
+          {(canRate ||
+            (task.ratings &&
+              task.ratings.length >
+                0)) && (
+            <section
+              className="
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                p-5
+                sm:p-6
+              "
+            >
+              <SectionTitle
+                title={
+                  uiText(isArabic, 'text1069')
+                }
+              />
+
+              {canRate && (
+                <div
+                  className="
+                    mt-4
+                    space-y-3
+                  "
+                >
+                  <div>
+                    <label className="label">
+                      {uiText(isArabic, 'text1060')}
+                    </label>
+
+                    <select
+                      className="input"
+                      value={
+                        ratingScore
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setRatingScore(
+                          Number(
+                            event.target.value,
+                          ),
+                        )
+                      }
+                    >
+                      {[1, 2, 3, 4, 5].map(
+                        (
+                          n,
+                        ) => (
+                          <option
+                            key={n}
+                            value={n}
+                          >
+                            {n} / 5
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="label">
+                      {uiText(isArabic, 'text1061')}
+                    </label>
+
+                    <textarea
+                      className="input"
+                      rows={3}
+                      placeholder={
+                        uiText(isArabic, 'text1070')
+                      }
+                      value={
+                        ratingFeedback
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setRatingFeedback(
+                          event.target.value,
+                        )
+                      }
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="
+                      btn-primary
+                      w-full
+                      sm:w-auto
+                    "
+                    disabled={
+                      ratingBusy
+                    }
+                    onClick={
+                      submitRating
+                    }
+                  >
+                    {ratingBusy
+                      ? (
+                          uiText(isArabic, 'text0081')
+                        )
+                      : myRating
+                        ? (
+                            uiText(isArabic, 'text1072')
+                          )
+                        : (
+                            uiText(isArabic, 'text1071')
+                          )}
+                  </button>
+                </div>
+              )}
+
+              {task.ratings &&
+                task.ratings.length >
+                  0 && (
+                <div
+                  className={
+                    canRate
+                      ? '\n                    mt-5\n                    border-t\n                    border-slate-100\n                    pt-5\n                    space-y-2\n                  '
+                      : '\n                    mt-4\n                    space-y-2\n                  '
+                  }
+                >
+                  {task.ratings.map(
+                    (
+                      r,
+                    ) => (
+                      <div
+                        key={
+                          r.id
+                        }
+                        className="
+                          rounded-xl
+                          border
+                          border-slate-100
+                          bg-slate-50/60
+                          px-4
+                          py-3
+                        "
+                      >
+                        <div
+                          className="
+                            flex
+                            items-center
+                            justify-between
+                            gap-3
+                          "
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            {r.ratedBy && (
+                              <Avatar
+                                name={r.ratedBy.fullName}
+                                avatarUrl={r.ratedBy.avatarUrl}
+                                size="sm"
+                                className="shrink-0"
+                              />
+                            )}
+
+                            <span className="truncate text-sm font-semibold text-slate-700">
+                              {r.ratedBy?.fullName ||
+                                uiText(isArabic, 'text1074')}
+                            </span>
+                          </div>
+
+                          <span
+                            className="
+                              shrink-0
+                              whitespace-nowrap
+                              text-sm
+                              font-semibold
+                              text-amber-500
+                            "
+                          >
+                            {'★'.repeat(
+                              r.score,
+                            )}
+
+                            <span className="text-slate-300">
+                              {'★'.repeat(
+                                5 -
+                                  r.score,
+                              )}
+                            </span>
+                          </span>
+                        </div>
+
+                        {r.feedback && (
+                          <p
+                            className="
+                              mt-2
+                              text-sm
+                              leading-6
+                              text-slate-500
+                            "
+                          >
+                            {
+                              r.feedback
+                            }
+                          </p>
+                        )}
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </section>
+          )}
 
 
           {/*

@@ -1185,17 +1185,8 @@ function TasksContent() {
     );
 
 
-  /*
-   * Admin users cannot normally be assignees.
-   */
   const assignableUsers =
-    owners.filter(
-      (
-        owner,
-      ) =>
-        owner.role.name !==
-        'ADMIN',
-    );
+    owners;
 
 
   /*

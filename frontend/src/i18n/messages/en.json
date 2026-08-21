@@ -1109,6 +1109,13 @@
     "text1064": "All statuses",
     "text1065": "All priorities",
     "text1066": "All assignees",
-    "text1067": "All types"
+    "text1067": "All types",
+    "text1068": "Evaluation saved.",
+    "text1069": "Evaluate this task",
+    "text1070": "Optional feedback",
+    "text1071": "Submit evaluation",
+    "text1072": "Update evaluation",
+    "text1073": "Evaluation",
+    "text1074": "Unknown user"
   }
 }

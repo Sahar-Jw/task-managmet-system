@@ -68,10 +68,6 @@ function ProjectDetailContent() {
     load();
   }, [load]);
 
-  if (loading) return <InlineLoader className="min-h-[40vh]" />;
-  if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
-
-  const canManage = isAdmin || project.createdById === user?.id;
   const filteredTasks = useMemo(() => {
     const term = taskSearch.trim().toLowerCase();
 
@@ -94,6 +90,10 @@ function ProjectDetailContent() {
     });
   }, [isArabic, taskAssigneeId, taskPriority, taskSearch, taskStatus, taskType, tasks]);
 
+  if (loading) return <InlineLoader className="min-h-[40vh]" />;
+  if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
+
+  const canManage = isAdmin || project.createdById === user?.id;
   const taskStatuses = Array.from(new Set(tasks.map((task) => task.status))).filter(Boolean);
   const taskPriorities = Array.from(new Set(tasks.map((task) => task.priority))).filter(Boolean);
   const taskTypes = Array.from(new Set(tasks.map((task) => task.taskType))).filter(Boolean);

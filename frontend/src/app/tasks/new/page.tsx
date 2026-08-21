@@ -1107,17 +1107,8 @@ function NewTaskContent() {
     );
 
 
-  /*
-   * Admins cannot be task assignees.
-   */
   const assignableUsers =
-    activeUsers.filter(
-      (
-        item,
-      ) =>
-        item.role.name !==
-        'ADMIN',
-    );
+    activeUsers;
 
 
   /*

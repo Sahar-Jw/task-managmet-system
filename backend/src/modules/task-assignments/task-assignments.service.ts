@@ -128,15 +128,6 @@ export class TaskAssignmentsService {
       );
     }
 
-    if (
-      user.role.name ===
-      RoleName.ADMIN
-    ) {
-      throw new BadRequestException(
-        appError('CANNOT_ASSIGN_TASK_ADMIN', 'Cannot assign a Task to an Admin'),
-      );
-    }
-
     return user;
   }
 

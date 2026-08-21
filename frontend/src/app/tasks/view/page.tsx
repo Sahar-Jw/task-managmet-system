@@ -12,7 +12,6 @@ import {
 import Link from 'next/link';
 
 import {
-  useParams,
   useRouter,
   useSearchParams,
 } from 'next/navigation';
@@ -410,21 +409,15 @@ function getWorkflowLabel(
  */
 
 function TaskDetailContent() {
-  const {
-    id,
-  } =
-    useParams<{
-      id:
-        string;
-    }>();
+  const searchParams =
+    useSearchParams();
+
+  const id =
+    searchParams.get('id') ?? '';
 
 
   const router =
     useRouter();
-
-
-  const searchParams =
-    useSearchParams();
 
 
   const {
@@ -1873,7 +1866,7 @@ function TaskDetailContent() {
       {isSubtask &&
         task.parentTask && (
         <Link
-          href={`/tasks/${task.parentTask.id}`}
+          href={`/tasks/view?id=${task.parentTask.id}`}
           className="
             mb-4
             flex
@@ -2398,13 +2391,13 @@ function TaskDetailContent() {
           user={user}
           onCancel={() => {
             setIsEditing(false);
-            router.replace(`/tasks/${task.id}`, { scroll: false });
+            router.replace(`/tasks/view?id=${task.id}`, { scroll: false });
           }}
           onSaved={async () => {
             await refreshTask();
             setIsEditing(false);
             setNotice(isArabic ? 'تم حفظ تغييرات المهمة.' : 'Task changes saved.');
-            router.replace(`/tasks/${task.id}`, { scroll: false });
+            router.replace(`/tasks/view?id=${task.id}`, { scroll: false });
           }}
         />
       )}
@@ -4641,7 +4634,7 @@ function TaskDetailContent() {
                 {task.project
                   ?.name ? (
                   <Link
-                    href={`/projects/${task.project.id}`}
+                    href={`/projects/view?id=${task.project.id}`}
                     className="
                       text-brand-700
                       hover:underline
@@ -4665,7 +4658,7 @@ function TaskDetailContent() {
                     }
                   >
                     <Link
-                      href={`/tasks/${task.parentTask.id}`}
+                      href={`/tasks/view?id=${task.parentTask.id}`}
                       className="
                         text-brand-700
                         hover:underline

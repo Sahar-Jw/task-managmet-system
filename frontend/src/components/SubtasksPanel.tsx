@@ -753,7 +753,7 @@ export default function SubtasksPanel({
         <div className="p-5 sm:p-6">
           {task.parentTask ? (
             <Link
-              href={`/tasks/${task.parentTask.id}`}
+              href={`/tasks/view?id=${task.parentTask.id}`}
               className="group flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-brand-200 hover:bg-brand-50/30"
             >
               <div className="min-w-0">
@@ -1031,7 +1031,7 @@ export default function SubtasksPanel({
                          * CARD
                          */}
                         <Link
-                          href={`/tasks/${child.id}`}
+                          href={`/tasks/view?id=${child.id}`}
                           className="
                             group
                             relative

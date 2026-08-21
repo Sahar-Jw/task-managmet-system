@@ -1517,7 +1517,7 @@ function DashboardContent() {
                   key={
                     task.id
                   }
-                  href={`/tasks/${task.id}`}
+                  href={`/tasks/view?id=${task.id}`}
                   className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
                 >
                   <div className="min-w-0">
@@ -1901,7 +1901,7 @@ function DashboardContent() {
                     key={
                       task.id
                     }
-                    href={`/tasks/${task.id}`}
+                    href={`/tasks/view?id=${task.id}`}
                     className="group flex items-center gap-4 px-5 py-4 transition hover:bg-red-50/40 sm:px-6"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
@@ -1971,7 +1971,7 @@ function DashboardContent() {
                     key={
                       project.id
                     }
-                    href={`/projects/${project.id}`}
+                    href={`/projects/view?id=${project.id}`}
                     className="group flex items-center gap-4 px-5 py-4 transition hover:bg-red-50/40 sm:px-6"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
@@ -2073,7 +2073,7 @@ function DashboardContent() {
                       key={
                         task.id
                       }
-                      href={`/tasks/${task.id}`}
+                      href={`/tasks/view?id=${task.id}`}
                       className="group flex items-center gap-4 px-5 py-4 transition hover:bg-slate-50 sm:px-6"
                     >
                       <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-100">
@@ -2146,7 +2146,7 @@ function DashboardContent() {
                     key={
                       project.id
                     }
-                    href={`/projects/${project.id}`}
+                    href={`/projects/view?id=${project.id}`}
                     className="group flex items-center gap-4 px-5 py-4 transition hover:bg-slate-50 sm:px-6"
                   >
                     <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-slate-100">
@@ -2249,7 +2249,7 @@ function DashboardContent() {
                   key={
                     task.id
                   }
-                  href={`/tasks/${task.id}`}
+                  href={`/tasks/view?id=${task.id}`}
                   className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
                 >
                   <div className="min-w-0">
@@ -2351,7 +2351,7 @@ function DashboardContent() {
                     key={
                       project.id
                     }
-                    href={`/projects/${project.id}`}
+                    href={`/projects/view?id=${project.id}`}
                     className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
                   >
                     <div className="min-w-0">

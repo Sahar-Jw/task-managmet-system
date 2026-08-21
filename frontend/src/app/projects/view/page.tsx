@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import { useAuth } from '@/lib/auth-context';
@@ -15,7 +15,7 @@ import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
 
 function ProjectDetailContent() {
-  const { id } = useParams<{ id: string }>();
+  const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
   const { user } = useAuth();
   const locale = useLocale();
@@ -306,7 +306,7 @@ function ProjectDetailContent() {
             filteredTasks.map((task) => (
               <Link
                 key={task.id}
-                href={`/tasks/${task.id}`}
+                href={`/tasks/view?id=${task.id}`}
                 className="block px-1 py-3 hover:bg-slate-50"
               >
                 <div className="flex items-start justify-between gap-4">

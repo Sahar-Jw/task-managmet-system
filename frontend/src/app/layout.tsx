@@ -1,28 +1,22 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { cookies } from 'next/headers';
 // @ts-ignore: side-effect CSS import declaration missing
 import './globals.css';
 import Shell from '@/components/Shell';
 import { ThemeProvider } from '@/lib/theme-context';
+import LocaleProvider from '@/components/LocaleProvider';
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const cookieStore = await cookies();
-  const locale = cookieStore.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'ar';
-  const messages = await getMessages();
-
   return (
-    <html lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
       <body>
-        <NextIntlClientProvider messages={messages} locale={locale}>
+        <LocaleProvider>
           <ThemeProvider>
-            <Shell >{children}</Shell>
+            <Shell>{children}</Shell>
           </ThemeProvider>
-        </NextIntlClientProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

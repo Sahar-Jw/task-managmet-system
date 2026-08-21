@@ -616,7 +616,7 @@ function getNotificationHref(
     typeof metadata.taskId ===
       'string'
   ) {
-    return `/tasks/${metadata.taskId}`;
+    return `/tasks/view?id=${metadata.taskId}`;
   }
 
 
@@ -625,7 +625,7 @@ function getNotificationHref(
     typeof metadata.projectId ===
       'string'
   ) {
-    return `/projects/${metadata.projectId}`;
+    return `/projects/view?id=${metadata.projectId}`;
   }
 
 

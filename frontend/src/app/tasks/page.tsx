@@ -1746,7 +1746,7 @@ function TasksContent() {
     return (
       <div className="relative z-20 flex flex-wrap items-center gap-2">
         <Link
-          href={`/tasks/${task.id}`}
+          href={`/tasks/view?id=${task.id}`}
           onClick={(
             event,
           ) =>
@@ -1760,7 +1760,7 @@ function TasksContent() {
 
         {canEditTask(task, user) && (
           <Link
-            href={`/tasks/${task.id}?edit=1`}
+            href={`/tasks/view?id=${task.id}&edit=1`}
             onClick={(event) => event.stopPropagation()}
             className="btn-secondary px-3 py-1.5 text-xs"
           >
@@ -2843,7 +2843,7 @@ function TasksContent() {
                    */}
 
                   <Link
-                    href={`/tasks/${task.id}`}
+                    href={`/tasks/view?id=${task.id}`}
                     className="absolute inset-0 z-10"
                     aria-label={
                       taskTitle(
@@ -3132,7 +3132,7 @@ function TasksContent() {
                     className="group relative px-5 py-4 transition hover:bg-slate-50/70"
                   >
                     <Link
-                      href={`/tasks/${task.id}`}
+                      href={`/tasks/view?id=${task.id}`}
                       className="absolute inset-0 z-10"
                       aria-label={
                         taskTitle(

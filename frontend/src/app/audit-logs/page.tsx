@@ -344,10 +344,10 @@ function getEntityLink(
 ): string | null {
   switch (log.entityType) {
     case 'Task':
-      return `/tasks/${log.entityId}`;
+      return `/tasks/view?id=${log.entityId}`;
 
     case 'Project':
-      return `/projects/${log.entityId}`;
+      return `/projects/view?id=${log.entityId}`;
 
     case 'TaskAssignment':
     case 'AssignmentApproval': {
@@ -355,7 +355,7 @@ function getEntityLink(
         (log.newValue?.taskId as string | undefined) ||
         (log.oldValue?.taskId as string | undefined);
 
-      return taskId ? `/tasks/${taskId}` : null;
+      return taskId ? `/tasks/view?id=${taskId}` : null;
     }
 
     default:

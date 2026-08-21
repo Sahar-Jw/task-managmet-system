@@ -2740,7 +2740,7 @@ function ProjectsContent() {
                    * Makes the card itself clickable.
                    */}
                   <Link
-                    href={`/projects/${project.id}`}
+                    href={`/projects/view?id=${project.id}`}
                     className="absolute inset-0 z-10"
                     aria-label={
                       project.name
@@ -2949,7 +2949,7 @@ function ProjectsContent() {
                     className="group relative px-5 py-4 transition hover:bg-slate-50/70"
                   >
                     <Link
-                      href={`/projects/${project.id}`}
+                      href={`/projects/view?id=${project.id}`}
                       className="absolute inset-0 z-10"
                       aria-label={
                         project.name

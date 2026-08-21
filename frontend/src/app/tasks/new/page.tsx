@@ -1954,7 +1954,7 @@ function NewTaskContent() {
 
 
         router.push(
-          `/tasks/${task.id}`,
+          `/tasks/view?id=${task.id}`,
         );
 
         return;
@@ -2001,7 +2001,7 @@ function NewTaskContent() {
 
 
           router.push(
-            `/tasks/${task.id}`,
+            `/tasks/view?id=${task.id}`,
           );
 
           return;
@@ -2050,7 +2050,7 @@ function NewTaskContent() {
 
 
       router.push(
-        `/tasks/${task.id}`,
+        `/tasks/view?id=${task.id}`,
       );
     } catch (
       err

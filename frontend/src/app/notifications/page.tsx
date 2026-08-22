@@ -29,6 +29,7 @@ import {
 
 import {
   NotificationsApi,
+  UsersApi,
 } from '@/lib/endpoints';
 
 import {
@@ -647,6 +648,7 @@ function NotificationRow({
   onOpen,
   onMarkRead,
   onDelete,
+  actorAvatarById,
 }: {
   notification:
     Notification;
@@ -677,6 +679,9 @@ function NotificationRow({
       notification:
         Notification,
     ) => void;
+
+  actorAvatarById:
+    Record<string, string | null>;
 }) {
   const config =
     getConfig(
@@ -805,7 +810,11 @@ function NotificationRow({
         {notification.metadata?.actorName ? (
           <Avatar
             name={notification.metadata.actorName}
-            avatarUrl={notification.metadata.actorAvatarUrl}
+            avatarUrl={
+              (notification.metadata.actorId
+                ? actorAvatarById[notification.metadata.actorId]
+                : undefined) ?? notification.metadata.actorAvatarUrl
+            }
             size="sm"
             className="shrink-0"
           />
@@ -922,98 +931,140 @@ function NotificationRow({
           </div>
 
 
-          <p
-            className="
-              mt-1
-              max-w-4xl
-              text-sm
-              leading-6
-              text-slate-500
-            "
-          >
-            {
-              content.message
-            }
-          </p>
-
-
-          {/*
-           * ==================================================
-           * EXTRA REASON
-           * ==================================================
-           */}
-
-          {typeof notification.metadata?.reason ===
-            'string' &&
-            notification.metadata.reason.trim() && (
-              <div
-                className="
-                  mt-2
-                  rounded-lg
-                  bg-slate-50
-                  px-3
-                  py-2
-                  text-xs
-                  leading-5
-                  text-slate-600
-                "
-              >
-                <span className="font-semibold text-slate-700">
-                  {uiText(isArabic, 'text0003')}
-                </span>
-
-                {
-                  notification.metadata.reason
-                }
-              </div>
-            )}
-
-
-          {/*
-           * ==================================================
-           * ACTIONS
-           * ==================================================
-           */}
-
           <div
             className="
-              mt-3
+              mt-1
               flex
-              flex-wrap
-              items-center
-              gap-2
+              flex-col
+              gap-3
+              lg:flex-row
+              lg:flex-wrap
+              lg:items-center
+              lg:justify-between
+              lg:gap-4
             "
-            onClick={(
-              event,
-            ) => {
-              event.stopPropagation();
-            }}
           >
-            {href && (
-              <button
-                type="button"
-                disabled={
-                  busy
-                }
+            <div
+              className="
+                min-w-0
+                lg:flex-1
+              "
+            >
+              <p
                 className="
-                  text-xs
-                  font-semibold
-                  text-brand-600
-                  hover:text-brand-800
-                  disabled:opacity-50
+                  max-w-4xl
+                  text-sm
+                  leading-6
+                  text-slate-500
                 "
-                onClick={() => {
-                  onOpen(
-                    notification,
-                  );
-                }}
               >
-                {uiText(isArabic, 'text0004')}
-              </button>
-            )}
+                {
+                  content.message
+                }
+              </p>
 
 
-            {!notification.isRead && (
+              {/*
+               * ================================================
+               * EXTRA REASON
+               * ================================================
+               */}
+
+              {typeof notification.metadata?.reason ===
+                'string' &&
+                notification.metadata.reason.trim() && (
+                  <div
+                    className="
+                      mt-2
+                      rounded-lg
+                      bg-slate-50
+                      px-3
+                      py-2
+                      text-xs
+                      leading-5
+                      text-slate-600
+                    "
+                  >
+                    <span className="font-semibold text-slate-700">
+                      {uiText(isArabic, 'text0003')}
+                    </span>
+
+                    {
+                      notification.metadata.reason
+                    }
+                  </div>
+                )}
+            </div>
+
+
+            {/*
+             * ==================================================
+             * ACTIONS
+             * ==================================================
+             */}
+
+            <div
+              className="
+                flex
+                flex-wrap
+                items-center
+                gap-2
+                lg:shrink-0
+              "
+              onClick={(
+                event,
+              ) => {
+                event.stopPropagation();
+              }}
+            >
+              {href && (
+                <button
+                  type="button"
+                  disabled={
+                    busy
+                  }
+                  className="
+                    text-xs
+                    font-semibold
+                    text-brand-600
+                    hover:text-brand-800
+                    disabled:opacity-50
+                  "
+                  onClick={() => {
+                    onOpen(
+                      notification,
+                    );
+                  }}
+                >
+                  {uiText(isArabic, 'text0004')}
+                </button>
+              )}
+
+
+              {!notification.isRead && (
+                <button
+                  type="button"
+                  disabled={
+                    busy
+                  }
+                  className="
+                    text-xs
+                    font-medium
+                    text-slate-500
+                    hover:text-slate-800
+                    disabled:opacity-50
+                  "
+                  onClick={() => {
+                    onMarkRead(
+                      notification,
+                    );
+                  }}
+                >
+                  {uiText(isArabic, 'text0314')}
+                </button>
+              )}
+
+
               <button
                 type="button"
                 disabled={
@@ -1022,58 +1073,36 @@ function NotificationRow({
                 className="
                   text-xs
                   font-medium
-                  text-slate-500
-                  hover:text-slate-800
+                  text-red-500
+                  hover:text-red-700
                   disabled:opacity-50
                 "
                 onClick={() => {
-                  onMarkRead(
+                  onDelete(
                     notification,
                   );
                 }}
               >
-                {uiText(isArabic, 'text0314')}
+                {uiText(isArabic, 'text0038')}
               </button>
-            )}
 
 
-            <button
-              type="button"
-              disabled={
-                busy
-              }
-              className="
-                text-xs
-                font-medium
-                text-red-500
-                hover:text-red-700
-                disabled:opacity-50
-              "
-              onClick={() => {
-                onDelete(
-                  notification,
-                );
-              }}
-            >
-              {uiText(isArabic, 'text0038')}
-            </button>
-
-
-            <span
-              className="
-                ml-auto
-                hidden
-                text-[10px]
-                text-slate-400
-                sm:inline
-              "
-              dir="ltr"
-            >
-              {formatExactDate(
-                notification.createdAt,
-                locale,
-              )}
-            </span>
+              <span
+                className="
+                  ml-auto
+                  hidden
+                  text-[10px]
+                  text-slate-400
+                  sm:inline
+                "
+                dir="ltr"
+              >
+                {formatExactDate(
+                  notification.createdAt,
+                  locale,
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -1232,7 +1261,7 @@ function NotificationsContent() {
     useState<
       NotificationFilter
     >(
-      'all',
+      'unread',
     );
 
 
@@ -1277,6 +1306,44 @@ function NotificationsContent() {
     useState(
       false,
     );
+
+
+  /*
+   * ==========================================================
+   * ACTOR AVATARS (live lookup)
+   * ==========================================================
+   * Notifications store a snapshot of the actor's avatar at the
+   * moment they were created, so notifications created before a
+   * user had (or changed) their avatar are stuck showing the old
+   * snapshot. Resolve by actorId against the current user list
+   * instead, so every notification — old or new — shows the
+   * actor's up-to-date avatar. Falls back to the stored snapshot
+   * if the actor can't be found (e.g. deleted user).
+   */
+
+  const [
+    actorAvatarById,
+    setActorAvatarById,
+  ] =
+    useState<
+      Record<string, string | null>
+    >({});
+
+
+  useEffect(() => {
+    UsersApi.list({ limit: '100' })
+      .then((result) => {
+        const next: Record<string, string | null> = {};
+        for (const u of result.items) {
+          next[u.id] = u.avatarUrl ?? null;
+        }
+        setActorAvatarById(next);
+      })
+      .catch(() => {
+        // Live lookup is a nice-to-have; if it fails we just fall
+        // back to whatever snapshot each notification already has.
+      });
+  }, []);
 
 
   /*
@@ -2269,6 +2336,9 @@ function NotificationsContent() {
                 }
                 onDelete={
                   deleteNotification
+                }
+                actorAvatarById={
+                  actorAvatarById
                 }
               />
             ),

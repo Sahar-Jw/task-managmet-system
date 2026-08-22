@@ -649,7 +649,8 @@ export class ProjectsService {
 
 
     /*
-     * Regular User cannot access somebody else's Project.
+     * Regular User cannot access somebody else's Project —
+     * unless they have a Task assigned to them within it.
      */
     if (
       actor &&
@@ -658,9 +659,21 @@ export class ProjectsService {
       project.createdById !==
         actor.id
     ) {
-      throw new ForbiddenException(
-        appError('YOU_DO_NOT_HAVE_ACCESS_PROJECT', 'You do not have access to this project'),
-      );
+      const hasAssignedTask =
+        await this.taskRepo.exist({
+          where: {
+            projectId: project.id,
+            assignedToId: actor.id,
+          },
+        });
+
+      if (
+        !hasAssignedTask
+      ) {
+        throw new ForbiddenException(
+          appError('YOU_DO_NOT_HAVE_ACCESS_PROJECT', 'You do not have access to this project'),
+        );
+      }
     }
 
 

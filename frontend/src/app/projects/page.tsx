@@ -2957,7 +2957,7 @@ function ProjectsContent() {
                     />
 
 
-                    <div className="relative z-0 grid gap-4 lg:grid-cols-[minmax(240px,1fr)_150px_180px_190px_auto] lg:items-center">
+                    <div className="relative grid gap-4 lg:grid-cols-[minmax(240px,1fr)_150px_180px_190px_auto] lg:items-center">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <h2 className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-brand-700">

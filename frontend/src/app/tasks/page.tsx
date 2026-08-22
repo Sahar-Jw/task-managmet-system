@@ -3142,7 +3142,7 @@ function TasksContent() {
                     />
 
 
-                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] xl:items-center">
+                    <div className="relative grid gap-4 xl:grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] xl:items-center">
                       {/*
                        * TASK
                        */}

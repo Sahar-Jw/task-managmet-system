@@ -10,9 +10,11 @@ import { ApiError } from '@/lib/api';
 import { ProjectsApi, TasksApi, UsersApi } from '@/lib/endpoints';
 import type { Project, Task, User } from '@/lib/types';
 import Avatar from '@/components/Avatar';
+import AvatarSelect from '@/components/AvatarSelect';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
+import { useListLabels } from '@/lib/list-labels-context';
 
 function ProjectDetailContent() {
   const id = useSearchParams().get('id') ?? '';
@@ -21,6 +23,7 @@ function ProjectDetailContent() {
   const locale = useLocale();
   const isArabic = locale === 'ar';
   const isAdmin = user?.role.name === 'ADMIN';
+  const { getLabel } = useListLabels();
 
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -288,19 +291,27 @@ function ProjectDetailContent() {
           />
           <select className="input" value={taskStatus} onChange={(event) => setTaskStatus(event.target.value)}>
             <option value="">{uiText(isArabic, 'text1064')}</option>
-            {taskStatuses.map((status) => <option key={status} value={status}>{status}</option>)}
+            {taskStatuses.map((status) => (
+              <option key={status} value={status}>{getLabel('task_status', status)}</option>
+            ))}
           </select>
           <select className="input" value={taskPriority} onChange={(event) => setTaskPriority(event.target.value)}>
             <option value="">{uiText(isArabic, 'text1065')}</option>
-            {taskPriorities.map((priority) => <option key={priority} value={priority}>{priority}</option>)}
+            {taskPriorities.map((priority) => (
+              <option key={priority} value={priority}>{getLabel('task_priority', priority)}</option>
+            ))}
           </select>
-          <select className="input" value={taskAssigneeId} onChange={(event) => setTaskAssigneeId(event.target.value)}>
-            <option value="">{uiText(isArabic, 'text1066')}</option>
-            {users.map((assignee) => <option key={assignee.id} value={assignee.id}>{assignee.fullName}</option>)}
-          </select>
+          <AvatarSelect
+            users={users}
+            value={taskAssigneeId}
+            onChange={setTaskAssigneeId}
+            placeholder={uiText(isArabic, 'text1066')}
+          />
           <select className="input md:col-span-2 xl:col-span-1" value={taskType} onChange={(event) => setTaskType(event.target.value)}>
             <option value="">{uiText(isArabic, 'text1067')}</option>
-            {taskTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+            {taskTypes.map((type) => (
+              <option key={type} value={type}>{getLabel('task_type', type)}</option>
+            ))}
           </select>
         </div>
 

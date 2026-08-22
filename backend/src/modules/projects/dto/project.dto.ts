@@ -130,6 +130,16 @@ export class QueryProjectsDto extends PaginationQueryDto {
 
 
   /*
+   * Projects that contain at least one Task assigned to the current
+   * actor (used by the "Assigned to me" tab — projects the actor did
+   * not create but has work in).
+   */
+  @IsOptional()
+  @IsBooleanString()
+  assignedToMe?: string;
+
+
+  /*
    * ----------------------------------------------------------
    * Organization / owner
    * ----------------------------------------------------------

@@ -224,11 +224,21 @@ export class ProjectsService {
      *
      * mine=true -> only Admin's own Projects
      * otherwise -> entire organization
+     *
+     * assignedToMe=true (either role) -> Projects the actor did NOT
+     * necessarily create, but has at least one Task assigned to them
+     * in. Overrides the ownership scope above — it's a distinct tab,
+     * not a further narrowing of "my projects".
      */
+    const assignedToMe =
+      query.assignedToMe ===
+      'true';
+
     const scopeToSelf =
-      !isAdmin ||
-      query.mine ===
-        'true';
+      !assignedToMe &&
+      (!isAdmin ||
+        query.mine ===
+          'true');
 
 
     /*
@@ -280,6 +290,27 @@ export class ProjectsService {
         'project.createdById = :actorId',
         {
           actorId:
+            actor.id,
+        },
+      );
+    }
+
+
+    if (
+      assignedToMe
+    ) {
+      qb.andWhere(
+        `project.id IN ${
+          qb
+            .subQuery()
+            .select('task.projectId')
+            .from(TaskEntity, 'task')
+            .where('task.assignedToId = :assignedToMeId')
+            .andWhere('task.projectId IS NOT NULL')
+            .getQuery()
+        }`,
+        {
+          assignedToMeId:
             actor.id,
         },
       );

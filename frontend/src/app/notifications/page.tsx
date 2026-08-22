@@ -901,11 +901,13 @@ function NotificationRow({
             <p
               className="
                 min-w-0
-                flex-1
-                truncate
+                basis-full
                 text-sm
                 leading-6
                 text-slate-500
+                sm:basis-auto
+                sm:flex-1
+                sm:truncate
               "
             >
               {

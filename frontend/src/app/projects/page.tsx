@@ -69,6 +69,7 @@ const PAGE_SIZE =
 type Scope =
   | 'all'
   | 'mine'
+  | 'assignedToMe'
   | 'archived';
 
 
@@ -1044,6 +1045,15 @@ function ProjectsContent() {
 
           if (
             scope ===
+            'assignedToMe'
+          ) {
+            params.assignedToMe =
+              'true';
+          }
+
+
+          if (
+            scope ===
             'archived'
           ) {
             params.status =
@@ -1080,6 +1090,8 @@ function ProjectsContent() {
             isAdmin &&
             scope !==
               'mine' &&
+            scope !==
+              'assignedToMe' &&
             ownerId
           ) {
             params.ownerId =
@@ -1091,6 +1103,8 @@ function ProjectsContent() {
             isAdmin &&
             scope !==
               'mine' &&
+            scope !==
+              'assignedToMe' &&
             departmentId
           ) {
             params.departmentId =
@@ -1102,6 +1116,8 @@ function ProjectsContent() {
             isAdmin &&
             scope !==
               'mine' &&
+            scope !==
+              'assignedToMe' &&
             branchId
           ) {
             params.branchId =
@@ -1997,11 +2013,14 @@ function ProjectsContent() {
               {scope ===
               'archived'
                 ? uiText(isArabic, 'text0406')
-                : isAdmin &&
-                    scope ===
-                      'all'
-                  ? uiText(isArabic, 'text0407')
-                  : uiText(isArabic, 'text0408')}
+                : scope ===
+                    'assignedToMe'
+                  ? uiText(isArabic, 'text1076')
+                  : isAdmin &&
+                      scope ===
+                        'all'
+                    ? uiText(isArabic, 'text0407')
+                    : uiText(isArabic, 'text0408')}
             </p>
           </div>
 
@@ -2021,7 +2040,9 @@ function ProjectsContent() {
 
 
             {scope !==
-              'archived' && (
+              'archived' &&
+              scope !==
+                'assignedToMe' && (
               <button
                 type="button"
                 className="btn-primary"
@@ -2084,6 +2105,24 @@ function ProjectsContent() {
           }`}
         >
           {uiText(isArabic, 'text0411')}
+        </button>
+
+
+        <button
+          type="button"
+          onClick={() =>
+            switchScope(
+              'assignedToMe',
+            )
+          }
+          className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+            scope ===
+            'assignedToMe'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {uiText(isArabic, 'text1075')}
         </button>
 
 
@@ -2338,7 +2377,9 @@ function ProjectsContent() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {isAdmin &&
                 scope !==
-                  'mine' && (
+                  'mine' &&
+                scope !==
+                  'assignedToMe' && (
                   <>
                     <div>
                       <label className="label">

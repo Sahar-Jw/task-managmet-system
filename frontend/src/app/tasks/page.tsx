@@ -3086,7 +3086,7 @@ function TasksContent() {
          */
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="hidden grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+          <div className="hidden grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_120px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
               {uiText(isArabic, 'text0167')}
             </div>
@@ -3152,7 +3152,7 @@ function TasksContent() {
                     />
 
 
-                    <div className="relative grid gap-4 xl:grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_auto] xl:items-center">
+                    <div className="relative grid gap-4 xl:grid-cols-[minmax(260px,1fr)_140px_160px_170px_170px_120px] xl:items-center">
                       {/*
                        * TASK
                        */}

@@ -2958,7 +2958,7 @@ function ProjectsContent() {
          */
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="hidden grid-cols-[minmax(240px,1fr)_150px_180px_190px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:grid">
+          <div className="hidden grid-cols-[minmax(240px,1fr)_150px_180px_190px_120px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 lg:grid">
             <div>
               {uiText(isArabic, 'text0432')}
             </div>
@@ -3009,7 +3009,7 @@ function ProjectsContent() {
                     />
 
 
-                    <div className="relative grid gap-4 lg:grid-cols-[minmax(240px,1fr)_150px_180px_190px_auto] lg:items-center">
+                    <div className="relative grid gap-4 lg:grid-cols-[minmax(240px,1fr)_150px_180px_190px_120px] lg:items-center">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <h2 className="truncate text-sm font-semibold text-slate-800 transition group-hover:text-brand-700">

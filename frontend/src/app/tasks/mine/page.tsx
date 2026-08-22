@@ -2594,7 +2594,7 @@ function MyTasksContent() {
         </div>
       ) : (
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="hidden grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+          <div className="hidden grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_160px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
               {uiText(isArabic, 'text0167')}
             </div>
@@ -2665,7 +2665,7 @@ function MyTasksContent() {
                     />
 
 
-                    <div className="relative grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] xl:items-center">
+                    <div className="relative grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_160px] xl:items-center">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           {task.color && (

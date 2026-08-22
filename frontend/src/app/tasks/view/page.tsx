@@ -55,7 +55,7 @@ import type {
 import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
 import { canEditTask } from '@/lib/task-permissions';
 import TaskEditPanel from '@/components/TaskEditPanel';
-import { EditIcon } from '@/components/ActionIcons';
+import { EditIcon, CancelIcon } from '@/components/ActionIcons';
 import AvatarSelect from '@/components/AvatarSelect';
 
 
@@ -2079,6 +2079,42 @@ function TaskDetailContent() {
                   </button>
                 )}
 
+                {myAcceptedAssignment && (
+                  <button
+                    type="button"
+                    disabled={assignmentBusy}
+                    className="icon-btn-danger h-8 w-8"
+                    title={uiText(isArabic, 'text0125')}
+                    aria-label={uiText(isArabic, 'text0125')}
+                    onClick={() =>
+                      setReasonModal({
+                        title: uiText(isArabic, 'text0125'),
+                        description: uiText(isArabic, 'text0126'),
+                        minLength: 10,
+                        confirmLabel: uiText(isArabic, 'text0127'),
+                        danger: true,
+                        onConfirm: (reason) => {
+                          setReasonModal(null);
+                          setAssignmentBusy(true);
+
+                          withFeedback(
+                            () =>
+                              AssignmentsApi.reject(
+                                myAcceptedAssignment.id,
+                                reason,
+                              ),
+                            uiText(isArabic, 'text0493'),
+                          ).finally(() =>
+                            setAssignmentBusy(false),
+                          );
+                        },
+                      })
+                    }
+                  >
+                    <CancelIcon />
+                  </button>
+                )}
+
                 {overdue && (
                   <span
                     className="
@@ -2132,6 +2168,32 @@ function TaskDetailContent() {
               >
                 {title}
               </h1>
+
+
+              {description ? (
+                <p
+                  className="
+                    mt-3
+                    max-w-4xl
+                    whitespace-pre-wrap
+                    text-sm
+                    leading-6
+                    text-slate-600
+                  "
+                >
+                  {description}
+                </p>
+              ) : (
+                <p
+                  className="
+                    mt-3
+                    text-sm
+                    text-slate-400
+                  "
+                >
+                  {uiText(isArabic, 'text0487')}
+                </p>
+              )}
 
 
               <div
@@ -2431,59 +2493,6 @@ function TaskDetailContent() {
             space-y-6
           "
         >
-          {/*
-           * ==================================================
-           * DESCRIPTION
-           * ==================================================
-           */}
-
-          <section
-            className="
-              rounded-2xl
-              border
-              border-slate-200
-              bg-white
-              p-5
-              sm:p-6
-            "
-          >
-            <SectionTitle
-              title={
-                uiText(isArabic, 'text0486')
-              }
-            />
-
-
-            {description ? (
-              <p
-                className="
-                  mt-4
-                  whitespace-pre-wrap
-                  text-sm
-                  leading-7
-                  text-slate-700
-                "
-              >
-                {description}
-              </p>
-            ) : (
-              <div
-                className="
-                  mt-4
-                  rounded-xl
-                  bg-slate-50
-                  px-4
-                  py-5
-                  text-sm
-                  text-slate-400
-                "
-              >
-                {uiText(isArabic, 'text0487')}
-              </div>
-            )}
-          </section>
-
-
           {/*
            * ==================================================
            * WORK BREAKDOWN

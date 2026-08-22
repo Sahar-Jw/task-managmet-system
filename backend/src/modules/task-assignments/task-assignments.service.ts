@@ -240,8 +240,16 @@ export class TaskAssignmentsService {
           dueDate:
             dto.dueDate,
 
+          /*
+           * Assignments are Accepted immediately — there is no
+           * waiting period. The assignee can still Reject at any
+           * time afterwards if they need to hand the Task back.
+           */
           status:
-            AssignmentStatus.PENDING_ACCEPTANCE,
+            AssignmentStatus.ACCEPTED,
+
+          acceptedAt:
+            new Date(),
         }),
       );
 
@@ -255,16 +263,16 @@ export class TaskAssignmentsService {
       assignee.id;
 
     /*
-     * It is assigned but not accepted yet.
-     *
-     * Do NOT put it in InProgress until the user accepts.
+     * Assignment is Accepted immediately, so work starts right away.
      */
     if (
       task.status ===
-      TaskStatus.UNASSIGNED
+        TaskStatus.UNASSIGNED ||
+      task.status ===
+        TaskStatus.PENDING
     ) {
       task.status =
-        TaskStatus.PENDING;
+        TaskStatus.IN_PROGRESS;
     }
 
     await this.taskRepo.save(
@@ -524,16 +532,20 @@ export class TaskAssignmentsService {
       );
 
     /*
-     * Once accepted, the User cannot simply reject.
-     *
-     * Creator/Admin must use Reassign instead.
+     * Reject is available any time the Assignment is still the
+     * active one for the Task — whether it's a legacy assignment
+     * still waiting on a response, or (the normal case now) one
+     * that was auto-Accepted. Once Rejected or Reassigned, it's
+     * no longer eligible.
      */
     if (
       assignment.status !==
-      AssignmentStatus.PENDING_ACCEPTANCE
+        AssignmentStatus.PENDING_ACCEPTANCE &&
+      assignment.status !==
+        AssignmentStatus.ACCEPTED
     ) {
       throw new ConflictException(
-        appError('ACCEPTED_ASSIGNMENT_CANNOT_REJECTED_DIRECTLY_ASK_ADMIN_TASK_CREATOR_REASSIGN_TASK', 'An accepted Assignment cannot be rejected directly; ask an Admin or the Task creator to reassign the Task'),
+        appError('ASSIGNMENT_NOT_ELIGIBLE_FOR_REJECTION', 'This Assignment is not active and cannot be rejected'),
       );
     }
 
@@ -729,54 +741,24 @@ export class TaskAssignmentsService {
    * REASSIGNMENT RULE
    * =========================================================
    *
-   * Reassignment is allowed only when:
-   *
-   * 1. The previous assignee rejected it.
-   *
-   * OR
-   *
-   * 2. The assignment is still PendingAcceptance after
-   *    14 full days without a response.
-   *
-   * Accepted assignments cannot be reassigned.
+   * Reassignment is allowed once the previous Assignment is no
+   * longer the active one — i.e. it was Rejected (the normal
+   * case now), or (for any assignment left over from before
+   * auto-accept) still PendingAcceptance. There is no waiting
+   * period any more: an Accepted Assignment simply cannot be
+   * reassigned — the assignee must Reject it first.
    */
-  const REASSIGN_AFTER_DAYS =
-    14;
-
-  const now =
-    new Date();
-
-  const createdAt =
-    new Date(
-      previous.createdAt,
-    );
-
-  const ageInMilliseconds =
-    now.getTime() -
-    createdAt.getTime();
-
-  const ageInDays =
-    ageInMilliseconds /
-    (
-      1000 *
-      60 *
-      60 *
-      24
-    );
-
   const wasRejected =
     previous.status ===
     AssignmentStatus.REJECTED;
 
-  const hasTimedOut =
+  const wasPending =
     previous.status ===
-      AssignmentStatus.PENDING_ACCEPTANCE &&
-    ageInDays >=
-      REASSIGN_AFTER_DAYS;
+    AssignmentStatus.PENDING_ACCEPTANCE;
 
   if (
     !wasRejected &&
-    !hasTimedOut
+    !wasPending
   ) {
     if (
       previous.status ===
@@ -784,24 +766,6 @@ export class TaskAssignmentsService {
     ) {
       throw new ConflictException(
         appError('ACCEPTED_ASSIGNMENT_CANNOT_REASSIGNED', 'An accepted Assignment cannot be reassigned'),
-      );
-    }
-
-    if (
-      previous.status ===
-      AssignmentStatus.PENDING_ACCEPTANCE
-    ) {
-      const remainingDays =
-        Math.max(
-          1,
-          Math.ceil(
-            REASSIGN_AFTER_DAYS -
-              ageInDays,
-          ),
-        );
-
-      throw new ConflictException(
-        appError('TASK_ASSIGNMENTS_BUSINESS_RULE_VIOLATION', `This Assignment is still waiting for a response. It can be reassigned after ${REASSIGN_AFTER_DAYS} days. ${remainingDays} day(s) remaining.`),
       );
     }
 
@@ -877,8 +841,15 @@ export class TaskAssignmentsService {
         dueDate:
           dto.dueDate,
 
+        /*
+         * Accepted immediately, same as a fresh assignment — no
+         * waiting period.
+         */
         status:
-          AssignmentStatus.PENDING_ACCEPTANCE,
+          AssignmentStatus.ACCEPTED,
+
+        acceptedAt:
+          new Date(),
       }),
     );
 
@@ -890,14 +861,16 @@ export class TaskAssignmentsService {
     newAssignee.id;
 
   /*
-   * The new User still needs to accept.
+   * Accepted immediately, so work starts right away.
    */
   if (
     task.status ===
-      TaskStatus.UNASSIGNED
+      TaskStatus.UNASSIGNED ||
+    task.status ===
+      TaskStatus.PENDING
   ) {
     task.status =
-      TaskStatus.PENDING;
+      TaskStatus.IN_PROGRESS;
   }
 
   await this.taskRepo.save(
@@ -913,7 +886,7 @@ export class TaskAssignmentsService {
   const reassignmentReason =
     wasRejected
       ? 'Previous assignment rejected'
-      : `No response for ${REASSIGN_AFTER_DAYS} days`;
+      : 'Previous assignment was still pending';
 
   await this.auditLogsService.record({
     actorId:

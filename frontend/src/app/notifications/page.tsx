@@ -845,74 +845,75 @@ function NotificationRow({
          */}
 
         <div className="min-w-0 flex-1">
-          <div
-            className="
-              flex
-              flex-wrap
-              items-start
-              justify-between
-              gap-2
-            "
-          >
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <span
-                  className={`
-                    inline-flex
-                    rounded-full
-                    px-2.5
-                    py-1
-                    text-[10px]
-                    font-semibold
-                    ${config.badgeClass}
-                  `}
-                >
-                  {uiText(
-                    isArabic,
-                    NOTIFICATION_LABEL_KEYS[notification.type] ?? 'text0709',
-                  )}
-                </span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span
+              className={`
+                inline-flex
+                shrink-0
+                rounded-full
+                px-2.5
+                py-1
+                text-[10px]
+                font-semibold
+                ${config.badgeClass}
+              `}
+            >
+              {uiText(
+                isArabic,
+                NOTIFICATION_LABEL_KEYS[notification.type] ?? 'text0709',
+              )}
+            </span>
 
-
-                {!notification.isRead && (
-                  <span
-                    className="
-                      inline-flex
-                      items-center
-                      gap-1.5
-                      text-[10px]
-                      font-semibold
-                      text-brand-700
-                    "
-                  >
-                    <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
-
-                    {uiText(isArabic, 'text0037')}
-                  </span>
-                )}
-              </div>
-
-
-              <h2
-                className={`
-                  mt-2
-                  text-sm
-                  leading-6
-                  ${
-                    notification.isRead
-                      ? 'font-medium text-slate-800'
-                      : 'font-semibold text-slate-950'
-                  }
-                `}
+            {!notification.isRead && (
+              <span
+                className="
+                  inline-flex
+                  shrink-0
+                  items-center
+                  gap-1.5
+                  text-[10px]
+                  font-semibold
+                  text-brand-700
+                "
               >
-                {
-                  content.title
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
+
+                {uiText(isArabic, 'text0037')}
+              </span>
+            )}
+
+            <h2
+              className={`
+                text-sm
+                leading-6
+                ${
+                  notification.isRead
+                    ? 'font-medium text-slate-800'
+                    : 'font-semibold text-slate-950'
                 }
-              </h2>
-            </div>
+              `}
+            >
+              {
+                content.title
+              }
+            </h2>
 
+            <p
+              className="
+                min-w-0
+                flex-1
+                truncate
+                text-sm
+                leading-6
+                text-slate-500
+              "
+            >
+              {
+                content.message
+              }
+            </p>
 
-            <div
+            <span
               className="
                 shrink-0
                 text-[11px]
@@ -927,89 +928,15 @@ function NotificationRow({
                 notification.createdAt,
                 isArabic,
               )}
-            </div>
-          </div>
-
-
-          <div
-            className="
-              mt-1
-              flex
-              flex-col
-              gap-3
-              lg:flex-row
-              lg:flex-wrap
-              lg:items-center
-              lg:justify-between
-              lg:gap-4
-            "
-          >
-            <div
-              className="
-                min-w-0
-                lg:flex-1
-              "
-            >
-              <p
-                className="
-                  max-w-4xl
-                  text-sm
-                  leading-6
-                  text-slate-500
-                "
-              >
-                {
-                  content.message
-                }
-              </p>
-
-
-              {/*
-               * ================================================
-               * EXTRA REASON
-               * ================================================
-               */}
-
-              {typeof notification.metadata?.reason ===
-                'string' &&
-                notification.metadata.reason.trim() && (
-                  <div
-                    className="
-                      mt-2
-                      rounded-lg
-                      bg-slate-50
-                      px-3
-                      py-2
-                      text-xs
-                      leading-5
-                      text-slate-600
-                    "
-                  >
-                    <span className="font-semibold text-slate-700">
-                      {uiText(isArabic, 'text0003')}
-                    </span>
-
-                    {
-                      notification.metadata.reason
-                    }
-                  </div>
-                )}
-            </div>
-
-
-            {/*
-             * ==================================================
-             * ACTIONS
-             * ==================================================
-             */}
+            </span>
 
             <div
               className="
                 flex
+                shrink-0
                 flex-wrap
                 items-center
                 gap-2
-                lg:shrink-0
               "
               onClick={(
                 event,
@@ -1085,25 +1012,39 @@ function NotificationRow({
               >
                 {uiText(isArabic, 'text0038')}
               </button>
-
-
-              <span
-                className="
-                  ml-auto
-                  hidden
-                  text-[10px]
-                  text-slate-400
-                  sm:inline
-                "
-                dir="ltr"
-              >
-                {formatExactDate(
-                  notification.createdAt,
-                  locale,
-                )}
-              </span>
             </div>
           </div>
+
+          {/*
+           * ================================================
+           * EXTRA REASON
+           * ================================================
+           */}
+
+          {typeof notification.metadata?.reason ===
+            'string' &&
+            notification.metadata.reason.trim() && (
+              <div
+                className="
+                  mt-2
+                  rounded-lg
+                  bg-slate-50
+                  px-3
+                  py-2
+                  text-xs
+                  leading-5
+                  text-slate-600
+                "
+              >
+                <span className="font-semibold text-slate-700">
+                  {uiText(isArabic, 'text0003')}
+                </span>
+
+                {
+                  notification.metadata.reason
+                }
+              </div>
+            )}
         </div>
       </div>
     </article>

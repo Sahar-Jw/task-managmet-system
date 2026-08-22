@@ -1,0 +1,126 @@
+diff --git a/frontend/src/app/tasks/mine/page.tsx b/frontend/src/app/tasks/mine/page.tsx
+index 766e56e..0c63f40 100644
+--- a/frontend/src/app/tasks/mine/page.tsx
++++ b/frontend/src/app/tasks/mine/page.tsx
+@@ -26,6 +26,7 @@ import StatusBadge from '@/components/StatusBadge';
+ import Avatar from '@/components/Avatar';
+ import ReasonModal from '@/components/ReasonModal';
+ import Pagination from '@/components/Pagination';
++import { ArchiveIcon, CancelIcon, EditIcon, UnarchiveIcon, ViewIcon } from '@/components/ActionIcons';
+ 
+ import {
+   useListLabels,
+@@ -1589,18 +1590,22 @@ function MyTasksContent() {
+           <Link
+             href={`/tasks/view?id=${task.id}`}
+             onClick={(event) => event.stopPropagation()}
+-            className="btn-secondary px-3 py-1.5 text-xs"
++            className="icon-btn h-8 w-8"
++            title={uiText(isArabic, 'text0158')}
++            aria-label={uiText(isArabic, 'text0158')}
+           >
+-            {uiText(isArabic, 'text0158')}
++            <ViewIcon />
+           </Link>
+ 
+           {canEditTask(task, user) && (
+             <Link
+               href={`/tasks/view?id=${task.id}&edit=1`}
+               onClick={(event) => event.stopPropagation()}
+-              className="btn-secondary px-3 py-1.5 text-xs"
++              className="icon-btn h-8 w-8"
++              title={uiText(isArabic, 'text0068')}
++              aria-label={uiText(isArabic, 'text0068')}
+             >
+-              {uiText(isArabic, 'text0068')}
++              <EditIcon />
+             </Link>
+           )}
+         </div>
+@@ -1632,9 +1637,11 @@ function MyTasksContent() {
+           ) =>
+             event.stopPropagation()
+           }
+-          className="btn-secondary px-3 py-1.5 text-xs"
++          className="icon-btn h-8 w-8"
++          title={uiText(isArabic, 'text0158')}
++          aria-label={uiText(isArabic, 'text0158')}
+         >
+-          {uiText(isArabic, 'text0158')}
++          <ViewIcon />
+         </Link>
+ 
+ 
+@@ -1642,9 +1649,11 @@ function MyTasksContent() {
+           <Link
+             href={`/tasks/view?id=${task.id}&edit=1`}
+             onClick={(event) => event.stopPropagation()}
+-            className="btn-secondary px-3 py-1.5 text-xs"
++            className="icon-btn h-8 w-8"
++            title={uiText(isArabic, 'text0068')}
++            aria-label={uiText(isArabic, 'text0068')}
+           >
+-            {uiText(isArabic, 'text0068')}
++            <EditIcon />
+           </Link>
+         )}
+ 
+@@ -1666,9 +1675,11 @@ function MyTasksContent() {
+                 task,
+               );
+             }}
+-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
++            className="icon-btn-danger h-8 w-8"
++            title={uiText(isArabic, 'text0110')}
++            aria-label={uiText(isArabic, 'text0110')}
+           >
+-            {uiText(isArabic, 'text0110')}
++            <CancelIcon />
+           </button>
+         )}
+ 
+@@ -1690,9 +1701,11 @@ function MyTasksContent() {
+                 task,
+               );
+             }}
+-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
++            className="icon-btn h-8 w-8"
++            title={uiText(isArabic, 'text0401')}
++            aria-label={uiText(isArabic, 'text0401')}
+           >
+-            {uiText(isArabic, 'text0401')}
++            <ArchiveIcon />
+           </button>
+         )}
+       </div>
+@@ -2653,7 +2666,7 @@ function MyTasksContent() {
+                     />
+ 
+ 
+-                    <div className="relative z-0 grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] xl:items-center">
++                    <div className="relative grid gap-4 xl:grid-cols-[minmax(280px,1fr)_140px_170px_170px_150px_auto] xl:items-center">
+                       <div className="min-w-0">
+                         <div className="flex items-center gap-2">
+                           {task.color && (
+diff --git a/frontend/src/components/ActionIcons.tsx b/frontend/src/components/ActionIcons.tsx
+index 4607d61..194fa34 100644
+--- a/frontend/src/components/ActionIcons.tsx
++++ b/frontend/src/components/ActionIcons.tsx
+@@ -77,6 +77,17 @@ export function UnarchiveIcon({ className }: IconProps) {
+   );
+ }
+ 
++export function CancelIcon({ className }: IconProps) {
++  return base(
++    <>
++      <circle cx="12" cy="12" r="9" />
++      <path d="m9.5 9.5 5 5" />
++      <path d="m14.5 9.5-5 5" />
++    </>,
++    className,
++  );
++}
++
+ export function ViewIcon({ className }: IconProps) {
+   return base(
+     <>

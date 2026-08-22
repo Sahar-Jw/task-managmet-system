@@ -39,7 +39,12 @@ synchronize: process.env.DB_SYNCHRONIZE === 'true',
   },
 
   uploads: {
-    maxFileSizeMb: parseInt(process.env.MAX_UPLOAD_FILE_SIZE_MB || '25', 10),
+    // Hard infra ceiling enforced by Multer at boot. The actual
+    // day-to-day limit admins see/edit lives in Settings > Task Defaults
+    // (settings.key = MAX_ATTACHMENT_SIZE_MB) and can only be set at or
+    // below this ceiling — raising it further requires changing this env
+    // var and restarting the server.
+    maxFileSizeMb: parseInt(process.env.MAX_UPLOAD_FILE_SIZE_MB || '100', 10),
   },
 
   mail: {

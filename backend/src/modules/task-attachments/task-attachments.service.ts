@@ -62,6 +62,11 @@ import {
   storagePathFromUrl,
 } from '../../common/storage/storage.util';
 
+import {
+  SettingsService,
+  MAX_ATTACHMENT_SIZE_SETTING_KEY,
+} from '../settings/settings.service';
+
 
 @Injectable()
 export class TaskAttachmentsService {
@@ -89,6 +94,9 @@ export class TaskAttachmentsService {
 
     private readonly auditLogsService:
       AuditLogsService,
+
+    private readonly settingsService:
+      SettingsService,
   ) {}
 
 
@@ -178,7 +186,7 @@ export class TaskAttachmentsService {
     }
 
 
-    this.assertFilesHaveData(
+    await this.assertFilesValid(
       files,
     );
 
@@ -296,7 +304,7 @@ export class TaskAttachmentsService {
     }
 
 
-    this.assertFilesHaveData(
+    await this.assertFilesValid(
       files,
     );
 
@@ -330,10 +338,10 @@ export class TaskAttachmentsService {
    * ==========================================================
    */
 
-  private assertFilesHaveData(
+  private async assertFilesValid(
     files:
       Express.Multer.File[],
-  ): void {
+  ): Promise<void> {
     const hasEmptyFile =
       files.some(
         (
@@ -352,6 +360,36 @@ export class TaskAttachmentsService {
     ) {
       throw new BadRequestException(
         appError('EMPTY_FILE_NOT_ALLOWED', 'Empty files cannot be uploaded'),
+      );
+    }
+
+    /*
+     * Admin-configurable via Settings > Task Defaults
+     * (settings.key = MAX_ATTACHMENT_SIZE_MB). Falls back to 25 MB if
+     * the row is missing or inactive.
+     */
+    const maxSizeMb =
+      await this.settingsService.getNumberSetting(
+        MAX_ATTACHMENT_SIZE_SETTING_KEY,
+        25,
+      );
+
+    const maxSizeBytes =
+      maxSizeMb *
+      1024 *
+      1024;
+
+    const oversizedFile =
+      files.find(
+        (file) => file.size > maxSizeBytes,
+      );
+
+    if (oversizedFile) {
+      throw new BadRequestException(
+        appError(
+          'ATTACHMENT_TOO_LARGE',
+          `"${oversizedFile.originalname}" exceeds the maximum attachment size of ${maxSizeMb} MB`,
+        ),
       );
     }
   }

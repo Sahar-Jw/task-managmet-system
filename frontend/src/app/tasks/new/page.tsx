@@ -119,6 +119,31 @@ function formatLocalDate(
 }
 
 
+function addDaysToDateString(
+  dateString:
+    string,
+
+  days:
+    number,
+) {
+  const base =
+    dateString
+      ? new Date(
+          `${dateString}T00:00:00`,
+        )
+      : new Date();
+
+  base.setDate(
+    base.getDate() +
+      days,
+  );
+
+  return formatLocalDate(
+    base,
+  );
+}
+
+
 function getDefaultTaskDates() {
   const startDate =
     new Date();
@@ -677,6 +702,32 @@ function NewTaskContent() {
     );
 
 
+  /*
+   * ==========================================================
+   * DEFAULT DEADLINE (Settings > Task Defaults)
+   * ==========================================================
+   *
+   * The deadline field is pre-filled with startDate + N days, where N
+   * comes from the admin-configurable "Default task deadline (days)"
+   * setting (falls back to 3). Once the creator manually edits the
+   * deadline field, we stop overwriting it even if startDate changes
+   * afterwards.
+   */
+
+  const [
+    defaultDeadlineDays,
+    setDefaultDeadlineDays,
+  ] =
+    useState<number | null>(
+      null,
+    );
+
+  const deadlineTouched =
+    useRef(
+      false,
+    );
+
+
   useEffect(() => {
     if (
       !user ||
@@ -780,6 +831,86 @@ function NewTaskContent() {
   }
 
 
+  async function loadDefaultDeadlineDays() {
+    try {
+      const rows =
+        await SettingsApi.list(
+          'project_setting',
+          true,
+        );
+
+      const row =
+        rows.find(
+          (item) =>
+            item.key ===
+            'DEFAULT_DEADLINE_DAYS',
+        );
+
+      const days =
+        row?.valueNumber !== undefined &&
+        row?.valueNumber !== null
+          ? Number(row.valueNumber)
+          : NaN;
+
+      setDefaultDeadlineDays(
+        Number.isFinite(days) && days > 0
+          ? days
+          : 3,
+      );
+    } catch {
+      setDefaultDeadlineDays(3);
+    }
+  }
+
+
+  useEffect(() => {
+    if (
+      defaultDeadlineDays ===
+        null ||
+      deadlineTouched.current
+    ) {
+      return;
+    }
+
+    setForm(
+      (current) => ({
+        ...current,
+
+        deadlineDate:
+          current.deadlineDate ||
+          addDaysToDateString(
+            current.startDate,
+            defaultDeadlineDays,
+          ),
+      }),
+    );
+  }, [defaultDeadlineDays]);
+
+
+  useEffect(() => {
+    if (
+      defaultDeadlineDays ===
+        null ||
+      deadlineTouched.current
+    ) {
+      return;
+    }
+
+    setForm(
+      (current) => ({
+        ...current,
+
+        deadlineDate:
+          addDaysToDateString(
+            current.startDate,
+            defaultDeadlineDays,
+          ),
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.startDate]);
+
+
   useEffect(() => {
     loadBranches();
 
@@ -788,6 +919,8 @@ function NewTaskContent() {
     loadTaskTypes();
 
     loadPriorities();
+
+    loadDefaultDeadlineDays();
 
 
     ProjectsApi.list({
@@ -3807,7 +3940,6 @@ function NewTaskContent() {
               >
                 <div>
                   <FieldLabel
-                    optional
                     isArabic={
                       isArabic
                     }
@@ -3846,7 +3978,6 @@ function NewTaskContent() {
 
                 <div>
                   <FieldLabel
-                    optional
                     isArabic={
                       isArabic
                     }
@@ -3873,13 +4004,16 @@ function NewTaskContent() {
                     }
                     onChange={(
                       event,
-                    ) =>
+                    ) => {
+                      deadlineTouched.current =
+                        true;
+
                       set(
                         'deadlineDate',
 
                         event.target.value,
-                      )
-                    }
+                      );
+                    }}
                   />
 
 

@@ -48,6 +48,16 @@ import {
   RoleName,
 } from '../../shared/enums/role.enum';
 
+import {
+  ConfigService,
+} from '@nestjs/config';
+
+// Stable `key` values for the singleton PROJECT_SETTING rows seeded by
+// the TaskDefaultsSettings migration. Read/updated by key rather than id
+// so callers never have to know the row's uuid.
+export const MAX_ATTACHMENT_SIZE_SETTING_KEY = 'MAX_ATTACHMENT_SIZE_MB';
+export const DEFAULT_DEADLINE_DAYS_SETTING_KEY = 'DEFAULT_DEADLINE_DAYS';
+
 @Injectable()
 export class SettingsService {
   constructor(
@@ -59,6 +69,9 @@ export class SettingsService {
 
     private readonly auditLogsService:
       AuditLogsService,
+
+    private readonly configService:
+      ConfigService,
   ) {}
 
   /*
@@ -499,6 +512,39 @@ export class SettingsService {
     }
 
     /*
+     * The admin-configurable attachment size can never exceed the
+     * server's hard infra ceiling (MAX_UPLOAD_FILE_SIZE_MB env var,
+     * default 100) — Multer itself is configured with that ceiling at
+     * boot, so a larger value here would silently never take effect.
+     */
+    if (
+      setting.type === SettingType.PROJECT_SETTING &&
+      setting.key === MAX_ATTACHMENT_SIZE_SETTING_KEY &&
+      setting.valueNumber !== undefined &&
+      setting.valueNumber !== null
+    ) {
+      const ceilingMb =
+        this.configService.get<number>('uploads.maxFileSizeMb') ?? 100;
+
+      const requested = Number(setting.valueNumber);
+
+      if (requested <= 0) {
+        throw new BadRequestException(
+          appError('INVALID_ATTACHMENT_SIZE_LIMIT', 'Max attachment size must be greater than 0'),
+        );
+      }
+
+      if (requested > ceilingMb) {
+        throw new BadRequestException(
+          appError(
+            'ATTACHMENT_SIZE_LIMIT_EXCEEDS_SERVER_CEILING',
+            `Max attachment size cannot exceed the server limit of ${ceilingMb} MB`,
+          ),
+        );
+      }
+    }
+
+    /*
      * A row is allowed to have only one language,
      * but not zero languages.
      */
@@ -642,6 +688,37 @@ export class SettingsService {
         },
       },
     );
+  }
+
+  /*
+   * -----------------------------------------------------
+   * NUMBER SETTING LOOKUP
+   * -----------------------------------------------------
+   *
+   * Reads a singleton PROJECT_SETTING row by its stable `key` and
+   * returns its numeric value, falling back when the row is missing,
+   * inactive, or holds something unparsable.
+   */
+
+  async getNumberSetting(
+    key: string,
+    fallback: number,
+  ): Promise<number> {
+    const setting = await this.settingRepo.findOne({
+      where: {
+        type: SettingType.PROJECT_SETTING,
+        key,
+        isActive: true,
+      },
+    });
+
+    if (!setting || setting.valueNumber === undefined || setting.valueNumber === null) {
+      return fallback;
+    }
+
+    const parsed = Number(setting.valueNumber);
+
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
   }
 
   /*

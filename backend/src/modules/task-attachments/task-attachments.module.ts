@@ -8,12 +8,14 @@ import { TaskAssignmentEntity } from '../task-assignments/entities/task-assignme
 import { TaskAttachmentsService } from './task-attachments.service';
 import { TaskAttachmentsController } from './task-attachments.controller';
 import { AuditLogsModule } from '../audit-logs/audit-logs.module';
+import { SettingsModule } from '../settings/settings.module';
 import { multerConfig } from './multer.config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([TaskAttachmentEntity, TaskEntity, TaskAssignmentEntity]),
     AuditLogsModule,
+    SettingsModule,
     MulterModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

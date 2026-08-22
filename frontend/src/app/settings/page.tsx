@@ -21,6 +21,7 @@ import ListSettingsTab from '@/components/ListSettingsTab';
 import ColorThemeTab from '@/components/ColorThemeTab';
 import WorkflowSettingsTab from '@/components/WorkflowSettingsTab';
 import DictionarySettingsTab from '@/components/DictionarySettingsTab';
+import TaskDefaultsTab from '@/components/TaskDefaultsTab';
 
 import {
   ApiError,
@@ -59,7 +60,8 @@ type PageTab =
   | 'color-theme'
   | 'lists'
   | 'workflow'
-  | 'dictionary';
+  | 'dictionary'
+  | 'task-defaults';
 
 
 type FormState = {
@@ -241,6 +243,17 @@ function DictionaryIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
       <path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Z" strokeWidth="1.7" />
       <path d="M8 8h7M8 12h7M8 16h4" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+
+function TaskDefaultsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5">
+      <circle cx="12" cy="13" r="8" strokeWidth="1.7" />
+      <path d="M12 9v4l3 2" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 2h6" strokeWidth="1.7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -2724,6 +2737,13 @@ const PAGE_TABS: {
     descriptionKey: 'text0826',
     icon: <DictionaryIcon />,
   },
+
+  {
+    value: 'task-defaults',
+    labelKey: 'text1077',
+    descriptionKey: 'text1078',
+    icon: <TaskDefaultsIcon />,
+  },
 ];
 
 
@@ -3029,6 +3049,12 @@ function SettingsPageContent() {
         {tab ===
           'dictionary' && (
           <DictionarySettingsTab />
+        )}
+
+
+        {tab ===
+          'task-defaults' && (
+          <TaskDefaultsTab />
         )}
       </div>
     </div>

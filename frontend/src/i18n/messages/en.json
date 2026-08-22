@@ -1118,6 +1118,12 @@
     "text1073": "Evaluation",
     "text1074": "Unknown user",
     "text1075": "Assigned to me",
-    "text1076": "Projects with tasks assigned to you."
+    "text1076": "Projects with tasks assigned to you.",
+    "text1077": "Task Defaults",
+    "text1078": "Controls that apply when creating new tasks. Changing these does not affect tasks that already exist.",
+    "text1079": "Must be a whole number of 1 or more.",
+    "text1080": "Could not save. Please try again.",
+    "text1081": "days",
+    "text1082": "MB"
   }
 }

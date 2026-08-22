@@ -1283,7 +1283,7 @@ export class ProjectsService {
       ProjectStatus.PLANNED;
 
     project.archivedAt =
-      undefined;
+      null;
 
 
     const saved =

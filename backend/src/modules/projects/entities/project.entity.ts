@@ -33,5 +33,5 @@ export class ProjectEntity extends VersionedEntity {
   createdById?: string;
 
   @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
-  archivedAt?: Date;
+  archivedAt?: Date | null;
 }

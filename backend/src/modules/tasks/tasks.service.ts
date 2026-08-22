@@ -4173,11 +4173,11 @@ export class TasksService {
 
 
     task.archivedAt =
-      undefined;
+      null;
 
 
     task.statusBeforeArchive =
-      undefined;
+      null;
 
 
     const saved =

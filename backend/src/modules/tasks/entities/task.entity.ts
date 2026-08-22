@@ -164,7 +164,7 @@ export class TaskEntity extends VersionedEntity {
   subTasks!: TaskEntity[];
 
   @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
-  archivedAt?: Date;
+  archivedAt?: Date | null;
 
   // BR-070: only the Task creator (or Admin) decides whether the assigned
   // User(s) may download attachments. Preview is always allowed for them
@@ -175,7 +175,7 @@ export class TaskEntity extends VersionedEntity {
   // The status this Task held right before it was archived, so it can be
   // restored to something meaningful instead of a hardcoded default.
   @Column({ name: 'status_before_archive', type: 'varchar', length: 50, nullable: true })
-  statusBeforeArchive?: string;
+  statusBeforeArchive?: string | null;
 
   // ---------- Children owned by the Task ----------
   @OneToMany(() => TaskAssignmentEntity, (a) => a.task)

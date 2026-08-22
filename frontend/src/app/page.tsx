@@ -842,7 +842,7 @@ export default function Home() {
        */}
 
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[68px] max-w-7xl items-center justify-between gap-2 px-3 sm:h-[72px] sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-[56px] max-w-7xl items-center justify-between gap-2 px-3 sm:h-[60px] sm:px-6 lg:px-8">
           <Link
             href={
               user
@@ -850,10 +850,10 @@ export default function Home() {
                 : '/'
             }
             data-no-loading
-            className="flex items-center gap-3"
+            className="flex items-center gap-2.5"
           >
             {branding?.logoUrl ? (
-              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={resolveBrandingAssetUrl(branding.logoUrl) ?? undefined}
@@ -862,12 +862,12 @@ export default function Home() {
                 />
               </div>
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600 text-white shadow-sm">
                 <svg
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   aria-hidden="true"
                 >
                   <path
@@ -890,11 +890,11 @@ export default function Home() {
             )}
 
             <div className="hidden min-w-0 sm:block">
-              <div className="text-sm font-semibold tracking-tight text-slate-900 sm:text-base">
+              <div className="text-xs font-semibold tracking-tight text-slate-900 sm:text-sm">
                 {branding?.siteName || 'Task & Project Manager'}
               </div>
 
-              <div className="hidden text-[11px] text-slate-400 sm:block">
+              <div className="hidden text-[10px] text-slate-400 sm:block">
                 {uiText(isArabic, 'text0342')}
               </div>
             </div>
@@ -905,7 +905,7 @@ export default function Home() {
             <button
               type="button"
               onClick={toggleLanguage}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-600 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
+              className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-600 transition hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700"
               aria-label={uiText(isArabic, 'text0763')}
               title={uiText(isArabic, 'text0763')}
             >
@@ -937,7 +937,7 @@ export default function Home() {
                   'login',
                 )
               }
-              className="hidden rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:block"
+              className="hidden rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:block"
             >
               {t(
                 'signIn',
@@ -952,7 +952,7 @@ export default function Home() {
                   'register',
                 )
               }
-              className="btn-primary px-3 sm:px-3.5"
+              className="btn-primary px-2.5 text-xs sm:px-3"
             >
               {t(
                 'createAccount',
@@ -976,38 +976,38 @@ export default function Home() {
            */}
 
           <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-brand-100/70 blur-3xl" />
+            <div className="absolute -left-40 -top-40 h-[360px] w-[360px] rounded-full bg-brand-100/70 blur-3xl" />
 
-            <div className="absolute -right-48 top-32 h-[520px] w-[520px] rounded-full bg-brand-50 blur-3xl" />
+            <div className="absolute -right-48 top-32 h-[400px] w-[400px] rounded-full bg-brand-50 blur-3xl" />
 
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:64px_64px] opacity-[0.18]" />
           </div>
 
 
-          <div className="relative mx-auto grid max-w-7xl gap-10 px-3 py-12 sm:min-h-[650px] sm:gap-14 sm:px-6 sm:py-20 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-8 lg:py-24">
+          <div className="relative mx-auto grid max-w-7xl gap-6 px-3 py-8 sm:min-h-[500px] sm:gap-10 sm:px-6 sm:py-12 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-8 lg:py-16">
             {/*
              * HERO COPY
              */}
 
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1.5 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur">
                 <span className="h-2 w-2 rounded-full bg-brand-500" />
 
                 {uiText(isArabic, 'text0343')}
               </div>
 
 
-              <h1 className="mt-7 max-w-3xl text-3xl font-semibold leading-[1.08] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[64px]">
+              <h1 className="mt-4 max-w-3xl text-2xl font-semibold leading-[1.1] tracking-[-0.03em] text-slate-950 sm:text-4xl lg:text-[44px]">
                 {uiText(isArabic, 'text0344')}
               </h1>
 
 
-              <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600 sm:text-base">
                 {uiText(isArabic, 'text0345')}
               </p>
 
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <button
                   type="button"
                   onClick={() =>
@@ -1015,7 +1015,7 @@ export default function Home() {
                       'register',
                     )
                   }
-                  className="btn-primary min-h-[46px] px-6 text-sm"
+                  className="btn-primary min-h-[40px] px-6 text-sm"
                 >
                   {uiText(isArabic, 'text0346')}
 
@@ -1042,14 +1042,14 @@ export default function Home() {
                       'login',
                     )
                   }
-                  className="btn-secondary min-h-[46px] px-6 text-sm"
+                  className="btn-secondary min-h-[40px] px-6 text-sm"
                 >
                   {uiText(isArabic, 'text0047')}
                 </button>
               </div>
 
 
-              <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-sm text-slate-500">
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-500">
                 {[
                   uiText(isArabic, 'text0048'),
 
@@ -1066,7 +1066,7 @@ export default function Home() {
                       }
                       className="flex items-center gap-2"
                     >
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-700">
+                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-100 text-brand-700">
                         ✓
                       </span>
 
@@ -1093,11 +1093,11 @@ export default function Home() {
                  * Window header
                  */}
 
-                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-5 py-4">
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3">
                   <div className="flex gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
-                    <span className="h-2.5 w-2.5 rounded-full bg-slate-300" />
+                    <span className="h-2 w-2 rounded-full bg-slate-300" />
+                    <span className="h-2 w-2 rounded-full bg-slate-300" />
+                    <span className="h-2 w-2 rounded-full bg-slate-300" />
                   </div>
 
                   <div className="text-[11px] font-medium text-slate-400">
@@ -1108,12 +1108,12 @@ export default function Home() {
                 </div>
 
 
-                <div className="p-5 sm:p-6">
+                <div className="p-4 sm:p-5">
                   {/*
                    * Mini dashboard
                    */}
 
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 gap-2">
                     {[
                       {
                         label:
@@ -1146,15 +1146,15 @@ export default function Home() {
                           key={
                             item.label
                           }
-                          className="rounded-xl border border-slate-100 bg-slate-50/70 p-3"
+                          className="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5"
                         >
-                          <div className="text-xl font-semibold text-slate-900">
+                          <div className="text-lg font-semibold text-slate-900">
                             {
                               item.value
                             }
                           </div>
 
-                          <div className="mt-1 truncate text-[10px] text-slate-400">
+                          <div className="mt-0.5 truncate text-[10px] text-slate-400">
                             {
                               item.label
                             }
@@ -1169,11 +1169,11 @@ export default function Home() {
                    * Main task
                    */}
 
-                  <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-4">
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
+                          <span className="h-2 w-2 rounded-full bg-brand-500" />
 
                           <span className="text-xs font-medium text-slate-400">
                             {uiText(isArabic, 'text0049')}
@@ -1181,20 +1181,20 @@ export default function Home() {
                         </div>
 
 
-                        <div className="mt-2 text-sm font-semibold text-slate-800">
+                        <div className="mt-1.5 text-sm font-semibold text-slate-800">
                           {uiText(isArabic, 'text0352')}
                         </div>
                       </div>
 
 
-                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-semibold text-amber-700">
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                         {uiText(isArabic, 'text0050')}
                       </span>
                     </div>
 
 
-                    <div className="mt-5 grid grid-cols-2 gap-3">
-                      <div className="rounded-lg bg-slate-50 p-3">
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <div className="rounded-lg bg-slate-50 p-2.5">
                         <div className="text-[10px] uppercase tracking-wide text-slate-400">
                           {uiText(isArabic, 'text0051')}
                         </div>
@@ -1205,7 +1205,7 @@ export default function Home() {
                       </div>
 
 
-                      <div className="rounded-lg bg-slate-50 p-3">
+                      <div className="rounded-lg bg-slate-50 p-2.5">
                         <div className="text-[10px] uppercase tracking-wide text-slate-400">
                           {uiText(isArabic, 'text0052')}
                         </div>
@@ -1217,8 +1217,8 @@ export default function Home() {
                     </div>
 
 
-                    <div className="mt-5">
-                      <div className="mb-2 flex items-center justify-between">
+                    <div className="mt-4">
+                      <div className="mb-1.5 flex items-center justify-between">
                         <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                           {uiText(isArabic, 'text0354')}
                         </span>
@@ -1395,7 +1395,7 @@ export default function Home() {
             ref={
               authRef
             }
-            className="relative border-y border-slate-200 bg-white py-16"
+            className="relative border-y border-slate-200 bg-white py-10"
           >
             <div className="mx-auto max-w-5xl px-5 sm:px-6">
               <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-xl">
@@ -1404,18 +1404,18 @@ export default function Home() {
                    * AUTH SIDE
                    */}
 
-                  <div className="relative hidden overflow-hidden bg-brand-600 p-8 text-white lg:block">
+                  <div className="relative hidden overflow-hidden bg-brand-600 p-6 text-white lg:block">
                     <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full border border-white/10" />
                     <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-white/10" />
 
 
-                    <div className="relative flex h-full min-h-[520px] flex-col">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
+                    <div className="relative flex h-full min-h-[420px] flex-col">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
-                          className="h-5 w-5"
+                          className="h-4 w-4"
                         >
                           <path
                             d="M7 12.5 10 15.5 17 8.5"
@@ -1436,7 +1436,7 @@ export default function Home() {
                       </div>
 
 
-                      <h2 className="mt-8 text-3xl font-semibold tracking-tight">
+                      <h2 className="mt-5 text-2xl font-semibold tracking-tight">
                         {mode ===
                         'login'
                           ? uiText(isArabic, 'text0059')
@@ -1444,7 +1444,7 @@ export default function Home() {
                       </h2>
 
 
-                      <p className="mt-4 max-w-sm text-sm leading-7 text-white/70">
+                      <p className="mt-3 max-w-sm text-sm leading-6 text-white/70">
                         {mode ===
                         'login'
                           ? uiText(isArabic, 'text0359')
@@ -1452,7 +1452,7 @@ export default function Home() {
                       </p>
 
 
-                      <div className="mt-auto space-y-3 pt-10">
+                      <div className="mt-auto space-y-2 pt-6">
                         {[
                           uiText(isArabic, 'text0361'),
 
@@ -1469,7 +1469,7 @@ export default function Home() {
                               }
                               className="flex items-center gap-3 text-sm text-white/80"
                             >
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-xs">
+                              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-xs">
                                 ✓
                               </span>
 
@@ -1488,8 +1488,8 @@ export default function Home() {
                    * AUTH FORM
                    */}
 
-                  <div className="p-6 sm:p-8 lg:p-10">
-                    <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="p-5 sm:p-6 lg:p-8">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
                           {mode ===
@@ -1498,7 +1498,7 @@ export default function Home() {
                             : uiText(isArabic, 'text0364')}
                         </div>
 
-                        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+                        <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">
                           {mode ===
                           'login'
                             ? uiText(isArabic, 'text0365')
@@ -1907,24 +1907,24 @@ export default function Home() {
          * ======================================================
          */}
 
-        <section className="border-b border-slate-200 bg-white py-20 sm:py-24">
+        <section className="border-b border-slate-200 bg-white py-12 sm:py-16">
           <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
             <div className="max-w-2xl">
               <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
                 {uiText(isArabic, 'text0379')}
               </div>
 
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-slate-950 sm:text-3xl">
                 {uiText(isArabic, 'text0380')}
               </h2>
 
-              <p className="mt-4 text-base leading-7 text-slate-600">
+              <p className="mt-3 text-sm leading-6 text-slate-600">
                 {uiText(isArabic, 'text0381')}
               </p>
             </div>
 
 
-            <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-8 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               {features.map(
                 (
                   feature,
@@ -1933,21 +1933,21 @@ export default function Home() {
                     key={
                       feature.title
                     }
-                    className="group rounded-2xl border border-slate-200 bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg"
+                    className="group rounded-2xl border border-slate-200 bg-white p-4 transition duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-100">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-100">
                       {
                         feature.icon
                       }
                     </div>
 
-                    <h3 className="mt-5 text-base font-semibold text-slate-900">
+                    <h3 className="mt-3 text-sm font-semibold text-slate-900">
                       {
                         feature.title
                       }
                     </h3>
 
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-1.5 text-xs leading-5 text-slate-500">
                       {
                         feature.description
                       }
@@ -1966,26 +1966,26 @@ export default function Home() {
          * ======================================================
          */}
 
-        <section className="bg-slate-50 py-20 sm:py-24">
+        <section className="bg-slate-50 py-12 sm:py-16">
           <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-            <div className="grid gap-12 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
+            <div className="grid gap-8 lg:grid-cols-[.85fr_1.15fr] lg:items-start">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[.16em] text-brand-600">
                   {uiText(isArabic, 'text0382')}
                 </div>
 
-                <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-4xl">
+                <h2 className="mt-2 text-2xl font-semibold tracking-[-0.02em] text-slate-950 sm:text-3xl">
                   {uiText(isArabic, 'text0383')}
                 </h2>
 
-                <p className="mt-4 max-w-md text-base leading-7 text-slate-600">
+                <p className="mt-3 max-w-md text-sm leading-6 text-slate-600">
                   {uiText(isArabic, 'text0384')}
                 </p>
 
 
-                <div className="mt-8 rounded-2xl border border-brand-100 bg-brand-50 p-5">
+                <div className="mt-5 rounded-2xl border border-brand-100 bg-brand-50 p-4">
                   <div className="flex gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-600 text-white">
                       ✓
                     </div>
 
@@ -1994,7 +1994,7 @@ export default function Home() {
                         {uiText(isArabic, 'text0066')}
                       </div>
 
-                      <p className="mt-1 text-sm leading-6 text-brand-800/70">
+                      <p className="mt-0.5 text-xs leading-5 text-brand-800/70">
                         {uiText(isArabic, 'text0385')}
                       </p>
                     </div>
@@ -2013,7 +2013,7 @@ export default function Home() {
                       key={
                         item.number
                       }
-                      className={`rounded-2xl border bg-white p-6 ${
+                      className={`rounded-2xl border bg-white p-4 ${
                         index ===
                         0
                           ? 'border-brand-200 shadow-sm'
@@ -2037,13 +2037,13 @@ export default function Home() {
                         />
                       </div>
 
-                      <h3 className="mt-6 text-lg font-semibold text-slate-900">
+                      <h3 className="mt-3 text-sm font-semibold text-slate-900">
                         {
                           item.title
                         }
                       </h3>
 
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                      <p className="mt-1.5 text-xs leading-5 text-slate-500">
                         {
                           item.description
                         }
@@ -2063,20 +2063,20 @@ export default function Home() {
          * ======================================================
          */}
 
-        <section className="bg-white py-20">
+        <section className="bg-white py-12">
           <div className="mx-auto max-w-7xl px-5 sm:px-6 lg:px-8">
-            <div className="relative overflow-hidden rounded-[28px] bg-brand-600 px-6 py-12 text-white sm:px-10 lg:px-14 lg:py-14">
+            <div className="relative overflow-hidden rounded-[28px] bg-brand-600 px-6 py-8 text-white sm:px-8 lg:px-10 lg:py-10">
               <div className="absolute -right-20 -top-32 h-80 w-80 rounded-full border border-white/10" />
               <div className="absolute -bottom-48 right-32 h-96 w-96 rounded-full border border-white/10" />
 
 
-              <div className="relative flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
-                  <h2 className="text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">
+                  <h2 className="text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
                     {uiText(isArabic, 'text0386')}
                   </h2>
 
-                  <p className="mt-4 max-w-xl text-sm leading-7 text-white/75 sm:text-base">
+                  <p className="mt-3 max-w-xl text-sm leading-6 text-white/75">
                     {uiText(isArabic, 'text0387')}
                   </p>
                 </div>
@@ -2090,7 +2090,7 @@ export default function Home() {
                         'register',
                       )
                     }
-                    className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
+                    className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
                   >
                     {uiText(isArabic, 'text0367')}
                   </button>
@@ -2103,7 +2103,7 @@ export default function Home() {
                         'login',
                       )
                     }
-                    className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                    className="rounded-xl border border-white/20 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/15"
                   >
                     {uiText(isArabic, 'text0047')}
                   </button>

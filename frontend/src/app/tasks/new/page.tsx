@@ -12,6 +12,7 @@ import {
 
 import {
   useRouter,
+  useSearchParams,
 } from 'next/navigation';
 
 import {
@@ -426,6 +427,13 @@ function NewTaskContent() {
     useRouter();
 
 
+  const presetProjectId =
+    useSearchParams().get(
+      'projectId',
+    ) ??
+    '';
+
+
   const {
     user,
   } =
@@ -610,7 +618,7 @@ function NewTaskContent() {
         '',
 
       projectId:
-        '',
+        presetProjectId,
 
       parentTaskId:
         '',

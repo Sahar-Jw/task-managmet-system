@@ -269,7 +269,14 @@ function ProjectDetailContent() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             {uiText(isArabic, 'text0887')}
           </h2>
-          <span className="text-xs text-slate-400">{filteredTasks.length} / {tasks.length}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-slate-400">{filteredTasks.length} / {tasks.length}</span>
+            {(canManage || isAdmin) && project.status !== 'Archived' && (
+              <Link href={`/tasks/new?projectId=${id}`} className="btn-primary">
+                + {uiText(isArabic, 'text0016')}
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">

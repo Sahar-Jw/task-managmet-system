@@ -15,6 +15,7 @@ import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
 import { useListLabels } from '@/lib/list-labels-context';
+import { ArchiveIcon, DeleteIcon, EditIcon, UnarchiveIcon } from '@/components/ActionIcons';
 
 function ProjectDetailContent() {
   const id = useSearchParams().get('id') ?? '';
@@ -234,15 +235,28 @@ function ProjectDetailContent() {
             </dl>
 
             {(canManage || isAdmin) && project.status !== 'Archived' && (
-              <div className="mt-5 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4">
                 {canManage && (
-                  <button className="btn-secondary" onClick={startEdit}>
-                    {uiText(isArabic, 'text0879')}
+                  <button
+                    type="button"
+                    className="icon-btn h-8 w-8"
+                    title={uiText(isArabic, 'text0879')}
+                    aria-label={uiText(isArabic, 'text0879')}
+                    onClick={startEdit}
+                  >
+                    <EditIcon />
                   </button>
                 )}
                 {canManage && (
-                  <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
-                    {busy ? uiText(isArabic, 'text0881') : uiText(isArabic, 'text0882')}
+                  <button
+                    type="button"
+                    className="icon-btn h-8 w-8"
+                    disabled={busy}
+                    title={busy ? uiText(isArabic, 'text0881') : uiText(isArabic, 'text0882')}
+                    aria-label={uiText(isArabic, 'text0882')}
+                    onClick={handleArchiveToggle}
+                  >
+                    <ArchiveIcon />
                   </button>
                 )}
                 {canManage &&
@@ -257,8 +271,14 @@ function ProjectDetailContent() {
                       </button>
                     </>
                   ) : (
-                    <button className="btn-danger" onClick={() => setConfirmDelete(true)}>
-                      {uiText(isArabic, 'text0880')}
+                    <button
+                      type="button"
+                      className="icon-btn-danger h-8 w-8"
+                      title={uiText(isArabic, 'text0880')}
+                      aria-label={uiText(isArabic, 'text0880')}
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      <DeleteIcon />
                     </button>
                   ))}
               </div>
@@ -266,8 +286,15 @@ function ProjectDetailContent() {
 
             {canManage && project.status === 'Archived' && (
               <div className="mt-5 border-t border-slate-100 pt-4">
-                <button className="btn-secondary disabled:opacity-50" disabled={busy} onClick={handleArchiveToggle}>
-                  {busy ? uiText(isArabic, 'text0885') : uiText(isArabic, 'text0886')}
+                <button
+                  type="button"
+                  className="icon-btn h-8 w-8"
+                  disabled={busy}
+                  title={busy ? uiText(isArabic, 'text0885') : uiText(isArabic, 'text0886')}
+                  aria-label={uiText(isArabic, 'text0886')}
+                  onClick={handleArchiveToggle}
+                >
+                  <UnarchiveIcon />
                 </button>
               </div>
             )}

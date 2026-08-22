@@ -55,6 +55,7 @@ import type {
 import TaskAttachmentsPanel from '@/components/TaskAttachmentsPanel';
 import { canEditTask } from '@/lib/task-permissions';
 import TaskEditPanel from '@/components/TaskEditPanel';
+import { EditIcon } from '@/components/ActionIcons';
 import AvatarSelect from '@/components/AvatarSelect';
 
 
@@ -2070,9 +2071,11 @@ function TaskDetailContent() {
                       setIsEditing(true);
                       window.setTimeout(() => document.getElementById('task-edit-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
                     }}
-                    className="btn-secondary px-3 py-1.5 text-xs"
+                    className="icon-btn h-8 w-8"
+                    title={uiText(isArabic, 'text0068')}
+                    aria-label={uiText(isArabic, 'text0068')}
                   >
-                    {uiText(isArabic, 'text0068')}
+                    <EditIcon />
                   </button>
                 )}
 

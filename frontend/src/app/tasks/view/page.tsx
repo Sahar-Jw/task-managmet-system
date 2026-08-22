@@ -779,6 +779,33 @@ function TaskDetailContent() {
   );
 
 
+  useEffect(
+    () => {
+      const myRatingEarly = task?.ratings?.find(
+        (r) => r.ratedById === user?.id,
+      );
+
+      if (
+        myRatingEarly
+      ) {
+        setRatingScore(
+          myRatingEarly.score,
+        );
+        setRatingFeedback(
+          myRatingEarly.feedback ||
+            '',
+        );
+      }
+
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [
+      task?.ratings,
+      user?.id,
+    ],
+  );
+
+
   /*
    * ==========================================================
    * FEEDBACK
@@ -974,28 +1001,6 @@ function TaskDetailContent() {
         r.ratedById ===
         user?.id,
     );
-
-
-  useEffect(
-    () => {
-      if (
-        myRating
-      ) {
-        setRatingScore(
-          myRating.score,
-        );
-        setRatingFeedback(
-          myRating.feedback ||
-            '',
-        );
-      }
-
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [
-      myRating?.id,
-    ],
-  );
 
 
   /*

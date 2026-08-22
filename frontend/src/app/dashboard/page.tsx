@@ -156,14 +156,14 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
       <div>
-        <h2 className="text-base font-semibold text-slate-900">
+        <h2 className="text-sm font-semibold text-slate-900">
           {title}
         </h2>
 
         {description && (
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <p className="mt-0.5 text-xs leading-5 text-slate-500">
             {description}
           </p>
         )}
@@ -232,7 +232,7 @@ function MetricCard({
 
   const content = (
     <div
-      className={`group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 transition ${
+      className={`group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition ${
         href
           ? 'hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg'
           : ''
@@ -242,24 +242,24 @@ function MetricCard({
         className={`absolute inset-x-0 top-0 h-[3px] ${styles.bar}`}
       />
 
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-slate-500">
+          <p className="text-xs font-medium text-slate-500">
             {title}
           </p>
 
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
+          <p className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-950">
             {value}
           </p>
 
-          <p className="mt-1.5 text-xs leading-5 text-slate-400">
+          <p className="mt-1 text-xs leading-5 text-slate-400">
             {description}
           </p>
         </div>
 
 
         <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ring-1 ${styles.icon}`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${styles.icon}`}
         >
           {icon}
         </div>
@@ -296,7 +296,7 @@ function EmptyState({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[200px] flex-col items-center justify-center px-6 py-10 text-center">
+    <div className="flex min-h-[160px] flex-col items-center justify-center px-6 py-8 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
         {icon ?? (
           <svg
@@ -332,7 +332,7 @@ function ChartEmptyState({
   message: string;
 }) {
   return (
-    <div className="flex h-[320px] items-center justify-center">
+    <div className="flex h-[260px] items-center justify-center">
       <EmptyState
         title={message}
         description="More data will appear here as tasks are created and completed."
@@ -1318,17 +1318,17 @@ function DashboardContent() {
 
   const branchChartHeight =
     Math.max(
-      280,
+      220,
       branchChartData.length *
-        50,
+        38,
     );
 
 
   const departmentChartHeight =
     Math.max(
-      280,
+      220,
       departmentChartData.length *
-        50,
+        38,
     );
 
 
@@ -1377,7 +1377,7 @@ function DashboardContent() {
   if (
     loading
   ) {
-    return <InlineLoader className="min-h-[320px]" />;
+    return <InlineLoader className="min-h-[260px]" />;
   }
 
 
@@ -1402,31 +1402,31 @@ function DashboardContent() {
        * ======================================================
        */}
 
-      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-4 sm:px-6">
         <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
 
 
-        <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex min-w-0 items-start gap-3">
             <Avatar
               name={user?.fullName || firstName || 'User'}
               avatarUrl={user?.avatarUrl}
-              size="md"
+              size="sm"
               className="shrink-0"
             />
 
             <div>
-            <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
+            <div className="text-[11px] font-semibold uppercase tracking-[.14em] text-brand-600">
               {uiText(isAr, 'text0279')}
             </div>
 
 
-            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
+            <h1 className="mt-1 text-lg font-semibold tracking-[-0.02em] text-slate-950 sm:text-xl">
               {uiText(isAr, 'text0725', { value0: firstName })}
             </h1>
 
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
               {isAdmin
                 ? uiText(isAr, 'text0280')
                 : uiText(isAr, 'text0281')}
@@ -1477,7 +1477,7 @@ function DashboardContent() {
        */}
 
       <section className="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <div className="border-b border-slate-100 p-5 sm:p-6">
+        <div className="border-b border-slate-100 p-4 sm:p-5">
           <SectionHeader
             title={
               uiText(isAr, 'text1032')
@@ -1518,7 +1518,7 @@ function DashboardContent() {
                     task.id
                   }
                   href={`/tasks/view?id=${task.id}`}
-                  className="group grid gap-3 px-5 py-4 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-6"
+                  className="group grid gap-2 px-4 py-3 transition hover:bg-slate-50 sm:grid-cols-[minmax(0,1fr)_150px_150px] sm:items-center sm:px-5"
                 >
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-slate-800 group-hover:text-brand-700">
@@ -1584,7 +1584,7 @@ function DashboardContent() {
        * ======================================================
        */}
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title={
             uiText(isAr, 'text0017')
@@ -1739,7 +1739,7 @@ function DashboardContent() {
        * ======================================================
        */}
 
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <SectionHeader
           title={
             uiText(isAr, 'text0287')
@@ -1762,7 +1762,7 @@ function DashboardContent() {
 
         {counts.length >
           0 ? (
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {counts.map(
               (
                 item,
@@ -1778,9 +1778,9 @@ function DashboardContent() {
                       )}`,
                     )
                   }
-                  className="group rounded-xl border border-slate-200 bg-slate-50/40 p-4 transition hover:border-brand-200 hover:bg-brand-50/40"
+                  className="group rounded-xl border border-slate-200 bg-slate-50/40 p-3 transition hover:border-brand-200 hover:bg-brand-50/40"
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2">
                     <StatusBadge
                       value={
                         item.status
@@ -1803,13 +1803,13 @@ function DashboardContent() {
                     </svg>
                   </div>
 
-                  <div className="mt-4 text-2xl font-semibold tracking-tight text-slate-900">
+                  <div className="mt-2 text-lg font-semibold tracking-tight text-slate-900">
                     {
                       item.count
                     }
                   </div>
 
-                  <div className="mt-1 text-xs text-slate-400">
+                  <div className="mt-0.5 text-xs text-slate-400">
                     {item.count ===
                     1
                       ? uiText(isAr, 'text0023')
@@ -2659,7 +2659,7 @@ function DashboardContent() {
                   }
                 />
               ) : (
-                <div className="h-[370px] p-4 sm:p-6" dir="ltr">
+                <div className="h-[300px] p-4 sm:p-6" dir="ltr">
                   <ResponsiveContainer
                     width="100%"
                     height="100%"

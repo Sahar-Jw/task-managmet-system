@@ -20,6 +20,7 @@ import {
 import Pagination from '@/components/Pagination';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Avatar from '@/components/Avatar';
+import { DeleteIcon, EditIcon, UserCheckIcon, UserXIcon } from '@/components/ActionIcons';
 
 import {
   useAuth,
@@ -1428,14 +1429,16 @@ function UsersContent() {
           disabled={
             busy
           }
-          className="btn-secondary px-3 py-1.5 text-xs"
+          className="icon-btn h-8 w-8"
+          title={uiText(isArabic, 'text0068')}
+          aria-label={uiText(isArabic, 'text0068')}
           onClick={() =>
             openEdit(
               target,
             )
           }
         >
-          {uiText(isArabic, 'text0068')}
+          <EditIcon />
         </button>
 
 
@@ -1445,7 +1448,19 @@ function UsersContent() {
             disabled={
               busy
             }
-            className="btn-secondary px-3 py-1.5 text-xs"
+            className="icon-btn h-8 w-8"
+            title={
+              busy
+                ? uiText(isArabic, 'text0095')
+                : target.isActive
+                  ? uiText(isArabic, 'text0096')
+                  : uiText(isArabic, 'text0097')
+            }
+            aria-label={
+              target.isActive
+                ? uiText(isArabic, 'text0096')
+                : uiText(isArabic, 'text0097')
+            }
             onClick={() => {
               if (
                 target.isActive
@@ -1460,11 +1475,7 @@ function UsersContent() {
               }
             }}
           >
-            {busy
-              ? uiText(isArabic, 'text0095')
-              : target.isActive
-                ? uiText(isArabic, 'text0096')
-                : uiText(isArabic, 'text0097')}
+            {target.isActive ? <UserXIcon /> : <UserCheckIcon />}
           </button>
         )}
 
@@ -1475,7 +1486,9 @@ function UsersContent() {
             disabled={
               busy
             }
-            className="btn-danger px-3 py-1.5 text-xs"
+            className="icon-btn-danger h-8 w-8"
+            title={uiText(isArabic, 'text0038')}
+            aria-label={uiText(isArabic, 'text0038')}
             onClick={() => {
               setDeleteError('');
 
@@ -1484,7 +1497,7 @@ function UsersContent() {
               );
             }}
           >
-            {uiText(isArabic, 'text0038')}
+            <DeleteIcon />
           </button>
         )}
       </div>

@@ -25,6 +25,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import Pagination from '@/components/Pagination';
 import Avatar from '@/components/Avatar';
+import { ArchiveIcon, EditIcon, UnarchiveIcon, ViewIcon } from '@/components/ActionIcons';
 
 import {
   useAuth,
@@ -1752,9 +1753,11 @@ function TasksContent() {
           ) =>
             event.stopPropagation()
           }
-          className="btn-secondary px-3 py-1.5 text-xs"
+          className="icon-btn h-8 w-8"
+          title={uiText(isArabic, 'text0158')}
+          aria-label={uiText(isArabic, 'text0158')}
         >
-          {uiText(isArabic, 'text0158')}
+          <ViewIcon />
         </Link>
 
 
@@ -1762,9 +1765,11 @@ function TasksContent() {
           <Link
             href={`/tasks/view?id=${task.id}&edit=1`}
             onClick={(event) => event.stopPropagation()}
-            className="btn-secondary px-3 py-1.5 text-xs"
+            className="icon-btn h-8 w-8"
+            title={uiText(isArabic, 'text0068')}
+            aria-label={uiText(isArabic, 'text0068')}
           >
-            {uiText(isArabic, 'text0068')}
+            <EditIcon />
           </Link>
         )}
 
@@ -1787,12 +1792,15 @@ function TasksContent() {
                 task.id,
               );
             }}
-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+            className="icon-btn h-8 w-8"
+            title={
+              busyId === task.id
+                ? uiText(isArabic, 'text0402')
+                : uiText(isArabic, 'text0403')
+            }
+            aria-label={uiText(isArabic, 'text0403')}
           >
-            {busyId ===
-            task.id
-              ? uiText(isArabic, 'text0402')
-              : uiText(isArabic, 'text0403')}
+            <UnarchiveIcon />
           </button>
         ) : (
           <button
@@ -1811,9 +1819,11 @@ function TasksContent() {
                 task,
               );
             }}
-            className="btn-secondary px-3 py-1.5 text-xs disabled:opacity-50"
+            className="icon-btn h-8 w-8"
+            title={uiText(isArabic, 'text0401')}
+            aria-label={uiText(isArabic, 'text0401')}
           >
-            {uiText(isArabic, 'text0401')}
+            <ArchiveIcon />
           </button>
         )}
       </div>

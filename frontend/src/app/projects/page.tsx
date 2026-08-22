@@ -25,6 +25,7 @@ import {
 import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import Pagination from '@/components/Pagination';
+import { ArchiveIcon, DeleteIcon, EditIcon, UnarchiveIcon } from '@/components/ActionIcons';
 
 import {
   useAuth,
@@ -1849,7 +1850,9 @@ function ProjectsContent() {
             'Archived' && (
             <button
               type="button"
-              className="btn-secondary px-3 py-1.5 text-xs"
+              className="icon-btn h-8 w-8"
+              title={uiText(isArabic, 'text0068')}
+              aria-label={uiText(isArabic, 'text0068')}
               onClick={(
                 event,
               ) => {
@@ -1861,7 +1864,7 @@ function ProjectsContent() {
                 );
               }}
             >
-              {uiText(isArabic, 'text0068')}
+              <EditIcon />
             </button>
           )}
 
@@ -1871,7 +1874,13 @@ function ProjectsContent() {
             'Archived' && (
             <button
               type="button"
-              className="btn-secondary px-3 py-1.5 text-xs"
+              className="icon-btn h-8 w-8"
+              title={
+                busyId === project.id
+                  ? uiText(isArabic, 'text0400')
+                  : uiText(isArabic, 'text0401')
+              }
+              aria-label={uiText(isArabic, 'text0401')}
               disabled={
                 busyId ===
                 project.id
@@ -1887,10 +1896,7 @@ function ProjectsContent() {
                 );
               }}
             >
-              {busyId ===
-              project.id
-                ? uiText(isArabic, 'text0400')
-                : uiText(isArabic, 'text0401')}
+              <ArchiveIcon />
             </button>
           )}
 
@@ -1900,7 +1906,13 @@ function ProjectsContent() {
             'Archived' && (
             <button
               type="button"
-              className="btn-secondary px-3 py-1.5 text-xs"
+              className="icon-btn h-8 w-8"
+              title={
+                busyId === project.id
+                  ? uiText(isArabic, 'text0402')
+                  : uiText(isArabic, 'text0403')
+              }
+              aria-label={uiText(isArabic, 'text0403')}
               disabled={
                 busyId ===
                 project.id
@@ -1916,10 +1928,7 @@ function ProjectsContent() {
                 );
               }}
             >
-              {busyId ===
-              project.id
-                ? uiText(isArabic, 'text0402')
-                : uiText(isArabic, 'text0403')}
+              <UnarchiveIcon />
             </button>
           )}
 
@@ -1927,7 +1936,9 @@ function ProjectsContent() {
         {manageable && (
           <button
             type="button"
-            className="btn-danger px-3 py-1.5 text-xs"
+            className="icon-btn-danger h-8 w-8"
+            title={uiText(isArabic, 'text0038')}
+            aria-label={uiText(isArabic, 'text0038')}
             onClick={(
               event,
             ) => {
@@ -1939,7 +1950,7 @@ function ProjectsContent() {
               );
             }}
           >
-            {uiText(isArabic, 'text0038')}
+            <DeleteIcon />
           </button>
         )}
       </div>

@@ -47,11 +47,25 @@ function ProjectDetailContent() {
     setLoading(true);
     setError('');
     try {
-      // Admin can see every task in the project; a regular User only ever
-      // sees their own tasks, so scope "mine" down to this project instead.
+      // Admin sees every task in the project. A regular User only sees
+      // tasks connected to them — but "connected to them" means tasks
+      // assigned to them (mine) OR tasks they created (assigned-by-me),
+      // not just assigned-to. Otherwise a task/project creator who gets
+      // demoted from Admin to User loses visibility into work they
+      // authored but handed off to someone else. Merge both, deduped
+      // by task id, scoped to this project.
       const fetchTasks = isAdmin
         ? TasksApi.list({ projectId: id, limit: '100' })
-        : TasksApi.mine({ projectId: id, limit: '100' });
+        : Promise.all([
+            TasksApi.mine({ projectId: id, limit: '100' }),
+            TasksApi.assignedByMe({ projectId: id, limit: '100' }),
+          ]).then(([mine, createdByMe]) => {
+            const byId = new Map<string, Task>();
+            for (const task of mine.items) byId.set(task.id, task);
+            for (const task of createdByMe.items) byId.set(task.id, task);
+            const items = Array.from(byId.values());
+            return { items, total: items.length, page: 1, limit: 100 };
+          });
       const [p, t, u] = await Promise.all([
         ProjectsApi.get(id),
         fetchTasks,

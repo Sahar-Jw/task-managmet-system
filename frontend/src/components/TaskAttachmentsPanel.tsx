@@ -8,6 +8,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from 'react';
 
 import {
@@ -482,6 +483,26 @@ export default function TaskAttachmentsPanel({
 
 
   const [
+    uploadProgress,
+    setUploadProgress,
+  ] =
+    useState(0);
+
+
+  const [
+    isUploading,
+    setIsUploading,
+  ] =
+    useState(false);
+
+
+  const progressIntervalRef =
+    useRef<NodeJS.Timeout | null>(
+      null,
+    );
+
+
+  const [
     previewBusyId,
     setPreviewBusyId,
   ] =
@@ -867,7 +888,8 @@ export default function TaskAttachmentsPanel({
     if (
       selectedFiles.length ===
         0 ||
-      busy
+      busy ||
+      isUploading
     ) {
       return;
     }
@@ -896,15 +918,84 @@ export default function TaskAttachmentsPanel({
       true,
     );
 
+    setIsUploading(
+      true,
+    );
+
+    setUploadProgress(0);
+
     setError('');
 
     setNotice('');
+
+
+    /*
+     * Start progress simulation.
+     */
+    progressIntervalRef.current =
+      setInterval(
+        () => {
+          setUploadProgress(
+            (
+              current,
+            ) => {
+              if (
+                current >=
+                90
+              ) {
+                return current;
+              }
+
+
+              return current +
+                Math.random() *
+                  5 +
+                1;
+            },
+          );
+        },
+        200,
+      );
 
 
     try {
       await AttachmentsApi.uploadToTask(
         task.id,
         selectedFiles,
+      );
+
+
+      /*
+       * Complete progress.
+       */
+      if (
+        progressIntervalRef.current
+      ) {
+        clearInterval(
+          progressIntervalRef.current,
+        );
+
+        progressIntervalRef.current =
+          null;
+      }
+
+
+      setUploadProgress(
+        100,
+      );
+
+
+      /*
+       * Show completion briefly.
+       */
+      await new Promise(
+        (
+          resolve,
+        ) =>
+          setTimeout(
+            resolve,
+            300,
+          ),
       );
 
 
@@ -931,9 +1022,29 @@ export default function TaskAttachmentsPanel({
             ),
       );
     } finally {
+      setIsUploading(
+        false,
+      );
+
       setBusy(
         false,
       );
+
+      setUploadProgress(
+        0,
+      );
+
+
+      if (
+        progressIntervalRef.current
+      ) {
+        clearInterval(
+          progressIntervalRef.current,
+        );
+
+        progressIntervalRef.current =
+          null;
+      }
     }
   }
 
@@ -1951,13 +2062,110 @@ export default function TaskAttachmentsPanel({
 
           {/*
            * ==================================================
+           * UPLOAD PROGRESS BAR
+           * ==================================================
+           */}
+
+          {isUploading && (
+            <div
+              className="
+                mb-4
+                rounded-xl
+                border
+                border-brand-200
+                bg-brand-50/60
+                p-4
+              "
+            >
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  mb-2
+                "
+              >
+                <span
+                  className="
+                    text-sm
+                    font-medium
+                    text-brand-700
+                  "
+                >
+                  {isArabic
+                    ? 'جاري رفع الملفات...'
+                    : 'Uploading files...'}
+                </span>
+
+                <span
+                  className="
+                    text-sm
+                    font-semibold
+                    text-brand-700
+                  "
+                >
+                  {Math.round(
+                    Math.min(
+                      uploadProgress,
+                      100,
+                    ),
+                  )}
+                  %
+                </span>
+              </div>
+
+              <div
+                className="
+                  h-2
+                  overflow-hidden
+                  rounded-full
+                  bg-brand-100
+                "
+              >
+                <div
+                  className="
+                    h-full
+                    rounded-full
+                    bg-brand-500
+                    transition-all
+                    duration-300
+                    ease-out
+                  "
+                  style={{
+                    width: `${Math.min(
+                      uploadProgress,
+                      100,
+                    )}%`,
+                  }}
+                />
+              </div>
+
+              <div
+                className="
+                  mt-2
+                  text-xs
+                  text-brand-600
+                "
+              >
+                {selectedFiles.length > 0 && (
+                  isArabic
+                    ? `${selectedFiles.length} ملف`
+                    : `${selectedFiles.length} ${selectedFiles.length === 1 ? 'file' : 'files'}`
+                )}
+              </div>
+            </div>
+          )}
+
+
+          {/*
+           * ==================================================
            * UPLOAD
            * ==================================================
            */}
 
           {canUpload && (
             <div
-              className="
+              className={`
                 mb-6
                 rounded-xl
                 border
@@ -1965,7 +2173,8 @@ export default function TaskAttachmentsPanel({
                 border-slate-300
                 bg-slate-50/60
                 p-4
-              "
+                ${isUploading ? 'opacity-50 pointer-events-none' : ''}
+              `}
             >
               <label
                 className="
@@ -2003,7 +2212,8 @@ export default function TaskAttachmentsPanel({
                     ATTACHMENT_ACCEPT
                   }
                   disabled={
-                    busy
+                    busy ||
+                    isUploading
                   }
                   className="sr-only"
                   onChange={(
@@ -2041,7 +2251,8 @@ export default function TaskAttachmentsPanel({
                     py-2
                     text-sm
                     ${
-                      busy
+                      busy ||
+                      isUploading
                         ? 'cursor-not-allowed opacity-50'
                         : 'cursor-pointer hover:border-brand-300'
                     }
@@ -2081,7 +2292,7 @@ export default function TaskAttachmentsPanel({
                */}
 
               {selectedFiles.length >
-                0 && (
+                0 && !isUploading && (
                 <div
                   className="
                     mt-4
@@ -2183,7 +2394,8 @@ export default function TaskAttachmentsPanel({
                         <button
                           type="button"
                           disabled={
-                            busy
+                            busy ||
+                            isUploading
                           }
                           onClick={() =>
                             removeSelectedFile(
@@ -2225,6 +2437,7 @@ export default function TaskAttachmentsPanel({
                   className="btn-primary"
                   disabled={
                     busy ||
+                    isUploading ||
                     selectedFiles.length ===
                       0
                   }
@@ -2232,7 +2445,8 @@ export default function TaskAttachmentsPanel({
                     upload
                   }
                 >
-                  {busy
+                  {busy ||
+                  isUploading
                     ? (
                         uiText(isArabic, 'text0218')
                       )

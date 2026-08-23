@@ -3,7 +3,6 @@
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
 
-
 import {
   useCallback,
   useEffect,
@@ -26,12 +25,10 @@ import {
 
 import {
   AuditLogsApi,
-  UsersApi,
 } from '@/lib/endpoints';
 
 import type {
   AuditLogEntry,
-  User,
 } from '@/lib/types';
 
 
@@ -43,10 +40,6 @@ import type {
 
 const PAGE_SIZE = 20;
 
-type SortDir =
-  | 'asc'
-  | 'desc';
-
 
 /*
  * ============================================================
@@ -54,144 +47,33 @@ type SortDir =
  * ============================================================
  */
 
-const ACTION_LABELS:
-  Record<
-    string,
-    {
-      en: string;
-      ar: string;
-    }
-  > = {
-  Create: {
-    en: uiText(false, 'text0683'),
-    ar: uiText(true, 'text0683'),
-  },
-
-  Update: {
-    en: uiText(false, 'text0684'),
-    ar: uiText(true, 'text0684'),
-  },
-
-  Delete: {
-    en: uiText(false, 'text0685'),
-    ar: uiText(true, 'text0685'),
-  },
-
-  Approve: {
-    en: uiText(false, 'text0686'),
-    ar: uiText(true, 'text0686'),
-  },
-
-  Reject: {
-    en: uiText(false, 'text0687'),
-    ar: uiText(true, 'text0687'),
-  },
-
-  Assign: {
-    en: uiText(false, 'text0688'),
-    ar: uiText(true, 'text0688'),
-  },
-
-  Accept: {
-    en: uiText(false, 'text1049'),
-    ar: uiText(true, 'text1049'),
-  },
-
-  Reassign: {
-    en: uiText(false, 'text0689'),
-    ar: uiText(true, 'text0689'),
-  },
-
-  StatusChange: {
-    en: uiText(false, 'text0690'),
-    ar: uiText(true, 'text0690'),
-  },
-
-  Login: {
-    en: uiText(false, 'text0691'),
-    ar: uiText(true, 'text0691'),
-  },
-
-  Logout: {
-    en: uiText(false, 'text0692'),
-    ar: uiText(true, 'text0692'),
-  },
-
-  LoginFailed: {
-    en: uiText(false, 'text0693'),
-    ar: uiText(true, 'text0693'),
-  },
-
-  AccountLocked: {
-    en: uiText(false, 'text0694'),
-    ar: uiText(true, 'text0694'),
-  },
-
-  AccountUnlocked: {
-    en: uiText(false, 'text0695'),
-    ar: uiText(true, 'text0695'),
-  },
-
-  Activate: {
-    en: uiText(false, 'text0696'),
-    ar: uiText(true, 'text0696'),
-  },
-
-  Deactivate: {
-    en: uiText(false, 'text0697'),
-    ar: uiText(true, 'text0697'),
-  },
-
-  Restore: {
-    en: uiText(false, 'text0698'),
-    ar: uiText(true, 'text0698'),
-  },
-
-  Archive: {
-    en: uiText(false, 'text0699'),
-    ar: uiText(true, 'text0699'),
-  },
+const ACTION_TEXT_KEYS: Record<string, Parameters<typeof uiText>[1]> = {
+  Create: 'text0683',
+  Update: 'text0684',
+  Delete: 'text0685',
+  Approve: 'text0686',
+  Reject: 'text0687',
+  Assign: 'text0688',
+  Accept: 'text1049',
+  Reassign: 'text0689',
+  StatusChange: 'text0690',
+  Login: 'text0691',
+  Logout: 'text0692',
+  LoginFailed: 'text0693',
+  AccountLocked: 'text0694',
+  AccountUnlocked: 'text0695',
+  Activate: 'text0696',
+  Deactivate: 'text0697',
+  Restore: 'text0698',
+  Archive: 'text0699',
 };
 
-
-/*
- * ============================================================
- * HELPERS
- * ============================================================
- */
-
-function actionLabel(
-  action: string,
-  isArabic: boolean,
-) {
-  const keys: Record<string, Parameters<typeof uiText>[1]> = {
-    Create: 'text0683',
-    Update: 'text0684',
-    Delete: 'text0685',
-    Approve: 'text0686',
-    Reject: 'text0687',
-    Assign: 'text0688',
-    Accept: 'text1049',
-    Reassign: 'text0689',
-    StatusChange: 'text0690',
-    Login: 'text0691',
-    Logout: 'text0692',
-    LoginFailed: 'text0693',
-    AccountLocked: 'text0694',
-    AccountUnlocked: 'text0695',
-    Activate: 'text0696',
-    Deactivate: 'text0697',
-    Restore: 'text0698',
-    Archive: 'text0699',
-  };
-
-  return keys[action] ? uiText(isArabic, keys[action]) : action;
+function actionLabel(action: string, isArabic: boolean) {
+  const key = ACTION_TEXT_KEYS[action];
+  return key ? uiText(isArabic, key) : action;
 }
 
-
-function actionClasses(
-  action: string,
-) {
+function actionClasses(action: string) {
   switch (action) {
     case 'Create':
     case 'Restore':
@@ -231,141 +113,41 @@ function actionClasses(
 }
 
 
-function entityLabel(
-  value: string,
-  isArabic: boolean,
-) {
-  const labels:
-    Record<
-      string,
-      {
-        en: string;
-        ar: string;
-      }
-    > = {
-    Task: {
-      en: uiText(false, 'text0700'),
-      ar: uiText(true, 'text0700'),
-    },
+/*
+ * ============================================================
+ * ENTITY LABELS
+ * ============================================================
+ */
 
-    Project: {
-      en: uiText(false, 'text0701'),
-      ar: uiText(true, 'text0701'),
-    },
+const ENTITY_TEXT_KEYS: Record<string, Parameters<typeof uiText>[1]> = {
+  Task: 'text0700',
+  Project: 'text0701',
+  User: 'text0702',
+  Setting: 'text0703',
+  BrandingSettings: 'text0704',
+  TaskAttachment: 'text0705',
+  TaskAssignment: 'text0706',
+  AssignmentApproval: 'text0706',
+  TaskComment: 'text0707',
+  TaskRating: 'text0708',
+  Branch: 'text0446',
+  Department: 'text0445',
+  Dictionary: 'text0831',
+};
 
-    User: {
-      en: uiText(false, 'text0702'),
-      ar: uiText(true, 'text0702'),
-    },
-
-    Setting: {
-      en: uiText(false, 'text0703'),
-      ar: uiText(true, 'text0703'),
-    },
-
-    BrandingSettings: {
-      en: uiText(false, 'text0704'),
-      ar: uiText(true, 'text0704'),
-    },
-
-    TaskAttachment: {
-      en: uiText(false, 'text0705'),
-      ar: uiText(true, 'text0705'),
-    },
-
-    TaskAssignment: {
-      en: uiText(false, 'text0706'),
-      ar: uiText(true, 'text0706'),
-    },
-
-    AssignmentApproval: {
-      en: uiText(false, 'text0706'),
-      ar: uiText(true, 'text0706'),
-    },
-
-    TaskComment: {
-      en: uiText(false, 'text0707'),
-      ar: uiText(true, 'text0707'),
-    },
-
-    TaskRating: {
-      en: uiText(false, 'text0708'),
-      ar: uiText(true, 'text0708'),
-    },
-
-    Branch: {
-      en: uiText(false, 'text0446'),
-      ar: uiText(true, 'text0446'),
-    },
-
-    Department: {
-      en: uiText(false, 'text0445'),
-      ar: uiText(true, 'text0445'),
-    },
-
-    Dictionary: {
-      en: uiText(false, 'text0831'),
-      ar: uiText(true, 'text0831'),
-    },
-  };
-
-  const item =
-    labels[value];
-
-  if (!item) {
-    return value;
-  }
-
-  return isArabic
-    ? item.ar
-    : item.en;
+function entityLabel(value: string, isArabic: boolean) {
+  const key = ENTITY_TEXT_KEYS[value];
+  return key ? uiText(isArabic, key) : value;
 }
 
 
-function formatDateTime(
-  value: string,
-  locale: string,
-) {
-  return new Date(value).toLocaleString(
-    locale,
-    {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    },
-  );
-}
+/*
+ * ============================================================
+ * VALUE / FIELD FORMATTING (used inside the details drawer)
+ * ============================================================
+ */
 
-
-function getEntityLink(
-  log: AuditLogEntry,
-): string | null {
-  switch (log.entityType) {
-    case 'Task':
-      return `/tasks/view?id=${log.entityId}`;
-
-    case 'Project':
-      return `/projects/view?id=${log.entityId}`;
-
-    case 'TaskAssignment':
-    case 'AssignmentApproval': {
-      const taskId =
-        (log.newValue?.taskId as string | undefined) ||
-        (log.oldValue?.taskId as string | undefined);
-
-      return taskId ? `/tasks/view?id=${taskId}` : null;
-    }
-
-    default:
-      return null;
-  }
-}
-
-
-const AUDIT_FIELD_LABELS:
-  Record<string, Parameters<typeof uiText>[1]> = {
+const AUDIT_FIELD_LABELS: Record<string, Parameters<typeof uiText>[1]> = {
   status: 'text0784',
   approvalStatus: 'text0785',
   title: 'text0786',
@@ -412,7 +194,6 @@ const AUDIT_FIELD_LABELS:
   feedback: 'text1061',
 };
 
-
 const HIDDEN_AUDIT_FIELDS = new Set([
   'id',
   'createdAt',
@@ -424,17 +205,11 @@ const HIDDEN_AUDIT_FIELDS = new Set([
   'fileSize',
 ]);
 
-
 function isHiddenAuditField(key: string) {
-  return (
-    HIDDEN_AUDIT_FIELDS.has(key) ||
-    /id$/i.test(key)
-  );
+  return HIDDEN_AUDIT_FIELDS.has(key) || /id$/i.test(key);
 }
 
-
-const AUDIT_VALUE_LABELS:
-  Record<string, Parameters<typeof uiText>[1]> = {
+const AUDIT_VALUE_LABELS: Record<string, Parameters<typeof uiText>[1]> = {
   Pending: 'text0810',
   Unassigned: 'text0811',
   InProgress: 'text0812',
@@ -452,7 +227,6 @@ const AUDIT_VALUE_LABELS:
   USER: 'text0824',
 };
 
-
 function humanizeField(key: string) {
   return key
     .replace(/([a-z])([A-Z])/g, '$1 $2')
@@ -460,20 +234,12 @@ function humanizeField(key: string) {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
-
 function auditFieldLabel(key: string, isArabic: boolean) {
   const catalogKey = AUDIT_FIELD_LABELS[key];
-  return catalogKey
-    ? uiText(isArabic, catalogKey)
-    : humanizeField(key);
+  return catalogKey ? uiText(isArabic, catalogKey) : humanizeField(key);
 }
 
-
-function formatAuditValue(
-  value: unknown,
-  isArabic: boolean,
-  locale: string,
-) {
+function formatAuditValue(value: unknown, isArabic: boolean, locale: string) {
   if (value === null || value === undefined || value === '') {
     return uiText(isArabic, 'text0781');
   }
@@ -506,11 +272,24 @@ function formatAuditValue(
   return String(value);
 }
 
+function changedAuditFields(log: AuditLogEntry) {
+  const oldValue = log.oldValue ?? {};
+  const newValue = log.newValue ?? {};
 
-function entityDisplayName(
-  log: AuditLogEntry,
-  isArabic: boolean,
-) {
+  return Object.keys({ ...oldValue, ...newValue })
+    .filter(
+      (key) =>
+        !isHiddenAuditField(key) &&
+        JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
+    )
+    .map((key) => ({
+      key,
+      before: oldValue[key],
+      after: newValue[key],
+    }));
+}
+
+function entityDisplayName(log: AuditLogEntry, isArabic: boolean) {
   const values = {
     ...(log.oldValue ?? {}),
     ...(log.newValue ?? {}),
@@ -526,66 +305,64 @@ function entityDisplayName(
   return match ? String(match) : entityLabel(log.entityType, isArabic);
 }
 
+function formatDateTime(value: string, locale: string) {
+  return new Date(value).toLocaleString(locale, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
-function changedAuditFields(log: AuditLogEntry) {
-  const oldValue = log.oldValue ?? {};
-  const newValue = log.newValue ?? {};
+function getEntityLink(log: AuditLogEntry): string | null {
+  switch (log.entityType) {
+    case 'Task':
+      return `/tasks/view?id=${log.entityId}`;
 
-  return Object.keys({ ...oldValue, ...newValue })
-    .filter((key) =>
-      !isHiddenAuditField(key) &&
-      JSON.stringify(oldValue[key]) !== JSON.stringify(newValue[key]),
-    )
-    .map((key) => ({
-      key,
-      before: oldValue[key],
-      after: newValue[key],
-    }));
+    case 'Project':
+      return `/projects/view?id=${log.entityId}`;
+
+    case 'TaskAssignment':
+    case 'AssignmentApproval': {
+      const taskId =
+        (log.newValue?.taskId as string | undefined) ||
+        (log.oldValue?.taskId as string | undefined);
+
+      return taskId ? `/tasks/view?id=${taskId}` : null;
+    }
+
+    default:
+      return null;
+  }
 }
 
 
 /*
  * ============================================================
- * ACTION BADGE
+ * SMALL PIECES
  * ============================================================
  */
 
-function ActionBadge({
-  action,
-  isArabic,
-}: {
-  action: string;
-  isArabic: boolean;
-}) {
+function ActionBadge({ action, isArabic }: { action: string; isArabic: boolean }) {
   return (
     <span
-      className={`
-        inline-flex
-        rounded-full
-        px-2.5
-        py-1
-        text-[10px]
-        font-semibold
-        ring-1
-        ${actionClasses(action)}
-      `}
+      className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${actionClasses(action)}`}
     >
-      {actionLabel(
-        action,
-        isArabic,
-      )}
+      {actionLabel(action, isArabic)}
     </span>
   );
 }
 
+function EntityBadge({ entityType, isArabic }: { entityType: string; isArabic: boolean }) {
+  return (
+    <span className="inline-flex shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+      {entityLabel(entityType, isArabic)}
+    </span>
+  );
+}
 
-/*
- * ============================================================
- * AUDIT ROW
- * ============================================================
- */
-
-function AuditItem({
+function ChangesDrawer({
   log,
   isArabic,
   locale,
@@ -594,266 +371,269 @@ function AuditItem({
   isArabic: boolean;
   locale: string;
 }) {
-  const entityLink =
-    getEntityLink(log);
-
-  const actorName =
-    log.actor?.fullName ||
-    (
-      uiText(isArabic, 'text0001')
-    );
-
-  const initial =
-    log.actor?.fullName
-      ?.trim()
-      .charAt(0)
-      .toUpperCase() ||
-    'S';
-
-  const targetName = entityDisplayName(log, isArabic);
   const changes = changedAuditFields(log);
 
+  if (changes.length === 0) {
+    return null;
+  }
+
   return (
-    <article
-      className="
-        group
-        rounded-2xl
-        border
-        border-slate-200
-        bg-white
-        px-5
-        py-4
-        transition
-        hover:border-brand-200
-        hover:shadow-sm
-        sm:px-6
-      "
-    >
-      <div
-        className="
-          flex
-          flex-col
-          gap-4
-          lg:flex-row
-          lg:items-center
-          lg:justify-between
-        "
-      >
-        {/*
-         * ====================================================
-         * LEFT / MAIN INFORMATION
-         * ====================================================
-         */}
+    <div className="mt-3 grid gap-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3 sm:grid-cols-2">
+      {changes.map((change) => (
+        <div key={change.key} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+          <div className="text-[11px] font-semibold text-slate-600">
+            {auditFieldLabel(change.key, isArabic)}
+          </div>
 
-        <div className="flex min-w-0 items-start gap-3">
-          {/*
-           * USER AVATAR
-           */}
+          <div className="mt-1 flex min-w-0 items-center gap-2 text-xs">
+            <span className="min-w-0 truncate rounded-md bg-red-50 px-2 py-1 text-red-700 line-through decoration-red-300">
+              {formatAuditValue(change.before, isArabic, locale)}
+            </span>
 
-          <Avatar
-            name={actorName}
-            avatarUrl={log.actor?.avatarUrl}
-            size="sm"
-            className="shrink-0 rounded-xl"
-          />
+            <span className="shrink-0 text-slate-300" aria-hidden="true">
+              {isArabic ? '←' : '→'}
+            </span>
 
-
-          <div className="min-w-0">
-            {/*
-             * BADGES
-             */}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <ActionBadge
-                action={log.action}
-                isArabic={isArabic}
-              />
-
-              <span
-                className="
-                  inline-flex
-                  rounded-full
-                  bg-slate-100
-                  px-2.5
-                  py-1
-                  text-[10px]
-                  font-medium
-                  text-slate-600
-                "
-              >
-                {entityLabel(
-                  log.entityType,
-                  isArabic,
-                )}
-              </span>
-            </div>
-
-
-            {/*
-             * MAIN SENTENCE
-             */}
-
-            <div className="mt-2 text-sm leading-6 text-slate-700">
-              <span className="font-semibold text-slate-900">
-                {actorName}
-              </span>
-
-              {' '}
-
-              <span>
-                {actionLabel(
-                  log.action,
-                  isArabic,
-                )}
-              </span>
-
-              {' '}
-
-              <span className="font-medium text-slate-800">
-                {targetName}
-              </span>
-            </div>
-
-
-            {changes.length > 0 && (
-              <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    {uiText(isArabic, 'text0774')}
-                  </span>
-
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 ring-1 ring-slate-200">
-                    {uiText(isArabic, 'text0783', { value0: changes.length })}
-                  </span>
-                </div>
-
-
-                <div className="grid gap-2 xl:grid-cols-2">
-                  {changes.map((change) => (
-                    <div
-                      key={change.key}
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2"
-                    >
-                      <div className="text-[11px] font-semibold text-slate-600">
-                        {auditFieldLabel(change.key, isArabic)}
-                      </div>
-
-                      <div className="mt-1 flex min-w-0 items-center gap-2 text-xs">
-                        <span className="min-w-0 truncate rounded-md bg-red-50 px-2 py-1 text-red-700 line-through decoration-red-300">
-                          {formatAuditValue(change.before, isArabic, locale)}
-                        </span>
-
-                        <span className="shrink-0 text-slate-300" aria-hidden="true">
-                          {isArabic ? '←' : '→'}
-                        </span>
-
-                        <span className="min-w-0 truncate rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
-                          {formatAuditValue(change.after, isArabic, locale)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-
-            {/*
-             * REASON
-             *
-             * Only shown when there actually is a reason.
-             */}
-
-            {log.reason && (
-              <div
-                className="
-                  mt-1
-                  max-w-3xl
-                  text-xs
-                  leading-5
-                  text-slate-500
-                "
-              >
-                <span className="font-medium text-slate-600">
-                  {uiText(isArabic, 'text0003')}
-                </span>
-
-                {log.reason}
-              </div>
-            )}
-
-
-            {/*
-             * USER EMAIL
-             *
-             * Useful normal information, but visually secondary.
-             */}
-
-            {log.actor?.email && (
-              <div
-                className="
-                  mt-1
-                  truncate
-                  text-[11px]
-                  text-slate-400
-                "
-              >
-                {log.actor.email}
-              </div>
-            )}
-
-
+            <span className="min-w-0 truncate rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+              {formatAuditValue(change.after, isArabic, locale)}
+            </span>
           </div>
         </div>
+      ))}
+    </div>
+  );
+}
 
+function DetailsCell({
+  log,
+  isArabic,
+  locale,
+  expanded,
+  onToggle,
+}: {
+  log: AuditLogEntry;
+  isArabic: boolean;
+  locale: string;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const entityLink = getEntityLink(log);
+  const changes = changedAuditFields(log);
+  const targetName = entityDisplayName(log, isArabic);
 
-        {/*
-         * ====================================================
-         * RIGHT SIDE
-         * DATE + OPEN
-         * ====================================================
-         */}
+  return (
+    <div className="min-w-0">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="min-w-0 truncate text-sm font-medium text-slate-800">
+          {targetName}
+        </span>
 
-        <div
-          className="
-            flex
-            shrink-0
-            flex-wrap
-            items-center
-            gap-3
-          "
-        >
-          <div
-            className="
-              whitespace-nowrap
-              text-xs
-              text-slate-400
-            "
-            dir="ltr"
+        {entityLink && (
+          <Link
+            href={entityLink}
+            className="shrink-0 text-xs font-semibold text-brand-600 hover:text-brand-800"
           >
-            {formatDateTime(
-              log.createdAt,
-              locale,
-            )}
-          </div>
-
-
-          {entityLink && (
-            <Link
-              href={entityLink}
-              className="
-                btn-secondary
-                px-3
-                py-1.5
-                text-xs
-              "
-            >
-              {uiText(isArabic, 'text0004')}
-            </Link>
-          )}
-        </div>
+            {uiText(isArabic, 'text0004')}
+          </Link>
+        )}
       </div>
-    </article>
+
+      {log.reason && (
+        <div className="mt-1 max-w-md truncate text-xs leading-5 text-slate-500">
+          <span className="font-medium text-slate-600">{uiText(isArabic, 'text0003')}</span>
+          {log.reason}
+        </div>
+      )}
+
+      {changes.length > 0 && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-800"
+        >
+          <span>
+            {uiText(isArabic, 'text0783', { value0: changes.length })}
+          </span>
+
+          <span aria-hidden="true">
+            {expanded ? '▲' : '▼'}
+          </span>
+
+          <span className="sr-only">
+            {expanded ? uiText(isArabic, 'text1089') : uiText(isArabic, 'text1088')}
+          </span>
+        </button>
+      )}
+
+      {expanded && <ChangesDrawer log={log} isArabic={isArabic} locale={locale} />}
+    </div>
+  );
+}
+
+
+/*
+ * ============================================================
+ * DESKTOP TABLE
+ * ============================================================
+ */
+
+function AuditTable({
+  items,
+  isArabic,
+  locale,
+  expandedId,
+  onToggle,
+}: {
+  items: AuditLogEntry[];
+  isArabic: boolean;
+  locale: string;
+  expandedId: string | null;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white md:block">
+      <table className="w-full text-start">
+        <thead>
+          <tr className="border-b border-slate-100 bg-slate-50/70 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th className="px-4 py-3 text-start">{uiText(isArabic, 'text1083')}</th>
+            <th className="px-4 py-3 text-start">{uiText(isArabic, 'text1084')}</th>
+            <th className="px-4 py-3 text-start">{uiText(isArabic, 'text1085')}</th>
+            <th className="hidden px-4 py-3 text-start lg:table-cell">{uiText(isArabic, 'text1086')}</th>
+            <th className="px-4 py-3 text-start">{uiText(isArabic, 'text1087')}</th>
+          </tr>
+        </thead>
+
+        <tbody className="divide-y divide-slate-100">
+          {items.map((log) => {
+            const actorName = log.actor?.fullName || uiText(isArabic, 'text0001');
+
+            return (
+              <tr key={log.id} className="align-top transition hover:bg-slate-50/60">
+                <td className="whitespace-nowrap px-4 py-3 text-xs text-slate-500" dir="ltr">
+                  {formatDateTime(log.createdAt, locale)}
+                </td>
+
+                <td className="px-4 py-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Avatar
+                      name={actorName}
+                      avatarUrl={log.actor?.avatarUrl}
+                      size="sm"
+                      className="shrink-0"
+                    />
+
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-slate-800">
+                        {actorName}
+                      </div>
+
+                      {log.actor?.email && (
+                        <div className="truncate text-xs text-slate-400">
+                          {log.actor.email}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </td>
+
+                <td className="px-4 py-3">
+                  <ActionBadge action={log.action} isArabic={isArabic} />
+                </td>
+
+                <td className="hidden px-4 py-3 lg:table-cell">
+                  <EntityBadge entityType={log.entityType} isArabic={isArabic} />
+                </td>
+
+                <td className="px-4 py-3">
+                  <DetailsCell
+                    log={log}
+                    isArabic={isArabic}
+                    locale={locale}
+                    expanded={expandedId === log.id}
+                    onToggle={() => onToggle(log.id)}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+
+/*
+ * ============================================================
+ * MOBILE CARD LIST
+ * ============================================================
+ */
+
+function AuditCards({
+  items,
+  isArabic,
+  locale,
+  expandedId,
+  onToggle,
+}: {
+  items: AuditLogEntry[];
+  isArabic: boolean;
+  locale: string;
+  expandedId: string | null;
+  onToggle: (id: string) => void;
+}) {
+  return (
+    <div className="space-y-3 md:hidden">
+      {items.map((log) => {
+        const actorName = log.actor?.fullName || uiText(isArabic, 'text0001');
+
+        return (
+          <article key={log.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <Avatar
+                  name={actorName}
+                  avatarUrl={log.actor?.avatarUrl}
+                  size="sm"
+                  className="shrink-0"
+                />
+
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-medium text-slate-800">
+                    {actorName}
+                  </div>
+
+                  {log.actor?.email && (
+                    <div className="truncate text-xs text-slate-400">
+                      {log.actor.email}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="shrink-0 whitespace-nowrap text-xs text-slate-400" dir="ltr">
+                {formatDateTime(log.createdAt, locale)}
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <ActionBadge action={log.action} isArabic={isArabic} />
+              <EntityBadge entityType={log.entityType} isArabic={isArabic} />
+            </div>
+
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <DetailsCell
+                log={log}
+                isArabic={isArabic}
+                locale={locale}
+                expanded={expandedId === log.id}
+                onToggle={() => onToggle(log.id)}
+              />
+            </div>
+          </article>
+        );
+      })}
+    </div>
   );
 }
 
@@ -864,63 +644,19 @@ function AuditItem({
  * ============================================================
  */
 
-function EmptyState({
-  isArabic,
-}: {
-  isArabic: boolean;
-}) {
+function EmptyState({ isArabic }: { isArabic: boolean }) {
   return (
-    <div
-      className="
-        flex
-        min-h-[280px]
-        flex-col
-        items-center
-        justify-center
-        rounded-2xl
-        border
-        border-slate-200
-        bg-white
-        px-6
-        text-center
-      "
-    >
-      <div
-        className="
-          flex
-          h-12
-          w-12
-          items-center
-          justify-center
-          rounded-2xl
-          bg-slate-100
-          text-slate-400
-        "
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          className="h-6 w-6"
-        >
-          <path
-            d="M6 4h9l3 3v13H6z"
-            strokeWidth="1.7"
-          />
-
-          <path
-            d="M9 11h6M9 15h6"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-          />
+    <div className="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-6 w-6">
+          <path d="M6 4h9l3 3v13H6z" strokeWidth="1.7" />
+          <path d="M9 11h6M9 15h6" strokeWidth="1.7" strokeLinecap="round" />
         </svg>
       </div>
-
 
       <h3 className="mt-4 text-sm font-semibold text-slate-800">
         {uiText(isArabic, 'text0267')}
       </h3>
-
 
       <p className="mt-1 text-sm text-slate-400">
         {uiText(isArabic, 'text0268')}
@@ -937,406 +673,96 @@ function EmptyState({
  */
 
 function AuditLogsContent() {
-  const locale =
-    useLocale();
-
-  const isArabic =
-    locale === 'ar';
-
+  const locale = useLocale();
+  const isArabic = locale === 'ar';
 
   /*
    * ==========================================================
-   * AUDIT DATA
+   * DATA
    * ==========================================================
    */
 
-  const [
-    items,
-    setItems,
-  ] =
-    useState<AuditLogEntry[]>([]);
-
-
-  const [
-    total,
-    setTotal,
-  ] =
-    useState(0);
-
-
-  const [
-    loading,
-    setLoading,
-  ] =
-    useState(true);
-
-
-  const [
-    error,
-    setError,
-  ] =
-    useState('');
-
-
-  const [
-    page,
-    setPage,
-  ] =
-    useState(1);
-
+  const [items, setItems] = useState<AuditLogEntry[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   /*
    * ==========================================================
-   * FILTER DATA
+   * FILTERS
+   *
+   * Kept intentionally simple: one action filter and one type
+   * filter, both plain dropdowns. No hidden "more filters" panel.
    * ==========================================================
    */
 
-  const [
-    entityTypes,
-    setEntityTypes,
-  ] =
-    useState<string[]>([]);
-
-
-  const [
-    actions,
-    setActions,
-  ] =
-    useState<string[]>([]);
-
-
-  const [
-    users,
-    setUsers,
-  ] =
-    useState<User[]>([]);
-
-
-  /*
-   * ==========================================================
-   * FILTER VALUES
-   * ==========================================================
-   */
-
-  const [
-    search,
-    setSearch,
-  ] =
-    useState('');
-
-
-  const [
-    debouncedSearch,
-    setDebouncedSearch,
-  ] =
-    useState('');
-
-
-  const [
-    entityType,
-    setEntityType,
-  ] =
-    useState('');
-
-
-  const [
-    action,
-    setAction,
-  ] =
-    useState('');
-
-
-  const [
-    actorId,
-    setActorId,
-  ] =
-    useState('');
-
-
-  const [
-    dateFrom,
-    setDateFrom,
-  ] =
-    useState('');
-
-
-  const [
-    dateTo,
-    setDateTo,
-  ] =
-    useState('');
-
-
-  const [
-    sortDir,
-    setSortDir,
-  ] =
-    useState<SortDir>('desc');
-
-
-  const [
-    showFilters,
-    setShowFilters,
-  ] =
-    useState(false);
-
-
-  /*
-   * ==========================================================
-   * LOAD FILTER OPTIONS
-   * ==========================================================
-   */
+  const [entityTypes, setEntityTypes] = useState<string[]>([]);
+  const [actions, setActions] = useState<string[]>([]);
+  const [entityType, setEntityType] = useState('');
+  const [action, setAction] = useState('');
 
   useEffect(() => {
-    AuditLogsApi
-      .meta()
+    AuditLogsApi.meta()
       .then((result) => {
-        setEntityTypes(
-          result.entityTypes,
-        );
-
-        setActions(
-          result.actions,
-        );
+        setEntityTypes(result.entityTypes);
+        setActions(result.actions);
       })
       .catch(() => {
-        /*
-         * The main audit request still works even if
-         * filter metadata fails.
-         */
-      });
-
-
-    UsersApi
-      .list({
-        limit: '100',
-      })
-      .then((result) => {
-        const sorted =
-          [...result.items].sort(
-            (a, b) =>
-              a.fullName.localeCompare(
-                b.fullName,
-              ),
-          );
-
-        setUsers(sorted);
-      })
-      .catch(() => {
-        /*
-         * Actor filter simply remains empty.
-         */
+        /* Filter dropdowns simply stay empty; the log itself still loads. */
       });
   }, []);
 
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError('');
 
-  /*
-   * ==========================================================
-   * SEARCH DEBOUNCE
-   * ==========================================================
-   */
+    try {
+      const params: Record<string, string> = {
+        page: String(page),
+        limit: String(PAGE_SIZE),
+        sortDir: 'desc',
+      };
 
-  useEffect(() => {
-    const timer =
-      window.setTimeout(
-        () => {
-          setDebouncedSearch(
-            search.trim(),
-          );
-        },
-        350,
-      );
+      if (entityType) {
+        params.entityType = entityType;
+      }
 
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [
-    search,
-  ]);
+      if (action) {
+        params.action = action;
+      }
 
-
-  /*
-   * ==========================================================
-   * LOAD AUDIT LOGS
-   * ==========================================================
-   */
-
-  const load =
-    useCallback(
-      async () => {
-        setLoading(true);
-        setError('');
-
-        try {
-          const params:
-            Record<
-              string,
-              string
-            > = {
-            page:
-              String(page),
-
-            limit:
-              String(PAGE_SIZE),
-
-            sortDir,
-          };
-
-
-          if (debouncedSearch) {
-            params.search =
-              debouncedSearch;
-          }
-
-
-          if (entityType) {
-            params.entityType =
-              entityType;
-          }
-
-
-          if (action) {
-            params.action =
-              action;
-          }
-
-
-          if (actorId) {
-            params.actorId =
-              actorId;
-          }
-
-
-          if (dateFrom) {
-            params.dateFrom =
-              dateFrom;
-          }
-
-
-          if (dateTo) {
-            params.dateTo =
-              dateTo;
-          }
-
-
-          const result =
-            await AuditLogsApi.search(
-              params,
-            );
-
-
-          setItems(
-            result.items,
-          );
-
-          setTotal(
-            result.total,
-          );
-        } catch (err) {
-          setError(
-            err instanceof ApiError
-              ? err.message
-              : uiText(isArabic, 'text0005'),
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      [
-        page,
-        sortDir,
-        debouncedSearch,
-        entityType,
-        action,
-        actorId,
-        dateFrom,
-        dateTo,
-        isArabic,
-      ],
-    );
-
+      const result = await AuditLogsApi.search(params);
+      setItems(result.items);
+      setTotal(result.total);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : uiText(isArabic, 'text0005'));
+    } finally {
+      setLoading(false);
+    }
+  }, [page, entityType, action, isArabic]);
 
   useEffect(() => {
     load();
-  }, [
-    load,
-  ]);
-
-
-  /*
-   * ==========================================================
-   * RESET PAGE AFTER FILTER CHANGE
-   * ==========================================================
-   */
+  }, [load]);
 
   useEffect(() => {
     setPage(1);
-  }, [
-    debouncedSearch,
-    entityType,
-    action,
-    actorId,
-    dateFrom,
-    dateTo,
-    sortDir,
-  ]);
+  }, [entityType, action]);
 
-
-  /*
-   * ==========================================================
-   * FILTER STATE
-   * ==========================================================
-   */
-
-  const hasFilters =
-    Boolean(
-      search ||
-      entityType ||
-      action ||
-      actorId ||
-      dateFrom ||
-      dateTo,
-    );
-
-
-  const filterCount =
-    [
-      Boolean(search),
-      Boolean(entityType),
-      Boolean(action),
-      Boolean(actorId),
-      Boolean(
-        dateFrom ||
-        dateTo,
-      ),
-    ].filter(Boolean).length;
-
+  const hasFilters = Boolean(entityType || action);
 
   function clearFilters() {
-    setSearch('');
     setEntityType('');
     setAction('');
-    setActorId('');
-    setDateFrom('');
-    setDateTo('');
   }
 
+  function toggleExpanded(id: string) {
+    setExpandedId((current) => (current === id ? null : id));
+  }
 
-  /*
-   * ==========================================================
-   * PAGINATION
-   * ==========================================================
-   */
-
-  const totalPages =
-    Math.max(
-      Math.ceil(
-        total /
-        PAGE_SIZE,
-      ),
-      1,
-    );
-
+  const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
 
   /*
    * ==========================================================
@@ -1346,16 +772,8 @@ function AuditLogsContent() {
 
   return (
     <div
-      className="
-        mx-auto
-        max-w-[1500px]
-        pb-12
-      "
-      dir={
-        isArabic
-          ? 'rtl'
-          : 'ltr'
-      }
+      className="mx-auto max-w-[1500px] pb-12"
+      dir={isArabic ? 'rtl' : 'ltr'}
     >
       {/*
        * ======================================================
@@ -1363,76 +781,23 @@ function AuditLogsContent() {
        * ======================================================
        */}
 
-      <section
-        className="
-          relative
-          overflow-hidden
-          rounded-2xl
-          border
-          border-slate-200
-          bg-white
-          px-5
-          py-6
-          sm:px-7
-        "
-      >
-        <div
-          className="
-            pointer-events-none
-            absolute
-            -right-32
-            -top-32
-            h-72
-            w-72
-            rounded-full
-            bg-brand-50
-            blur-3xl
-          "
-        />
-
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-6 sm:px-7">
+        <div className="pointer-events-none absolute -right-32 -top-32 h-72 w-72 rounded-full bg-brand-50 blur-3xl" />
 
         <div className="relative">
-          <div
-            className="
-              text-xs
-              font-semibold
-              uppercase
-              tracking-[.14em]
-              text-brand-600
-            "
-          >
+          <div className="text-xs font-semibold uppercase tracking-[.14em] text-brand-600">
             {uiText(isArabic, 'text0006')}
           </div>
 
-
-          <h1
-            className="
-              mt-2
-              text-2xl
-              font-semibold
-              tracking-[-0.03em]
-              text-slate-950
-              sm:text-3xl
-            "
-          >
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
             {uiText(isArabic, 'text0007')}
           </h1>
 
-
-          <p
-            className="
-              mt-2
-              max-w-2xl
-              text-sm
-              leading-6
-              text-slate-500
-            "
-          >
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
             {uiText(isArabic, 'text0269')}
           </p>
         </div>
       </section>
-
 
       {/*
        * ======================================================
@@ -1440,355 +805,49 @@ function AuditLogsContent() {
        * ======================================================
        */}
 
-      <section
-        className="
-          mt-5
-          rounded-2xl
-          border
-          border-slate-200
-          bg-white
-          p-4
-        "
-      >
-        <div
-          className="
-            flex
-            flex-col
-            gap-3
-            xl:flex-row
-            xl:items-center
-          "
-        >
-          {/*
-           * SEARCH
-           */}
-
-          <div className="relative min-w-0 flex-1">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              className={`
-                pointer-events-none
-                absolute
-                top-1/2
-                h-4
-                w-4
-                -translate-y-1/2
-                text-slate-400
-                ${
-                  isArabic
-                    ? 'right-3'
-                    : 'left-3'
-                }
-              `}
-            >
-              <circle
-                cx="11"
-                cy="11"
-                r="6"
-                strokeWidth="1.8"
-              />
-
-              <path
-                d="m16 16 4 4"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              />
-            </svg>
-
-
-            <input
-              className={`
-                input
-                ${
-                  isArabic
-                    ? 'pr-9'
-                    : 'pl-9'
-                }
-              `}
-              placeholder={
-                uiText(isArabic, 'text0270')
-              }
-              value={search}
-              onChange={(event) => {
-                setSearch(
-                  event.target.value,
-                );
-              }}
-            />
-          </div>
-
-
-          {/*
-           * TYPE
-           */}
-
+      <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <select
-            className="input xl:w-[190px]"
+            className="input sm:w-[220px]"
+            aria-label={uiText(isArabic, 'text1091')}
             value={entityType}
-            onChange={(event) => {
-              setEntityType(
-                event.target.value,
-              );
-            }}
+            onChange={(event) => setEntityType(event.target.value)}
           >
-            <option value="">
-              {uiText(isArabic, 'text0008')}
-            </option>
+            <option value="">{uiText(isArabic, 'text0008')}</option>
 
-
-            {entityTypes.map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {entityLabel(
-                    item,
-                    isArabic,
-                  )}
-                </option>
-              ),
-            )}
+            {entityTypes.map((item) => (
+              <option key={item} value={item}>
+                {entityLabel(item, isArabic)}
+              </option>
+            ))}
           </select>
-
-
-          {/*
-           * ACTION
-           */}
 
           <select
-            className="input xl:w-[190px]"
+            className="input sm:w-[220px]"
+            aria-label={uiText(isArabic, 'text1090')}
             value={action}
-            onChange={(event) => {
-              setAction(
-                event.target.value,
-              );
-            }}
+            onChange={(event) => setAction(event.target.value)}
           >
-            <option value="">
-              {uiText(isArabic, 'text0009')}
-            </option>
+            <option value="">{uiText(isArabic, 'text0009')}</option>
 
-
-            {actions.map(
-              (item) => (
-                <option
-                  key={item}
-                  value={item}
-                >
-                  {actionLabel(
-                    item,
-                    isArabic,
-                  )}
-                </option>
-              ),
-            )}
+            {actions.map((item) => (
+              <option key={item} value={item}>
+                {actionLabel(item, isArabic)}
+              </option>
+            ))}
           </select>
 
-
-          {/*
-           * SORT
-           */}
-
-          <button
-            type="button"
-            className="btn-secondary shrink-0"
-            onClick={() => {
-              setSortDir(
-                (current) =>
-                  current === 'desc'
-                    ? 'asc'
-                    : 'desc',
-              );
-            }}
-          >
-            {sortDir === 'desc'
-              ? '↓'
-              : '↑'}
-
-            {' '}
-
-            {sortDir === 'desc'
-              ? uiText(isArabic, 'text0010')
-              : uiText(isArabic, 'text0011')}
-          </button>
-
-
-          {/*
-           * MORE FILTERS
-           */}
-
-          <button
-            type="button"
-            className="btn-secondary shrink-0"
-            onClick={() => {
-              setShowFilters(
-                (current) =>
-                  !current,
-              );
-            }}
-          >
-            {uiText(isArabic, 'text0271')}
-
-
-            {filterCount > 0 && (
-              <span
-                className="
-                  ml-1.5
-                  rounded-full
-                  bg-brand-100
-                  px-1.5
-                  py-0.5
-                  text-[10px]
-                  font-semibold
-                  text-brand-700
-                "
-              >
-                {filterCount}
-              </span>
-            )}
-          </button>
-        </div>
-
-
-        {/*
-         * ====================================================
-         * EXTRA FILTERS
-         * ====================================================
-         */}
-
-        {showFilters && (
-          <div
-            className="
-              mt-4
-              border-t
-              border-slate-100
-              pt-4
-            "
-          >
-            <div
-              className="
-                grid
-                gap-4
-                sm:grid-cols-2
-                lg:grid-cols-3
-              "
+          {hasFilters && (
+            <button
+              type="button"
+              className="text-sm font-medium text-brand-600 hover:text-brand-800 sm:ms-auto"
+              onClick={clearFilters}
             >
-              {/*
-               * USER
-               */}
-
-              <div>
-                <label className="label">
-                  {uiText(isArabic, 'text0272')}
-                </label>
-
-
-                <select
-                  className="input"
-                  value={actorId}
-                  onChange={(event) => {
-                    setActorId(
-                      event.target.value,
-                    );
-                  }}
-                >
-                  <option value="">
-                    {uiText(isArabic, 'text0273')}
-                  </option>
-
-
-                  {users.map(
-                    (user) => (
-                      <option
-                        key={user.id}
-                        value={user.id}
-                      >
-                        {user.fullName}
-                      </option>
-                    ),
-                  )}
-                </select>
-              </div>
-
-
-              {/*
-               * DATE FROM
-               */}
-
-              <div>
-                <label className="label">
-                  {uiText(isArabic, 'text0274')}
-                </label>
-
-
-                <input
-                  type="date"
-                  className="input"
-                  value={dateFrom}
-                  max={
-                    dateTo ||
-                    undefined
-                  }
-                  onChange={(event) => {
-                    setDateFrom(
-                      event.target.value,
-                    );
-                  }}
-                />
-              </div>
-
-
-              {/*
-               * DATE TO
-               */}
-
-              <div>
-                <label className="label">
-                  {uiText(isArabic, 'text0012')}
-                </label>
-
-
-                <input
-                  type="date"
-                  className="input"
-                  value={dateTo}
-                  min={
-                    dateFrom ||
-                    undefined
-                  }
-                  onChange={(event) => {
-                    setDateTo(
-                      event.target.value,
-                    );
-                  }}
-                />
-              </div>
-            </div>
-
-
-            {hasFilters && (
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  className="
-                    text-sm
-                    font-medium
-                    text-red-600
-                    hover:text-red-700
-                  "
-                  onClick={clearFilters}
-                >
-                  {uiText(isArabic, 'text0275')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              {uiText(isArabic, 'text0276')}
+            </button>
+          )}
+        </div>
       </section>
-
 
       {/*
        * ======================================================
@@ -1796,46 +855,10 @@ function AuditLogsContent() {
        * ======================================================
        */}
 
-      <div
-        className="
-          mt-5
-          flex
-          items-center
-          justify-between
-          gap-3
-        "
-      >
-        <div className="text-sm text-slate-500">
-          <span className="font-semibold text-slate-800">
-            {total}
-          </span>
-
-          {' '}
-
-          {isArabic
-            ? 'سجل'
-            : total === 1
-              ? 'entry'
-              : 'entries'}
-        </div>
-
-
-        {hasFilters && (
-          <button
-            type="button"
-            className="
-              text-xs
-              font-medium
-              text-brand-600
-              hover:text-brand-800
-            "
-            onClick={clearFilters}
-          >
-            {uiText(isArabic, 'text0276')}
-          </button>
-        )}
+      <div className="mt-5 text-sm text-slate-500">
+        <span className="font-semibold text-slate-800">{total}</span>{' '}
+        {uiText(isArabic, 'text0277')}
       </div>
-
 
       {/*
        * ======================================================
@@ -1844,64 +867,42 @@ function AuditLogsContent() {
        */}
 
       {error && (
-        <div
-          className="
-            mt-4
-            rounded-xl
-            border
-            border-red-200
-            bg-red-50
-            p-4
-            text-sm
-            text-red-700
-          "
-        >
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       )}
 
-
       {/*
        * ======================================================
-       * LOADING
+       * LOADING / EMPTY / LIST
        * ======================================================
        */}
 
       {loading ? (
         <InlineLoader className="mt-4 min-h-48" />
       ) : items.length === 0 ? (
-        /*
-         * ====================================================
-         * EMPTY
-         * ====================================================
-         */
-
         <div className="mt-4">
-          <EmptyState
-            isArabic={isArabic}
-          />
+          <EmptyState isArabic={isArabic} />
         </div>
       ) : (
-        /*
-         * ====================================================
-         * AUDIT LIST
-         * ====================================================
-         */
+        <div className="mt-4">
+          <AuditTable
+            items={items}
+            isArabic={isArabic}
+            locale={locale}
+            expandedId={expandedId}
+            onToggle={toggleExpanded}
+          />
 
-        <div className="mt-4 space-y-3">
-          {items.map(
-            (log) => (
-              <AuditItem
-                key={log.id}
-                log={log}
-                isArabic={isArabic}
-                locale={locale}
-              />
-            ),
-          )}
+          <AuditCards
+            items={items}
+            isArabic={isArabic}
+            locale={locale}
+            expandedId={expandedId}
+            onToggle={toggleExpanded}
+          />
         </div>
       )}
-
 
       {/*
        * ======================================================
@@ -1915,9 +916,7 @@ function AuditLogsContent() {
           totalPages={totalPages}
           total={total}
           onPageChange={setPage}
-          itemLabel={
-            uiText(isArabic, 'text0277')
-          }
+          itemLabel={uiText(isArabic, 'text0277')}
         />
       )}
     </div>

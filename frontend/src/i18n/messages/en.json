@@ -1124,6 +1124,15 @@
     "text1079": "Must be a whole number of 1 or more.",
     "text1080": "Could not save. Please try again.",
     "text1081": "days",
-    "text1082": "MB"
+    "text1082": "MB",
+    "text1083": "When",
+    "text1084": "User",
+    "text1085": "Action",
+    "text1086": "Type",
+    "text1087": "Details",
+    "text1088": "Show details",
+    "text1089": "Hide details",
+    "text1090": "Filter by action",
+    "text1091": "Filter by type"
   }
 }

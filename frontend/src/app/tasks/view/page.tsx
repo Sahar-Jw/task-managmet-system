@@ -2834,7 +2834,9 @@ function TaskDetailContent() {
                * =================================================
                */}
 
-              {myPendingAssignment && (
+              {myPendingAssignment &&
+                task.status !==
+                  'Completed' && (
                 <div
                   className="
                     mt-4
@@ -4217,30 +4219,19 @@ function TaskDetailContent() {
                           gap-3
                         "
                       >
-                        <div
-                          className="
-                            flex
-                            h-9
-                            w-9
-                            shrink-0
-                            items-center
-                            justify-center
-                            rounded-xl
-                            bg-white
-                            text-xs
-                            font-bold
-                            text-brand-700
-                            shadow-sm
-                          "
-                        >
-                          {comment.author
-                            ?.fullName
-                            ?.charAt(
-                              0,
-                            )
-                            .toUpperCase() ||
-                            '?'}
-                        </div>
+                        <Avatar
+                          name={
+                            comment.author
+                              ?.fullName ||
+                            'User'
+                          }
+                          avatarUrl={
+                            comment.author
+                              ?.avatarUrl
+                          }
+                          size="sm"
+                          className="shrink-0 shadow-sm"
+                        />
 
                         <div
                           className="

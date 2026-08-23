@@ -2083,7 +2083,7 @@ function TaskDetailContent() {
                   <button
                     type="button"
                     disabled={assignmentBusy}
-                    className="icon-btn-danger h-8 w-8"
+                    className="btn-danger h-8 gap-1.5 px-3 text-xs"
                     title={uiText(isArabic, 'text0125')}
                     aria-label={uiText(isArabic, 'text0125')}
                     onClick={() =>
@@ -2111,7 +2111,8 @@ function TaskDetailContent() {
                       })
                     }
                   >
-                    <CancelIcon />
+                    <CancelIcon className="h-3.5 w-3.5" />
+                    {uiText(isArabic, 'text0125')}
                   </button>
                 )}
 

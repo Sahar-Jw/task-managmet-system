@@ -3066,7 +3066,15 @@ function NewTaskContent() {
                       </FieldLabel>
 
                       <select
-                        className="input"
+                        dir={
+                          isArabic
+                            ? 'rtl'
+                            : 'ltr'
+                        }
+                        className="
+                          input
+                          max-w-sm
+                        "
                         value={
                           form.budgetCurrency
                         }
@@ -3157,8 +3165,14 @@ function NewTaskContent() {
                       "
                     >
                       <select
+                        dir={
+                          isArabic
+                            ? 'rtl'
+                            : 'ltr'
+                        }
                         className="
                           input
+                          max-w-sm
                           flex-1
                         "
                         required
@@ -3232,8 +3246,14 @@ function NewTaskContent() {
                       "
                     >
                       <select
+                        dir={
+                          isArabic
+                            ? 'rtl'
+                            : 'ltr'
+                        }
                         className="
                           input
+                          max-w-sm
                           flex-1
                         "
                         required
@@ -3437,8 +3457,14 @@ function NewTaskContent() {
                     "
                   >
                     <select
+                      dir={
+                        isArabic
+                          ? 'rtl'
+                          : 'ltr'
+                      }
                       className="
                         input
+                        max-w-sm
                         flex-1
                       "
                       required
@@ -3521,8 +3547,14 @@ function NewTaskContent() {
                     "
                   >
                     <select
+                      dir={
+                        isArabic
+                          ? 'rtl'
+                          : 'ltr'
+                      }
                       className="
                         input
+                        max-w-sm
                         flex-1
                       "
                       disabled={
@@ -3597,7 +3629,15 @@ function NewTaskContent() {
 
 
                   <select
-                    className="input"
+                    dir={
+                      isArabic
+                        ? 'rtl'
+                        : 'ltr'
+                    }
+                    className="
+                      input
+                      max-w-sm
+                    "
                     disabled={
                       Boolean(
                         selectedParent,
@@ -3836,7 +3876,15 @@ function NewTaskContent() {
 
 
                       <select
-                        className="input"
+                        dir={
+                          isArabic
+                            ? 'rtl'
+                            : 'ltr'
+                        }
+                        className="
+                          input
+                          max-w-sm
+                        "
                         required
                         value={
                           form.approverId
@@ -3914,7 +3962,15 @@ function NewTaskContent() {
 
 
                   <select
-                    className="input"
+                    dir={
+                      isArabic
+                        ? 'rtl'
+                        : 'ltr'
+                    }
+                    className="
+                      input
+                      max-w-sm
+                    "
                     value={
                       form.parentTaskId
                     }
@@ -4009,6 +4065,11 @@ function NewTaskContent() {
 
 
                   <input
+                    dir={
+                      isArabic
+                        ? 'rtl'
+                        : 'ltr'
+                    }
                     type="date"
                     className="
                       input
@@ -4050,6 +4111,11 @@ function NewTaskContent() {
 
 
                   <input
+                    dir={
+                      isArabic
+                        ? 'rtl'
+                        : 'ltr'
+                    }
                     type="date"
                     className="
                       input

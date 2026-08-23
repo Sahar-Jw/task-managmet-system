@@ -381,16 +381,21 @@ function AddButton({
       }
       className="
         inline-flex
+        h-11
+        shrink-0
         items-center
         gap-1
-        rounded-lg
-        px-2
-        py-1
+        rounded-md
+        border
+        border-brand-200
+        bg-brand-50
+        px-3
         text-xs
         font-semibold
         text-brand-700
         transition
-        hover:bg-brand-50
+        hover:border-brand-300
+        hover:bg-brand-100
         hover:text-brand-900
       "
     >
@@ -3126,12 +3131,75 @@ function NewTaskContent() {
                   space-y-4
                 "
               >
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                    action={
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    gap-4
+                    sm:grid-cols-2
+                  "
+                >
+                  <div>
+                    <FieldLabel
+                      isArabic={
+                        isArabic
+                      }
+                    >
+                      {uiText(isArabic, 'text0163')}
+                    </FieldLabel>
+
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                      "
+                    >
+                      <select
+                        className="
+                          input
+                          flex-1
+                        "
+                        required
+                        value={
+                          form.taskType
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          set(
+                            'taskType',
+
+                            event.target.value,
+                          )
+                        }
+                      >
+                        <option value="">
+                          {uiText(isArabic, 'text0187')}
+                        </option>
+
+
+                        {visibleTaskTypes.map(
+                          (
+                            item,
+                          ) => (
+                            <option
+                              key={
+                                item.id
+                              }
+                              value={
+                                item.key
+                              }
+                            >
+                              {isArabic
+                                ? item.codeAr
+                                : item.codeEn}
+                            </option>
+                          ),
+                        )}
+                      </select>
+
                       <AddButton
                         isArabic={
                           isArabic
@@ -3142,61 +3210,71 @@ function NewTaskContent() {
                           )
                         }
                       />
-                    }
-                  >
-                    {uiText(isArabic, 'text0163')}
-                  </FieldLabel>
+                    </div>
+                  </div>
 
 
-                  <select
-                    className="input"
-                    required
-                    value={
-                      form.taskType
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'taskType',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
+                  <div>
+                    <FieldLabel
+                      isArabic={
+                        isArabic
+                      }
+                    >
+                      {uiText(isArabic, 'text0297')}
+                    </FieldLabel>
 
 
-                    {visibleTaskTypes.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.key
-                          }
-                        >
-                          {isArabic
-                            ? item.codeAr
-                            : item.codeEn}
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                      "
+                    >
+                      <select
+                        className="
+                          input
+                          flex-1
+                        "
+                        required
+                        value={
+                          form.priority
+                        }
+                        onChange={(
+                          event,
+                        ) =>
+                          set(
+                            'priority',
+
+                            event.target.value,
+                          )
+                        }
+                      >
+                        <option value="">
+                          {uiText(isArabic, 'text0187')}
                         </option>
-                      ),
-                    )}
-                  </select>
-                </div>
 
 
-                <div>
-                  <FieldLabel
-                    isArabic={
-                      isArabic
-                    }
-                    action={
+                        {visiblePriorities.map(
+                          (
+                            item,
+                          ) => (
+                            <option
+                              key={
+                                item.id
+                              }
+                              value={
+                                item.key
+                              }
+                            >
+                              {isArabic
+                                ? item.codeAr
+                                : item.codeEn}
+                            </option>
+                          ),
+                        )}
+                      </select>
+
                       <AddButton
                         isArabic={
                           isArabic
@@ -3207,52 +3285,8 @@ function NewTaskContent() {
                           )
                         }
                       />
-                    }
-                  >
-                    {uiText(isArabic, 'text0297')}
-                  </FieldLabel>
-
-
-                  <select
-                    className="input"
-                    required
-                    value={
-                      form.priority
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'priority',
-
-                        event.target.value,
-                      )
-                    }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
-
-
-                    {visiblePriorities.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.key
-                          }
-                        >
-                          {isArabic
-                            ? item.codeAr
-                            : item.codeEn}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                    </div>
+                  </div>
                 </div>
 
 
@@ -3378,7 +3412,11 @@ function NewTaskContent() {
               <div
                 className="
                   mt-5
-                  space-y-4
+                  grid
+                  grid-cols-1
+                  gap-4
+                  sm:grid-cols-2
+                  lg:grid-cols-3
                 "
               >
                 <div>
@@ -3386,73 +3424,81 @@ function NewTaskContent() {
                     isArabic={
                       isArabic
                     }
-                    action={
-                      isAdmin &&
-                      !selectedParent
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'department',
-                                )
-                              }
-                            />
-                          )
-                        : undefined
-                    }
                   >
                     {uiText(isArabic, 'text0374')}
                   </FieldLabel>
 
 
-                  <select
-                    className="input"
-                    required
-                    disabled={
-                      Boolean(
-                        selectedParent,
-                      )
-                    }
-                    value={
-                      form.departmentId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'departmentId',
-
-                        event.target.value,
-                      )
-                    }
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-2
+                    "
                   >
-                    <option value="">
-                      {uiText(isArabic, 'text0187')}
-                    </option>
+                    <select
+                      className="
+                        input
+                        flex-1
+                      "
+                      required
+                      disabled={
+                        Boolean(
+                          selectedParent,
+                        )
+                      }
+                      value={
+                        form.departmentId
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        set(
+                          'departmentId',
+
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="">
+                        {uiText(isArabic, 'text0187')}
+                      </option>
 
 
-                    {visibleDepartments.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
+                      {visibleDepartments.map(
+                        (
+                          item,
+                        ) => (
+                          <option
+                            key={
+                              item.id
+                            }
+                            value={
+                              item.id
+                            }
+                          >
+                            {settingLabel(
+                              item,
+                            )}
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    {isAdmin &&
+                      !selectedParent && (
+                        <AddButton
+                          isArabic={
+                            isArabic
                           }
-                          value={
-                            item.id
+                          onClick={() =>
+                            openQuickAdd(
+                              'department',
+                            )
                           }
-                        >
-                          {settingLabel(
-                            item,
-                          )}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                        />
+                      )}
+                  </div>
                 </div>
 
 
@@ -3462,72 +3508,80 @@ function NewTaskContent() {
                     isArabic={
                       isArabic
                     }
-                    action={
-                      isAdmin &&
-                      !selectedParent
-                        ? (
-                            <AddButton
-                              isArabic={
-                                isArabic
-                              }
-                              onClick={() =>
-                                openQuickAdd(
-                                  'branch',
-                                )
-                              }
-                            />
-                          )
-                        : undefined
-                    }
                   >
                     {uiText(isArabic, 'text0371')}
                   </FieldLabel>
 
 
-                  <select
-                    className="input"
-                    disabled={
-                      Boolean(
-                        selectedParent,
-                      )
-                    }
-                    value={
-                      form.branchId
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      set(
-                        'branchId',
-
-                        event.target.value,
-                      )
-                    }
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-2
+                    "
                   >
-                    <option value="">
-                      {uiText(isArabic, 'text0430')}
-                    </option>
+                    <select
+                      className="
+                        input
+                        flex-1
+                      "
+                      disabled={
+                        Boolean(
+                          selectedParent,
+                        )
+                      }
+                      value={
+                        form.branchId
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        set(
+                          'branchId',
+
+                          event.target.value,
+                        )
+                      }
+                    >
+                      <option value="">
+                        {uiText(isArabic, 'text0430')}
+                      </option>
 
 
-                    {visibleBranches.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
+                      {visibleBranches.map(
+                        (
+                          item,
+                        ) => (
+                          <option
+                            key={
+                              item.id
+                            }
+                            value={
+                              item.id
+                            }
+                          >
+                            {settingLabel(
+                              item,
+                            )}
+                          </option>
+                        ),
+                      )}
+                    </select>
+
+                    {isAdmin &&
+                      !selectedParent && (
+                        <AddButton
+                          isArabic={
+                            isArabic
                           }
-                          value={
-                            item.id
+                          onClick={() =>
+                            openQuickAdd(
+                              'branch',
+                            )
                           }
-                        >
-                          {settingLabel(
-                            item,
-                          )}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                        />
+                      )}
+                  </div>
                 </div>
 
 
@@ -3938,7 +3992,10 @@ function NewTaskContent() {
               <div
                 className="
                   mt-5
-                  space-y-4
+                  grid
+                  grid-cols-1
+                  gap-4
+                  sm:grid-cols-2
                 "
               >
                 <div>
@@ -3953,7 +4010,10 @@ function NewTaskContent() {
 
                   <input
                     type="date"
-                    className="input"
+                    className="
+                      input
+                      max-w-[200px]
+                    "
                     min={
                       selectedParent?.startDate ||
                       undefined
@@ -3991,7 +4051,10 @@ function NewTaskContent() {
 
                   <input
                     type="date"
-                    className="input"
+                    className="
+                      input
+                      max-w-[200px]
+                    "
                     required
                     min={
                       form.startDate ||

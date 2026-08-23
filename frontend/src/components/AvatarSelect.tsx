@@ -35,7 +35,7 @@ export default function AvatarSelect({
     <div ref={ref} className="relative">
       <button
         type="button"
-        className="input flex w-full items-center justify-between gap-3 text-left"
+        className="input flex w-full items-center justify-between gap-3"
         disabled={disabled}
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -61,7 +61,7 @@ export default function AvatarSelect({
             type="button"
             role="option"
             aria-selected={!value}
-            className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-50"
+            className="flex w-full items-center rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-50"
             onClick={() => {
               onChange('');
               setOpen(false);
@@ -76,14 +76,14 @@ export default function AvatarSelect({
               role="option"
               aria-selected={user.id === value}
               key={user.id}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
               onClick={() => {
                 onChange(user.id);
                 setOpen(false);
               }}
             >
               <Avatar name={user.fullName} avatarUrl={user.avatarUrl} size="sm" className="shrink-0" />
-              <span className="min-w-0 flex-1 truncate">{user.fullName}</span>
+              <span className="min-w-0 truncate">{user.fullName}</span>
             </button>
           ))}
         </div>

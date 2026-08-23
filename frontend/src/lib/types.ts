@@ -168,6 +168,9 @@ export interface Project {
   ownerName?:
     string;
 
+  ownerAvatarUrl?:
+    string | null;
+
   ownerDepartmentName?:
     string;
 

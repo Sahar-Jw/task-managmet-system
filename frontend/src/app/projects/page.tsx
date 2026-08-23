@@ -26,6 +26,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import StatusBadge from '@/components/StatusBadge';
 import Pagination from '@/components/Pagination';
 import { ArchiveIcon, DeleteIcon, EditIcon, UnarchiveIcon } from '@/components/ActionIcons';
+import Avatar from '@/components/Avatar';
 
 import {
   useAuth,
@@ -2880,14 +2881,17 @@ function ProjectsContent() {
                     {isAdmin && (
                       <div className="mt-4 border-t border-slate-100 pt-4">
                         <div className="flex items-center gap-2">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-[10px] font-semibold text-brand-700">
-                            {project.ownerName
-                              ?.charAt(
-                                0,
-                              )
-                              .toUpperCase() ||
-                              '?'}
-                          </div>
+                          <Avatar
+                            name={
+                              project.ownerName ||
+                              '?'
+                            }
+                            avatarUrl={
+                              project.ownerAvatarUrl
+                            }
+                            size="sm"
+                            className="shrink-0"
+                          />
 
                           <div className="min-w-0">
                             <div className="truncate text-xs font-medium text-slate-700">
@@ -3081,22 +3085,36 @@ function ProjectsContent() {
 
                       <div className="min-w-0">
                         {isAdmin ? (
-                          <>
-                            <div className="truncate text-xs font-medium text-slate-700">
-                              {project.ownerName ||
-                                '—'}
+                          <div className="flex items-center gap-2">
+                            <Avatar
+                              name={
+                                project.ownerName ||
+                                '?'
+                              }
+                              avatarUrl={
+                                project.ownerAvatarUrl
+                              }
+                              size="sm"
+                              className="h-6 w-6 shrink-0 text-[10px]"
+                            />
+
+                            <div className="min-w-0">
+                              <div className="truncate text-xs font-medium text-slate-700">
+                                {project.ownerName ||
+                                  '—'}
+                              </div>
+
+                              <div className="mt-1 truncate text-[10px] text-slate-400">
+                                {project.ownerDepartmentName ||
+                                  '—'}
+
+                                {' · '}
+
+                                {project.ownerBranchName ||
+                                  '—'}
+                              </div>
                             </div>
-
-                            <div className="mt-1 truncate text-[10px] text-slate-400">
-                              {project.ownerDepartmentName ||
-                                '—'}
-
-                              {' · '}
-
-                              {project.ownerBranchName ||
-                                '—'}
-                            </div>
-                          </>
+                          </div>
                         ) : (
                           <div className="text-xs text-slate-400">
                             {uiText(isArabic, 'text0431')}{' '}

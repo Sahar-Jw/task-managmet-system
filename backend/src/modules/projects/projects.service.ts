@@ -69,6 +69,8 @@ export type ProjectWithOwner =
   ProjectEntity & {
     ownerName?: string;
 
+    ownerAvatarUrl?: string | null;
+
     ownerDepartmentName?: string;
     ownerBranchName?: string;
   };
@@ -859,6 +861,9 @@ export class ProjectsService {
 
           ownerName:
             owner?.fullName,
+
+          ownerAvatarUrl:
+            owner?.avatarUrl,
 
           ownerDepartmentName:
             owner?.departmentId

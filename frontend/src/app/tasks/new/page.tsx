@@ -3783,7 +3783,6 @@ function NewTaskContent() {
 
                 <div
                   className={`
-                    overflow-hidden
                     rounded-xl
                     border
                     transition
@@ -3800,6 +3799,7 @@ function NewTaskContent() {
                       items-center
                       justify-between
                       gap-4
+                      rounded-t-xl
                       p-4
                     "
                   >
@@ -3863,6 +3863,7 @@ function NewTaskContent() {
                         border-t
                         border-brand-100
                         bg-white
+                        rounded-b-xl
                         p-4
                       "
                     >
@@ -3875,59 +3876,24 @@ function NewTaskContent() {
                       </FieldLabel>
 
 
-                      <select
-                        dir={
-                          isArabic
-                            ? 'rtl'
-                            : 'ltr'
-                        }
-                        className="
-                          input
-                          max-w-sm
-                        "
-                        required
-                        value={
-                          form.approverId
-                        }
-                        onChange={(
-                          event,
-                        ) =>
+                      <AvatarSelect
+                        users={approvers}
+                        value={form.approverId}
+                        onChange={(value) =>
                           set(
                             'approverId',
 
-                            event.target.value,
+                            value,
                           )
                         }
-                      >
-                        <option value="">
-                          {uiText(isArabic, 'text0571')}
-                        </option>
-
-
-                        {approvers.map(
-                          (
-                            item,
-                          ) => (
-                            <option
-                              key={
-                                item.id
-                              }
-                              value={
-                                item.id
-                              }
-                            >
-                              {
-                                item.fullName
-                              }
-
-                              {item.role.name ===
-                              'ADMIN'
-                                ? ' — Admin'
-                                : ''}
-                            </option>
-                          ),
-                        )}
-                      </select>
+                        placeholder={uiText(isArabic, 'text0571')}
+                        getLabelSuffix={(item) =>
+                          item.role.name ===
+                          'ADMIN'
+                            ? ' — Admin'
+                            : ''
+                        }
+                      />
 
 
                       <p

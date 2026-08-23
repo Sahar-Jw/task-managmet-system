@@ -10,12 +10,14 @@ export default function AvatarSelect({
   onChange,
   placeholder,
   disabled = false,
+  getLabelSuffix,
 }: {
   users: User[];
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   disabled?: boolean;
+  getLabelSuffix?: (user: User) => string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -44,7 +46,10 @@ export default function AvatarSelect({
         {selected ? (
           <span className="flex min-w-0 items-center gap-2">
             <Avatar name={selected.fullName} avatarUrl={selected.avatarUrl} size="sm" className="shrink-0" />
-            <span className="truncate">{selected.fullName}</span>
+            <span className="truncate">
+              {selected.fullName}
+              {getLabelSuffix ? getLabelSuffix(selected) : ''}
+            </span>
           </span>
         ) : (
           <span className="truncate text-slate-400">{placeholder}</span>
@@ -83,7 +88,10 @@ export default function AvatarSelect({
               }}
             >
               <Avatar name={user.fullName} avatarUrl={user.avatarUrl} size="sm" className="shrink-0" />
-              <span className="min-w-0 truncate">{user.fullName}</span>
+              <span className="min-w-0 truncate">
+                {user.fullName}
+                {getLabelSuffix ? getLabelSuffix(user) : ''}
+              </span>
             </button>
           ))}
         </div>

@@ -997,7 +997,7 @@ export default function Home() {
               </div>
 
 
-              <h1 className="mt-4 max-w-3xl text-xl font-semibold leading-8 tracking-[-0.02em] text-slate-950 sm:text-3xl lg:text-[34px]">
+              <h1 className="mt-4 max-w-3xl text-xl font-semibold leading-snug tracking-[-0.02em] text-slate-950 sm:text-3xl lg:text-[34px]">
                 {uiText(isArabic, 'text0344')}
               </h1>
 

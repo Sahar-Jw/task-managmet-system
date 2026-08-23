@@ -2079,42 +2079,42 @@ function TaskDetailContent() {
                   </button>
                 )}
 
-                {myAcceptedAssignment && (
-                  <button
-                    type="button"
-                    disabled={assignmentBusy}
-                    className="btn-danger h-8 gap-1.5 px-3 text-xs"
-                    title={uiText(isArabic, 'text0125')}
-                    aria-label={uiText(isArabic, 'text0125')}
-                    onClick={() =>
-                      setReasonModal({
-                        title: uiText(isArabic, 'text0125'),
-                        description: uiText(isArabic, 'text0126'),
-                        minLength: 10,
-                        confirmLabel: uiText(isArabic, 'text0127'),
-                        danger: true,
-                        onConfirm: (reason) => {
-                          setReasonModal(null);
-                          setAssignmentBusy(true);
+             {myAcceptedAssignment && task.status !== 'Completed' && (
+  <button
+    type="button"
+    disabled={assignmentBusy}
+    className="btn-danger h-8 gap-1.5 px-3 text-xs"
+    title={uiText(isArabic, 'text0125')}
+    aria-label={uiText(isArabic, 'text0125')}
+    onClick={() =>
+      setReasonModal({
+        title: uiText(isArabic, 'text0125'),
+        description: uiText(isArabic, 'text0126'),
+        minLength: 10,
+        confirmLabel: uiText(isArabic, 'text0127'),
+        danger: true,
+        onConfirm: (reason) => {
+          setReasonModal(null);
+          setAssignmentBusy(true);
 
-                          withFeedback(
-                            () =>
-                              AssignmentsApi.reject(
-                                myAcceptedAssignment.id,
-                                reason,
-                              ),
-                            uiText(isArabic, 'text0493'),
-                          ).finally(() =>
-                            setAssignmentBusy(false),
-                          );
-                        },
-                      })
-                    }
-                  >
-                    <CancelIcon className="h-3.5 w-3.5" />
-                    {uiText(isArabic, 'text0125')}
-                  </button>
-                )}
+          withFeedback(
+            () =>
+              AssignmentsApi.reject(
+                myAcceptedAssignment.id,
+                reason,
+              ),
+            uiText(isArabic, 'text0493'),
+          ).finally(() =>
+            setAssignmentBusy(false),
+          );
+        },
+      })
+    }
+  >
+    <CancelIcon className="h-3.5 w-3.5" />
+    {uiText(isArabic, 'text0125')}
+  </button>
+                          )}
 
                 {overdue && (
                   <span

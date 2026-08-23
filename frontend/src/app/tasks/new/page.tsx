@@ -144,6 +144,61 @@ function addDaysToDateString(
 }
 
 
+/*
+ * ==============================================================
+ * FETCH ALL PAGES
+ * ==============================================================
+ *
+ * The backend caps `limit` at 100 per request (see
+ * PaginationQueryDto), so there's no single "no limit" request we
+ * can send. Instead we keep requesting pages of 100 and merging
+ * them until every item has been collected, so callers effectively
+ * get the full, unlimited result set.
+ * ==============================================================
+ */
+
+async function fetchAllTasks(
+  fetchPage: (
+    params: Record<string, string>,
+  ) => Promise<{
+    items: Task[];
+    total: number;
+  }>,
+
+  extraParams: Record<string, string> = {},
+): Promise<Task[]> {
+  const PAGE_SIZE = 100;
+
+  let page = 1;
+  let all: Task[] = [];
+
+  // Safety valve so a backend bug (e.g. `total` never matching
+  // collected items) can't spin this into an infinite loop.
+  const MAX_PAGES = 200;
+
+  while (page <= MAX_PAGES) {
+    const result = await fetchPage({
+      ...extraParams,
+      page: String(page),
+      limit: String(PAGE_SIZE),
+    });
+
+    all = all.concat(result.items);
+
+    if (
+      result.items.length === 0 ||
+      all.length >= result.total
+    ) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return all;
+}
+
+
 function getDefaultTaskDates() {
   const startDate =
     new Date();
@@ -976,23 +1031,21 @@ function NewTaskContent() {
 
     const tasksRequest =
       isAdmin
-        ? TasksApi.list({
-            limit:
-              '100',
-
-            excludeArchived:
-              'true',
-          })
+        ? fetchAllTasks(
+            TasksApi.list,
+            {
+              excludeArchived:
+                'true',
+            },
+          )
         : Promise.all([
-            TasksApi.mine({
-              limit:
-                '100',
-            }),
+            fetchAllTasks(
+              TasksApi.mine,
+            ),
 
-            TasksApi.assignedByMe({
-              limit:
-                '100',
-            }),
+            fetchAllTasks(
+              TasksApi.assignedByMe,
+            ),
           ]).then(
             ([
               assignedToMe,
@@ -1001,8 +1054,8 @@ function NewTaskContent() {
               const byId =
                 new Map(
                   [
-                    ...assignedToMe.items,
-                    ...createdByMe.items,
+                    ...assignedToMe,
+                    ...createdByMe,
                   ].map(
                     (
                       item,
@@ -1014,21 +1067,9 @@ function NewTaskContent() {
                 );
 
 
-              const items =
-                Array.from(
-                  byId.values(),
-                );
-
-
-              return {
-                items,
-                total:
-                  items.length,
-                page:
-                  1,
-                limit:
-                  100,
-              };
+              return Array.from(
+                byId.values(),
+              );
             },
           );
 
@@ -1036,10 +1077,10 @@ function NewTaskContent() {
     tasksRequest
       .then(
         (
-          result,
+          items,
         ) =>
           setTasks(
-            result.items,
+            items,
           ),
       )
       .catch(
@@ -2384,31 +2425,19 @@ function NewTaskContent() {
       >
         <div
           className="
-            grid
-            gap-6
-            xl:grid-cols-[minmax(0,1fr)_380px]
+            card
+            divide-y
+            divide-slate-100
           "
         >
           {/*
-           * ==================================================
-           * LEFT
-           * ==================================================
-           */}
-
-          <div
-            className="
-              space-y-6
-            "
-          >
-            {/*
-             * =================================================
-             * DETAILS
+           * =================================================
+           * DETAILS
              * =================================================
              */}
 
-            <section
+            <div
               className="
-                card
                 p-6
               "
             >
@@ -2498,7 +2527,7 @@ function NewTaskContent() {
                   />
                 </div>
               </div>
-            </section>
+            </div>
 
 
             {/*
@@ -2507,12 +2536,7 @@ function NewTaskContent() {
              * =================================================
              */}
 
-            <section
-              className="
-                card
-                overflow-hidden
-              "
-            >
+            <div>
               <div
                 className="
                   border-b
@@ -2882,7 +2906,7 @@ function NewTaskContent() {
                   </div>
                 )}
               </div>
-            </section>
+            </div>
 
 
             {/*
@@ -2891,12 +2915,7 @@ function NewTaskContent() {
              * =================================================
              */}
 
-            <section
-              className="
-                card
-                overflow-hidden
-              "
-            >
+            <div>
               <div
                 className="
                   flex
@@ -3080,31 +3099,18 @@ function NewTaskContent() {
                   </div>
                 </div>
               )}
-            </section>
-          </div>
+            </div>
 
 
-          {/*
-           * ==================================================
-           * SIDEBAR
-           * ==================================================
-           */}
-
-          <aside
-            className="
-              space-y-6
-            "
-          >
             {/*
              * =================================================
              * CLASSIFICATION
              * =================================================
              */}
 
-            <section
+            <div
               className="
-                card
-                p-5
+                p-6
               "
             >
               <SectionHeader
@@ -3328,7 +3334,7 @@ function NewTaskContent() {
                   </div>
                 </div>
               </div>
-            </section>
+            </div>
 
 
             {/*
@@ -3337,10 +3343,9 @@ function NewTaskContent() {
              * =================================================
              */}
 
-            <section
+            <div
               className="
-                card
-                p-5
+                p-6
               "
             >
               <SectionHeader
@@ -3583,7 +3588,7 @@ function NewTaskContent() {
                   </select>
                 </div>
               </div>
-            </section>
+            </div>
 
 
             {/*
@@ -3592,10 +3597,9 @@ function NewTaskContent() {
              * =================================================
              */}
 
-            <section
+            <div
               className="
-                card
-                p-5
+                p-6
               "
             >
               <SectionHeader
@@ -3910,7 +3914,7 @@ function NewTaskContent() {
                   )}
                 </div>
               </div>
-            </section>
+            </div>
 
 
             {/*
@@ -3919,10 +3923,9 @@ function NewTaskContent() {
              * =================================================
              */}
 
-            <section
+            <div
               className="
-                card
-                p-5
+                p-6
               "
             >
               <SectionHeader
@@ -4030,8 +4033,7 @@ function NewTaskContent() {
                   )}
                 </div>
               </div>
-            </section>
-          </aside>
+            </div>
         </div>
 
 

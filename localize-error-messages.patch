@@ -1,0 +1,70 @@
+diff --git a/backend/src/common/filters/http-exception.filter.ts b/backend/src/common/filters/http-exception.filter.ts
+index ccbaa3f..7f5804d 100644
+--- a/backend/src/common/filters/http-exception.filter.ts
++++ b/backend/src/common/filters/http-exception.filter.ts
+@@ -126,6 +126,39 @@ const EXACT_AR: Record<string, string> = {
+   'Start Task cannot be disabled': 'لا يمكن تعطيل إجراء بدء المهمة.',
+   'Every dictionary entry requires English and Arabic text': 'يتطلب كل إدخال في القاموس نصاً باللغتين الإنجليزية والعربية.',
+   'Only Admin may create organization settings': 'يمكن للمسؤول فقط إنشاء إعدادات الفروع والأقسام والمؤسسة.',
++  'An approver is required when the Task needs approval': 'المعتمد مطلوب عند تفعيل الموافقة للمهمة.',
++  "Assignment due date cannot exceed the parent Task's due date": 'لا يمكن أن يتجاوز موعد التكليف النهائي موعد المهمة الرئيسية.',
++  'This Assignment is not active and cannot be rejected': 'هذا التكليف غير نشط ولا يمكن رفضه.',
++  'Avatar must be an image (png, jpg, jpeg, webp, gif)': 'يجب أن تكون الصورة الرمزية بصيغة png أو jpg أو jpeg أو webp أو gif.',
++  'Cannot attach a Task to an archived Parent Task': 'لا يمكن ربط مهمة بمهمة رئيسية مؤرشفة.',
++  'Cannot enable approval on a completed or finished Task': 'لا يمكن تفعيل الموافقة على مهمة مكتملة أو منتهية.',
++  'Cannot permanently delete a Task that has Assignments, Comments, Attachments, or Ratings': 'لا يمكن حذف مهمة نهائياً إذا كانت تحتوي على تكليفات أو تعليقات أو مرفقات أو تقييمات.',
++  'This change would create a circular Task hierarchy': 'هذا التغيير سينشئ تسلسلاً هرمياً دائرياً بين المهام.',
++  'A Completed Task cannot transition back to Pending': 'لا يمكن لمهمة مكتملة العودة إلى حالة قيد الانتظار.',
++  'File must be an image (png, jpg, jpeg, webp, gif, svg, ico)': 'يجب أن يكون الملف صورة بصيغة png أو jpg أو jpeg أو webp أو gif أو svg أو ico.',
++  'A Finished Task can only be reopened by Admin': 'يمكن للمسؤول فقط إعادة فتح مهمة منتهية.',
++  'Max attachment size must be greater than 0': 'يجب أن يكون الحد الأقصى لحجم المرفق أكبر من صفر.',
++  'Moving the deadline earlier than today requires Admin override': 'نقل الموعد النهائي إلى ما قبل اليوم يتطلب تجاوزاً من المسؤول.',
++  'Only the assigned User(s), the Task creator, or Admin may change status': 'يمكن للمستخدم(ين) المكلّف(ين) أو منشئ المهمة أو المسؤول فقط تغيير الحالة.',
++  'Only the designated approver or Admin may decide on this Task': 'يمكن للمعتمد المحدد أو المسؤول فقط اتخاذ قرار بشأن هذه المهمة.',
++  'Only the Parent Task creator, Admin, or the User who accepted the Parent Task may create Sub-tasks': 'يمكن لمنشئ المهمة الرئيسية أو المسؤول أو المستخدم الذي قبل المهمة الرئيسية فقط إنشاء مهام فرعية.',
++  'Only the Task creator or Admin may archive this Task': 'يمكن لمنشئ المهمة أو المسؤول فقط أرشفة هذه المهمة.',
++  'Only the Task creator or Admin may change attachment download permissions': 'يمكن لمنشئ المهمة أو المسؤول فقط تغيير صلاحيات تنزيل المرفقات.',
++  'Only the Task creator or Admin may edit this Task': 'يمكن لمنشئ المهمة أو المسؤول فقط تعديل هذه المهمة.',
++  "This is a built-in status/type used by the app's workflow and cannot be deleted — you can still edit its Arabic/English text.": 'هذه حالة أو نوع أساسي يستخدمه سير عمل النظام ولا يمكن حذفه — يمكنك تعديل نصه العربي أو الإنجليزي.',
++  "Sub-task Branch must match its Parent Task": 'يجب أن يتطابق فرع المهمة الفرعية مع فرع المهمة الرئيسية.',
++  "Sub-task deadline cannot exceed its Parent Task's deadline": 'لا يمكن أن يتجاوز الموعد النهائي للمهمة الفرعية الموعد النهائي للمهمة الرئيسية.',
++  'Sub-task Department must match its Parent Task': 'يجب أن يتطابق قسم المهمة الفرعية مع قسم المهمة الرئيسية.',
++  'Sub-task Project must match its Parent Task': 'يجب أن يتطابق مشروع المهمة الفرعية مع مشروع المهمة الرئيسية.',
++  "Sub-task start date cannot be before its Parent Task's start date": 'لا يمكن أن يكون تاريخ بدء المهمة الفرعية قبل تاريخ بدء المهمة الرئيسية.',
++  'This Task already has an active Assignment. Reassign it instead of creating a new one.': 'تملك هذه المهمة تكليفاً نشطاً بالفعل. أعد تكليفه بدلاً من إنشاء تكليف جديد.',
++  'The Task for this Attachment no longer exists': 'المهمة المرتبطة بهذا المرفق لم تعد موجودة.',
++  'A Task cannot reference itself as its own parent': 'لا يمكن أن تكون المهمة رئيسية لنفسها.',
++  'Task is pending approval and cannot be edited until a decision is made': 'المهمة بانتظار الموافقة ولا يمكن تعديلها حتى يُتخذ قرار.',
++  'This Task requires approval; route it through PendingApproval and have the approver decide first': 'تتطلب هذه المهمة موافقة؛ يجب توجيهها إلى حالة بانتظار الموافقة أولاً ليتخذ المعتمد القرار.',
++  'This user has related records (tasks, comments, audit history, etc.) and cannot be permanently deleted. Deactivate the account instead.': 'يملك هذا المستخدم سجلات مرتبطة (مهام أو تعليقات أو سجل تدقيق، إلخ) ولا يمكن حذفه نهائياً. قم بتعطيل الحساب بدلاً من ذلك.',
++  'This Workflow action is not currently available': 'إجراء سير العمل هذا غير متاح حالياً.',
++  'Date "to" cannot be before date "from"': 'لا يمكن أن يكون تاريخ "إلى" قبل تاريخ "من".',
+ };
+ 
+ const STATUS_AR: Record<number, string> = {
+@@ -299,6 +332,25 @@ function translateBusinessError(message: string): string | null {
+   match = message.match(/^You may only (.+) your own comments$/i);
+   if (match) return `يمكنك تنفيذ الإجراء «${match[1]}» على تعليقاتك فقط.`;
+ 
++  match = message.match(/^(.+?) "to"(?: date)? cannot be before (?:the )?"from"(?: date)?$/i);
++  if (match) {
++    const fieldsAr: Record<string, string> = {
++      'created date': 'الإنشاء',
++      deadline: 'الموعد النهائي',
++      'join date': 'الانضمام',
++      'start date': 'البدء',
++      date: 'التاريخ',
++    };
++    const key = match[1].trim().toLowerCase();
++    return `لا يمكن أن يكون تاريخ ${fieldsAr[key] || match[1]} "إلى" قبل تاريخ "من".`;
++  }
++
++  match = message.match(/^Max attachment size cannot exceed the server limit of (\d+) MB$/i);
++  if (match) return `لا يمكن أن يتجاوز الحد الأقصى لحجم المرفق الحد الأعلى للخادم البالغ ${match[1]} ميجابايت.`;
++
++  match = message.match(/^"(.+)" exceeds the maximum attachment size of (\d+) MB$/i);
++  if (match) return `الملف «${match[1]}» يتجاوز الحد الأقصى لحجم المرفق البالغ ${match[2]} ميجابايت.`;
++
+   match = message.match(/^"(.+)" is not a valid, active (.+)$/i);
+   if (match) return `القيمة «${match[1]}» ليست ${match[2]} صالحة ونشطة.`;
+ 

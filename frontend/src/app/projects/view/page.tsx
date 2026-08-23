@@ -34,7 +34,7 @@ function ProjectDetailContent() {
   const [busy, setBusy] = useState(false);
 
   const [editing, setEditing] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', description: '' });
+  const [editForm, setEditForm] = useState({ name: '', description: '', startDate: '', endDate: '' });
   const [editError, setEditError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -117,7 +117,12 @@ function ProjectDetailContent() {
   const taskTypes = Array.from(new Set(tasks.map((task) => task.taskType))).filter(Boolean);
 
   function startEdit() {
-    setEditForm({ name: project!.name, description: project!.description || '' });
+    setEditForm({
+      name: project!.name,
+      description: project!.description || '',
+      startDate: project!.startDate || '',
+      endDate: project!.endDate || '',
+    });
     setEditError('');
     setEditing(true);
   }
@@ -125,8 +130,19 @@ function ProjectDetailContent() {
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault();
     setEditError('');
+
+    if (editForm.startDate && editForm.endDate && editForm.endDate < editForm.startDate) {
+      setEditError(uiText(isArabic, 'text0394'));
+      return;
+    }
+
     try {
-      const updated = await ProjectsApi.update(id, editForm);
+      const updated = await ProjectsApi.update(id, {
+        name: editForm.name,
+        description: editForm.description,
+        ...(editForm.startDate ? { startDate: editForm.startDate } : {}),
+        ...(editForm.endDate ? { endDate: editForm.endDate } : {}),
+      });
       setProject(updated);
       setEditing(false);
     } catch (err) {
@@ -190,6 +206,28 @@ function ProjectDetailContent() {
                 value={editForm.description}
                 onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="label">{uiText(isArabic, 'text0860')}</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={editForm.startDate}
+                  max={editForm.endDate || undefined}
+                  onChange={(e) => setEditForm({ ...editForm, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="label">{uiText(isArabic, 'text0861')}</label>
+                <input
+                  type="date"
+                  className="input"
+                  value={editForm.endDate}
+                  min={editForm.startDate || undefined}
+                  onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
+                />
+              </div>
             </div>
             {editError && <p className="text-sm text-red-600">{editError}</p>}
             <div className="flex gap-2">

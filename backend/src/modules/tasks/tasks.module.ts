@@ -43,6 +43,10 @@ import {
 } from './tasks.service';
 
 import {
+  TaskOverdueCron,
+} from './task-overdue.cron';
+
+import {
   TasksController,
 } from './tasks.controller';
 
@@ -54,6 +58,7 @@ import {
   ProjectsModule,
 } from '../projects/projects.module';
 import { TaskWorkflowModule } from '../task-workflow/task-workflow.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 
 
@@ -75,10 +80,13 @@ import { TaskWorkflowModule } from '../task-workflow/task-workflow.module';
     ProjectsModule,
 
     TaskWorkflowModule,
+
+    NotificationsModule,
   ],
 
   providers: [
     TasksService,
+    TaskOverdueCron,
   ],
 
   controllers: [

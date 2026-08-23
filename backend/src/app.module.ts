@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 
 import configuration from './config/configuration';
@@ -37,6 +38,8 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
       validate,
       envFilePath: ['.env'],
     }),
+
+    ScheduleModule.forRoot(),
 
     TypeOrmModule.forRootAsync({
   imports: [

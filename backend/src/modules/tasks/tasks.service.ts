@@ -98,6 +98,18 @@ import {
   AssignmentStatus,
 } from '../../shared/enums/assignment-status.enum';
 
+import {
+  NotificationsService,
+} from '../notifications/notifications.service';
+
+import {
+  NotificationType,
+} from '../../shared/enums/notification-type.enum';
+
+import {
+  formatTaskDetails,
+} from '../../shared/utils/task-notification.util';
+
 
 /*
  * ============================================================
@@ -247,6 +259,9 @@ export class TasksService {
 
     private readonly taskWorkflowService:
       TaskWorkflowService,
+
+    private readonly notificationsService:
+      NotificationsService,
   ) {}
 
 
@@ -3565,6 +3580,55 @@ export class TasksService {
     }
 
 
+    /*
+     * Notify the Task's creator (owner) when their Task is
+     * Completed — so they know without having to check back
+     * manually. Skip if the creator is the one who completed it.
+     */
+    if (
+      dto.status ===
+        TaskStatus.COMPLETED &&
+      oldValue.status !==
+        TaskStatus.COMPLETED &&
+      saved.createdById !==
+        actor.id
+    ) {
+      await this.notificationsService.dispatch({
+        recipientId:
+          saved.createdById,
+
+        type:
+          NotificationType.TASK_COMPLETED,
+
+        title:
+          'Task completed',
+
+        message:
+          `${actor.fullName} marked "${saved.title}" as completed.${formatTaskDetails(saved)}`,
+
+        metadata: {
+          taskId:
+            saved.id,
+
+          actorId:
+            actor.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitle:
+            saved.title,
+
+          priority:
+            saved.priority,
+
+          dueDate:
+            saved.deadlineDate,
+        },
+      });
+    }
+
+
     return this.findOne(
       saved.id,
     );
@@ -3734,6 +3798,54 @@ export class TasksService {
       await this.projectsService.recomputeStatus(
         saved.projectId,
       );
+    }
+
+
+    /*
+     * Same as changeStatus(): tell the Task's creator when the
+     * Task becomes Completed via an approval decision, since it
+     * never passes through changeStatus() on this path.
+     */
+    if (
+      dto.approve &&
+      saved.status ===
+        TaskStatus.COMPLETED &&
+      saved.createdById !==
+        actor.id
+    ) {
+      await this.notificationsService.dispatch({
+        recipientId:
+          saved.createdById,
+
+        type:
+          NotificationType.TASK_COMPLETED,
+
+        title:
+          'Task completed',
+
+        message:
+          `${actor.fullName} marked "${saved.title}" as completed.${formatTaskDetails(saved)}`,
+
+        metadata: {
+          taskId:
+            saved.id,
+
+          actorId:
+            actor.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitle:
+            saved.title,
+
+          priority:
+            saved.priority,
+
+          dueDate:
+            saved.deadlineDate,
+        },
+      });
     }
 
 

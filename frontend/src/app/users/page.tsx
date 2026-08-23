@@ -2260,7 +2260,7 @@ function UsersContent() {
          */
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <div className="hidden grid-cols-[minmax(250px,1fr)_120px_170px_170px_140px_auto] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
+          <div className="hidden grid-cols-[minmax(250px,1fr)_120px_170px_170px_140px_300px] gap-4 border-b border-slate-100 bg-slate-50 px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 xl:grid">
             <div>
               {uiText(isArabic, 'text0272')}
             </div>
@@ -2318,7 +2318,7 @@ function UsersContent() {
                     }
                     className="px-5 py-4 transition hover:bg-slate-50/70"
                   >
-                    <div className="grid gap-4 xl:grid-cols-[minmax(250px,1fr)_120px_170px_170px_140px_auto] xl:items-center">
+                    <div className="grid gap-4 xl:grid-cols-[minmax(250px,1fr)_120px_170px_170px_140px_300px] xl:items-center">
                       {/*
                        * USER
                        */}

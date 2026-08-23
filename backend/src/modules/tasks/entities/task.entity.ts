@@ -152,6 +152,9 @@ export class TaskEntity extends VersionedEntity {
   @Column({ name: 'actual_end_date', type: 'timestamp', nullable: true })
   actualEndDate?: Date; // when it really ends
 
+  @Column({ name: 'overdue_notified_at', type: 'timestamp', nullable: true })
+  overdueNotifiedAt?: Date; // set once the creator has been notified this Task is overdue
+
   // ---------- Hierarchy: father task / sub-tasks ----------
   @Column({ name: 'parent_task_id', type: 'uuid', nullable: true })
   parentTaskId?: string;

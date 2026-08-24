@@ -788,6 +788,13 @@ export const TasksApi = {
       )}`,
     ),
 
+  forProject: (
+    projectId: string,
+  ) =>
+    api<Paginated<Task>>(
+      `/tasks/project/${projectId}`,
+    ),
+
   get: (
     id: string,
   ) =>

@@ -61,28 +61,12 @@ function ProjectDetailContent() {
     setLoading(true);
     setError('');
     try {
-      // Admin sees every task in the project. A regular User only sees
-      // tasks connected to them — but "connected to them" means tasks
-      // assigned to them (mine) OR tasks they created (assigned-by-me),
-      // not just assigned-to. Otherwise a task/project creator who gets
-      // demoted from Admin to User loses visibility into work they
-      // authored but handed off to someone else. Merge both, deduped
-      // by task id, scoped to this project.
-      const fetchTasks = isAdmin
-        ? TasksApi.list({ projectId: id, limit: '100' })
-        : Promise.all([
-            TasksApi.mine({ projectId: id, limit: '100' }),
-            TasksApi.assignedByMe({ projectId: id, limit: '100' }),
-          ]).then(([mine, createdByMe]) => {
-            const byId = new Map<string, Task>();
-            for (const task of mine.items) byId.set(task.id, task);
-            for (const task of createdByMe.items) byId.set(task.id, task);
-            const items = Array.from(byId.values());
-            return { items, total: items.length, page: 1, limit: 100 };
-          });
+      // Everyone who can open this Project (Admin, creator, or has a
+      // Task/Sub-task assigned to them in it — enforced server-side)
+      // sees every Task in it, parent or sub-task, read-only.
       const [p, t, u] = await Promise.all([
         ProjectsApi.get(id),
-        fetchTasks,
+        TasksApi.forProject(id),
         UsersApi.list({ limit: '100' }).catch(() => ({ items: [], total: 0, page: 1, limit: 100 })),
       ]);
       setProject(p);
@@ -93,7 +77,7 @@ function ProjectDetailContent() {
     } finally {
       setLoading(false);
     }
-  }, [id, isAdmin, isArabic]);
+  }, [id, isArabic]);
 
   useEffect(() => {
     load();
@@ -152,6 +136,20 @@ function ProjectDetailContent() {
   }, [isArabic, sortBy, sortDir, taskAssigneeId, taskPriority, taskSearch, taskStatus, taskType, tasks]);
 
   const taskFilterCount = [taskStatus, taskPriority, taskType, taskAssigneeId].filter(Boolean).length;
+
+  const taskById = useMemo(
+    () => new Map(tasks.map((task) => [task.id, task])),
+    [tasks],
+  );
+
+  const subTaskCountByParentId = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const task of tasks) {
+      if (!task.parentTaskId) continue;
+      counts.set(task.parentTaskId, (counts.get(task.parentTaskId) ?? 0) + 1);
+    }
+    return counts;
+  }, [tasks]);
 
   if (loading) return <InlineLoader className="min-h-[40vh]" />;
   if (!project) return <p className="text-red-600">{error || uiText(isArabic, 'text0890')}</p>;
@@ -497,6 +495,19 @@ function ProjectDetailContent() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="truncate font-medium text-slate-800">{task.title}</div>
+                    {task.parentTaskId && (
+                      <div className="mt-1 truncate text-xs text-slate-500">
+                        {uiText(isArabic, 'text1092')}{' '}
+                        <span className="font-medium text-slate-600">
+                          {taskById.get(task.parentTaskId)?.title || uiText(isArabic, 'text1093')}
+                        </span>
+                      </div>
+                    )}
+                    {!!subTaskCountByParentId.get(task.id) && (
+                      <div className="mt-1 text-xs text-slate-500">
+                        {uiText(isArabic, 'text1094')} · {subTaskCountByParentId.get(task.id)}
+                      </div>
+                    )}
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-2">
                     <StatusBadge value={task.taskType} listType="task_type" />

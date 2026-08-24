@@ -1133,6 +1133,9 @@
     "text1088": "Show details",
     "text1089": "Hide details",
     "text1090": "Filter by action",
-    "text1091": "Filter by type"
+    "text1091": "Filter by type",
+    "text1092": "Subtask of:",
+    "text1093": "Parent task",
+    "text1094": "Has subtasks"
   }
 }

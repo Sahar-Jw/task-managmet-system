@@ -58,6 +58,19 @@ export class TasksController {
     return this.tasksService.findAssignedByMe(user.id, query);
   }
 
+  // All Tasks (parent + sub-tasks) within a single Project, for the
+  // Project details "read-only" view. Admin sees the whole org; a
+  // regular User is only let through if they'd already pass
+  // ProjectsService.findOne's own access check for this Project
+  // (creator, or has at least one Task assigned to them in it) —
+  // that check is reused here so both stay in sync.
+  // NOTE: must stay declared before ':id' or Nest will treat
+  // "project" as an id.
+  @Get('project/:projectId')
+  findAllForProject(@Param('projectId') projectId: string, @CurrentUser() user: UserEntity) {
+    return this.tasksService.findAllForProject(projectId, user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id);

@@ -1249,6 +1249,158 @@ export class TasksService {
    * ==========================================================
    */
 
+  /*
+   * ==========================================================
+   * PROJECT TASK CONTEXT
+   * ==========================================================
+   *
+   * Used by the read-only Project details view: a regular User
+   * only sees Tasks assigned to them or created by them (see
+   * findMyTasks / findAssignedByMe). If that set includes a
+   * Sub-task, its Parent Task would otherwise be invisible to
+   * them (and vice-versa) even though both live in a Project
+   * they already have access to.
+   *
+   * This fills the gap by adding, within the same Project:
+   * - the Parent Task of any Sub-task already in the list
+   * - the Sub-tasks of any Parent Task already in the list
+   *
+   * Context Tasks are appended for display only — they don't
+   * affect `total`/pagination of the caller's own scope.
+   * ==========================================================
+   */
+
+  private async expandWithProjectTaskContext(
+    items: TaskEntity[],
+    projectId: string,
+  ): Promise<TaskEntity[]> {
+    const existingIds = new Set(
+      items.map((task) => task.id),
+    );
+
+    const missingParentIds = Array.from(
+      new Set(
+        items
+          .map((task) => task.parentTaskId)
+          .filter(
+            (parentId): parentId is string =>
+              Boolean(parentId) && !existingIds.has(parentId as string),
+          ),
+      ),
+    );
+
+    const possibleParentIds = items
+      .filter((task) => !task.parentTaskId)
+      .map((task) => task.id);
+
+    const relations = [
+      'branch',
+      'department',
+      'project',
+      'assignedTo',
+      'createdBy',
+      'ratings',
+    ];
+
+    const contextTasks: TaskEntity[] = [];
+
+    if (missingParentIds.length > 0) {
+      contextTasks.push(
+        ...(await this.taskRepo.find({
+          where: {
+            id: In(missingParentIds),
+            projectId,
+          },
+          relations,
+        })),
+      );
+    }
+
+    if (possibleParentIds.length > 0) {
+      contextTasks.push(
+        ...(await this.taskRepo.find({
+          where: {
+            parentTaskId: In(possibleParentIds),
+            projectId,
+          },
+          relations,
+        })),
+      );
+    }
+
+    if (contextTasks.length === 0) {
+      return items;
+    }
+
+    const merged = new Map(
+      items.map((task) => [task.id, task]),
+    );
+
+    for (const task of contextTasks) {
+      if (!merged.has(task.id)) {
+        merged.set(task.id, task);
+      }
+    }
+
+    return Array.from(merged.values());
+  }
+
+
+  /*
+   * ==========================================================
+   * ALL TASKS FOR A PROJECT (read-only viewer)
+   * ==========================================================
+   *
+   * Backs the Project details page. Unlike findMyTasks /
+   * findAssignedByMe, this returns every Task (and Sub-task) in
+   * the Project, not just ones connected to the actor — the
+   * actor only needs to be ALLOWED to view the Project at all.
+   *
+   * Re-uses ProjectsService.findOne's own access check (Admin,
+   * Project creator, or has >=1 Task assigned to them in it) so
+   * the two stay in sync; it throws Not Found / Forbidden itself
+   * when the actor isn't allowed to see this Project.
+   * ==========================================================
+   */
+
+  async findAllForProject(
+    projectId: string,
+    actor: UserEntity,
+  ) {
+    await this.projectsService.findOne(
+      projectId,
+      actor,
+    );
+
+    const tasks =
+      await this.taskRepo.find({
+        where: {
+          projectId,
+        },
+
+        relations: [
+          'branch',
+          'department',
+          'project',
+          'assignedTo',
+          'createdBy',
+          'ratings',
+        ],
+
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+    return {
+      items: tasks,
+      total: tasks.length,
+      page: 1,
+      limit: tasks.length || 1,
+    };
+  }
+
+
   async findMyTasks(
   userId:
     string,
@@ -1688,9 +1840,18 @@ export class TasksService {
       );
 
 
+  const expandedItems =
+    query.projectId
+      ? await this.expandWithProjectTaskContext(
+          items,
+          query.projectId,
+        )
+      : items;
+
+
   return {
-    items,
-    total,
+    items: expandedItems,
+    total: expandedItems.length !== items.length ? expandedItems.length : total,
     page,
     limit,
   };
@@ -2127,9 +2288,18 @@ export class TasksService {
       );
 
 
+  const expandedItems =
+    query.projectId
+      ? await this.expandWithProjectTaskContext(
+          items,
+          query.projectId,
+        )
+      : items;
+
+
   return {
-    items,
-    total,
+    items: expandedItems,
+    total: expandedItems.length !== items.length ? expandedItems.length : total,
     page,
     limit,
   };

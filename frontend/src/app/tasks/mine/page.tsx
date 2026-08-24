@@ -26,7 +26,7 @@ import StatusBadge from '@/components/StatusBadge';
 import Avatar from '@/components/Avatar';
 import ReasonModal from '@/components/ReasonModal';
 import Pagination from '@/components/Pagination';
-import { ArchiveIcon, CancelIcon, EditIcon, UnarchiveIcon, ViewIcon } from '@/components/ActionIcons';
+import { ArchiveIcon, CancelIcon, EditIcon, FilterIcon, UnarchiveIcon, ViewIcon } from '@/components/ActionIcons';
 import {
   useListLabels,
 } from '@/lib/list-labels-context';
@@ -2060,6 +2060,7 @@ function MyTasksContent() {
               )
             }
           >
+            <FilterIcon className="mr-1.5 h-4 w-4" />
             {uiText(isArabic, 'text0271')}
 
             {filterCount >

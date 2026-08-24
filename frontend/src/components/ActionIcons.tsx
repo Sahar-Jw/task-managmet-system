@@ -109,6 +109,13 @@ export function UserCheckIcon({ className }: IconProps) {
   );
 }
 
+export function FilterIcon({ className }: IconProps) {
+  return base(
+    <path d="M4 6h16M7 12h10M10 18h4" strokeWidth="1.8" />,
+    className,
+  );
+}
+
 export function UserXIcon({ className }: IconProps) {
   return base(
     <>

@@ -1,0 +1,57 @@
+diff --git a/frontend/src/app/tasks/view/page.tsx b/frontend/src/app/tasks/view/page.tsx
+index a8933a6..c5708ba 100644
+--- a/frontend/src/app/tasks/view/page.tsx
++++ b/frontend/src/app/tasks/view/page.tsx
+@@ -3150,40 +3150,19 @@ function TaskDetailContent() {
+                       sm:flex-row
+                     "
+                   >
+-                    <select
+-                      className="input"
+-                      value={
+-                        assignmentUserId
+-                      }
+-                      onChange={(
+-                        event,
+-                      ) =>
+-                        setAssignmentUserId(
+-                          event.target.value,
+-                        )
+-                      }
++                    <div
++                      className="
++                        w-full
++                        sm:w-3/5
++                      "
+                     >
+-                      <option value="">
+-                        {uiText(isArabic, 'text0498')}
+-                      </option>
+-
+-                      {assignableUsers.map(
+-                        (
+-                          item,
+-                        ) => (
+-                          <option
+-                            key={
+-                              item.id
+-                            }
+-                            value={
+-                              item.id
+-                            }
+-                          >
+-                            {item.fullName}
+-                          </option>
+-                        ),
+-                      )}
+-                    </select>
++                      <AvatarSelect
++                        users={assignableUsers}
++                        value={assignmentUserId}
++                        onChange={setAssignmentUserId}
++                        placeholder={uiText(isArabic, 'text0498')}
++                      />
++                    </div>
+ 
+                     <button
+                       type="button"

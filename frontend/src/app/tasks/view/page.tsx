@@ -2528,7 +2528,6 @@ function TaskDetailContent() {
 
           <section
             className="
-              overflow-hidden
               rounded-2xl
               border
               border-slate-200

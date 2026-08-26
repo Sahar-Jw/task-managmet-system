@@ -54,6 +54,10 @@ import {
 } from '../../shared/enums/audit-action.enum';
 
 import {
+  AuditReasonCode,
+} from '../../shared/enums/audit-reason-code.enum';
+
+import {
   RoleName,
 } from '../../shared/enums/role.enum';
 
@@ -800,7 +804,7 @@ export class UsersService {
       },
 
       reason:
-        'Account deactivated by Admin',
+        AuditReasonCode.ACCOUNT_DEACTIVATED_BY_ADMIN,
     });
   }
 
@@ -864,7 +868,7 @@ export class UsersService {
       },
 
       reason:
-        'Permanent deletion by Admin',
+        AuditReasonCode.PERMANENT_DELETION_BY_ADMIN,
     });
 
 
@@ -1101,7 +1105,7 @@ export class UsersService {
       },
 
       reason:
-        'Password changed by user',
+        AuditReasonCode.PASSWORD_CHANGED_BY_USER,
     });
   }
 
@@ -1210,7 +1214,7 @@ export class UsersService {
       },
 
       reason:
-        'Self-service registration',
+        AuditReasonCode.SELF_SERVICE_REGISTRATION,
     });
 
 
@@ -1336,7 +1340,7 @@ export class UsersService {
       },
 
       reason:
-        'Avatar updated',
+        AuditReasonCode.AVATAR_UPDATED,
     });
 
 
@@ -1428,7 +1432,7 @@ export class UsersService {
       },
 
       reason:
-        'Avatar removed',
+        AuditReasonCode.AVATAR_REMOVED,
     });
 
 

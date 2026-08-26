@@ -83,6 +83,10 @@ import {
 } from '../../shared/enums/audit-action.enum';
 
 import {
+  AuditReasonCode,
+} from '../../shared/enums/audit-reason-code.enum';
+
+import {
   RoleName,
 } from '../../shared/enums/role.enum';
 
@@ -4294,7 +4298,7 @@ export class TasksService {
           AuditAction.DELETE,
 
         reason:
-          'Hard delete',
+          AuditReasonCode.HARD_DELETE,
 
         oldValue: {
           taskTitle:

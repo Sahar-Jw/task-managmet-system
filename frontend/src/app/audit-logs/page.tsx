@@ -143,6 +143,44 @@ function entityLabel(value: string, isArabic: boolean) {
 
 /*
  * ============================================================
+ * REASON LABELS
+ * ============================================================
+ *
+ * `reason` on an audit log entry is either:
+ *
+ * 1. A system-generated code (prefixed "SYS_") — translatable,
+ *    looked up below.
+ * 2. Free text typed by a user (a rejection reason, a reassignment
+ *    note, etc.) — not translatable, shown exactly as written.
+ * 3. Legacy plain-English text written before system reasons were
+ *    coded (older rows) — also shown as-is, same as free text.
+ *
+ * Only case 1 is translated; 2 and 3 fall through unchanged, which
+ * is the correct behavior for both (arbitrary user content, and
+ * historical rows we can't rewrite since audit logs are immutable).
+ */
+
+const REASON_TEXT_KEYS: Record<string, Parameters<typeof uiText>[1]> = {
+  SYS_PASSWORD_CHANGED_BY_USER: 'text1095',
+  SYS_SELF_SERVICE_REGISTRATION: 'text1096',
+  SYS_AVATAR_UPDATED: 'text1097',
+  SYS_AVATAR_REMOVED: 'text1098',
+  SYS_ACCOUNT_DEACTIVATED_BY_ADMIN: 'text1099',
+  SYS_PERMANENT_DELETION_BY_ADMIN: 'text1100',
+  SYS_HARD_DELETE: 'text1101',
+  SYS_TASK_COMPLETION_DERIVED: 'text1102',
+  SYS_ATTACHMENT_DELETED_BY_OWNER: 'text1103',
+  SYS_SITE_BRANDING_UPDATED: 'text1104',
+};
+
+function reasonLabel(reason: string, isArabic: boolean) {
+  const key = REASON_TEXT_KEYS[reason];
+  return key ? uiText(isArabic, key) : reason;
+}
+
+
+/*
+ * ============================================================
  * VALUE / FIELD FORMATTING (used inside the details drawer)
  * ============================================================
  */
@@ -192,6 +230,11 @@ const AUDIT_FIELD_LABELS: Record<string, Parameters<typeof uiText>[1]> = {
   archivedAt: 'text1059',
   score: 'text1060',
   feedback: 'text1061',
+  avatarUrl: 'text1105',
+  phone: 'text1106',
+  role: 'text1107',
+  type: 'text1108',
+  key: 'text1109',
 };
 
 const HIDDEN_AUDIT_FIELDS = new Set([
@@ -441,7 +484,7 @@ function DetailsCell({
       {log.reason && (
         <div className="mt-1 max-w-md truncate text-xs leading-5 text-slate-500">
           <span className="font-medium text-slate-600">{uiText(isArabic, 'text0003')}</span>
-          {log.reason}
+          {reasonLabel(log.reason, isArabic)}
         </div>
       )}
 
@@ -693,8 +736,10 @@ function AuditLogsContent() {
    * ==========================================================
    * FILTERS
    *
-   * Kept intentionally simple: one action filter and one type
-   * filter, both plain dropdowns. No hidden "more filters" panel.
+   * Type + action dropdowns, plus a free-text search (matches
+   * actor name/email/entity/reason on the backend) and a date
+   * range — the API already supports both, they just weren't
+   * exposed here before.
    * ==========================================================
    */
 
@@ -702,6 +747,15 @@ function AuditLogsContent() {
   const [actions, setActions] = useState<string[]>([]);
   const [entityType, setEntityType] = useState('');
   const [action, setAction] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setSearch(searchInput.trim()), 400);
+    return () => clearTimeout(timeout);
+  }, [searchInput]);
 
   useEffect(() => {
     AuditLogsApi.meta()
@@ -733,6 +787,18 @@ function AuditLogsContent() {
         params.action = action;
       }
 
+      if (search) {
+        params.search = search;
+      }
+
+      if (dateFrom) {
+        params.dateFrom = dateFrom;
+      }
+
+      if (dateTo) {
+        params.dateTo = dateTo;
+      }
+
       const result = await AuditLogsApi.search(params);
       setItems(result.items);
       setTotal(result.total);
@@ -741,7 +807,7 @@ function AuditLogsContent() {
     } finally {
       setLoading(false);
     }
-  }, [page, entityType, action, isArabic]);
+  }, [page, entityType, action, search, dateFrom, dateTo, isArabic]);
 
   useEffect(() => {
     load();
@@ -749,13 +815,17 @@ function AuditLogsContent() {
 
   useEffect(() => {
     setPage(1);
-  }, [entityType, action]);
+  }, [entityType, action, search, dateFrom, dateTo]);
 
-  const hasFilters = Boolean(entityType || action);
+  const hasFilters = Boolean(entityType || action || search || dateFrom || dateTo);
 
   function clearFilters() {
     setEntityType('');
     setAction('');
+    setSearchInput('');
+    setSearch('');
+    setDateFrom('');
+    setDateTo('');
   }
 
   function toggleExpanded(id: string) {
@@ -806,46 +876,79 @@ function AuditLogsContent() {
        */}
 
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <select
-            className="input sm:w-[220px]"
-            aria-label={uiText(isArabic, 'text1091')}
-            value={entityType}
-            onChange={(event) => setEntityType(event.target.value)}
-          >
-            <option value="">{uiText(isArabic, 'text0008')}</option>
+        <div className="flex flex-col gap-3">
+          <input
+            type="text"
+            className="input w-full"
+            placeholder={uiText(isArabic, 'text1110')}
+            aria-label={uiText(isArabic, 'text1110')}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+          />
 
-            {entityTypes.map((item) => (
-              <option key={item} value={item}>
-                {entityLabel(item, isArabic)}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="input sm:w-[220px]"
-            aria-label={uiText(isArabic, 'text1090')}
-            value={action}
-            onChange={(event) => setAction(event.target.value)}
-          >
-            <option value="">{uiText(isArabic, 'text0009')}</option>
-
-            {actions.map((item) => (
-              <option key={item} value={item}>
-                {actionLabel(item, isArabic)}
-              </option>
-            ))}
-          </select>
-
-          {hasFilters && (
-            <button
-              type="button"
-              className="text-sm font-medium text-brand-600 hover:text-brand-800 sm:ms-auto"
-              onClick={clearFilters}
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <select
+              className="input sm:w-[220px]"
+              aria-label={uiText(isArabic, 'text1091')}
+              value={entityType}
+              onChange={(event) => setEntityType(event.target.value)}
             >
-              {uiText(isArabic, 'text0276')}
-            </button>
-          )}
+              <option value="">{uiText(isArabic, 'text0008')}</option>
+
+              {entityTypes.map((item) => (
+                <option key={item} value={item}>
+                  {entityLabel(item, isArabic)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="input sm:w-[220px]"
+              aria-label={uiText(isArabic, 'text1090')}
+              value={action}
+              onChange={(event) => setAction(event.target.value)}
+            >
+              <option value="">{uiText(isArabic, 'text0009')}</option>
+
+              {actions.map((item) => (
+                <option key={item} value={item}>
+                  {actionLabel(item, isArabic)}
+                </option>
+              ))}
+            </select>
+
+            <label className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="shrink-0">{uiText(isArabic, 'text1111')}</span>
+              <input
+                type="date"
+                className="input sm:w-[160px]"
+                value={dateFrom}
+                max={dateTo || undefined}
+                onChange={(event) => setDateFrom(event.target.value)}
+              />
+            </label>
+
+            <label className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="shrink-0">{uiText(isArabic, 'text1112')}</span>
+              <input
+                type="date"
+                className="input sm:w-[160px]"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(event) => setDateTo(event.target.value)}
+              />
+            </label>
+
+            {hasFilters && (
+              <button
+                type="button"
+                className="text-sm font-medium text-brand-600 hover:text-brand-800 sm:ms-auto"
+                onClick={clearFilters}
+              >
+                {uiText(isArabic, 'text0276')}
+              </button>
+            )}
+          </div>
         </div>
       </section>
 

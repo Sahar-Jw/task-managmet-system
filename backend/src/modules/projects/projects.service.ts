@@ -51,6 +51,10 @@ import {
 } from '../../shared/enums/audit-action.enum';
 
 import {
+  AuditReasonCode,
+} from '../../shared/enums/audit-reason-code.enum';
+
+import {
   TaskStatus,
 } from '../../shared/enums/task-status.enum';
 
@@ -1519,7 +1523,7 @@ export class ProjectsService {
       },
 
       reason:
-        'System-derived from Task completion state',
+        AuditReasonCode.TASK_COMPLETION_DERIVED,
     });
   }
 }

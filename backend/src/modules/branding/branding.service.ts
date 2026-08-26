@@ -37,6 +37,10 @@ import {
 } from '../../shared/enums/audit-action.enum';
 
 import {
+  AuditReasonCode,
+} from '../../shared/enums/audit-reason-code.enum';
+
+import {
   storedFileUrl,
   storagePathFromUrl,
 } from '../../common/storage/storage.util';
@@ -151,7 +155,7 @@ export class BrandingService {
         saved,
 
       reason:
-        'Site branding updated',
+        AuditReasonCode.SITE_BRANDING_UPDATED,
     });
 
 

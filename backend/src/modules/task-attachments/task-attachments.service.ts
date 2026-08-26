@@ -48,6 +48,10 @@ import {
 } from '../../shared/enums/audit-action.enum';
 
 import {
+  AuditReasonCode,
+} from '../../shared/enums/audit-reason-code.enum';
+
+import {
   RoleName,
 } from '../../shared/enums/role.enum';
 
@@ -1210,7 +1214,7 @@ export class TaskAttachmentsService {
       },
 
       reason:
-        'Attachment deleted by Task owner',
+        AuditReasonCode.ATTACHMENT_DELETED_BY_OWNER,
     });
   }
 }

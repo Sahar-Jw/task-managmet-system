@@ -1136,6 +1136,24 @@
     "text1091": "Filter by type",
     "text1092": "Subtask of:",
     "text1093": "Parent task",
-    "text1094": "Has subtasks"
+    "text1094": "Has subtasks",
+    "text1095": "Password changed by user",
+    "text1096": "Self-service registration",
+    "text1097": "Avatar updated",
+    "text1098": "Avatar removed",
+    "text1099": "Account deactivated by admin",
+    "text1100": "Permanent deletion by admin",
+    "text1101": "Permanently deleted",
+    "text1102": "Automatically derived from task completion",
+    "text1103": "Attachment deleted by task owner",
+    "text1104": "Site branding updated",
+    "text1105": "Avatar",
+    "text1106": "Phone",
+    "text1107": "Role",
+    "text1108": "Type",
+    "text1109": "Key",
+    "text1110": "Search by name, email, or reason",
+    "text1111": "From date",
+    "text1112": "To date"
   }
 }

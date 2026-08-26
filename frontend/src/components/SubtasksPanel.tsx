@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react';
 
+import { createPortal } from 'react-dom';
+
 import Link from 'next/link';
 
 import {
@@ -17,6 +19,7 @@ import {
 
 import StatusBadge from '@/components/StatusBadge';
 import Avatar from '@/components/Avatar';
+import AvatarSelect from '@/components/AvatarSelect';
 
 import {
   useAuth,
@@ -156,6 +159,19 @@ export default function SubtasksPanel({
     useState(
       false,
     );
+
+
+  const [
+    mounted,
+    setMounted,
+  ] =
+    useState(
+      false,
+    );
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
 
   const [
@@ -1224,27 +1240,29 @@ export default function SubtasksPanel({
        * ======================================================
        */}
 
-      {modalOpen && (
-        <div
-          className="fixed inset-0 z-[150] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
-          onMouseDown={(
-            event,
-          ) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              closeModal();
-            }
-          }}
-        >
+      {modalOpen &&
+        mounted &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[150] flex items-end justify-center bg-slate-950/45 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+            onMouseDown={(
+              event,
+            ) => {
+              if (
+                event.target ===
+                event.currentTarget
+              ) {
+                closeModal();
+              }
+            }}
+          >
           <form
             onSubmit={
               createSubtask
             }
-            className="max-h-[100dvh] w-full max-w-2xl overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl"
+            className="flex max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-2xl"
           >
-            <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[.12em] text-brand-600">
                   {uiText(isArabic, 'text0653')}
@@ -1275,7 +1293,7 @@ export default function SubtasksPanel({
             </div>
 
 
-            <div className="space-y-5 p-5 sm:p-6">
+            <div className="flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
               <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-4">
                 <div className="text-[10px] font-semibold uppercase tracking-wide text-brand-600">
                   {uiText(isArabic, 'text0519')}
@@ -1425,13 +1443,15 @@ export default function SubtasksPanel({
                   </label>
 
 
-                  <select
-                    className="input"
+                  <AvatarSelect
+                    users={
+                      assignableUsers
+                    }
                     value={
                       form.assigneeId
                     }
                     onChange={(
-                      event,
+                      value,
                     ) =>
                       setForm(
                         (
@@ -1440,40 +1460,20 @@ export default function SubtasksPanel({
                           ...current,
 
                           assigneeId:
-                            event.target.value,
+                            value,
                         }),
                       )
                     }
-                  >
-                    <option value="">
-                      {uiText(isArabic, 'text0244')}
-                    </option>
-
-
-                    {assignableUsers.map(
-                      (
-                        item,
-                      ) => (
-                        <option
-                          key={
-                            item.id
-                          }
-                          value={
-                            item.id
-                          }
-                        >
-                          {item.fullName}
-
-                          {item.id ===
-                          user?.id
-                            ? (
-                                uiText(isArabic, 'text0245')
-                              )
-                            : ''}
-                        </option>
-                      ),
-                    )}
-                  </select>
+                    placeholder={uiText(isArabic, 'text0244')}
+                    getLabelSuffix={(
+                      item,
+                    ) =>
+                      item.id ===
+                      user?.id
+                        ? uiText(isArabic, 'text0245')
+                        : ''
+                    }
+                  />
 
 
                   <p className="mt-1 text-xs text-slate-400">
@@ -1608,7 +1608,7 @@ export default function SubtasksPanel({
             </div>
 
 
-            <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-slate-100 bg-slate-50/95 px-4 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
+            <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-slate-100 bg-slate-50/95 px-4 py-4 backdrop-blur sm:flex sm:justify-end sm:px-6">
               <button
                 type="button"
                 className="btn-secondary"
@@ -1641,8 +1641,9 @@ export default function SubtasksPanel({
               </button>
             </div>
           </form>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

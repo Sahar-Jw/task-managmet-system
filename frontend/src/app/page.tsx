@@ -2124,34 +2124,46 @@ export default function Home() {
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-8 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                className="h-4 w-4"
-              >
-                <path
-                  d="M7 12.5 10 15.5 17 8.5"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            {branding?.logoUrl ? (
+              <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={resolveBrandingAssetUrl(branding.logoUrl) ?? undefined}
+                  alt={branding.siteName || uiText(isArabic, 'text0985')}
+                  className="h-full w-full object-contain p-1"
                 />
+              </div>
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M7 12.5 10 15.5 17 8.5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
 
-                <rect
-                  x="4"
-                  y="4"
-                  width="16"
-                  height="16"
-                  rx="4"
-                  strokeWidth="1.8"
-                />
-              </svg>
-            </div>
+                  <rect
+                    x="4"
+                    y="4"
+                    width="16"
+                    height="16"
+                    rx="4"
+                    strokeWidth="1.8"
+                  />
+                </svg>
+              </div>
+            )}
 
             <div>
               <div className="text-sm font-semibold text-slate-800">
-                {uiText(isArabic, 'text0985')}
+                {branding?.siteName || uiText(isArabic, 'text0985')}
               </div>
 
               <div className="text-xs text-slate-400">
@@ -2163,7 +2175,7 @@ export default function Home() {
 
           <div className="text-xs text-slate-400">
             © {new Date().getFullYear()}{' '}
-            {uiText(isArabic, 'text0985')}
+            {branding?.siteName || uiText(isArabic, 'text0985')}
           </div>
         </div>
       </footer>

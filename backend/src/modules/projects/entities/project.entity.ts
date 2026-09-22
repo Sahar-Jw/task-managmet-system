@@ -1,4 +1,4 @@
-import { Column, Entity, Unique } from 'typeorm';
+import { Column, Entity, Index, Unique } from 'typeorm';
 import { VersionedEntity } from '../../../shared/entities/versioned-base.entity';
 import { ProjectStatus } from '../../../shared/enums/project-status.enum';
 
@@ -10,6 +10,7 @@ import { ProjectStatus } from '../../../shared/enums/project-status.enum';
  */
 @Entity('projects')
 @Unique(['name'])
+@Index(['teamId'])
 export class ProjectEntity extends VersionedEntity {
   @Column({ type: 'varchar', length: 200 })
   name!: string;
@@ -31,6 +32,14 @@ export class ProjectEntity extends VersionedEntity {
 
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
   createdById?: string;
+
+  // Which Team this Project belongs to (see TeamEntity), set from the
+  // creator's team_id at creation time. Null means it's an Admin-created
+  // (organization-wide) Project, visible to everyone, same as before
+  // Teams existed. Plain reference id, no relation — same rationale as
+  // the rest of this entity.
+  @Column({ name: 'team_id', type: 'uuid', nullable: true })
+  teamId?: string | null;
 
   @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
   archivedAt?: Date | null;

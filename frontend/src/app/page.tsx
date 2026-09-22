@@ -34,6 +34,14 @@ import {
 } from '@/lib/api';
 
 import {
+  TeamsApi,
+} from '@/lib/endpoints';
+
+import type {
+  TeamInvitePreview,
+} from '@/lib/types';
+
+import {
   isValidPhone,
 } from '@/lib/validation';
 
@@ -50,17 +58,6 @@ type AuthMode =
   | 'login'
   | 'register'
   | null;
-
-
-type BranchOrDept = {
-  id: string;
-
-  codeAr?: string;
-  codeEn?: string;
-
-  valueAr?: string;
-  valueEn?: string;
-};
 
 
 /*
@@ -156,45 +153,24 @@ export default function Home() {
   ] = useState('');
 
   const [
-    branchId,
-    setBranchId,
+    inviteToken,
+    setInviteToken,
   ] = useState('');
 
   const [
-    departmentId,
-    setDepartmentId,
+    invitePreview,
+    setInvitePreview,
+  ] = useState<TeamInvitePreview | null>(null);
+
+  const [
+    loadingInvite,
+    setLoadingInvite,
+  ] = useState(false);
+
+  const [
+    inviteError,
+    setInviteError,
   ] = useState('');
-
-
-  /*
-   * ==========================================================
-   * PUBLIC DATA
-   * ==========================================================
-   */
-
-  const [
-    branches,
-    setBranches,
-  ] = useState<
-    BranchOrDept[]
-  >([]);
-
-  const [
-    departments,
-    setDepartments,
-  ] = useState<
-    BranchOrDept[]
-  >([]);
-
-  const [
-    loadingBranches,
-    setLoadingBranches,
-  ] = useState(true);
-
-  const [
-    loadingDepartments,
-    setLoadingDepartments,
-  ] = useState(true);
 
 
   /*
@@ -256,6 +232,19 @@ export default function Home() {
     setMode(
       requestedMode,
     );
+
+    const tokenFromUrl =
+      params.get(
+        'inviteToken',
+      );
+
+    if (
+      tokenFromUrl
+    ) {
+      setInviteToken(
+        tokenFromUrl,
+      );
+    }
   }, []);
 
 
@@ -289,135 +278,65 @@ export default function Home() {
 
   /*
    * ==========================================================
-   * PUBLIC BRANCH / DEPARTMENT DATA
+   * INVITE-TOKEN PREVIEW
    * ==========================================================
+   *
+   * Registration is invite-only: an employee only reaches the
+   * register form via the link their Team Leader shared, which
+   * carries ?inviteToken=... . We resolve that token to "you're
+   * joining <leader>'s team" up front so people don't fill out
+   * the whole form before finding out the link is bad.
    */
 
   useEffect(() => {
-    async function loadPublicData() {
-      const baseUrl =
-        process.env
-          .NEXT_PUBLIC_API_URL ||
-        'http://localhost:3000/api/v1';
+    if (!inviteToken) {
+      setInvitePreview(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadInvitePreview() {
+      setLoadingInvite(true);
+      setInviteError('');
 
       try {
-        const [
-          branchesResponse,
-          departmentsResponse,
-        ] =
-          await Promise.all([
-            fetch(
-              `${baseUrl}/public/branches`,
-            ),
+        const preview =
+          await TeamsApi.invitePreview(
+            inviteToken,
+          );
 
-            fetch(
-              `${baseUrl}/public/departments`,
-            ),
-          ]);
+        if (!cancelled) {
+          setInvitePreview(preview);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setInvitePreview(null);
 
-
-        if (
-          !branchesResponse.ok ||
-          !departmentsResponse.ok
-        ) {
-          throw new Error(
-            'Failed to load registration data.',
+          setInviteError(
+            err instanceof ApiError
+              ? err.message
+              : isArabic
+                ? 'رابط الدعوة غير صالح أو منتهي الصلاحية'
+                : 'This invite link is invalid or has expired',
           );
         }
-
-
-        const branchesJson =
-          await branchesResponse.json();
-
-        const departmentsJson =
-          await departmentsResponse.json();
-
-
-        setBranches(
-          branchesJson.data ??
-            branchesJson,
-        );
-
-        setDepartments(
-          departmentsJson.data ??
-            departmentsJson,
-        );
-      } catch {
-        setAuthError(
-          uiText(isArabic, 'text0325'),
-        );
       } finally {
-        setLoadingBranches(
-          false,
-        );
-
-        setLoadingDepartments(
-          false,
-        );
+        if (!cancelled) {
+          setLoadingInvite(false);
+        }
       }
     }
 
-    loadPublicData();
+    loadInvitePreview();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
+    inviteToken,
     isArabic,
   ]);
-
-
-  /*
-   * ==========================================================
-   * LANGUAGE HELPERS
-   * ==========================================================
-   */
-
-  function directoryLabel(
-    item: BranchOrDept,
-  ) {
-    if (
-      isArabic
-    ) {
-      return (
-        item.valueAr ||
-        item.codeAr ||
-        item.valueEn ||
-        item.codeEn ||
-        '—'
-      );
-    }
-
-    return (
-      item.valueEn ||
-      item.codeEn ||
-      item.valueAr ||
-      item.codeAr ||
-      '—'
-    );
-  }
-
-
-  const visibleBranches =
-    branches.filter(
-      (item) =>
-        Boolean(
-          isArabic
-            ? item.codeAr ||
-                item.valueAr
-            : item.codeEn ||
-                item.valueEn,
-        ),
-    );
-
-
-  const visibleDepartments =
-    departments.filter(
-      (item) =>
-        Boolean(
-          isArabic
-            ? item.codeAr ||
-                item.valueAr
-            : item.codeEn ||
-                item.valueEn,
-        ),
-    );
 
 
   /*
@@ -483,8 +402,8 @@ export default function Home() {
     setFullName('');
     setPhone('');
     setPhoneError('');
-    setBranchId('');
-    setDepartmentId('');
+    // inviteToken / invitePreview are intentionally left alone: they
+    // come from the URL (the leader's shared link), not from typing.
   }
 
 
@@ -596,6 +515,25 @@ export default function Home() {
     }
 
 
+    if (
+      mode ===
+        'register' &&
+      !inviteToken
+    ) {
+      setAuthError(
+        isArabic
+          ? 'التسجيل متاح فقط عبر رابط دعوة من قائد فريق'
+          : 'Registration is only available through a Team Leader\u2019s invite link',
+      );
+
+      setSubmitting(
+        false,
+      );
+
+      return;
+    }
+
+
     try {
       if (
         mode ===
@@ -621,8 +559,7 @@ export default function Home() {
             phone ||
             undefined,
 
-          branchId,
-          departmentId,
+          inviteToken,
         });
       }
 
@@ -1572,6 +1509,33 @@ export default function Home() {
                     >
                       {mode ===
                         'register' && (
+                        <div className="sm:col-span-2">
+                          {loadingInvite ? (
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                              {isArabic
+                                ? 'جارٍ التحقق من رابط الدعوة...'
+                                : 'Checking invite link\u2026'}
+                            </div>
+                          ) : invitePreview ? (
+                            <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+                              {isArabic
+                                ? `أنت على وشك الانضمام إلى فريق ${invitePreview.leaderName ?? ''} (${invitePreview.teamName})`
+                                : `You're joining ${invitePreview.leaderName ?? 'a'}'s team (${invitePreview.teamName})`}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                              {inviteError ||
+                                (isArabic
+                                  ? 'التسجيل متاح فقط عبر رابط دعوة من قائد فريق. يرجى طلب الرابط من قائد فريقك.'
+                                  : 'Registration is only available through a Team Leader\u2019s invite link. Ask your Team Leader for the link.')}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+
+                      {mode ===
+                        'register' && (
                         <div className="grid gap-5 sm:grid-cols-2">
                           <div className="sm:col-span-2">
                             <label
@@ -1743,129 +1707,6 @@ export default function Home() {
                       </div>
 
 
-                      {mode ===
-                        'register' && (
-                        <div className="grid gap-5 sm:grid-cols-2">
-                          <div>
-                            <label
-                              className="label"
-                              htmlFor="branch"
-                            >
-                              {uiText(isArabic, 'text0371')}
-                            </label>
-
-                            <select
-                              id="branch"
-                              required
-                              className="input"
-                              value={
-                                branchId
-                              }
-                              onChange={(
-                                event,
-                              ) =>
-                                setBranchId(
-                                  event
-                                    .target
-                                    .value,
-                                )
-                              }
-                              disabled={
-                                loadingBranches
-                              }
-                            >
-                              <option
-                                value=""
-                                disabled
-                              >
-                                {loadingBranches
-                                  ? uiText(isArabic, 'text0372')
-                                  : uiText(isArabic, 'text0373')}
-                              </option>
-
-                              {visibleBranches.map(
-                                (
-                                  branch,
-                                ) => (
-                                  <option
-                                    key={
-                                      branch.id
-                                    }
-                                    value={
-                                      branch.id
-                                    }
-                                  >
-                                    {directoryLabel(
-                                      branch,
-                                    )}
-                                  </option>
-                                ),
-                              )}
-                            </select>
-                          </div>
-
-
-                          <div>
-                            <label
-                              className="label"
-                              htmlFor="department"
-                            >
-                              {uiText(isArabic, 'text0374')}
-                            </label>
-
-                            <select
-                              id="department"
-                              required
-                              className="input"
-                              value={
-                                departmentId
-                              }
-                              onChange={(
-                                event,
-                              ) =>
-                                setDepartmentId(
-                                  event
-                                    .target
-                                    .value,
-                                )
-                              }
-                              disabled={
-                                loadingDepartments
-                              }
-                            >
-                              <option
-                                value=""
-                                disabled
-                              >
-                                {loadingDepartments
-                                  ? uiText(isArabic, 'text0375')
-                                  : uiText(isArabic, 'text0376')}
-                              </option>
-
-                              {visibleDepartments.map(
-                                (
-                                  department,
-                                ) => (
-                                  <option
-                                    key={
-                                      department.id
-                                    }
-                                    value={
-                                      department.id
-                                    }
-                                  >
-                                    {directoryLabel(
-                                      department,
-                                    )}
-                                  </option>
-                                ),
-                              )}
-                            </select>
-                          </div>
-                        </div>
-                      )}
-
-
                       {authError && (
                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                           {
@@ -1879,7 +1720,9 @@ export default function Home() {
                         type="submit"
                         className="btn-primary min-h-[46px] w-full"
                         disabled={
-                          submitting
+                          submitting ||
+                          (mode === 'register' &&
+                            (!inviteToken || !invitePreview))
                         }
                       >
                         {submitting

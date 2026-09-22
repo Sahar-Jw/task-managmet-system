@@ -292,13 +292,28 @@ export class ProjectsService {
     if (
       scopeToSelf
     ) {
-      qb.andWhere(
-        'project.createdById = :actorId',
-        {
-          actorId:
-            actor.id,
-        },
-      );
+      if (
+        actor.teamId
+      ) {
+        qb.andWhere(
+          '(project.createdById = :actorId OR project.teamId = :actorTeamId)',
+          {
+            actorId:
+              actor.id,
+
+            actorTeamId:
+              actor.teamId,
+          },
+        );
+      } else {
+        qb.andWhere(
+          'project.createdById = :actorId',
+          {
+            actorId:
+              actor.id,
+          },
+        );
+      }
     }
 
 
@@ -687,14 +702,20 @@ export class ProjectsService {
 
     /*
      * Regular User cannot access somebody else's Project —
-     * unless they have a Task assigned to them within it.
+     * unless it belongs to their own Team, or they have a Task
+     * assigned to them within it.
      */
     if (
       actor &&
       actor.role?.name !==
         RoleName.ADMIN &&
       project.createdById !==
-        actor.id
+        actor.id &&
+      !(
+        actor.teamId &&
+        project.teamId ===
+          actor.teamId
+      )
     ) {
       const hasAssignedTask =
         await this.taskRepo.exist({
@@ -955,6 +976,16 @@ export class ProjectsService {
 
           createdById:
             actor.id,
+
+          // Admin-created Projects stay organization-wide (teamId null),
+          // same as before Teams existed. Anyone else's Project belongs
+          // to their own Team, so their whole group can see it.
+          teamId:
+            actor.role?.name ===
+            RoleName.ADMIN
+              ? undefined
+              : actor.teamId ??
+                undefined,
 
           status:
             ProjectStatus.PLANNED,

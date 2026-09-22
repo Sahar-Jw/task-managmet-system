@@ -50,10 +50,7 @@ interface AuthContextValue {
         password:
           string;
 
-        branchId:
-          string;
-
-        departmentId:
+        inviteToken:
           string;
 
         phone?:
@@ -242,10 +239,7 @@ export function AuthProvider({
       password:
         string;
 
-      branchId:
-        string;
-
-      departmentId:
+      inviteToken:
         string;
 
       phone?:

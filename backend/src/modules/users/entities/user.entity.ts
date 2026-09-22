@@ -12,6 +12,7 @@ import { VersionedEntity } from '../../../shared/entities/versioned-base.entity'
 @Index(['departmentId'])
 @Index(['branchId'])
 @Index(['roleId'])
+@Index(['teamId'])
 export class UserEntity extends VersionedEntity {
   @Column({ name: 'full_name', type: 'varchar', length: 150 })
   fullName!: string;
@@ -51,6 +52,14 @@ export class UserEntity extends VersionedEntity {
 
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId!: string;
+
+  // The Team this User belongs to (see TeamEntity). Set for a TEAM_LEADER
+  // (the team they lead) and for every USER who registered through that
+  // leader's invite link or was added by them directly. Null for Admins
+  // and for any User created before Teams existed. Plain reference id
+  // (no relation), same rationale as department_id/branch_id above.
+  @Column({ name: 'team_id', type: 'uuid', nullable: true })
+  teamId?: string | null;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;

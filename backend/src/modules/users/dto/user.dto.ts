@@ -56,6 +56,10 @@ export class ChangeOwnPasswordDto {
   @IsString() @MinLength(8) newPassword!: string;
 }
 
+// Public self-registration is invite-only: an inviteToken (from a Team
+// Leader's shared link) is required, and Department/Branch/Team are all
+// derived from that Team's leader — there is nothing organizational left
+// for the registering employee to pick themselves.
 export class RegisterUserDto {
   @IsString() @IsNotEmpty() @MaxLength(150)
   fullName!: string;
@@ -66,8 +70,8 @@ export class RegisterUserDto {
   @IsString() @MinLength(8)
   password!: string;
 
-  @IsUUID() branchId!: string;
-  @IsUUID() departmentId!: string;
+  @IsString() @IsNotEmpty()
+  inviteToken!: string;
 
   @IsOptional() @IsString() @IsPhoneNumber12() phone?: string;
 }

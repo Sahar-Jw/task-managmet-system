@@ -389,6 +389,9 @@ export class TasksService {
   private async assertValidAssignee(
     userId:
       string,
+
+    actor:
+      UserEntity,
   ):
     Promise<UserEntity> {
     const assignee =
@@ -418,6 +421,28 @@ export class TasksService {
     ) {
       throw new BadRequestException(
         appError('CANNOT_ASSIGN_TASK_DEACTIVATED_USER', 'Cannot assign a Task to a deactivated User'),
+      );
+    }
+
+
+    /*
+     * A Task can only be assigned within the actor's own Team — the
+     * Team Leader, or a fellow employee under that same leader. Admin
+     * is exempt (can assign across the whole organization, as before).
+     */
+    if (
+      actor.role?.name !==
+        RoleName.ADMIN &&
+      actor.id !==
+        assignee.id &&
+      (
+        !actor.teamId ||
+        assignee.teamId !==
+          actor.teamId
+      )
+    ) {
+      throw new ForbiddenException(
+        appError('CAN_ONLY_ASSIGN_TASKS_WITHIN_YOUR_TEAM', 'You can only assign Tasks to members of your own Team'),
       );
     }
 
@@ -2520,6 +2545,7 @@ export class TasksService {
       createAssignee =
         await this.assertValidAssignee(
           dto.assignedToId,
+          actor,
         );
     }
 
@@ -2984,6 +3010,7 @@ export class TasksService {
       updateAssignee =
         await this.assertValidAssignee(
           effectiveAssigneeId,
+          actor,
         );
     }
 

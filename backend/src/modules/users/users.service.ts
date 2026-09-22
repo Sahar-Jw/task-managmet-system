@@ -31,11 +31,20 @@ import {
 } from './entities/user.entity';
 
 import {
+  TeamEntity,
+} from '../teams/entities/team.entity';
+
+import {
   AdminUpdateUserDto,
   ChangeOwnPasswordDto,
+  CreateUserDto,
   RegisterUserDto,
   UpdateOwnProfileDto,
 } from './dto/user.dto';
+
+import {
+  CreateTeamEmployeeDto,
+} from '../teams/dto/team.dto';
 
 import {
   QueryUsersDto,
@@ -75,6 +84,12 @@ export class UsersService {
     )
     private readonly userRepo:
       Repository<UserEntity>,
+
+    @InjectRepository(
+      TeamEntity,
+    )
+    private readonly teamRepo:
+      Repository<TeamEntity>,
 
     private readonly rolesService:
       RolesService,
@@ -1138,6 +1153,51 @@ export class UsersService {
     }
 
 
+    /*
+     * Self-registration is invite-only: the token comes from a Team
+     * Leader's shared link. Department, Branch and Team are all
+     * inherited from that leader — there is nothing organizational
+     * left for the registering employee to choose.
+     */
+    const team =
+      await this.teamRepo.findOne({
+        where: {
+          inviteToken:
+            dto.inviteToken,
+
+          isActive:
+            true,
+        },
+      });
+
+
+    if (
+      !team
+    ) {
+      throw new BadRequestException(
+        appError('INVITE_LINK_INVALID_OR_EXPIRED', 'This invite link is invalid or has expired'),
+      );
+    }
+
+
+    const leader =
+      await this.userRepo.findOne({
+        where: {
+          id:
+            team.leaderId,
+        },
+      });
+
+
+    if (
+      !leader
+    ) {
+      throw new BadRequestException(
+        appError('TEAM_LEADER_NO_LONGER_AVAILABLE', "This team's leader account is no longer available"),
+      );
+    }
+
+
     const role =
       await this.rolesService.findByName(
         RoleName.USER,
@@ -1185,10 +1245,14 @@ export class UsersService {
             role.id,
 
           departmentId:
-            dto.departmentId,
+            leader.departmentId ??
+            undefined,
 
           branchId:
-            dto.branchId,
+            leader.branchId,
+
+          teamId:
+            team.id,
 
           isActive:
             true,
@@ -1215,6 +1279,274 @@ export class UsersService {
 
       reason:
         AuditReasonCode.SELF_SERVICE_REGISTRATION,
+    });
+
+
+    return this.findById(
+      user.id,
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * TEAM LEADER ADDS AN EMPLOYEE DIRECTLY
+   * ==========================================================
+   */
+
+  async createTeamEmployee(
+    dto:
+      CreateTeamEmployeeDto,
+
+    leader:
+      UserEntity,
+  ): Promise<UserEntity> {
+    const existing =
+      await this.userRepo.findOne({
+        where: {
+          email:
+            dto.email,
+        },
+      });
+
+
+    if (
+      existing
+    ) {
+      throw new ConflictException(
+        appError('USER_WITH_EMAIL_ALREADY_EXISTS', 'A User with this email already exists'),
+      );
+    }
+
+
+    const role =
+      await this.rolesService.findByName(
+        RoleName.USER,
+      );
+
+
+    if (
+      !role
+    ) {
+      throw new BadRequestException(
+        appError('DEFAULT_USER_ROLE_NOT_CONFIGURED', 'Default USER role is not configured'),
+      );
+    }
+
+
+    const saltRounds =
+      this.configService.get<number>(
+        'security.bcryptSaltRounds',
+      ) ??
+      12;
+
+
+    const passwordHash =
+      await bcrypt.hash(
+        dto.password,
+        saltRounds,
+      );
+
+
+    const user =
+      await this.userRepo.save(
+        this.userRepo.create({
+          fullName:
+            dto.fullName,
+
+          email:
+            dto.email,
+
+          passwordHash,
+
+          phone:
+            dto.phone,
+
+          roleId:
+            role.id,
+
+          departmentId:
+            leader.departmentId ??
+            undefined,
+
+          branchId:
+            leader.branchId,
+
+          teamId:
+            leader.teamId ??
+            undefined,
+
+          createdById:
+            leader.id,
+
+          isActive:
+            true,
+        }),
+      );
+
+
+    await this.auditLogsService.record({
+      actorId:
+        leader.id,
+
+      entityType:
+        'User',
+
+      entityId:
+        user.id,
+
+      action:
+        AuditAction.CREATE,
+
+      newValue: {
+        ...user,
+
+        passwordHash:
+          undefined,
+      },
+
+      reason:
+        AuditReasonCode.TEAM_EMPLOYEE_ADDED_BY_LEADER,
+    });
+
+
+    return this.findById(
+      user.id,
+    );
+  }
+
+
+  /*
+   * ==========================================================
+   * ADMIN CREATES A USER (any role — incl. Team Leader accounts)
+   * ==========================================================
+   */
+
+  async create(
+    dto:
+      CreateUserDto,
+
+    actor:
+      UserEntity,
+  ): Promise<UserEntity> {
+    const existing =
+      await this.userRepo.findOne({
+        where: {
+          email:
+            dto.email,
+        },
+      });
+
+
+    if (
+      existing
+    ) {
+      throw new ConflictException(
+        appError('USER_WITH_EMAIL_ALREADY_EXISTS', 'A User with this email already exists'),
+      );
+    }
+
+
+    const role =
+      await this.rolesService.findById(
+        dto.roleId,
+      );
+
+
+    if (
+      !role
+    ) {
+      throw new BadRequestException(
+        appError('SELECTED_ROLE_DOES_NOT_EXIST', 'Selected role does not exist'),
+      );
+    }
+
+
+    const isAdminRole =
+      role.name ===
+      RoleName.ADMIN;
+
+
+    if (
+      !isAdminRole &&
+      !dto.departmentId
+    ) {
+      throw new BadRequestException(
+        appError('DEPARTMENT_REQUIRED_NON_ADMIN_USERS', 'Department is required for non-Admin Users'),
+      );
+    }
+
+
+    const saltRounds =
+      this.configService.get<number>(
+        'security.bcryptSaltRounds',
+      ) ??
+      12;
+
+
+    const passwordHash =
+      await bcrypt.hash(
+        dto.password,
+        saltRounds,
+      );
+
+
+    const user =
+      await this.userRepo.save(
+        this.userRepo.create({
+          fullName:
+            dto.fullName,
+
+          email:
+            dto.email,
+
+          passwordHash,
+
+          phone:
+            dto.phone,
+
+          roleId:
+            role.id,
+
+          departmentId:
+            isAdminRole
+              ? undefined
+              : dto.departmentId,
+
+          branchId:
+            dto.branchId,
+
+          createdById:
+            actor.id,
+
+          isActive:
+            true,
+        }),
+      );
+
+
+    await this.auditLogsService.record({
+      actorId:
+        actor.id,
+
+      entityType:
+        'User',
+
+      entityId:
+        user.id,
+
+      action:
+        AuditAction.CREATE,
+
+      newValue: {
+        ...user,
+
+        passwordHash:
+          undefined,
+
+        roleName:
+          role.name,
+      },
     });
 
 

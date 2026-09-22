@@ -11,9 +11,10 @@ export class RolesService implements OnModuleInit {
     private readonly roleRepo: Repository<RoleEntity>,
   ) {}
 
-  /** Ensures the two launch roles (ADMIN, USER) always exist. */
+  /** Ensures the launch roles (ADMIN, TEAM_LEADER, USER) always exist. */
   async onModuleInit() {
     await this.ensureRole(RoleName.ADMIN, 'Full administrative privileges');
+    await this.ensureRole(RoleName.TEAM_LEADER, 'Leads a Team: adds employees, shares the invite link, and manages Tasks/Projects within their group');
     await this.ensureRole(RoleName.USER, 'Standard authenticated user');
   }
 

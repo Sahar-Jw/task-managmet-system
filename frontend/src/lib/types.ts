@@ -1,6 +1,6 @@
 export interface Role {
   id: string;
-  name: 'ADMIN' | 'USER';
+  name: 'ADMIN' | 'TEAM_LEADER' | 'USER';
 }
 
 
@@ -104,6 +104,9 @@ export interface User {
   branchId?:
     string;
 
+  teamId?:
+    string | null;
+
   isActive:
     boolean;
 
@@ -127,6 +130,47 @@ export interface User {
 
   lockedUntil?:
     string | null;
+}
+
+
+/*
+ * ============================================================
+ * TEAM
+ * ============================================================
+ */
+
+export interface TeamMember {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  isActive: boolean;
+  role: Role;
+}
+
+export interface Team {
+  id: string;
+
+  name: string;
+
+  leaderId: string;
+  leaderName?: string;
+  leaderEmail?: string;
+
+  inviteToken: string;
+  inviteLink?: string;
+
+  isActive: boolean;
+
+  members: TeamMember[];
+
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface TeamInvitePreview {
+  teamName: string;
+  leaderName?: string;
 }
 
 

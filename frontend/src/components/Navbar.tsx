@@ -466,6 +466,10 @@ export default function Navbar() {
     user.role.name ===
     'ADMIN';
 
+  const isTeamLeader =
+    user.role.name ===
+    'TEAM_LEADER';
+
 
   /*
    * ==========================================================
@@ -513,6 +517,23 @@ export default function Navbar() {
         <ProjectIcon />,
     },
 
+    ...(isTeamLeader
+      ? [
+          {
+            href:
+              '/team',
+
+            label:
+              locale === 'ar'
+                ? 'فريقي'
+                : 'My Team',
+
+            icon:
+              <UsersIcon />,
+          },
+        ]
+      : []),
+
     ...(isAdmin
       ? [
           {
@@ -536,6 +557,19 @@ export default function Navbar() {
               t(
                 'users',
               ),
+
+            icon:
+              <UsersIcon />,
+          },
+
+          {
+            href:
+              '/groups',
+
+            label:
+              locale === 'ar'
+                ? 'المجموعات'
+                : 'Groups',
 
             icon:
               <UsersIcon />,

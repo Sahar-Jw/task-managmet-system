@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserEntity } from './entities/user.entity';
+import { TeamEntity } from '../teams/entities/team.entity';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { RolesModule } from '../roles/roles.module';
@@ -11,7 +12,7 @@ import { avatarMulterConfig } from './avatar-multer.config';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, TeamEntity]),
     RolesModule,
     AuditLogsModule,
     MulterModule.registerAsync({

@@ -18,6 +18,8 @@ import type {
   TaskWorkflowActionKey,
   TaskWorkflowConfig,
   TaskWorkflowMode,
+  Team,
+  TeamInvitePreview,
   User,
 } from './types';
 
@@ -52,8 +54,7 @@ export const AuthApi = {
       fullName: string;
       email: string;
       password: string;
-      branchId: string;
-      departmentId: string;
+      inviteToken: string;
       phone?: string;
     },
   ) =>
@@ -593,6 +594,70 @@ export const UsersApi = {
       },
     ),
 };
+
+/*
+ * ============================================================
+ * TEAMS
+ * ============================================================
+ */
+
+export const TeamsApi = {
+  /*
+   * Team Leader: their own Team — name, invite link, members.
+   * Auto-provisions the Team row on first hit.
+   */
+  my: () =>
+    api<Team>(
+      '/teams/my',
+    ),
+
+  regenerateInviteLink: () =>
+    api<{
+      inviteToken: string;
+      inviteLink: string;
+    }>(
+      '/teams/my/invite-link/regenerate',
+      {
+        method: 'POST',
+      },
+    ),
+
+  addEmployee: (
+    data: {
+      fullName: string;
+      email: string;
+      password: string;
+      phone?: string;
+    },
+  ) =>
+    api<User>(
+      '/teams/my/employees',
+      {
+        method: 'POST',
+        body: data,
+      },
+    ),
+
+  /*
+   * Admin: the "Groups" page — every Team, its leader, its members.
+   */
+  listAll: () =>
+    api<Team[]>(
+      '/teams',
+    ),
+
+  /*
+   * Public: registration page preview of who a token belongs to.
+   */
+  invitePreview: (
+    token: string,
+  ) =>
+    api<TeamInvitePreview>(
+      `/teams/invite/${token}`,
+      { showLoader: false },
+    ),
+};
+
 /*
  * ============================================================
  * PROJECTS

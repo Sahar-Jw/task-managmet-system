@@ -104,6 +104,7 @@ export class TaskAssignmentsService {
 
   private async getValidAssignee(
     userId: string,
+    actor: UserEntity,
   ): Promise<UserEntity> {
     const user =
       await this.userRepo.findOne({
@@ -125,6 +126,21 @@ export class TaskAssignmentsService {
     if (!user.isActive) {
       throw new BadRequestException(
         appError('CANNOT_ASSIGN_TASK_DEACTIVATED_USER', 'Cannot assign a Task to a deactivated User'),
+      );
+    }
+
+    /*
+     * A Task can only be sent within the actor's own Team — the Team
+     * Leader, or a fellow employee under that same leader. Admin is
+     * exempt (can assign across the whole organization, as before).
+     */
+    if (
+      actor.role.name !== RoleName.ADMIN &&
+      actor.id !== user.id &&
+      (!actor.teamId || user.teamId !== actor.teamId)
+    ) {
+      throw new ForbiddenException(
+        appError('CAN_ONLY_ASSIGN_TASKS_WITHIN_YOUR_TEAM', 'You can only assign Tasks to members of your own Team'),
       );
     }
 
@@ -187,6 +203,7 @@ export class TaskAssignmentsService {
     const assignee =
       await this.getValidAssignee(
         dto.assigneeId,
+        actor,
       );
 
     if (
@@ -783,6 +800,7 @@ export class TaskAssignmentsService {
   const newAssignee =
     await this.getValidAssignee(
       dto.newAssigneeId,
+      actor,
     );
 
   if (

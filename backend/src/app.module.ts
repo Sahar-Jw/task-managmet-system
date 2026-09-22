@@ -12,6 +12,7 @@ import { RolesModule } from './modules/roles/roles.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { BrandingModule } from './modules/branding/branding.module';
 import { UsersModule } from './modules/users/users.module';
+import { TeamsModule } from './modules/teams/teams.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { TasksModule } from './modules/tasks/tasks.module';
@@ -114,6 +115,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     SettingsModule,
     BrandingModule,
     UsersModule,
+    TeamsModule,
     AuthModule,
     ProjectsModule,
     TasksModule,

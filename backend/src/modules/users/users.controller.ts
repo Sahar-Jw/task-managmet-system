@@ -17,6 +17,7 @@ import { UsersService } from './users.service';
 import {
   AdminUpdateUserDto,
   ChangeOwnPasswordDto,
+  CreateUserDto,
   UpdateOwnProfileDto,
 } from './dto/user.dto';
 import { QueryUsersDto } from './dto/query-users.dto';
@@ -72,6 +73,15 @@ export class UsersController {
   // @Roles(RoleName.ADMIN)
   findAll(@Query() query: QueryUsersDto) {
     return this.usersService.findAll(query);
+  }
+
+  // POST /users — Admin only: creates a User of any role, including
+  // Team Leader accounts. (Employees normally join via a Team Leader's
+  // invite link or POST /teams/my/employees instead.)
+  @Post()
+  @Roles(RoleName.ADMIN)
+  create(@Body() dto: CreateUserDto, @CurrentUser() user: UserEntity) {
+    return this.usersService.create(dto, user);
   }
 
   // GET /users/:id — Admin,

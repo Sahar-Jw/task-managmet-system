@@ -31,7 +31,7 @@ export class ReportsController {
     const scoped =
       user.role.name === RoleName.ADMIN
         ? filters
-        : { ...filters, branchId: user.branchId, departmentId: user.departmentId ?? undefined };
+        : { ...filters, branchId: user.branchId ?? undefined, departmentId: user.departmentId ?? undefined };
     return this.reportsService.monthlySummary(scoped, filters.months ?? 12);
   }
 
@@ -45,7 +45,7 @@ export class ReportsController {
   // Any authenticated user. Non-admins only ever get their own branch's row.
   @Get('branch-overview')
   branchOverview(@CurrentUser() user: UserEntity) {
-    const scopeBranchId = user.role.name === RoleName.ADMIN ? undefined : user.branchId;
+    const scopeBranchId = user.role.name === RoleName.ADMIN ? undefined : user.branchId ?? undefined;
     return this.reportsService.branchOverview(scopeBranchId);
   }
 

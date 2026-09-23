@@ -281,11 +281,11 @@ export default function Home() {
    * INVITE-TOKEN PREVIEW
    * ==========================================================
    *
-   * Registration is invite-only: an employee only reaches the
-   * register form via the link their Team Leader shared, which
-   * carries ?inviteToken=... . We resolve that token to "you're
-   * joining <leader>'s team" up front so people don't fill out
-   * the whole form before finding out the link is bad.
+   * If the register form was reached via a Team Leader's invite
+   * link (?inviteToken=...), resolve it to "you're joining
+   * <leader>'s team" up front so people don't fill out the whole
+   * form before finding out the link is bad. No token at all is
+   * also valid — that path creates a brand-new Team Leader.
    */
 
   useEffect(() => {
@@ -515,25 +515,6 @@ export default function Home() {
     }
 
 
-    if (
-      mode ===
-        'register' &&
-      !inviteToken
-    ) {
-      setAuthError(
-        isArabic
-          ? 'التسجيل متاح فقط عبر رابط دعوة من قائد فريق'
-          : 'Registration is only available through a Team Leader\u2019s invite link',
-      );
-
-      setSubmitting(
-        false,
-      );
-
-      return;
-    }
-
-
     try {
       if (
         mode ===
@@ -559,7 +540,9 @@ export default function Home() {
             phone ||
             undefined,
 
-          inviteToken,
+          inviteToken:
+            inviteToken ||
+            undefined,
         });
       }
 
@@ -1510,24 +1493,32 @@ export default function Home() {
                       {mode ===
                         'register' && (
                         <div className="sm:col-span-2">
-                          {loadingInvite ? (
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                              {isArabic
-                                ? 'جارٍ التحقق من رابط الدعوة...'
-                                : 'Checking invite link\u2026'}
-                            </div>
-                          ) : invitePreview ? (
+                          {inviteToken ? (
+                            loadingInvite ? (
+                              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                                {isArabic
+                                  ? 'جارٍ التحقق من رابط الدعوة...'
+                                  : 'Checking invite link\u2026'}
+                              </div>
+                            ) : invitePreview ? (
+                              <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+                                {isArabic
+                                  ? `أنت على وشك الانضمام إلى فريق ${invitePreview.leaderName ?? ''} (${invitePreview.teamName})`
+                                  : `You're joining ${invitePreview.leaderName ?? 'a'}'s team (${invitePreview.teamName})`}
+                              </div>
+                            ) : (
+                              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                                {inviteError ||
+                                  (isArabic
+                                    ? 'رابط الدعوة غير صالح أو منتهي الصلاحية'
+                                    : 'This invite link is invalid or has expired')}
+                              </div>
+                            )
+                          ) : (
                             <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
                               {isArabic
-                                ? `أنت على وشك الانضمام إلى فريق ${invitePreview.leaderName ?? ''} (${invitePreview.teamName})`
-                                : `You're joining ${invitePreview.leaderName ?? 'a'}'s team (${invitePreview.teamName})`}
-                            </div>
-                          ) : (
-                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                              {inviteError ||
-                                (isArabic
-                                  ? 'التسجيل متاح فقط عبر رابط دعوة من قائد فريق. يرجى طلب الرابط من قائد فريقك.'
-                                  : 'Registration is only available through a Team Leader\u2019s invite link. Ask your Team Leader for the link.')}
+                                ? 'ستُنشئ حسابك كقائد فريق جديد، وستحصل على رابط دعوة خاص بك لإضافة أعضاء فريقك لاحقًا.'
+                                : "You're signing up as a new Team Leader \u2014 you'll get your own team and an invite link to add your employees afterwards."}
                             </div>
                           )}
                         </div>
@@ -1722,7 +1713,8 @@ export default function Home() {
                         disabled={
                           submitting ||
                           (mode === 'register' &&
-                            (!inviteToken || !invitePreview))
+                            !!inviteToken &&
+                            (!invitePreview || !!inviteError))
                         }
                       >
                         {submitting

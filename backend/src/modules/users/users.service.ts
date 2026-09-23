@@ -27,6 +27,10 @@ import {
 } from 'fs/promises';
 
 import {
+  randomBytes,
+} from 'crypto';
+
+import {
   UserEntity,
 } from './entities/user.entity';
 
@@ -1154,11 +1158,34 @@ export class UsersService {
 
 
     /*
-     * Self-registration is invite-only: the token comes from a Team
-     * Leader's shared link. Department, Branch and Team are all
-     * inherited from that leader — there is nothing organizational
-     * left for the registering employee to choose.
+     * Self-registration has two paths:
+     *
+     * - inviteToken supplied → joining an existing Team Leader's group
+     *   as an employee (USER role). Department/Branch/Team are all
+     *   inherited from that leader.
+     *
+     * - no inviteToken → this is a brand-new Team Leader signing up on
+     *   their own. They get their own Team (with a fresh invite link)
+     *   created immediately, so they can start inviting employees.
      */
+    if (
+      dto.inviteToken
+    ) {
+      return this.registerAsEmployee(
+        dto,
+      );
+    }
+
+    return this.registerAsTeamLeader(
+      dto,
+    );
+  }
+
+
+  private async registerAsEmployee(
+    dto:
+      RegisterUserDto,
+  ): Promise<UserEntity> {
     const team =
       await this.teamRepo.findOne({
         where: {
@@ -1249,7 +1276,8 @@ export class UsersService {
             undefined,
 
           branchId:
-            leader.branchId,
+            leader.branchId ??
+            undefined,
 
           teamId:
             team.id,
@@ -1257,6 +1285,121 @@ export class UsersService {
           isActive:
             true,
         }),
+      );
+
+
+    await this.auditLogsService.record({
+      entityType:
+        'User',
+
+      entityId:
+        user.id,
+
+      action:
+        AuditAction.CREATE,
+
+      newValue: {
+        ...user,
+
+        passwordHash:
+          undefined,
+      },
+
+      reason:
+        AuditReasonCode.SELF_SERVICE_REGISTRATION,
+    });
+
+
+    return this.findById(
+      user.id,
+    );
+  }
+
+
+  private async registerAsTeamLeader(
+    dto:
+      RegisterUserDto,
+  ): Promise<UserEntity> {
+    const role =
+      await this.rolesService.findByName(
+        RoleName.TEAM_LEADER,
+      );
+
+
+    if (
+      !role
+    ) {
+      throw new BadRequestException(
+        appError('TEAM_LEADER_ROLE_NOT_CONFIGURED', 'TEAM_LEADER role is not configured'),
+      );
+    }
+
+
+    const saltRounds =
+      this.configService.get<number>(
+        'security.bcryptSaltRounds',
+      ) ??
+      12;
+
+
+    const passwordHash =
+      await bcrypt.hash(
+        dto.password,
+        saltRounds,
+      );
+
+
+    let user =
+      await this.userRepo.save(
+        this.userRepo.create({
+          fullName:
+            dto.fullName,
+
+          email:
+            dto.email,
+
+          passwordHash,
+
+          phone:
+            dto.phone,
+
+          roleId:
+            role.id,
+
+          isActive:
+            true,
+        }),
+      );
+
+
+    /*
+     * Every self-registered Team Leader gets their own Team right
+     * away, with a ready-to-share invite link — mirrors
+     * TeamsService.getOrCreateForLeader, done eagerly here instead of
+     * on first dashboard visit.
+     */
+    const team =
+      await this.teamRepo.save(
+        this.teamRepo.create({
+          name:
+            `${user.fullName}'s Team`,
+
+          leaderId:
+            user.id,
+
+          inviteToken:
+            randomBytes(24).toString('hex'),
+        }),
+      );
+
+
+    user.teamId =
+      team.id;
+
+
+    user =
+      await this.userRepo.save(
+        user,
       );
 
 

@@ -50,8 +50,14 @@ export class UserEntity extends VersionedEntity {
   @Column({ name: 'department_id', type: 'uuid', nullable: true })
   departmentId?: string | null;
 
-  @Column({ name: 'branch_id', type: 'uuid' })
-  branchId!: string;
+  // branch_id is nullable for the same reason department_id is: a
+  // self-registered Team Leader (see UsersService.registerAsTeamLeader)
+  // has no Admin-assigned Branch yet. Every other User (Admin-created,
+  // or joined via an invite link and inheriting their leader's Branch)
+  // still ends up with one — that rule lives in the service layer, not
+  // a DB constraint.
+  @Column({ name: 'branch_id', type: 'uuid', nullable: true })
+  branchId?: string | null;
 
   // The Team this User belongs to (see TeamEntity). Set for a TEAM_LEADER
   // (the team they lead) and for every USER who registered through that

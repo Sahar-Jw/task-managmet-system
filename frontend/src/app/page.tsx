@@ -34,6 +34,7 @@ import {
 } from '@/lib/api';
 
 import {
+  PublicApi,
   TeamsApi,
 } from '@/lib/endpoints';
 
@@ -58,6 +59,14 @@ type AuthMode =
   | 'login'
   | 'register'
   | null;
+
+type RegistrationOption = {
+  id: string;
+  codeAr: string;
+  codeEn: string;
+  valueAr?: string;
+  valueEn?: string;
+};
 
 
 /*
@@ -170,6 +179,26 @@ export default function Home() {
   const [
     inviteError,
     setInviteError,
+  ] = useState('');
+
+  const [
+    branches,
+    setBranches,
+  ] = useState<RegistrationOption[]>([]);
+
+  const [
+    departments,
+    setDepartments,
+  ] = useState<RegistrationOption[]>([]);
+
+  const [
+    branchId,
+    setBranchId,
+  ] = useState('');
+
+  const [
+    departmentId,
+    setDepartmentId,
   ] = useState('');
 
 
@@ -287,6 +316,42 @@ export default function Home() {
    * form before finding out the link is bad. No token at all is
    * also valid — that path creates a brand-new Team Leader.
    */
+
+  useEffect(() => {
+    if (mode !== 'register' || inviteToken) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadRegistrationOptions() {
+      try {
+        const [branchOptions, departmentOptions] = await Promise.all([
+          PublicApi.branches(),
+          PublicApi.departments(),
+        ]);
+
+        if (!cancelled) {
+          setBranches(branchOptions);
+          setDepartments(departmentOptions);
+        }
+      } catch {
+        if (!cancelled) {
+          setBranches([]);
+          setDepartments([]);
+        }
+      }
+    }
+
+    void loadRegistrationOptions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    inviteToken,
+    mode,
+  ]);
 
   useEffect(() => {
     if (!inviteToken) {
@@ -543,6 +608,13 @@ export default function Home() {
           inviteToken:
             inviteToken ||
             undefined,
+
+          ...(inviteToken
+            ? {}
+            : {
+                branchId,
+                departmentId,
+              }),
         });
       }
 
@@ -1603,6 +1675,78 @@ export default function Home() {
                               </p>
                             )}
                           </div>
+
+
+                          {!inviteToken && (
+                            <>
+                              <div>
+                                <label
+                                  className="label"
+                                  htmlFor="branchId"
+                                >
+                                  {isArabic ? 'الفرع' : 'Branch'}
+                                </label>
+
+                                <select
+                                  id="branchId"
+                                  required
+                                  className="input"
+                                  value={branchId}
+                                  onChange={(event) =>
+                                    setBranchId(event.target.value)
+                                  }
+                                >
+                                  <option value="">
+                                    {isArabic ? 'اختر الفرع' : 'Select branch'}
+                                  </option>
+
+                                  {branches.map((branch) => (
+                                    <option key={branch.id} value={branch.id}>
+                                      {isArabic
+                                        ? branch.valueAr || branch.codeAr
+                                        : branch.valueEn || branch.codeEn}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label
+                                  className="label"
+                                  htmlFor="departmentId"
+                                >
+                                  {isArabic ? 'القسم' : 'Department'}
+                                </label>
+
+                                <select
+                                  id="departmentId"
+                                  required
+                                  className="input"
+                                  value={departmentId}
+                                  onChange={(event) =>
+                                    setDepartmentId(event.target.value)
+                                  }
+                                >
+                                  <option value="">
+                                    {isArabic
+                                      ? 'اختر القسم'
+                                      : 'Select department'}
+                                  </option>
+
+                                  {departments.map((department) => (
+                                    <option
+                                      key={department.id}
+                                      value={department.id}
+                                    >
+                                      {isArabic
+                                        ? department.valueAr || department.codeAr
+                                        : department.valueEn || department.codeEn}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
 

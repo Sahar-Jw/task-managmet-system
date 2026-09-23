@@ -55,6 +55,8 @@ export const AuthApi = {
       email: string;
       password: string;
       inviteToken: string;
+      branchId?: string;
+      departmentId?: string;
       phone?: string;
     },
   ) =>

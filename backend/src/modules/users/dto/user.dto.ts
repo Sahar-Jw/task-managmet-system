@@ -73,5 +73,11 @@ export class RegisterUserDto {
   @IsOptional() @IsString() @IsNotEmpty()
   inviteToken?: string;
 
+  @IsOptional() @IsUUID()
+  departmentId?: string;
+
+  @IsOptional() @IsUUID()
+  branchId?: string;
+
   @IsOptional() @IsString() @IsPhoneNumber12() phone?: string;
 }

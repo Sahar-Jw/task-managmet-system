@@ -586,6 +586,56 @@ export class UsersService {
       );
 
 
+    if (
+      oldValue.role?.name !==
+        RoleName.TEAM_LEADER &&
+      saved.role?.name ===
+        RoleName.TEAM_LEADER
+    ) {
+      const existingTeam =
+        await this.teamRepo.findOne({
+          where: {
+            leaderId:
+              saved.id,
+          },
+        });
+
+
+      if (!existingTeam) {
+        const team =
+          await this.teamRepo.save(
+            this.teamRepo.create({
+              name:
+                `${saved.fullName}'s Team`,
+
+              leaderId:
+                saved.id,
+
+              inviteToken:
+                randomBytes(24).toString('hex'),
+            }),
+          );
+
+        saved.teamId =
+          team.id;
+
+        await this.userRepo.save(
+          saved,
+        );
+      } else if (
+        saved.teamId !==
+        existingTeam.id
+      ) {
+        saved.teamId =
+          existingTeam.id;
+
+        await this.userRepo.save(
+          saved,
+        );
+      }
+    }
+
+
     /*
      * Resolve Role names for the Audit Log. `user.role` is an eager
      * relation loaded once at the top of this method, so it goes stale
@@ -1197,6 +1247,15 @@ export class UsersService {
       );
     }
 
+    if (
+      !dto.departmentId ||
+      !dto.branchId
+    ) {
+      throw new BadRequestException(
+        appError('DEPARTMENT_AND_BRANCH_REQUIRED', 'Department and branch are required'),
+      );
+    }
+
     return this.registerAsTeamLeader(
       dto,
     );
@@ -1386,6 +1445,12 @@ export class UsersService {
 
           roleId:
             role.id,
+
+          departmentId:
+            dto.departmentId,
+
+          branchId:
+            dto.branchId,
 
           isActive:
             true,

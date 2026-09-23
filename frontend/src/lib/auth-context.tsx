@@ -53,6 +53,12 @@ interface AuthContextValue {
         inviteToken:
           string;
 
+        branchId?:
+          string;
+
+        departmentId?:
+          string;
+
         phone?:
           string;
       },
@@ -240,6 +246,12 @@ export function AuthProvider({
         string;
 
       inviteToken:
+        string;
+
+      branchId?:
+        string;
+
+      departmentId?:
         string;
 
       phone?:

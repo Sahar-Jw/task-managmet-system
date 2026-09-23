@@ -1571,9 +1571,10 @@ export default function Home() {
                               </div>
                             ) : invitePreview ? (
                               <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                                {isArabic
-                                  ? `أنت على وشك الانضمام إلى فريق ${invitePreview.leaderName ?? ''} (${invitePreview.teamName})`
-                                  : `You're joining ${invitePreview.leaderName ?? 'a'}'s team (${invitePreview.teamName})`}
+                                {uiText(isArabic, 'text1256', {
+                                  leaderName: invitePreview.leaderName ?? '',
+                                  teamName: invitePreview.teamName,
+                                })}
                               </div>
                             ) : (
                               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

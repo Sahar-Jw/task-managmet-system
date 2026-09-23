@@ -1,0 +1,341 @@
+diff --git a/frontend/src/app/groups/page.tsx b/frontend/src/app/groups/page.tsx
+index 80952e4..3cfc194 100644
+--- a/frontend/src/app/groups/page.tsx
++++ b/frontend/src/app/groups/page.tsx
+@@ -13,12 +13,9 @@ import { ApiError } from '@/lib/api';
+ import { TeamsApi } from '@/lib/endpoints';
+ import type { Team } from '@/lib/types';
+ import Pagination from '@/components/Pagination';
++import { uiText } from '@/lib/ui-text';
+ 
+ 
+-function t(isArabic: boolean, en: string, ar: string) {
+-  return isArabic ? ar : en;
+-}
+-
+ function displayTeamName(name: string, isArabic: boolean) {
+   if (!isArabic) return name;
+ 
+@@ -62,7 +59,7 @@ function GroupsContent() {
+       setError(
+         err instanceof ApiError
+           ? err.message
+-          : t(isArabic, 'Could not load groups.', 'تعذر تحميل المجموعات.'),
++          : uiText(isArabic, 'text1245'),
+       );
+     } finally {
+       setLoading(false);
+@@ -89,21 +86,17 @@ function GroupsContent() {
+     <div className="space-y-6" dir={isArabic ? 'rtl' : 'ltr'}>
+       <div>
+         <h1 className="text-xl font-semibold text-slate-800">
+-          {t(isArabic, 'Groups', 'المجموعات')}
++          {uiText(isArabic, 'text1246')}
+         </h1>
+         <p className="mt-1 text-sm text-slate-500">
+-          {t(
+-            isArabic,
+-            'Every Team Leader\u2019s group in one place \u2014 who leads it, and who is in it.',
+-            'كل مجموعة تابعة لقائد فريق في مكان واحد \u2014 من يقودها ومن أعضاؤها.',
+-          )}
++          {uiText(isArabic, 'text1247')}
+         </p>
+       </div>
+ 
+       <div className="grid gap-3 sm:grid-cols-2">
+         <input
+           className="input"
+-          placeholder={t(isArabic, 'Search groups or leaders', 'ابحث عن المجموعات أو القادة')}
++          placeholder={uiText(isArabic, 'text1248')}
+           value={search}
+           onChange={(event) => updateFilter(setSearch, event.target.value)}
+         />
+@@ -112,9 +105,9 @@ function GroupsContent() {
+           value={isActive}
+           onChange={(event) => updateFilter(setIsActive, event.target.value)}
+         >
+-          <option value="">{t(isArabic, 'All statuses', 'كل الحالات')}</option>
+-          <option value="true">{t(isArabic, 'Active', 'نشط')}</option>
+-          <option value="false">{t(isArabic, 'Inactive', 'غير نشط')}</option>
++          <option value="">{uiText(isArabic, 'text1249')}</option>
++          <option value="true">{uiText(isArabic, 'text1250')}</option>
++          <option value="false">{uiText(isArabic, 'text1244')}</option>
+         </select>
+       </div>
+ 
+@@ -127,7 +120,7 @@ function GroupsContent() {
+           <InlineLoader className="p-8" />
+         ) : teams.length === 0 ? (
+           <p className="px-4 py-8 text-center text-sm text-slate-400">
+-            {t(isArabic, 'No groups yet.', 'لا توجد مجموعات بعد.')}
++            {uiText(isArabic, 'text1251')}
+           </p>
+         ) : (
+           teams.map((team) => (
+@@ -140,7 +133,7 @@ function GroupsContent() {
+                 <div>
+                   <div className="font-medium text-slate-800">{displayTeamName(team.name, isArabic)}</div>
+                   <div className="text-xs text-slate-500">
+-                    {t(isArabic, 'Leader:', 'القائد:')} {team.leaderName ?? '\u2014'}
++                    {uiText(isArabic, 'text1252')} {team.leaderName ?? '\u2014'}
+                     {team.leaderEmail ? ` (${team.leaderEmail})` : ''}
+                   </div>
+                 </div>
+@@ -148,12 +141,12 @@ function GroupsContent() {
+                 <div className="flex items-center gap-3">
+                   <span className="badge bg-slate-100 text-slate-600">
+                     {team.members.length}{' '}
+-                    {t(isArabic, 'members', 'أعضاء')}
++                    {uiText(isArabic, 'text1253')}
+                   </span>
+ 
+                   {!team.isActive && (
+                     <span className="badge bg-slate-100 text-slate-500">
+-                      {t(isArabic, 'Inactive', 'غير نشط')}
++                      {uiText(isArabic, 'text1244')}
+                     </span>
+                   )}
+ 
+@@ -179,7 +172,7 @@ function GroupsContent() {
+                 <div className="mt-3 divide-y divide-slate-100 rounded-lg border border-slate-100">
+                   {team.members.length === 0 ? (
+                     <p className="px-3 py-3 text-xs text-slate-400">
+-                      {t(isArabic, 'No members yet.', 'لا يوجد أعضاء بعد.')}
++                      {uiText(isArabic, 'text1254')}
+                     </p>
+                   ) : (
+                     team.members.map((member) => (
+@@ -194,7 +187,7 @@ function GroupsContent() {
+ 
+                         {!member.isActive && (
+                           <span className="badge bg-slate-100 text-slate-500">
+-                            {t(isArabic, 'Inactive', 'غير نشط')}
++                            {uiText(isArabic, 'text1244')}
+                           </span>
+                         )}
+                       </div>
+@@ -213,7 +206,7 @@ function GroupsContent() {
+           totalPages={Math.ceil(total / 20)}
+           total={total}
+           onPageChange={setPage}
+-          itemLabel={t(isArabic, 'groups', 'مجموعات')}
++          itemLabel={uiText(isArabic, 'text1255')}
+         />
+       )}
+     </div>
+diff --git a/frontend/src/app/page.tsx b/frontend/src/app/page.tsx
+index fc23dd2..6ad65e5 100644
+--- a/frontend/src/app/page.tsx
++++ b/frontend/src/app/page.tsx
+@@ -1571,9 +1571,10 @@ export default function Home() {
+                               </div>
+                             ) : invitePreview ? (
+                               <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+-                                {isArabic
+-                                  ? `أنت على وشك الانضمام إلى فريق ${invitePreview.leaderName ?? ''} (${invitePreview.teamName})`
+-                                  : `You're joining ${invitePreview.leaderName ?? 'a'}'s team (${invitePreview.teamName})`}
++                                {uiText(isArabic, 'text1256', {
++                                  leaderName: invitePreview.leaderName ?? '',
++                                  teamName: invitePreview.teamName,
++                                })}
+                               </div>
+                             ) : (
+                               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+diff --git a/frontend/src/app/team/page.tsx b/frontend/src/app/team/page.tsx
+index 99b2e80..a059b73 100644
+--- a/frontend/src/app/team/page.tsx
++++ b/frontend/src/app/team/page.tsx
+@@ -12,11 +12,7 @@ import InlineLoader from '@/components/InlineLoader';
+ import { ApiError } from '@/lib/api';
+ import { TeamsApi } from '@/lib/endpoints';
+ import type { Team } from '@/lib/types';
+-
+-
+-function t(isArabic: boolean, en: string, ar: string) {
+-  return isArabic ? ar : en;
+-}
++import { uiText } from '@/lib/ui-text';
+ 
+ 
+ function TeamContent() {
+@@ -41,7 +37,7 @@ function TeamContent() {
+       setError(
+         err instanceof ApiError
+           ? err.message
+-          : t(isArabic, 'Could not load your team.', 'تعذر تحميل فريقك.'),
++          : uiText(isArabic, 'text1232'),
+       );
+     } finally {
+       setLoading(false);
+@@ -95,7 +91,7 @@ function TeamContent() {
+       setError(
+         err instanceof ApiError
+           ? err.message
+-          : t(isArabic, 'Could not regenerate the invite link.', 'تعذر تجديد رابط الدعوة.'),
++          : uiText(isArabic, 'text1233'),
+       );
+     } finally {
+       setRegenerating(false);
+@@ -124,25 +120,17 @@ function TeamContent() {
+       <div>
+         <h1 className="text-xl font-semibold text-slate-800">{team.name}</h1>
+         <p className="mt-1 text-sm text-slate-500">
+-          {t(
+-            isArabic,
+-            'Employees who register through your invite link land here. Tasks and projects in this group stay between you and them.',
+-            'الموظفون الذين يسجّلون عبر رابط الدعوة الخاص بك يظهرون هنا. تبقى المهام والمشاريع في هذه المجموعة بينك وبينهم فقط.',
+-          )}
++          {uiText(isArabic, 'text1234')}
+         </p>
+       </div>
+ 
+       <div className="card p-6">
+         <h2 className="text-sm font-semibold text-slate-800">
+-          {t(isArabic, 'Invite link', 'رابط الدعوة')}
++          {uiText(isArabic, 'text1235')}
+         </h2>
+ 
+         <p className="mt-1 text-xs text-slate-500">
+-          {t(
+-            isArabic,
+-            'Share this link with employees you want on your team. They register through it and are linked to you automatically.',
+-            'شارك هذا الرابط مع الموظفين الذين تريدهم في فريقك. يسجّلون من خلاله ويُربطون بك تلقائياً.',
+-          )}
++          {uiText(isArabic, 'text1236')}
+         </p>
+ 
+         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+@@ -159,8 +147,8 @@ function TeamContent() {
+             onClick={() => void copyInviteLink()}
+           >
+             {copied
+-              ? t(isArabic, 'Copied!', 'تم النسخ!')
+-              : t(isArabic, 'Copy', 'نسخ')}
++              ? uiText(isArabic, 'text1237')
++              : uiText(isArabic, 'text1238')}
+           </button>
+ 
+           <button
+@@ -170,34 +158,26 @@ function TeamContent() {
+             onClick={() => void regenerateLink()}
+           >
+             {regenerating
+-              ? t(isArabic, 'Regenerating\u2026', 'جارٍ التجديد\u2026')
+-              : t(isArabic, 'Regenerate link', 'تجديد الرابط')}
++              ? uiText(isArabic, 'text1239')
++              : uiText(isArabic, 'text1240')}
+           </button>
+         </div>
+ 
+         <p className="mt-2 text-xs text-amber-600">
+-          {t(
+-            isArabic,
+-            'Regenerating invalidates the old link immediately.',
+-            'تجديد الرابط يلغي الرابط القديم فوراً.',
+-          )}
++          {uiText(isArabic, 'text1241')}
+         </p>
+       </div>
+ 
+       <div className="card divide-y divide-slate-100">
+         <div className="px-4 py-3">
+           <h2 className="text-sm font-semibold text-slate-800">
+-            {t(isArabic, 'Members', 'الأعضاء')} ({team.members.length})
++            {uiText(isArabic, 'text1242')} ({team.members.length})
+           </h2>
+         </div>
+ 
+         {team.members.length === 0 ? (
+           <p className="px-4 py-6 text-center text-sm text-slate-400">
+-            {t(
+-              isArabic,
+-              'No employees yet. Share your invite link above.',
+-              'لا يوجد موظفون بعد. شارك رابط الدعوة أعلاه.',
+-            )}
++            {uiText(isArabic, 'text1243')}
+           </p>
+         ) : (
+           team.members.map((member) => (
+@@ -209,7 +189,7 @@ function TeamContent() {
+ 
+               {!member.isActive && (
+                 <span className="badge bg-slate-100 text-slate-500">
+-                  {t(isArabic, 'Inactive', 'غير نشط')}
++                  {uiText(isArabic, 'text1244')}
+                 </span>
+               )}
+             </div>
+diff --git a/frontend/src/i18n/messages/ar.json b/frontend/src/i18n/messages/ar.json
+index 905af11..fdf754c 100644
+--- a/frontend/src/i18n/messages/ar.json
++++ b/frontend/src/i18n/messages/ar.json
+@@ -1273,6 +1273,31 @@
+     "text1228": "إعادة تعيين كلمة المرور من خلال مسار نسيت كلمة المرور",
+     "text1229": "تم تحديث قاموس التطبيق ثنائي اللغة",
+     "text1230": "تمت المراجعة بواسطة المسؤول",
+-    "text1231": "إعادة تعيين القسم بواسطة المسؤول (BR-010)"
++    "text1231": "إعادة تعيين القسم بواسطة المسؤول (BR-010)",
++    "text1232": "تعذر تحميل فريقك.",
++    "text1233": "تعذر تجديد رابط الدعوة.",
++    "text1234": "الموظفون الذين يسجّلون عبر رابط الدعوة الخاص بك يظهرون هنا. تبقى المهام والمشاريع في هذه المجموعة بينك وبينهم فقط.",
++    "text1235": "رابط الدعوة",
++    "text1236": "شارك هذا الرابط مع الموظفين الذين تريدهم في فريقك. يسجّلون من خلاله ويُربطون بك تلقائياً.",
++    "text1237": "تم النسخ!",
++    "text1238": "نسخ",
++    "text1239": "جارٍ التجديد…",
++    "text1240": "تجديد الرابط",
++    "text1241": "تجديد الرابط يلغي الرابط القديم فوراً.",
++    "text1242": "الأعضاء",
++    "text1243": "لا يوجد موظفون بعد. شارك رابط الدعوة أعلاه.",
++    "text1244": "غير نشط",
++    "text1245": "تعذر تحميل المجموعات.",
++    "text1246": "المجموعات",
++    "text1247": "كل مجموعة تابعة لقائد فريق في مكان واحد — من يقودها ومن أعضاؤها.",
++    "text1248": "ابحث عن المجموعات أو القادة",
++    "text1249": "كل الحالات",
++    "text1250": "نشط",
++    "text1251": "لا توجد مجموعات بعد.",
++    "text1252": "القائد:",
++    "text1253": "أعضاء",
++    "text1254": "لا يوجد أعضاء بعد.",
++    "text1255": "مجموعات",
++    "text1256": "أنت على وشك الانضمام إلى فريق {leaderName} ({teamName})"
+   }
+ }
+diff --git a/frontend/src/i18n/messages/en.json b/frontend/src/i18n/messages/en.json
+index 885107f..10b575a 100644
+--- a/frontend/src/i18n/messages/en.json
++++ b/frontend/src/i18n/messages/en.json
+@@ -1273,6 +1273,31 @@
+     "text1228": "Password reset via forgot-password flow",
+     "text1229": "Updated bilingual application dictionary",
+     "text1230": "Moderated by Admin",
+-    "text1231": "Department reassignment by Admin (BR-010)"
++    "text1231": "Department reassignment by Admin (BR-010)",
++    "text1232": "Could not load your team.",
++    "text1233": "Could not regenerate the invite link.",
++    "text1234": "Employees who register through your invite link land here. Tasks and projects in this group stay between you and them.",
++    "text1235": "Invite link",
++    "text1236": "Share this link with employees you want on your team. They register through it and are linked to you automatically.",
++    "text1237": "Copied!",
++    "text1238": "Copy",
++    "text1239": "Regenerating…",
++    "text1240": "Regenerate link",
++    "text1241": "Regenerating invalidates the old link immediately.",
++    "text1242": "Members",
++    "text1243": "No employees yet. Share your invite link above.",
++    "text1244": "Inactive",
++    "text1245": "Could not load groups.",
++    "text1246": "Groups",
++    "text1247": "Every Team Leader’s group in one place — who leads it, and who is in it.",
++    "text1248": "Search groups or leaders",
++    "text1249": "All statuses",
++    "text1250": "Active",
++    "text1251": "No groups yet.",
++    "text1252": "Leader:",
++    "text1253": "members",
++    "text1254": "No members yet.",
++    "text1255": "groups",
++    "text1256": "You're joining {leaderName}'s team ({teamName})"
+   }
+ }

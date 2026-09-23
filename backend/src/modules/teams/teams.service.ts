@@ -12,6 +12,8 @@ import { randomBytes } from 'crypto';
 import { TeamEntity } from './entities/team.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { RoleName } from '../../shared/enums/role.enum';
+import { QueryTeamsDto } from './dto/query-teams.dto';
+import { Paginated } from '../../common/utils/pagination.dto';
 
 export type TeamWithMembers = TeamEntity & {
   leaderName?: string;
@@ -124,34 +126,67 @@ export class TeamsService {
 
   // GET /teams (Admin only) — the "Groups" page: every Team, its leader,
   // and its members, all in one place.
-  async listAll(): Promise<TeamWithMembers[]> {
-    const teams = await this.teamRepo.find({ order: { createdAt: 'DESC' } });
+  async listAll(query: QueryTeamsDto = {}): Promise<Paginated<TeamWithMembers>> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const allTeams = await this.teamRepo.find({ order: { createdAt: 'DESC' } });
 
-    if (teams.length === 0) {
-      return [];
+    if (allTeams.length === 0) {
+      return { items: [], total: 0, page, limit };
     }
 
-    const teamIds = teams.map((team) => team.id);
-    const leaderIds = teams.map((team) => team.leaderId);
-
-    const [members, leaders] = await Promise.all([
+    const allTeamIds = allTeams.map((team) => team.id);
+    const allLeaderIds = allTeams.map((team) => team.leaderId);
+    const [allMembers, allLeaders] = await Promise.all([
       this.userRepo.find({
-        where: { teamId: In(teamIds) },
+        where: { teamId: In(allTeamIds) },
         relations: ['role'],
         order: { fullName: 'ASC' },
       }),
-      this.userRepo.find({ where: { id: In(leaderIds) } }),
+      this.userRepo.find({ where: { id: In(allLeaderIds) } }),
     ]);
 
-    const leaderById = new Map(leaders.map((leader) => [leader.id, leader]));
+    const leaderById = new Map(allLeaders.map((leader) => [leader.id, leader]));
+    const membersByTeam = new Map<string, UserEntity[]>();
+    for (const member of allMembers) {
+      const members = membersByTeam.get(member.teamId ?? '') ?? [];
+      members.push(member);
+      membersByTeam.set(member.teamId ?? '', members);
+    }
 
-    return teams.map((team) => ({
-      ...team,
-      leaderName: leaderById.get(team.leaderId)?.fullName,
-      leaderEmail: leaderById.get(team.leaderId)?.email,
-      members: members.filter(
-        (member) => member.teamId === team.id && member.id !== team.leaderId,
-      ),
-    }));
+    const search = query.search?.trim().toLowerCase();
+    const filteredTeams = allTeams.filter((team) => {
+      if (query.isActive !== undefined && team.isActive !== query.isActive) {
+        return false;
+      }
+
+      const leader = leaderById.get(team.leaderId);
+      if (search && !`${team.name} ${leader?.fullName ?? ''} ${leader?.email ?? ''}`.toLowerCase().includes(search)) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const total = filteredTeams.length;
+    const teams = filteredTeams.slice((page - 1) * limit, page * limit);
+
+    if (teams.length === 0) {
+      return { items: [], total, page, limit };
+    }
+
+    return {
+      items: teams.map((team) => ({
+        ...team,
+        leaderName: leaderById.get(team.leaderId)?.fullName,
+        leaderEmail: leaderById.get(team.leaderId)?.email,
+        members: (membersByTeam.get(team.id) ?? []).filter(
+          (member) => member.teamId === team.id && member.id !== team.leaderId,
+        ),
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 }

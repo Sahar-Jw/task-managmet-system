@@ -24,14 +24,14 @@ export class ReportsController {
   }
 
   // Any authenticated user. Admins see org-wide (or filtered) numbers;
-  // everyone else is pinned to their own branch + department server-side,
+  // everyone else is pinned to their own team server-side,
   // regardless of what branchId/departmentId they pass in the query.
   @Get('monthly-summary')
   monthlySummary(@Query() filters: ReportFiltersDto, @CurrentUser() user: UserEntity) {
     const scoped =
       user.role.name === RoleName.ADMIN
         ? filters
-        : { ...filters, branchId: user.branchId ?? undefined, departmentId: user.departmentId ?? undefined };
+        : { ...filters, teamId: user.teamId ?? undefined, branchId: undefined, departmentId: undefined };
     return this.reportsService.monthlySummary(scoped, filters.months ?? 12);
   }
 
@@ -44,16 +44,29 @@ export class ReportsController {
 
   // Any authenticated user. Non-admins only ever get their own branch's row.
   @Get('branch-overview')
-  branchOverview(@CurrentUser() user: UserEntity) {
-    const scopeBranchId = user.role.name === RoleName.ADMIN ? undefined : user.branchId ?? undefined;
-    return this.reportsService.branchOverview(scopeBranchId);
+  branchOverview(@Query() filters: ReportFiltersDto, @CurrentUser() user: UserEntity) {
+    const scope = user.role.name === RoleName.ADMIN
+      ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
+      : {
+          branchId: user.branchId ?? undefined,
+          teamId: user.teamId ?? undefined,
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+        };
+    return this.reportsService.branchOverview(scope);
   }
 
   // Any authenticated user. Non-admins only ever get their own department's row.
   @Get('department-overview')
-  departmentOverview(@CurrentUser() user: UserEntity) {
-    const scopeDepartmentId =
-      user.role.name === RoleName.ADMIN ? undefined : user.departmentId ?? undefined;
-    return this.reportsService.departmentOverview(scopeDepartmentId);
+  departmentOverview(@Query() filters: ReportFiltersDto, @CurrentUser() user: UserEntity) {
+    const scope = user.role.name === RoleName.ADMIN
+      ? { dateFrom: filters.dateFrom, dateTo: filters.dateTo }
+      : {
+          departmentId: user.departmentId ?? undefined,
+          teamId: user.teamId ?? undefined,
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+        };
+    return this.reportsService.departmentOverview(scope);
   }
 }

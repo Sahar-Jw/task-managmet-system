@@ -659,14 +659,20 @@ function DashboardContent() {
     setStatsError('');
 
 
+    const year = new Date().getFullYear();
+    const dateFrom = `${year}-01-01`;
+    const dateTo = `${year}-12-31`;
+
     Promise.all([
       ReportsApi.monthlySummary({
         months: '12',
+        dateFrom,
+        dateTo,
       }),
 
-      ReportsApi.branchOverview(),
+      ReportsApi.branchOverview({ dateFrom, dateTo }),
 
-      ReportsApi.departmentOverview(),
+      ReportsApi.departmentOverview({ dateFrom, dateTo }),
     ])
       .then(
         ([

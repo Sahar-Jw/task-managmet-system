@@ -12,6 +12,10 @@ import {
 } from 'next/navigation';
 
 import {
+  flushSync,
+} from 'react-dom';
+
+import {
   AuthApi,
 } from './endpoints';
 
@@ -135,9 +139,9 @@ export function AuthProvider({
         await AuthApi.me();
 
 
-      setUser(
-        me,
-      );
+      flushSync(() => {
+        setUser(me);
+      });
     } catch {
       setToken(
         null,

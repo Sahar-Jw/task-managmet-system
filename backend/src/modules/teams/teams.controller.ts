@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 import { TeamsService } from './teams.service';
+import { QueryTeamsDto } from './dto/query-teams.dto';
 import { UserEntity } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -49,8 +50,8 @@ export class TeamsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(RoleName.ADMIN)
   @Get()
-  listAll() {
-    return this.teamsService.listAll();
+  listAll(@Query() query: QueryTeamsDto) {
+    return this.teamsService.listAll(query);
   }
 
   // GET /teams/invite/:token — public: lets the registration page show

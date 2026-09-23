@@ -12,6 +12,7 @@ import InlineLoader from '@/components/InlineLoader';
 import { ApiError } from '@/lib/api';
 import { TeamsApi } from '@/lib/endpoints';
 import type { Team } from '@/lib/types';
+import Pagination from '@/components/Pagination';
 
 
 function t(isArabic: boolean, en: string, ar: string) {
@@ -24,6 +25,10 @@ function GroupsContent() {
   const isArabic = locale === 'ar';
 
   const [teams, setTeams] = useState<Team[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState('');
+  const [isActive, setIsActive] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -34,8 +39,14 @@ function GroupsContent() {
     setError('');
 
     try {
-      const data = await TeamsApi.listAll();
-      setTeams(data);
+      const data = await TeamsApi.listAll({
+        page: String(page),
+        limit: '20',
+        ...(search ? { search } : {}),
+        ...(isActive ? { isActive } : {}),
+      });
+      setTeams(data.items);
+      setTotal(data.total);
     } catch (err) {
       setError(
         err instanceof ApiError
@@ -50,8 +61,12 @@ function GroupsContent() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, search, isActive]);
+
+  function updateFilter(setter: (value: string) => void, value: string) {
+    setPage(1);
+    setter(value);
+  }
 
 
   function toggle(teamId: string) {
@@ -72,6 +87,24 @@ function GroupsContent() {
             'كل مجموعة تابعة لقائد فريق في مكان واحد \u2014 من يقودها ومن أعضاؤها.',
           )}
         </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          className="input"
+          placeholder={t(isArabic, 'Search groups or leaders', 'ابحث عن المجموعات أو القادة')}
+          value={search}
+          onChange={(event) => updateFilter(setSearch, event.target.value)}
+        />
+        <select
+          className="input"
+          value={isActive}
+          onChange={(event) => updateFilter(setIsActive, event.target.value)}
+        >
+          <option value="">{t(isArabic, 'All statuses', 'كل الحالات')}</option>
+          <option value="true">{t(isArabic, 'Active', 'نشط')}</option>
+          <option value="false">{t(isArabic, 'Inactive', 'غير نشط')}</option>
+        </select>
       </div>
 
       {error && (
@@ -162,6 +195,16 @@ function GroupsContent() {
           ))
         )}
       </div>
+
+      {total > 0 && (
+        <Pagination
+          page={page}
+          totalPages={Math.ceil(total / 20)}
+          total={total}
+          onPageChange={setPage}
+          itemLabel={t(isArabic, 'groups', 'مجموعات')}
+        />
+      )}
     </div>
   );
 }

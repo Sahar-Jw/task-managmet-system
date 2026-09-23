@@ -51,6 +51,16 @@ function TeamContent() {
 
   useEffect(() => {
     void load();
+
+    function reloadOnFocus() {
+      void load();
+    }
+
+    window.addEventListener('focus', reloadOnFocus);
+
+    return () => {
+      window.removeEventListener('focus', reloadOnFocus);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

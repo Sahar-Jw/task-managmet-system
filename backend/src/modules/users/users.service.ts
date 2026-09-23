@@ -1368,6 +1368,14 @@ export class UsersService {
       );
 
 
+    team.inviteToken =
+      randomBytes(24).toString('hex');
+
+    await this.teamRepo.save(
+      team,
+    );
+
+
     await this.auditLogsService.record({
       entityType:
         'User',

@@ -211,7 +211,8 @@ export default function Home() {
   useEffect(() => {
     if (
       !loading &&
-      user
+      user &&
+      mode !== 'register'
     ) {
       router.replace(
         '/dashboard',

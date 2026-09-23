@@ -31,6 +31,7 @@ import {
 export interface ReportFilters {
   branchId?: string;
   departmentId?: string;
+  teamId?: string;
   dateFrom?: string;
   dateTo?: string;
 }
@@ -351,8 +352,12 @@ export class ReportsService {
    */
 
   async departmentOverview(
-    scopeDepartmentId?:
-      string,
+    scope?: {
+      departmentId?: string;
+      teamId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    },
   ) {
     const qb =
       this.taskRepo
@@ -368,16 +373,23 @@ export class ReportsService {
         );
 
 
-    if (
-      scopeDepartmentId
-    ) {
+    if (scope?.departmentId) {
       qb.andWhere(
         'task.departmentId = :scopeDepartmentId',
         {
-          scopeDepartmentId,
+          scopeDepartmentId: scope.departmentId,
         },
       );
     }
+
+    if (scope?.teamId) {
+      qb.innerJoin('task.assignedTo', 'departmentTeamMember');
+      qb.andWhere('departmentTeamMember.teamId = :departmentTeamId', {
+        departmentTeamId: scope.teamId,
+      });
+    }
+
+    this.applyDateFilters(qb, scope);
 
 
     const raw =
@@ -714,8 +726,12 @@ export class ReportsService {
    */
 
   async branchOverview(
-    scopeBranchId?:
-      string,
+    scope?: {
+      branchId?: string;
+      teamId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+    },
   ) {
     const qb =
       this.taskRepo
@@ -731,16 +747,23 @@ export class ReportsService {
         );
 
 
-    if (
-      scopeBranchId
-    ) {
+    if (scope?.branchId) {
       qb.andWhere(
         'task.branchId = :scopeBranchId',
         {
-          scopeBranchId,
+          scopeBranchId: scope.branchId,
         },
       );
     }
+
+    if (scope?.teamId) {
+      qb.innerJoin('task.assignedTo', 'branchTeamMember');
+      qb.andWhere('branchTeamMember.teamId = :branchTeamId', {
+        branchTeamId: scope.teamId,
+      });
+    }
+
+    this.applyDateFilters(qb, scope);
 
 
     const raw =
@@ -885,6 +908,24 @@ export class ReportsService {
 
 
     if (
+      filters.teamId
+    ) {
+      qb.innerJoin(
+        'task.assignedTo',
+        'teamMember',
+      );
+
+      qb.andWhere(
+        'teamMember.teamId = :teamId',
+        {
+          teamId:
+            filters.teamId,
+        },
+      );
+    }
+
+
+    if (
       filters.dateFrom
     ) {
       qb.andWhere(
@@ -918,6 +959,23 @@ export class ReportsService {
             filters.dateTo,
         },
       );
+    }
+  }
+
+  private applyDateFilters(
+    qb: SelectQueryBuilder<TaskEntity>,
+    filters?: { dateFrom?: string; dateTo?: string },
+  ) {
+    if (filters?.dateFrom) {
+      qb.andWhere('task.createdAt >= :overviewDateFrom', {
+        overviewDateFrom: filters.dateFrom,
+      });
+    }
+
+    if (filters?.dateTo) {
+      qb.andWhere('task.createdAt < DATE_ADD(:overviewDateTo, INTERVAL 1 DAY)', {
+        overviewDateTo: filters.dateTo,
+      });
     }
   }
 }

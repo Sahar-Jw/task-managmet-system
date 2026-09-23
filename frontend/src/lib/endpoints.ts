@@ -627,9 +627,9 @@ export const TeamsApi = {
   /*
    * Admin: the "Groups" page — every Team, its leader, its members.
    */
-  listAll: () =>
-    api<Team[]>(
-      '/teams',
+  listAll: (params: Record<string, string> = {}) =>
+    api<Paginated<Team>>(
+      `/teams?${new URLSearchParams(params)}`,
     ),
 
   /*
@@ -1440,8 +1440,9 @@ export const ReportsApi = {
         '/reports/user-performance',
       ),
 
-  branchOverview:
-    () =>
+  branchOverview: (
+    params: Record<string, string> = {},
+  ) =>
       api<
         {
           branchId: string;
@@ -1451,11 +1452,12 @@ export const ReportsApi = {
           overdueTasks: string;
         }[]
       >(
-        '/reports/branch-overview',
+        `/reports/branch-overview?${new URLSearchParams(params)}`,
       ),
 
-  departmentOverview:
-    () =>
+  departmentOverview: (
+    params: Record<string, string> = {},
+  ) =>
       api<
         {
           departmentId: string;
@@ -1465,7 +1467,7 @@ export const ReportsApi = {
           overdueTasks: string;
         }[]
       >(
-        '/reports/department-overview',
+        `/reports/department-overview?${new URLSearchParams(params)}`,
       ),
 };
 

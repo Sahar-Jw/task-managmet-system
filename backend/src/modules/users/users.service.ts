@@ -47,10 +47,6 @@ import {
 } from './dto/user.dto';
 
 import {
-  CreateTeamEmployeeDto,
-} from '../teams/dto/team.dto';
-
-import {
   QueryUsersDto,
 } from './dto/query-users.dto';
 
@@ -115,6 +111,9 @@ export class UsersService {
   async findAll(
     query:
       QueryUsersDto,
+
+    currentUser?:
+      UserEntity,
   ) {
     const page =
       query.page ??
@@ -147,6 +146,28 @@ export class UsersService {
           'user.role',
           'role',
         );
+
+
+    /*
+     * Non-Admins only ever see their own Team (Team Leader + that
+     * leader's employees) — this is what powers every "assign /
+     * reassign to" picker in the app. Admin keeps the unrestricted,
+     * query-filterable view (the Users admin page). A Team Leader who
+     * hasn't touched anything Team-related yet has no teamId, so they
+     * correctly see nobody until their Team is provisioned.
+     */
+    if (
+      currentUser &&
+      currentUser.role?.name !== RoleName.ADMIN
+    ) {
+      qb.andWhere(
+        'user.teamId = :scopedTeamId',
+        {
+          scopedTeamId:
+            currentUser.teamId ?? null,
+        },
+      );
+    }
 
 
     if (
@@ -1422,134 +1443,6 @@ export class UsersService {
 
       reason:
         AuditReasonCode.SELF_SERVICE_REGISTRATION,
-    });
-
-
-    return this.findById(
-      user.id,
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * TEAM LEADER ADDS AN EMPLOYEE DIRECTLY
-   * ==========================================================
-   */
-
-  async createTeamEmployee(
-    dto:
-      CreateTeamEmployeeDto,
-
-    leader:
-      UserEntity,
-  ): Promise<UserEntity> {
-    const existing =
-      await this.userRepo.findOne({
-        where: {
-          email:
-            dto.email,
-        },
-      });
-
-
-    if (
-      existing
-    ) {
-      throw new ConflictException(
-        appError('USER_WITH_EMAIL_ALREADY_EXISTS', 'A User with this email already exists'),
-      );
-    }
-
-
-    const role =
-      await this.rolesService.findByName(
-        RoleName.USER,
-      );
-
-
-    if (
-      !role
-    ) {
-      throw new BadRequestException(
-        appError('DEFAULT_USER_ROLE_NOT_CONFIGURED', 'Default USER role is not configured'),
-      );
-    }
-
-
-    const saltRounds =
-      this.configService.get<number>(
-        'security.bcryptSaltRounds',
-      ) ??
-      12;
-
-
-    const passwordHash =
-      await bcrypt.hash(
-        dto.password,
-        saltRounds,
-      );
-
-
-    const user =
-      await this.userRepo.save(
-        this.userRepo.create({
-          fullName:
-            dto.fullName,
-
-          email:
-            dto.email,
-
-          passwordHash,
-
-          phone:
-            dto.phone,
-
-          roleId:
-            role.id,
-
-          departmentId:
-            leader.departmentId ??
-            undefined,
-
-          branchId:
-            leader.branchId,
-
-          teamId:
-            leader.teamId ??
-            undefined,
-
-          createdById:
-            leader.id,
-
-          isActive:
-            true,
-        }),
-      );
-
-
-    await this.auditLogsService.record({
-      actorId:
-        leader.id,
-
-      entityType:
-        'User',
-
-      entityId:
-        user.id,
-
-      action:
-        AuditAction.CREATE,
-
-      newValue: {
-        ...user,
-
-        passwordHash:
-          undefined,
-      },
-
-      reason:
-        AuditReasonCode.TEAM_EMPLOYEE_ADDED_BY_LEADER,
     });
 
 

@@ -68,11 +68,13 @@ export class UsersController {
     return this.usersService.removeAvatar(user.id);
   }
 
-  // GET /users — Admin only 
+  // GET /users — Admin gets every User (the Users admin page). A Team
+  // Leader or employee gets only their own Team (leader + teammates) —
+  // this is what every "assign / reassign to" picker in the app uses,
+  // so scoping happens once here in the service.
   @Get()
-  // @Roles(RoleName.ADMIN)
-  findAll(@Query() query: QueryUsersDto) {
-    return this.usersService.findAll(query);
+  findAll(@Query() query: QueryUsersDto, @CurrentUser() user: UserEntity) {
+    return this.usersService.findAll(query, user);
   }
 
   // POST /users — Admin only: creates a User of any role, including

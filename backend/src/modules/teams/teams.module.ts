@@ -5,10 +5,9 @@ import { TeamEntity } from './entities/team.entity';
 import { UserEntity } from '../users/entities/user.entity';
 import { TeamsService } from './teams.service';
 import { TeamsController } from './teams.controller';
-import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TeamEntity, UserEntity]), UsersModule],
+  imports: [TypeOrmModule.forFeature([TeamEntity, UserEntity])],
   providers: [TeamsService],
   controllers: [TeamsController],
   exports: [TeamsService],

@@ -1,10 +1,8 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 import { TeamsService } from './teams.service';
-import { CreateTeamEmployeeDto } from './dto/team.dto';
-import { UsersService } from '../users/users.service';
 import { UserEntity } from '../users/entities/user.entity';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -18,7 +16,6 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class TeamsController {
   constructor(
     private readonly teamsService: TeamsService,
-    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -44,17 +41,6 @@ export class TeamsController {
   async regenerateInviteLink(@CurrentUser() user: UserEntity) {
     const team = await this.teamsService.regenerateInviteLink(user);
     return { inviteToken: team.inviteToken, inviteLink: this.buildInviteLink(team.inviteToken) };
-  }
-
-  // POST /teams/my/employees — Team Leader adds an employee directly,
-  // as an alternative to sharing the invite link.
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(RoleName.TEAM_LEADER)
-  @Post('my/employees')
-  async addEmployee(@Body() dto: CreateTeamEmployeeDto, @CurrentUser() user: UserEntity) {
-    await this.teamsService.getOrCreateForLeader(user);
-    return this.usersService.createTeamEmployee(dto, user);
   }
 
   // GET /teams — Admin only: the "Groups" page, every Team Leader's group

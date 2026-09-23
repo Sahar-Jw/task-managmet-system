@@ -622,22 +622,6 @@ export const TeamsApi = {
       },
     ),
 
-  addEmployee: (
-    data: {
-      fullName: string;
-      email: string;
-      password: string;
-      phone?: string;
-    },
-  ) =>
-    api<User>(
-      '/teams/my/employees',
-      {
-        method: 'POST',
-        body: data,
-      },
-    ),
-
   /*
    * Admin: the "Groups" page — every Team, its leader, its members.
    */

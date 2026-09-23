@@ -2887,6 +2887,7 @@ function SettingsPageContent() {
         className="
           mt-5
           grid
+          grid-cols-1
           gap-3
           sm:grid-cols-2
           lg:grid-cols-3
@@ -2916,6 +2917,7 @@ function SettingsPageContent() {
                 className={`
                   group
                   flex
+                  min-w-0
                   items-center
                   gap-3
                   rounded-2xl

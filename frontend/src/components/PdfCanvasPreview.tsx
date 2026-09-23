@@ -1,5 +1,7 @@
 'use client';
 
+
+import { uiText } from '@/lib/ui-text';
 import { useEffect, useRef, useState } from 'react';
 
 type PdfDocument = {
@@ -243,13 +245,13 @@ export default function PdfCanvasPreview({
     <div ref={containerRef} dir="ltr" className="flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-slate-100">
       {status === 'loading' && (
         <div className="flex min-h-48 flex-1 items-center justify-center text-sm text-slate-600">
-          {isArabic ? 'جارٍ تحميل ملف PDF…' : 'Loading PDF…'}
+          {uiText(isArabic, 'text1133')}
         </div>
       )}
 
       {status === 'error' && (
         <div className="flex min-h-48 flex-1 items-center justify-center p-6 text-center text-sm font-medium text-red-600">
-          {isArabic ? 'تعذّر عرض ملف PDF.' : 'Unable to display this PDF.'} {error}
+          {uiText(isArabic, 'text1134')} {error}
         </div>
       )}
 
@@ -260,12 +262,10 @@ export default function PdfCanvasPreview({
               ⚠️
             </div>
             <h3 className="mt-5 text-base font-semibold text-slate-800">
-              {isArabic ? 'المرفق فارغ' : 'Empty attachment'}
+              {uiText(isArabic, 'text1135')}
             </h3>
             <p className="mt-2 text-sm text-slate-500">
-              {isArabic
-                ? 'لا يحتوي ملف PDF على محتوى قابل للعرض.'
-                : 'This PDF contains no displayable content.'}
+              {uiText(isArabic, 'text1136')}
             </p>
           </div>
         </div>
@@ -278,7 +278,7 @@ export default function PdfCanvasPreview({
               type="button"
               className="btn-secondary min-w-10 px-3"
               disabled={pageNumber <= 1}
-              aria-label={isArabic ? 'الصفحة السابقة' : 'Previous page'}
+              aria-label={uiText(isArabic, 'text0637')}
               onClick={() => setPageNumber((page) => Math.max(1, page - 1))}
             >
               ‹
@@ -290,7 +290,7 @@ export default function PdfCanvasPreview({
               type="button"
               className="btn-secondary min-w-10 px-3"
               disabled={pageNumber >= pageCount}
-              aria-label={isArabic ? 'الصفحة التالية' : 'Next page'}
+              aria-label={uiText(isArabic, 'text0235')}
               onClick={() => setPageNumber((page) => Math.min(pageCount, page + 1))}
             >
               ›

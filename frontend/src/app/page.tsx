@@ -382,9 +382,7 @@ export default function Home() {
           setInviteError(
             err instanceof ApiError
               ? err.message
-              : isArabic
-                ? 'رابط الدعوة غير صالح أو منتهي الصلاحية'
-                : 'This invite link is invalid or has expired',
+              : uiText(isArabic, 'text1113'),
           );
         }
       } finally {
@@ -1569,9 +1567,7 @@ export default function Home() {
                           {inviteToken ? (
                             loadingInvite ? (
                               <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                                {isArabic
-                                  ? 'جارٍ التحقق من رابط الدعوة...'
-                                  : 'Checking invite link\u2026'}
+                                {uiText(isArabic, 'text1114')}
                               </div>
                             ) : invitePreview ? (
                               <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
@@ -1582,16 +1578,12 @@ export default function Home() {
                             ) : (
                               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                                 {inviteError ||
-                                  (isArabic
-                                    ? 'رابط الدعوة غير صالح أو منتهي الصلاحية'
-                                    : 'This invite link is invalid or has expired')}
+                                  (uiText(isArabic, 'text1113'))}
                               </div>
                             )
                           ) : (
                             <div className="rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-                              {isArabic
-                                ? 'ستُنشئ حسابك كقائد فريق جديد، وستحصل على رابط دعوة خاص بك لإضافة أعضاء فريقك لاحقًا.'
-                                : "You're signing up as a new Team Leader \u2014 you'll get your own team and an invite link to add your employees afterwards."}
+                              {uiText(isArabic, 'text1115')}
                             </div>
                           )}
                         </div>
@@ -1685,7 +1677,7 @@ export default function Home() {
                                   className="label"
                                   htmlFor="branchId"
                                 >
-                                  {isArabic ? 'الفرع' : 'Branch'}
+                                  {uiText(isArabic, 'text0800')}
                                 </label>
 
                                 <select
@@ -1698,7 +1690,7 @@ export default function Home() {
                                   }
                                 >
                                   <option value="">
-                                    {isArabic ? 'اختر الفرع' : 'Select branch'}
+                                    {uiText(isArabic, 'text1116')}
                                   </option>
 
                                   {branches.map((branch) => (
@@ -1716,7 +1708,7 @@ export default function Home() {
                                   className="label"
                                   htmlFor="departmentId"
                                 >
-                                  {isArabic ? 'القسم' : 'Department'}
+                                  {uiText(isArabic, 'text0866')}
                                 </label>
 
                                 <select
@@ -1729,9 +1721,7 @@ export default function Home() {
                                   }
                                 >
                                   <option value="">
-                                    {isArabic
-                                      ? 'اختر القسم'
-                                      : 'Select department'}
+                                    {uiText(isArabic, 'text1117')}
                                   </option>
 
                                   {departments.map((department) => (

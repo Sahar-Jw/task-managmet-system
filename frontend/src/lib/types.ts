@@ -209,6 +209,9 @@ export interface Project {
   createdById?:
     string;
 
+  teamId?:
+    string | null;
+
   ownerName?:
     string;
 

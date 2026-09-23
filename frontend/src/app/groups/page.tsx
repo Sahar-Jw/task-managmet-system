@@ -19,6 +19,17 @@ function t(isArabic: boolean, en: string, ar: string) {
   return isArabic ? ar : en;
 }
 
+function displayTeamName(name: string, isArabic: boolean) {
+  if (!isArabic) return name;
+
+  if (name === 'Team') return 'فريق';
+
+  const suffix = "'s Team";
+  return name.endsWith(suffix)
+    ? `${name.slice(0, -suffix.length)} - فريق`
+    : name;
+}
+
 
 function GroupsContent() {
   const locale = useLocale();
@@ -127,7 +138,7 @@ function GroupsContent() {
                 className="flex w-full items-center justify-between text-left"
               >
                 <div>
-                  <div className="font-medium text-slate-800">{team.name}</div>
+                  <div className="font-medium text-slate-800">{displayTeamName(team.name, isArabic)}</div>
                   <div className="text-xs text-slate-500">
                     {t(isArabic, 'Leader:', 'القائد:')} {team.leaderName ?? '\u2014'}
                     {team.leaderEmail ? ` (${team.leaderEmail})` : ''}

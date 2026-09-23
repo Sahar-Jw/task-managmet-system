@@ -2467,7 +2467,7 @@ function TaskDetailContent() {
           onSaved={async () => {
             await refreshTask();
             setIsEditing(false);
-            setNotice(isArabic ? 'تم حفظ تغييرات المهمة.' : 'Task changes saved.');
+            setNotice(uiText(isArabic, 'text1118'));
             router.replace(`/tasks/view?id=${task.id}`, { scroll: false });
           }}
         />

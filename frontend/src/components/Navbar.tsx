@@ -1,5 +1,7 @@
 'use client';
 
+
+import { uiText } from '@/lib/ui-text';
 import {
   useEffect,
   useRef,
@@ -524,9 +526,7 @@ export default function Navbar() {
               '/team',
 
             label:
-              locale === 'ar'
-                ? 'فريقي'
-                : 'My Team',
+              uiText(locale === 'ar', 'text1125'),
 
             icon:
               <UsersIcon />,
@@ -567,9 +567,7 @@ export default function Navbar() {
               '/groups',
 
             label:
-              locale === 'ar'
-                ? 'المجموعات'
-                : 'Groups',
+              uiText(locale === 'ar', 'text1126'),
 
             icon:
               <UsersIcon />,
@@ -933,10 +931,10 @@ export default function Navbar() {
             type="button"
             onClick={toggleMode}
             className="hidden h-9 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 xl:flex"
-            aria-label={mode === 'dark' ? (locale === 'ar' ? 'تفعيل الوضع الفاتح' : 'Use light mode') : (locale === 'ar' ? 'تفعيل الوضع الداكن' : 'Use dark mode')}
+            aria-label={mode === 'dark' ? (uiText(locale === 'ar', 'text1127')) : (uiText(locale === 'ar', 'text1128'))}
           >
             <span aria-hidden="true">{mode === 'dark' ? '☀️' : '🌙'}</span>
-            {mode === 'dark' ? (locale === 'ar' ? 'فاتح' : 'Light') : (locale === 'ar' ? 'داكن' : 'Dark')}
+            {mode === 'dark' ? (uiText(locale === 'ar', 'text1129')) : (uiText(locale === 'ar', 'text1130'))}
           </button>
 
           {/*
@@ -1341,8 +1339,8 @@ export default function Navbar() {
                       {mode === 'dark' ? '☀️' : '🌙'}
                     </span>
                     {mode === 'dark'
-                      ? (locale === 'ar' ? 'الوضع الفاتح' : 'Light mode')
-                      : (locale === 'ar' ? 'الوضع الداكن' : 'Dark mode')}
+                      ? (uiText(locale === 'ar', 'text1131'))
+                      : (uiText(locale === 'ar', 'text1132'))}
                   </button>
 
 

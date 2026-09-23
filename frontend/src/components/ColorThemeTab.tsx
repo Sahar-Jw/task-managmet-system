@@ -287,10 +287,10 @@ export default function ColorThemeTab() {
         <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
           <div className="mb-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              {isArabic ? 'مظهر الموقع' : 'Site appearance'}
+              {uiText(isArabic, 'text1119')}
             </h3>
             <p className="mt-1 text-xs text-slate-500">
-              {isArabic ? 'اختر لوحة الألوان التي تريد تعديلها. تُحفظ ألوان الوضع الفاتح والداكن بشكل مستقل.' : 'Select the color palette to edit. Light and dark colors are saved independently.'}
+              {uiText(isArabic, 'text1120')}
             </p>
           </div>
 
@@ -302,7 +302,7 @@ export default function ColorThemeTab() {
               className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition ${mode === 'light' ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-200'}`}
             >
               <span aria-hidden="true">☀️</span>
-              {isArabic ? 'الوضع الفاتح' : 'Light theme'}
+              {uiText(isArabic, 'text1121')}
             </button>
 
             <button
@@ -312,14 +312,14 @@ export default function ColorThemeTab() {
               className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition ${mode === 'dark' ? 'border-brand-500 bg-brand-50 text-brand-700 ring-2 ring-brand-100' : 'border-slate-200 bg-white text-slate-600 hover:border-brand-200'}`}
             >
               <span aria-hidden="true">🌙</span>
-              {isArabic ? 'الوضع الداكن' : 'Dark theme'}
+              {uiText(isArabic, 'text1122')}
             </button>
           </div>
 
           <p className="mt-3 text-xs font-medium text-brand-700">
             {mode === 'dark'
-              ? (isArabic ? 'أنت تعدّل الآن ألوان الوضع الداكن.' : 'You are now editing the dark theme colors.')
-              : (isArabic ? 'أنت تعدّل الآن ألوان الوضع الفاتح.' : 'You are now editing the light theme colors.')}
+              ? (uiText(isArabic, 'text1123'))
+              : (uiText(isArabic, 'text1124'))}
           </p>
         </div>
 

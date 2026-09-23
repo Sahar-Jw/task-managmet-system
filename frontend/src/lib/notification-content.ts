@@ -1,3 +1,4 @@
+import { uiText } from '@/lib/ui-text';
 import type {
   Notification,
 } from '@/lib/types';
@@ -52,163 +53,92 @@ export function localizedNotificationContent(
   const task =
     taskTitle
       ? `“${taskTitle}”`
-      : isArabic
-        ? 'المهمة'
-        : 'the task';
+      : uiText(isArabic, 'text1181');
 
   const project =
     projectName
       ? `“${projectName}”`
-      : isArabic
-        ? 'المشروع'
-        : 'the project';
+      : uiText(isArabic, 'text1182');
 
   switch (notification.type) {
     case 'TaskAssigned':
-      return isArabic
-        ? {
-            title: 'تم إسناد مهمة جديدة إليك',
-            message: actor
-              ? `قام ${actor} بإسناد ${task} إليك.`
-              : `تم إسناد ${task} إليك.`,
-          }
-        : {
-            title: 'New task assigned to you',
-            message: actor
-              ? `${actor} assigned ${task} to you.`
-              : `${task} was assigned to you.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1183'),
+        message: actor
+          ? uiText(isArabic, 'text1184', { value0: actor, value1: task })
+          : uiText(isArabic, 'text1185', { value0: task }),
+      };
 
     case 'TaskReassigned':
-      return isArabic
-        ? {
-            title: 'تمت إعادة إسناد مهمة إليك',
-            message: actor
-              ? `قام ${actor} بإعادة إسناد ${task} إليك.`
-              : `تمت إعادة إسناد ${task} إليك.`,
-          }
-        : {
-            title: 'Task reassigned to you',
-            message: actor
-              ? `${actor} reassigned ${task} to you.`
-              : `${task} was reassigned to you.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1186'),
+        message: actor
+          ? uiText(isArabic, 'text1187', { value0: actor, value1: task })
+          : uiText(isArabic, 'text1188', { value0: task }),
+      };
 
     case 'AssignmentAccepted':
-      return isArabic
-        ? {
-            title: 'تم قبول إسناد المهمة',
-            message: actor
-              ? `وافق ${actor} على إسناد ${task}.`
-              : `تم قبول إسناد ${task}.`,
-          }
-        : {
-            title: 'Assignment accepted',
-            message: actor
-              ? `${actor} accepted the assignment for ${task}.`
-              : `The assignment for ${task} was accepted.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1189'),
+        message: actor
+          ? uiText(isArabic, 'text1190', { value0: actor, value1: task })
+          : uiText(isArabic, 'text1191', { value0: task }),
+      };
 
     case 'AssignmentRejected':
-      return isArabic
-        ? {
-            title: 'تم رفض إسناد المهمة',
-            message: actor
-              ? `رفض ${actor} إسناد ${task}.`
-              : `تم رفض إسناد ${task}.`,
-          }
-        : {
-            title: 'Assignment rejected',
-            message: actor
-              ? `${actor} rejected the assignment for ${task}.`
-              : `The assignment for ${task} was rejected.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1192'),
+        message: actor
+          ? uiText(isArabic, 'text1193', { value0: actor, value1: task })
+          : uiText(isArabic, 'text1194', { value0: task }),
+      };
 
     case 'ApprovalRequested':
-      return isArabic
-        ? {
-            title: 'طلب موافقة جديد',
-            message: `توجد موافقة مطلوبة على ${task}.`,
-          }
-        : {
-            title: 'New approval request',
-            message: `Approval is required for ${task}.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1195'),
+        message: uiText(isArabic, 'text1196', { value0: task }),
+      };
 
     case 'ApprovalDecision': {
       const approved =
         decision === 'approved' ||
         (!decision && notification.title.toLowerCase().includes('approved'));
-      return isArabic
-        ? {
-            title: approved ? 'تمت الموافقة على المهمة' : 'تم رفض المهمة',
-            message: actor
-              ? `${approved ? 'وافق' : 'رفض'} ${actor} على ${task}.`
-              : `${approved ? 'تمت الموافقة على' : 'تم رفض'} ${task}.`,
-          }
-        : {
-            title: approved ? 'Task approved' : 'Task rejected',
-            message: actor
-              ? `${actor} ${approved ? 'approved' : 'rejected'} ${task}.`
-              : `${task} was ${approved ? 'approved' : 'rejected'}.`,
-          };
+      return {
+        title: approved ? uiText(isArabic, 'text1197') : uiText(isArabic, 'text1198'),
+        message: actor
+          ? uiText(isArabic, approved ? 'text1199' : 'text1200', { value0: actor, value1: task })
+          : uiText(isArabic, approved ? 'text1201' : 'text1202', { value0: task }),
+      };
     }
 
     case 'NewComment':
-      return isArabic
-        ? {
-            title: 'تعليق جديد على مهمة',
-            message: actor
-              ? `أضاف ${actor} تعليقاً على ${task}.`
-              : `تمت إضافة تعليق جديد على ${task}.`,
-          }
-        : {
-            title: 'New comment on a task',
-            message: actor
-              ? `${actor} commented on ${task}.`
-              : `A new comment was added to ${task}.`,
-          };
+      return {
+        title: uiText(isArabic, 'text1203'),
+        message: actor
+          ? uiText(isArabic, 'text1204', { value0: actor, value1: task })
+          : uiText(isArabic, 'text1205', { value0: task }),
+      };
 
     case 'TaskStatusChanged':
-      return isArabic
-        ? { title: 'تغيّرت حالة المهمة', message: `تم تحديث حالة ${task}.` }
-        : { title: 'Task status changed', message: `The status of ${task} was updated.` };
+      return { title: uiText(isArabic, 'text1206'), message: uiText(isArabic, 'text1207', { value0: task }) };
     case 'TaskCompleted':
-      return isArabic
-        ? { title: 'اكتملت المهمة', message: `تم إكمال ${task}.` }
-        : { title: 'Task completed', message: `${task} was completed.` };
+      return { title: uiText(isArabic, 'text1208'), message: uiText(isArabic, 'text1209', { value0: task }) };
     case 'TaskReopened':
-      return isArabic
-        ? { title: 'أُعيد فتح المهمة', message: `تمت إعادة فتح ${task}.` }
-        : { title: 'Task reopened', message: `${task} was reopened.` };
+      return { title: uiText(isArabic, 'text1210'), message: uiText(isArabic, 'text1211', { value0: task }) };
     case 'TaskUpdated':
-      return isArabic
-        ? { title: 'تم تحديث المهمة', message: `تم تحديث معلومات ${task}.` }
-        : { title: 'Task updated', message: `${task} was updated.` };
+      return { title: uiText(isArabic, 'text1212'), message: uiText(isArabic, 'text1213', { value0: task }) };
     case 'DueDateChanged':
-      return isArabic
-        ? { title: 'تغيّر الموعد النهائي', message: `تم تغيير الموعد النهائي لـ ${task}.` }
-        : { title: 'Due date changed', message: `The due date for ${task} changed.` };
+      return { title: uiText(isArabic, 'text1214'), message: uiText(isArabic, 'text1215', { value0: task }) };
     case 'DueDateApproaching':
-      return isArabic
-        ? { title: 'الموعد النهائي يقترب', message: `اقترب الموعد النهائي لـ ${task}.` }
-        : { title: 'Due date approaching', message: `The due date for ${task} is approaching.` };
+      return { title: uiText(isArabic, 'text1216'), message: uiText(isArabic, 'text1217', { value0: task }) };
     case 'TaskOverdue':
-      return isArabic
-        ? { title: 'المهمة متأخرة', message: `تجاوزت ${task} موعدها النهائي.` }
-        : { title: 'Task overdue', message: `${task} is past its due date.` };
+      return { title: uiText(isArabic, 'text1218'), message: uiText(isArabic, 'text1219', { value0: task }) };
     case 'ProjectUpdated':
-      return isArabic
-        ? { title: 'تم تحديث المشروع', message: `تم تحديث ${project}.` }
-        : { title: 'Project updated', message: `${project} was updated.` };
+      return { title: uiText(isArabic, 'text1220'), message: uiText(isArabic, 'text1221', { value0: project }) };
     case 'ProjectArchived':
-      return isArabic
-        ? { title: 'تمت أرشفة المشروع', message: `تمت أرشفة ${project}.` }
-        : { title: 'Project archived', message: `${project} was archived.` };
+      return { title: uiText(isArabic, 'text1222'), message: uiText(isArabic, 'text1223', { value0: project }) };
     case 'ProjectRestored':
-      return isArabic
-        ? { title: 'تمت استعادة المشروع', message: `تمت استعادة ${project}.` }
-        : { title: 'Project restored', message: `${project} was restored.` };
+      return { title: uiText(isArabic, 'text1224'), message: uiText(isArabic, 'text1225', { value0: project }) };
     default:
       return {
         title: notification.title,

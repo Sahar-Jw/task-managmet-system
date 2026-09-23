@@ -136,7 +136,7 @@ export default function TaskEditPanel({
         setTasks(taskResult.items);
       })
       .catch((loadError) => {
-        if (!cancelled) setError(loadError instanceof ApiError ? loadError.message : isArabic ? 'تعذّر تحميل خيارات التعديل.' : 'Could not load editing options.');
+        if (!cancelled) setError(loadError instanceof ApiError ? loadError.message : uiText(isArabic, 'text1153'));
       })
       .finally(() => {
         if (!cancelled) setLoadingLookups(false);
@@ -186,23 +186,23 @@ export default function TaskEditPanel({
     if (saving) return;
 
     if (!form.title.trim() || !form.taskType || !form.priority || !form.departmentId || !form.deadlineDate) {
-      setError(isArabic ? 'أكمل جميع الحقول المطلوبة.' : 'Complete all required fields.');
+      setError(uiText(isArabic, 'text1154'));
       return;
     }
     if (form.startDate && form.deadlineDate && form.deadlineDate < form.startDate) {
-      setError(isArabic ? 'يجب أن يكون الموعد النهائي بعد تاريخ البدء.' : 'Deadline must be on or after the start date.');
+      setError(uiText(isArabic, 'text1155'));
       return;
     }
     if (form.needsApproval && !form.approverId) {
-      setError(isArabic ? 'اختر الشخص المسؤول عن الموافقة.' : 'Choose an approver.');
+      setError(uiText(isArabic, 'text1156'));
       return;
     }
     if (form.needsBudget && (!form.budgetMin || !form.budgetMax)) {
-      setError(isArabic ? 'أدخل الحد الأدنى والأعلى للميزانية.' : 'Enter both minimum and maximum budget.');
+      setError(uiText(isArabic, 'text1157'));
       return;
     }
     if (form.needsBudget && Number(form.budgetMin) > Number(form.budgetMax)) {
-      setError(isArabic ? 'الحد الأدنى للميزانية لا يمكن أن يتجاوز الحد الأعلى.' : 'Minimum budget cannot exceed maximum budget.');
+      setError(uiText(isArabic, 'text1158'));
       return;
     }
 
@@ -234,7 +234,7 @@ export default function TaskEditPanel({
       }
       await onSaved();
     } catch (saveError) {
-      setError(saveError instanceof ApiError ? saveError.message : isArabic ? 'تعذّر حفظ التغييرات.' : 'Could not save changes.');
+      setError(saveError instanceof ApiError ? saveError.message : uiText(isArabic, 'text1159'));
     } finally {
       setSaving(false);
     }
@@ -248,64 +248,64 @@ export default function TaskEditPanel({
       <section className={section}>
         <div className="mb-5 flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-semibold text-slate-950">{isArabic ? 'تعديل المهمة' : 'Edit task'}</h2>
-            <p className="mt-1 text-sm text-slate-500">{isArabic ? 'يمكنك تعديل جميع معلومات المهمة وتفعيل الميزانية أو الموافقة.' : 'Edit all task information and enable budget or approval when needed.'}</p>
+            <h2 className="text-base font-semibold text-slate-950">{uiText(isArabic, 'text1160')}</h2>
+            <p className="mt-1 text-sm text-slate-500">{uiText(isArabic, 'text1161')}</p>
           </div>
-          <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{isArabic ? 'إلغاء' : 'Cancel'}</button>
+          <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{uiText(isArabic, 'text0996')}</button>
         </div>
 
         <div className="grid gap-4">
-          <div className={field}><label className="label">{isArabic ? 'العنوان *' : 'Title *'}</label><input required maxLength={255} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.title} onChange={(e) => set('title', e.target.value)} /></div>
-          <div className={field}><label className="label">{isArabic ? 'الوصف' : 'Description'}</label><textarea rows={5} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.description} onChange={(e) => set('description', e.target.value)} /></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1162')}</label><input required maxLength={255} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.title} onChange={(e) => set('title', e.target.value)} /></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text0859')}</label><textarea rows={5} className="input" dir={isArabic ? 'rtl' : 'ltr'} value={form.description} onChange={(e) => set('description', e.target.value)} /></div>
         </div>
       </section>
 
       <section className={section}>
-        <h3 className="mb-4 text-sm font-semibold text-slate-900">{isArabic ? 'التصنيف والتنظيم' : 'Classification and organization'}</h3>
+        <h3 className="mb-4 text-sm font-semibold text-slate-900">{uiText(isArabic, 'text1163')}</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className={field}><label className="label">{isArabic ? 'نوع المهمة *' : 'Task type *'}</label><select required className="input" value={form.taskType} onChange={(e) => set('taskType', e.target.value)}>{!taskTypes.some((item) => item.key === form.taskType) && <option value={form.taskType}>{form.taskType}</option>}{taskTypes.filter((item) => item.key).map((item) => <option key={item.id} value={item.key}>{settingLabel(item)}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'الأهمية *' : 'Priority *'}</label><select required className="input" value={form.priority} onChange={(e) => set('priority', e.target.value)}>{!priorities.some((item) => item.key === form.priority) && <option value={form.priority}>{form.priority}</option>}{priorities.filter((item) => item.key).map((item) => <option key={item.id} value={item.key}>{settingLabel(item)}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'لون المهمة' : 'Task color'}</label><input type="color" className="input h-11 p-1" value={form.color} onChange={(e) => set('color', e.target.value)} /></div>
-          <div className={field}><label className="label">{isArabic ? 'الفرع' : 'Branch'}</label><select className="input" value={form.branchId} onChange={(e) => set('branchId', e.target.value)}><option value="">{isArabic ? 'بدون فرع' : 'No branch'}</option>{branches.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'القسم *' : 'Department *'}</label><select required className="input" value={form.departmentId} onChange={(e) => set('departmentId', e.target.value)}><option value="">{isArabic ? 'اختر القسم' : 'Choose department'}</option>{departments.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'المشروع' : 'Project'}</label><select className="input" value={form.projectId} onChange={(e) => set('projectId', e.target.value)}><option value="">{isArabic ? 'بدون مشروع' : 'No project'}</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'المهمة الرئيسية' : 'Parent task'}</label><select className="input" value={form.parentTaskId} onChange={(e) => changeParent(e.target.value)}><option value="">{isArabic ? 'بدون مهمة رئيسية' : 'No parent task'}</option>{parentTasks.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>
-          <div className={field}><label className="label">{isArabic ? 'تاريخ البدء' : 'Start date'}</label><input type="date" className="input" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} /></div>
-          <div className={field}><label className="label">{isArabic ? 'الموعد النهائي *' : 'Deadline *'}</label><input required type="date" min={form.startDate || undefined} className="input" value={form.deadlineDate} onChange={(e) => set('deadlineDate', e.target.value)} /></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1164')}</label><select required className="input" value={form.taskType} onChange={(e) => set('taskType', e.target.value)}>{!taskTypes.some((item) => item.key === form.taskType) && <option value={form.taskType}>{form.taskType}</option>}{taskTypes.filter((item) => item.key).map((item) => <option key={item.id} value={item.key}>{settingLabel(item)}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1165')}</label><select required className="input" value={form.priority} onChange={(e) => set('priority', e.target.value)}>{!priorities.some((item) => item.key === form.priority) && <option value={form.priority}>{form.priority}</option>}{priorities.filter((item) => item.key).map((item) => <option key={item.id} value={item.key}>{settingLabel(item)}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text0562')}</label><input type="color" className="input h-11 p-1" value={form.color} onChange={(e) => set('color', e.target.value)} /></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text0800')}</label><select className="input" value={form.branchId} onChange={(e) => set('branchId', e.target.value)}><option value="">{uiText(isArabic, 'text0430')}</option>{branches.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1166')}</label><select required className="input" value={form.departmentId} onChange={(e) => set('departmentId', e.target.value)}><option value="">{uiText(isArabic, 'text1167')}</option>{departments.map((item) => <option key={item.id} value={item.id}>{settingLabel(item)}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text0801')}</label><select className="input" value={form.projectId} onChange={(e) => set('projectId', e.target.value)}><option value="">{uiText(isArabic, 'text0564')}</option>{projects.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1093')}</label><select className="input" value={form.parentTaskId} onChange={(e) => changeParent(e.target.value)}><option value="">{uiText(isArabic, 'text1168')}</option>{parentTasks.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text0860')}</label><input type="date" className="input" value={form.startDate} onChange={(e) => set('startDate', e.target.value)} /></div>
+          <div className={field}><label className="label">{uiText(isArabic, 'text1169')}</label><input required type="date" min={form.startDate || undefined} className="input" value={form.deadlineDate} onChange={(e) => set('deadlineDate', e.target.value)} /></div>
         </div>
-        {loadingLookups && <p className="mt-3 text-xs text-slate-400">{isArabic ? 'جارٍ تحميل الخيارات…' : 'Loading options…'}</p>}
+        {loadingLookups && <p className="mt-3 text-xs text-slate-400">{uiText(isArabic, 'text1170')}</p>}
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className={`${section} overflow-hidden`}>
           <div className="flex items-start justify-between gap-4">
-            <div><h3 className="text-sm font-semibold text-slate-900">{isArabic ? 'تتطلب موافقة' : 'Requires approval'}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{isArabic ? 'فعّل هذا الخيار وحدد الشخص المسؤول عن الموافقة.' : 'Enable this and choose the person responsible for approval.'}</p></div>
-            <Switch checked={form.needsApproval} label={isArabic ? 'تفعيل الموافقة' : 'Enable approval'} onChange={(value) => setForm((current) => ({ ...current, needsApproval: value, approverId: value ? current.approverId : '' }))} />
+            <div><h3 className="text-sm font-semibold text-slate-900">{uiText(isArabic, 'text1171')}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{uiText(isArabic, 'text1172')}</p></div>
+            <Switch checked={form.needsApproval} label={uiText(isArabic, 'text1173')} onChange={(value) => setForm((current) => ({ ...current, needsApproval: value, approverId: value ? current.approverId : '' }))} />
           </div>
-          {form.needsApproval && <div className="mt-4 border-t border-slate-100 pt-4"><label className="label">{isArabic ? 'الموافق *' : 'Approver *'}</label><select required className="input" value={form.approverId} onChange={(e) => set('approverId', e.target.value)}><option value="">{isArabic ? 'اختر الموافق' : 'Choose approver'}</option>{approvers.map((item) => <option key={item.id} value={item.id}>{item.fullName}{item.role.name === 'ADMIN' ? ' — Admin' : ''}</option>)}</select></div>}
+          {form.needsApproval && <div className="mt-4 border-t border-slate-100 pt-4"><label className="label">{uiText(isArabic, 'text1174')}</label><select required className="input" value={form.approverId} onChange={(e) => set('approverId', e.target.value)}><option value="">{uiText(isArabic, 'text1175')}</option>{approvers.map((item) => <option key={item.id} value={item.id}>{item.fullName}{item.role.name === 'ADMIN' ? ` — ${uiText(isArabic, 'text1226')}` : ''}</option>)}</select></div>}
         </section>
 
         <section className={`${section} overflow-hidden`}>
           <div className="flex items-start justify-between gap-4">
-            <div><h3 className="text-sm font-semibold text-slate-900">{isArabic ? 'الميزانية' : 'Budget'}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{isArabic ? 'فعّل هذا الخيار لإضافة ميزانية للمهمة.' : 'Enable this option to add a task budget.'}</p></div>
-            <Switch checked={form.needsBudget} label={isArabic ? 'تفعيل الميزانية' : 'Enable budget'} onChange={(value) => setForm((current) => ({ ...current, needsBudget: value, budgetMin: value ? current.budgetMin : '', budgetMax: value ? current.budgetMax : '', budgetCurrency: value ? current.budgetCurrency || 'SAR' : 'SAR' }))} />
+            <div><h3 className="text-sm font-semibold text-slate-900">{uiText(isArabic, 'text0150')}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{uiText(isArabic, 'text1176')}</p></div>
+            <Switch checked={form.needsBudget} label={uiText(isArabic, 'text0183')} onChange={(value) => setForm((current) => ({ ...current, needsBudget: value, budgetMin: value ? current.budgetMin : '', budgetMax: value ? current.budgetMax : '', budgetCurrency: value ? current.budgetCurrency || 'SAR' : 'SAR' }))} />
           </div>
-          {form.needsBudget && <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-3"><div><label className="label">{isArabic ? 'الحد الأدنى *' : 'Minimum *'}</label><input required type="number" min="0" step="0.01" className="input" value={form.budgetMin} onChange={(e) => set('budgetMin', e.target.value)} /></div><div><label className="label">{isArabic ? 'الحد الأعلى *' : 'Maximum *'}</label><input required type="number" min="0" step="0.01" className="input" value={form.budgetMax} onChange={(e) => set('budgetMax', e.target.value)} /></div><div><label className="label">{isArabic ? 'العملة' : 'Currency'}</label><select className="input" value={form.budgetCurrency} onChange={(e) => set('budgetCurrency', e.target.value)}><option value="SAR">{uiText(isArabic, 'text1040')}</option><option value="SYP">{uiText(isArabic, 'text1039')}</option><option value="USD">{uiText(isArabic, 'text1041')}</option><option value="EUR">{uiText(isArabic, 'text1042')}</option><option value="AED">{uiText(isArabic, 'text1043')}</option></select></div></div>}
+          {form.needsBudget && <div className="mt-4 grid gap-3 border-t border-slate-100 pt-4 sm:grid-cols-3"><div><label className="label">{uiText(isArabic, 'text1177')}</label><input required type="number" min="0" step="0.01" className="input" value={form.budgetMin} onChange={(e) => set('budgetMin', e.target.value)} /></div><div><label className="label">{uiText(isArabic, 'text1178')}</label><input required type="number" min="0" step="0.01" className="input" value={form.budgetMax} onChange={(e) => set('budgetMax', e.target.value)} /></div><div><label className="label">{uiText(isArabic, 'text0561')}</label><select className="input" value={form.budgetCurrency} onChange={(e) => set('budgetCurrency', e.target.value)}><option value="SAR">{uiText(isArabic, 'text1040')}</option><option value="SYP">{uiText(isArabic, 'text1039')}</option><option value="USD">{uiText(isArabic, 'text1041')}</option><option value="EUR">{uiText(isArabic, 'text1042')}</option><option value="AED">{uiText(isArabic, 'text1043')}</option></select></div></div>}
         </section>
       </div>
 
       <section className={section}>
         <div className="flex items-start justify-between gap-4">
-          <div><h3 className="text-sm font-semibold text-slate-900">{isArabic ? 'تنزيل المرفقات' : 'Attachment downloads'}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{isArabic ? 'السماح للمستخدم المعيّن بتنزيل مرفقات المهمة. تبقى المعاينة متاحة دائماً.' : 'Allow the assigned user to download task attachments. Preview remains available.'}</p></div>
-          <Switch checked={form.assigneeCanDownloadAttachments} label={isArabic ? 'السماح بتنزيل المرفقات' : 'Allow attachment downloads'} onChange={(value) => set('assigneeCanDownloadAttachments', value)} />
+          <div><h3 className="text-sm font-semibold text-slate-900">{uiText(isArabic, 'text1179')}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{uiText(isArabic, 'text1180')}</p></div>
+          <Switch checked={form.assigneeCanDownloadAttachments} label={uiText(isArabic, 'text0803')} onChange={(value) => set('assigneeCanDownloadAttachments', value)} />
         </div>
       </section>
 
       {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <div className="sticky bottom-3 z-20 flex flex-col-reverse gap-2 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-lg backdrop-blur sm:flex-row sm:justify-end">
-        <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{isArabic ? 'إلغاء' : 'Cancel'}</button>
-        <button type="submit" className="btn-primary" disabled={saving || loadingLookups}>{saving ? (isArabic ? 'جارٍ الحفظ…' : 'Saving…') : (isArabic ? 'حفظ التغييرات' : 'Save changes')}</button>
+        <button type="button" className="btn-secondary" disabled={saving} onClick={onCancel}>{uiText(isArabic, 'text0996')}</button>
+        <button type="submit" className="btn-primary" disabled={saving || loadingLookups}>{saving ? (uiText(isArabic, 'text1000')) : (uiText(isArabic, 'text1001'))}</button>
       </div>
     </form>
   );

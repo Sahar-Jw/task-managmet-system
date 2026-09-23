@@ -16,6 +16,7 @@ import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
 import { useListLabels } from '@/lib/list-labels-context';
 import { ArchiveIcon, DeleteIcon, EditIcon, UnarchiveIcon, FilterIcon } from '@/components/ActionIcons';
+import ProjectTaskBoard from '@/components/ProjectTaskBoard';
 
 type TaskSortBy =
   | 'createdAt'
@@ -141,6 +142,12 @@ function ProjectDetailContent() {
     () => new Map(tasks.map((task) => [task.id, task])),
     [tasks],
   );
+
+  function handleBoardTaskChanged(updatedTask: Task) {
+    setTasks((current) =>
+      current.map((task) => (task.id === updatedTask.id ? updatedTask : task)),
+    );
+  }
 
   const subTaskCountByParentId = useMemo(() => {
     const counts = new Map<string, number>();
@@ -388,6 +395,15 @@ function ProjectDetailContent() {
           </>
         )}
       </div>
+
+      <ProjectTaskBoard
+        project={project}
+        tasks={tasks}
+        user={user}
+        locale={locale}
+        getLabel={getLabel}
+        onTaskChanged={handleBoardTaskChanged}
+      />
 
       <div className="card p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

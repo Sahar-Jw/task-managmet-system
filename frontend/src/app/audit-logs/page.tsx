@@ -175,7 +175,19 @@ const REASON_TEXT_KEYS: Record<string, Parameters<typeof uiText>[1]> = {
 
 function reasonLabel(reason: string, isArabic: boolean) {
   const key = REASON_TEXT_KEYS[reason];
-  return key ? uiText(isArabic, key) : reason;
+  if (key) return uiText(isArabic, key);
+
+  const locked = reason.match(/^Locked after (\d+) consecutive failed login attempts$/);
+  if (locked) return uiText(isArabic, 'text1227', { value0: locked[1] });
+
+  const legacyReasons: Record<string, Parameters<typeof uiText>[1]> = {
+    'Password reset via forgot-password flow': 'text1228',
+    'Updated bilingual application dictionary': 'text1229',
+    'Moderated by Admin': 'text1230',
+    'Department reassignment by Admin (BR-010)': 'text1231',
+  };
+
+  return legacyReasons[reason] ? uiText(isArabic, legacyReasons[reason]) : reason;
 }
 
 

@@ -4088,6 +4088,16 @@ export class TasksService {
     }
 
 
+    if (
+      actor.role.name ===
+        RoleName.TEAM_LEADER &&
+      task.project?.teamId ===
+        actor.teamId
+    ) {
+      return;
+    }
+
+
     const isAssignee =
       await this.assignmentRepo.exist({
         where: {
@@ -4127,16 +4137,6 @@ export class TasksService {
       UserEntity,
   ):
     Promise<TaskEntity> {
-    if (
-      actor.role.name !==
-      RoleName.ADMIN
-    ) {
-      throw new ForbiddenException(
-        appError('ONLY_ADMIN_MAY_REOPEN_TASK', 'Only Admin may reopen a Task'),
-      );
-    }
-
-
     if (
       task.status !==
         TaskStatus.COMPLETED &&

@@ -905,9 +905,7 @@ export default function TaskAttachmentsPanel({
       )
     ) {
       setError(
-        isArabic
-          ? 'لا يمكن رفع ملف فارغ.'
-          : 'Empty files cannot be uploaded.',
+        uiText(isArabic, 'text1148'),
       );
 
       return;
@@ -1294,9 +1292,7 @@ export default function TaskAttachmentsPanel({
       0
     ) {
       throw new Error(
-        isArabic
-          ? 'لا يحتوي ملف Excel على أوراق قابلة للعرض.'
-          : 'This Excel file has no worksheets to preview.',
+        uiText(isArabic, 'text1149'),
       );
     }
 
@@ -2092,9 +2088,7 @@ export default function TaskAttachmentsPanel({
                     text-brand-700
                   "
                 >
-                  {isArabic
-                    ? 'جاري رفع الملفات...'
-                    : 'Uploading files...'}
+                  {uiText(isArabic, 'text1150')}
                 </span>
 
                 <span
@@ -2607,9 +2601,7 @@ export default function TaskAttachmentsPanel({
                         attachment.fileSize,
                       ) === 0 && (
                         <div className="mt-1 text-xs font-semibold text-amber-600">
-                          {isArabic
-                            ? 'هذا المرفق فارغ.'
-                            : 'This attachment is empty.'}
+                          {uiText(isArabic, 'text1151')}
                         </div>
                       )}
                     </div>
@@ -3239,14 +3231,10 @@ export default function TaskAttachmentsPanel({
                       ⚠️
                     </div>
                     <h3 className="mt-5 text-base font-semibold text-slate-800">
-                      {isArabic
-                        ? 'المرفق فارغ'
-                        : 'Empty attachment'}
+                      {uiText(isArabic, 'text1135')}
                     </h3>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
-                      {isArabic
-                        ? 'لا يحتوي هذا الملف على أي بيانات لعرضها.'
-                        : 'This file contains no data to preview.'}
+                      {uiText(isArabic, 'text1152')}
                     </p>
                   </div>
                 </div>

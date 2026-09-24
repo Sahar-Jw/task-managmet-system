@@ -19,7 +19,10 @@ interface MessageTree {
   [key: string]: string | MessageTree;
 }
 
-const DICTIONARY_CACHE_KEY = 'bilingualDictionaryCache.v1';
+// Bumped to v2 so browsers drop cached overrides that still contain the
+// removed "waiting for acceptance" wording.
+const DICTIONARY_CACHE_KEY = 'bilingualDictionaryCache.v2';
+const LEGACY_DICTIONARY_CACHE_KEYS = ['bilingualDictionaryCache.v1'];
 
 function flattenMessages(
   tree: MessageTree,
@@ -86,6 +89,14 @@ export function DictionaryProvider({ children }: { children: React.ReactNode }) 
   }, [applyEntries]);
 
   useEffect(() => {
+    try {
+      LEGACY_DICTIONARY_CACHE_KEYS.forEach((key) =>
+        localStorage.removeItem(key),
+      );
+    } catch {
+      // Storage can be disabled; nothing to clean up in that case.
+    }
+
     try {
       const cached = localStorage.getItem(DICTIONARY_CACHE_KEY);
       if (cached) {

@@ -36,7 +36,6 @@ function GroupsContent() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
-  const [isActive, setIsActive] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -51,7 +50,6 @@ function GroupsContent() {
         page: String(page),
         limit: '20',
         ...(search ? { search } : {}),
-        ...(isActive ? { isActive } : {}),
       });
       setTeams(data.items);
       setTotal(data.total);
@@ -69,7 +67,7 @@ function GroupsContent() {
 
   useEffect(() => {
     void load();
-  }, [page, search, isActive]);
+  }, [page, search]);
 
   function updateFilter(setter: (value: string) => void, value: string) {
     setPage(1);
@@ -93,22 +91,13 @@ function GroupsContent() {
         </p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div>
         <input
           className="input"
           placeholder={uiText(isArabic, 'text1248')}
           value={search}
           onChange={(event) => updateFilter(setSearch, event.target.value)}
         />
-        <select
-          className="input"
-          value={isActive}
-          onChange={(event) => updateFilter(setIsActive, event.target.value)}
-        >
-          <option value="">{uiText(isArabic, 'text1249')}</option>
-          <option value="true">{uiText(isArabic, 'text1250')}</option>
-          <option value="false">{uiText(isArabic, 'text1244')}</option>
-        </select>
       </div>
 
       {error && (
@@ -128,7 +117,7 @@ function GroupsContent() {
               <button
                 type="button"
                 onClick={() => toggle(team.id)}
-                className="flex w-full items-center justify-between text-left"
+                className="flex w-full items-center justify-between text-start"
               >
                 <div>
                   <div className="font-medium text-slate-800">{displayTeamName(team.name, isArabic)}</div>

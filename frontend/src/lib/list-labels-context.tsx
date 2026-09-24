@@ -8,11 +8,56 @@ import type { Setting, SettingType } from './types';
 
 type ListLabelsMap = Record<string, Record<string, Setting>>; // type -> key -> row
 
+export const FALLBACK_LIST_LABELS: Record<string, Record<string, string>> = {
+  task_status: {
+    Pending: 'قيد الانتظار',
+    Unassigned: 'غير مسند',
+    InProgress: 'قيد التنفيذ',
+    PendingApproval: 'قيد الموافقة',
+    Completed: 'مكتمل',
+    Reopened: 'إعادة فتح',
+    Finished: 'منتهي',
+    Archived: 'مؤرشف',
+    Planned: 'مخطط',
+    Active: 'نشط',
+    PendingAcceptance: 'قيد القبول',
+    Accepted: 'مقبول',
+    Rejected: 'مرفوض',
+    Reassigned: 'إعادة تعيين',
+  },
+  task_priority: {
+    Low: 'منخفض',
+    Medium: 'متوسط',
+    High: 'عالي',
+    Critical: 'حرج',
+  },
+  task_type: {
+    General: 'عام',
+    Administrative: 'إداري',
+    Financial: 'مالي',
+    Technical: 'تقني',
+    Maintenance: 'صيانة',
+    HR: 'الموارد البشرية',
+    Procurement: 'المشتريات',
+    Other: 'أخرى',
+  },
+  project_status: {
+    Active: 'نشط',
+    Archived: 'مؤرشف',
+    Completed: 'مكتمل',
+  },
+};
+
+export function getFallbackListLabel(type: SettingType, key: string, locale: string) {
+  const label = FALLBACK_LIST_LABELS[type]?.[key];
+  if (!label) return key;
+  return locale === 'ar' ? label : key;
+}
+
 interface ListLabelsContextValue {
   /** Resolves a status/type/priority machine key to its label in the
-   * current interface language. Falls back to the raw key itself if the
-   * lookup hasn't loaded yet or the key isn't found (e.g. legacy data),
-   * so display never breaks — it just temporarily shows the raw key. */
+   * current interface language. Falls back to a predefined Arabic label when
+   * the list entry is not available yet or the key is a legacy enum value. */
   getLabel: (type: SettingType, key: string) => string;
   /** Call after adding/editing/deleting an entry on the Statuses & Types
    * tab so every badge/label across the app picks up the change without
@@ -55,7 +100,7 @@ export function ListLabelsProvider({ children }: { children: React.ReactNode }) 
   const getLabel = useCallback(
     (type: SettingType, key: string) => {
       const row = map[type]?.[key];
-      if (!row) return key;
+      if (!row) return getFallbackListLabel(type, key, locale);
       const label = locale === 'ar' ? row.codeAr : row.codeEn;
       // No label in the current language (e.g. it was only ever added in
       // the other one) — fall back to the raw key rather than showing

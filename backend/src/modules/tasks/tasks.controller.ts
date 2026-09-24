@@ -78,7 +78,7 @@ export class TasksController {
 
   // BR-028 to BR-031: Admin or User may create
   @Post()
-  @Roles(RoleName.ADMIN, RoleName.USER)
+  @Roles(RoleName.ADMIN, RoleName.TEAM_LEADER, RoleName.USER)
   create(@Body() dto: CreateTaskDto, @CurrentUser() user: UserEntity) {
     return this.tasksService.create(dto, user);
   }

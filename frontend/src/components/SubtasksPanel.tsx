@@ -664,25 +664,12 @@ export default function SubtasksPanel({
       if (
         form.assigneeId
       ) {
-        const assignment =
-          await AssignmentsApi.assign(
-            createdTask.id,
-            form.assigneeId,
-            form.deadlineDate ||
-              undefined,
-          ) as
-            TaskAssignment;
-
-
-        if (
-          form.assigneeId ===
-            user?.id &&
-          assignment?.id
-        ) {
-          await AssignmentsApi.accept(
-            assignment.id,
-          );
-        }
+        await AssignmentsApi.assign(
+          createdTask.id,
+          form.assigneeId,
+          form.deadlineDate ||
+            undefined,
+        );
       }
 
 

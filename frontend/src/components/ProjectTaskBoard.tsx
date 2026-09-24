@@ -5,6 +5,7 @@ import { uiText } from '@/lib/ui-text';
 import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/StatusBadge';
+import Avatar from '@/components/Avatar';
 import ReasonModal from '@/components/ReasonModal';
 import { ApiError } from '@/lib/api';
 import { TasksApi } from '@/lib/endpoints';
@@ -68,6 +69,11 @@ export default function ProjectTaskBoard({
   const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
   const [boardError, setBoardError] = useState('');
   const draggedRef = useRef(false);
+  const [hoveredTask, setHoveredTask] = useState<{
+    task: Task;
+    top: number;
+    left: number;
+  } | null>(null);
   const [reasonRequest, setReasonRequest] = useState<{
     task: Task;
     nextStatus: string;
@@ -165,22 +171,23 @@ export default function ProjectTaskBoard({
 
       {view === 'tracker' ? (
         <div className="mt-5 overflow-x-auto">
-          <div className="min-w-[760px]">
-            <div className="mb-2 grid grid-cols-[minmax(220px,1.2fr)_minmax(520px,2fr)] gap-3 text-xs font-medium text-slate-400">
-              <span>{uiText(isArabic, 'text1145')}</span>
+          <div className="min-w-[400px] w-full">
+            <div className="mb-2 text-xs font-medium text-slate-400">
               <div className="relative h-6">
                 {timelineTicks.map((tick) => (
                   <span
                     key={tick.position}
                     className="absolute -translate-x-1/2 whitespace-nowrap"
-                    style={{ left: `${tick.position}%` }}
+                    style={{
+                      [isArabic ? 'right' : 'left']: `${tick.position}%`,
+                    }}
                   >
                     {tick.label}
                   </span>
                 ))}
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {tasks.length === 0 ? (
                 <p className="py-6 text-center text-sm text-slate-400">{uiText(isArabic, 'text1146')}</p>
               ) : tasks.map((task) => {
@@ -199,8 +206,7 @@ export default function ProjectTaskBoard({
                 const isFinished = task.status === 'Finished';
                 const isOverdue = Boolean(
                   task.deadlineDate &&
-                  task.deadlineDate < today &&
-                  !['Completed', 'Finished', 'Archived'].includes(task.status),
+                  task.deadlineDate < today,
                 );
                 const barTrackClass = isFinished
                   ? 'bg-slate-200'
@@ -217,32 +223,46 @@ export default function ProjectTaskBoard({
                     ? 'bg-red-600'
                     : 'bg-brand-500';
                 return (
-                  <div key={task.id} className="grid grid-cols-[minmax(220px,1.2fr)_minmax(520px,2fr)] items-center gap-3 rounded-lg border border-slate-100 px-3 py-2">
-                    <Link href={`/tasks/view?id=${task.id}`} className="min-w-0 hover:text-brand-700">
-                      <div className="truncate text-sm font-medium text-slate-800">{task.title}</div>
-                      <div className="mt-1 text-xs text-slate-400">{formatDate(taskStart, locale)} - {formatDate(task.deadlineDate, locale)}</div>
-                    </Link>
+                  <div key={task.id} className="rounded-lg border border-slate-100 px-2 py-1">
                     <div
-                      className="relative h-8 overflow-hidden rounded border border-slate-100 bg-slate-50"
+                      className="relative h-9 rounded border border-slate-100 bg-slate-50"
                       style={{
                         backgroundImage: 'linear-gradient(to right, rgba(148, 163, 184, 0.2) 1px, transparent 1px)',
                         backgroundSize: '14.2857% 100%',
                       }}
                     >
                       <div
-                        className="absolute top-1.5 h-5 overflow-hidden rounded"
-                        style={{ left: `${left}%`, width: `${barWidth}%` }}
-                        title={getLabel('task_status', task.status)}
-                      >
+                        className="absolute inset-0 overflow-hidden rounded"
+                        aria-label={task.title}
+                      />
+                      <div className="group absolute top-1.5 h-5 rounded" style={{
+                        [isArabic ? 'right' : 'left']: `${left}%`,
+                        width: `${barWidth}%`,
+                      }} onMouseEnter={(event) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        setHoveredTask({
+                          task,
+                          top: Math.min(window.innerHeight - 180, rect.bottom + 8),
+                          left: Math.max(8, Math.min(window.innerWidth - 248, rect.left)),
+                        });
+                      }} onMouseLeave={() => setHoveredTask(null)}>
+                        <div
+                        className="absolute inset-0 overflow-hidden rounded"
+                        style={{
+                          width: '100%',
+                        }}
+                        title={`${task.title} - ${task.assignedTo?.fullName || uiText(isArabic, 'text0014')} - ${getLabel('task_status', task.status)}`}
+                        >
                         <div className={`absolute inset-0 ${barTrackClass}`} />
                         <div
-                          className={`absolute inset-y-0 left-0 ${barProgressClass}`}
+                          className={`absolute inset-y-0 ${isArabic ? 'right-0' : 'left-0'} ${barProgressClass}`}
                           style={{
                             width: `${progress}%`,
                           }}
                         />
+                        </div>
+                        </div>
                       </div>
-                    </div>
                   </div>
                 );
               })}
@@ -260,11 +280,33 @@ export default function ProjectTaskBoard({
               <div className="space-y-2">
                 {tasks.filter((task) => task.status === status).map((task) => {
                   const movable = canMoveTask(task, project, user);
+                  const saving = savingTaskId === task.id;
+                  const nextStatuses = (ALLOWED_TRANSITIONS[task.status] || [])
+                    .filter((nextStatus) => statuses.includes(nextStatus as TaskStatus));
                   return (
-                    <div key={task.id} draggable={movable && savingTaskId !== task.id} onDragStart={() => { draggedRef.current = true; setDraggedTaskId(task.id); }} className={`rounded-lg border bg-white p-3 shadow-sm ${movable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-80'}`}>
+                    <div key={task.id} draggable={movable && !saving} onDragStart={() => { draggedRef.current = true; setDraggedTaskId(task.id); }} className={`rounded-lg border bg-white p-3 shadow-sm ${movable ? 'cursor-grab active:cursor-grabbing' : 'cursor-default opacity-80'}`}>
                       <Link href={`/tasks/view?id=${task.id}`} onClick={(event) => { if (draggedRef.current) { event.preventDefault(); draggedRef.current = false; } }} className="block text-sm font-medium text-slate-800 hover:text-brand-700">{task.title}</Link>
-                      <div className="mt-2 flex flex-wrap gap-1.5"><StatusBadge value={task.priority} listType="task_priority" />{task.assignedTo && <span className="text-xs text-slate-500">{task.assignedTo.fullName}</span>}</div>
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5"><StatusBadge value={task.priority} listType="task_priority" />{task.assignedTo && <span className="flex items-center gap-1 text-xs text-slate-500"><Avatar name={task.assignedTo.fullName} avatarUrl={task.assignedTo.avatarUrl} size="sm" />{task.assignedTo.fullName}</span>}</div>
+                      {task.deadlineDate && task.deadlineDate < new Date().toISOString().slice(0, 10) && (
+                        <span className="mt-2 inline-flex rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 ring-1 ring-red-100">
+                          {uiText(isArabic, 'text0285')}
+                        </span>
+                      )}
                       <div className="mt-2 text-xs text-slate-400">{formatDate(task.startDate, locale)} - {formatDate(task.deadlineDate, locale)}</div>
+                      {movable && nextStatuses.length > 0 && (
+                        <select
+                          className="input mt-3 min-h-9 py-1 text-xs md:hidden"
+                          value=""
+                          disabled={saving}
+                          onChange={(event) => void moveTask(task, event.target.value)}
+                        >
+                          <option value="">{saving ? uiText(isArabic, 'text1257') : uiText(isArabic, 'text1258')}</option>
+                          {nextStatuses.map((nextStatus) => (
+                            <option key={nextStatus} value={nextStatus}>{getLabel('task_status', nextStatus)}</option>
+                          ))}
+                        </select>
+                      )}
+                      {saving && <span className="mt-2 inline-flex items-center gap-2 text-xs text-brand-700"><span className="h-3 w-3 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />{uiText(isArabic, 'text1257')}</span>}
                       {!movable && <div className="mt-2 text-[11px] text-slate-400">{uiText(isArabic, 'text1147')}</div>}
                     </div>
                   );
@@ -272,6 +314,33 @@ export default function ProjectTaskBoard({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {hoveredTask && (
+        <div
+          className="pointer-events-none fixed z-[70] w-60 max-w-[calc(100vw-1rem)] rounded-xl border border-slate-200 bg-white p-3 text-start shadow-xl"
+          dir={isArabic ? 'rtl' : 'ltr'}
+          style={{ top: hoveredTask.top, left: hoveredTask.left }}
+        >
+          <div className="font-semibold text-slate-800">{hoveredTask.task.title}</div>
+          <div className="mt-2 flex items-center gap-2 text-xs text-slate-500">
+            {hoveredTask.task.assignedTo ? (
+              <Avatar name={hoveredTask.task.assignedTo.fullName} avatarUrl={hoveredTask.task.assignedTo.avatarUrl} size="sm" />
+            ) : null}
+            <span>{hoveredTask.task.assignedTo?.fullName || uiText(isArabic, 'text0014')}</span>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <StatusBadge value={hoveredTask.task.status} listType="task_status" />
+            {hoveredTask.task.deadlineDate && hoveredTask.task.deadlineDate < new Date().toISOString().slice(0, 10) && (
+              <span className="rounded-full bg-red-50 px-2 py-0.5 font-semibold text-red-700 ring-1 ring-red-100">
+                {uiText(isArabic, 'text0285')}
+              </span>
+            )}
+            <span>
+              {formatDate(hoveredTask.task.startDate || hoveredTask.task.createdAt.slice(0, 10), locale)} - {formatDate(hoveredTask.task.deadlineDate, locale)}
+            </span>
+          </div>
         </div>
       )}
 

@@ -980,10 +980,7 @@ function TaskDetailContent() {
       ) =>
         assignment.assigneeId ===
           user.id &&
-        (assignment.status ===
-          'Accepted' ||
-          assignment.status ===
-            'Completed'),
+        !['Rejected', 'Reassigned', 'Completed'].includes(assignment.status),
     );
 
   const canRate =
@@ -1060,10 +1057,7 @@ function TaskDetailContent() {
       (
         assignment,
       ) =>
-        assignment.status ===
-          'PendingAcceptance' ||
-        assignment.status ===
-          'Accepted',
+        !['Rejected', 'Reassigned'].includes(assignment.status),
     );
 
 
@@ -1077,41 +1071,14 @@ function TaskDetailContent() {
     );
 
 
-  const stalePendingAssignment =
-    assignments.find(
-      (
-        assignment,
-      ) =>
-        assignment.status ===
-          'PendingAcceptance' &&
-        assignmentAgeInDays(
-          assignment,
-        ) >=
-          REASSIGN_AFTER_DAYS,
-    );
-
-
-  const myPendingAssignment =
+  const myActiveAssignment =
     assignments.find(
       (
         assignment,
       ) =>
         assignment.assigneeId ===
           user?.id &&
-        assignment.status ===
-          'PendingAcceptance',
-    );
-
-
-  const myAcceptedAssignment =
-    assignments.find(
-      (
-        assignment,
-      ) =>
-        assignment.assigneeId ===
-          user?.id &&
-        assignment.status ===
-          'Accepted',
+        !['Rejected', 'Reassigned', 'Completed'].includes(assignment.status),
     );
 
 
@@ -1143,8 +1110,7 @@ function TaskDetailContent() {
    */
 
   const assignmentToReassign =
-    latestRejectedAssignment ||
-    stalePendingAssignment;
+    latestRejectedAssignment;
 
 
   const canReassign =
@@ -1288,27 +1254,6 @@ function TaskDetailContent() {
         []
       ),
     ];
-
-
-  /*
-   * ==========================================================
-   * ASSIGNMENT ACCEPTANCE RULE
-   * ==========================================================
-   */
-
-  if (
-    currentAssignment?.status ===
-    'PendingAcceptance'
-  ) {
-    nextStatuses =
-      nextStatuses.filter(
-        (
-          status,
-        ) =>
-          status !==
-          'InProgress',
-      );
-  }
 
 
   /*
@@ -2079,7 +2024,7 @@ function TaskDetailContent() {
                   </button>
                 )}
 
-             {myAcceptedAssignment && task.status !== 'Completed' && (
+             {myActiveAssignment && task.status !== 'Completed' && (
   <button
     type="button"
     disabled={assignmentBusy}
@@ -2100,7 +2045,7 @@ function TaskDetailContent() {
           withFeedback(
             () =>
               AssignmentsApi.reject(
-                myAcceptedAssignment.id,
+                myActiveAssignment.id,
                 reason,
               ),
             uiText(isArabic, 'text0493'),
@@ -2653,127 +2598,9 @@ function TaskDetailContent() {
                     </div>
 
 
-                    {currentAssignment.status ===
-                      'PendingAcceptance' && (
-                      <div
-                        className="
-                          rounded-xl
-                          bg-amber-50
-                          px-3
-                          py-2
-                          text-xs
-                          font-semibold
-                          text-amber-700
-                        "
-                      >
-                        {uiText(isArabic, 'text0490')}
-                      </div>
-                    )}
-
-
-                    {currentAssignment.status ===
-                      'Accepted' && (
-                      <div
-                        className="
-                          rounded-xl
-                          bg-emerald-50
-                          px-3
-                          py-2
-                          text-xs
-                          font-semibold
-                          text-emerald-700
-                        "
-                      >
-                        ✓{' '}
-
-                        {uiText(isArabic, 'text0056')}
-                      </div>
-                    )}
                   </div>
 
 
-                  {currentAssignment.status ===
-                    'PendingAcceptance' && (
-                    <div
-                      className="
-                        mt-4
-                        border-t
-                        border-slate-100
-                        pt-4
-                      "
-                    >
-                      <div
-                        className="
-                          flex
-                          flex-wrap
-                          items-center
-                          justify-between
-                          gap-4
-                        "
-                      >
-                        <div>
-                          <div
-                            className="
-                              text-xs
-                              text-slate-400
-                            "
-                          >
-                            {uiText(isArabic, 'text0118')}
-                          </div>
-
-                          <div
-                            className="
-                              mt-1
-                              text-sm
-                              font-semibold
-                              text-slate-700
-                            "
-                          >
-                            {Math.floor(
-                              assignmentAgeInDays(
-                                currentAssignment,
-                              ),
-                            )}{' '}
-
-                            {uiText(isArabic, 'text0119')}
-                          </div>
-                        </div>
-
-
-                        {!stalePendingAssignment && (
-                          <div
-                            className="
-                              text-end
-                            "
-                          >
-                            <div
-                              className="
-                                text-xs
-                                text-slate-400
-                              "
-                            >
-                              {uiText(isArabic, 'text0120')}
-                            </div>
-
-                            <div
-                              className="
-                                mt-1
-                                text-sm
-                                font-semibold
-                                text-amber-700
-                              "
-                            >
-                              {assignmentDaysRemaining(
-                                currentAssignment,
-                              )}{' '}
-
-                              {uiText(isArabic, 'text0119')}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div
@@ -2827,165 +2654,7 @@ function TaskDetailContent() {
               )}
 
 
-              {/*
-               * =================================================
-               * ACCEPT / REJECT
-               * =================================================
-               */}
-
-              {myPendingAssignment &&
-                task.status !==
-                  'Completed' && (
-                <div
-                  className="
-                    mt-4
-                    rounded-xl
-                    border
-                    border-brand-200
-                    bg-brand-50/60
-                    p-4
-                  "
-                >
-                  <div
-                    className="
-                      flex
-                      items-start
-                      gap-3
-                    "
-                  >
-                    <div
-                      className="
-                        flex
-                        h-9
-                        w-9
-                        shrink-0
-                        items-center
-                        justify-center
-                        rounded-xl
-                        bg-brand-100
-                        font-bold
-                        text-brand-700
-                      "
-                    >
-                      !
-                    </div>
-
-                    <div>
-                      <div
-                        className="
-                          font-semibold
-                          text-brand-900
-                        "
-                      >
-                        {uiText(isArabic, 'text0122')}
-                      </div>
-
-                      <p
-                        className="
-                          mt-1
-                          text-sm
-                          leading-6
-                          text-brand-700
-                        "
-                      >
-                        {uiText(isArabic, 'text0492')}
-                      </p>
-                    </div>
-                  </div>
-
-
-                  <div
-                    className="
-                      mt-4
-                      flex
-                      flex-wrap
-                      gap-2
-                    "
-                  >
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      disabled={
-                        assignmentBusy
-                      }
-                      onClick={() => {
-                        setAssignmentBusy(
-                          true,
-                        );
-
-
-                        withFeedback(
-                          () =>
-                            AssignmentsApi.accept(
-                              myPendingAssignment.id,
-                            ),
-
-                          uiText(isArabic, 'text0123'),
-                        ).finally(
-                          () =>
-                            setAssignmentBusy(
-                              false,
-                            ),
-                        );
-                      }}
-                    >
-                      {uiText(isArabic, 'text0124')}
-                    </button>
-
-
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      disabled={
-                        assignmentBusy
-                      }
-                      onClick={() =>
-                        setReasonModal({
-                          title:
-                            uiText(isArabic, 'text0125'),
-
-                          description:
-                            uiText(isArabic, 'text0126'),
-
-                          minLength:
-                            10,
-
-                          confirmLabel:
-                            uiText(isArabic, 'text0127'),
-
-                          danger:
-                            true,
-
-                          onConfirm:
-                            (
-                              reason,
-                            ) => {
-                              setReasonModal(
-                                null,
-                              );
-
-
-                              withFeedback(
-                                () =>
-                                  AssignmentsApi.reject(
-                                    myPendingAssignment.id,
-                                    reason,
-                                  ),
-
-                                uiText(isArabic, 'text0493'),
-                              );
-                            },
-                        })
-                      }
-                    >
-                      {uiText(isArabic, 'text0125')}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-
-              {myAcceptedAssignment && (
+              {false && (
                 <div
                   className="
                     mt-4
@@ -3014,10 +2683,7 @@ function TaskDetailContent() {
                * =================================================
                */}
 
-              {canManageAssignment &&
-                currentAssignment?.status ===
-                  'PendingAcceptance' &&
-                !stalePendingAssignment && (
+              {false && (
                   <div
                     className="
                       mt-4
@@ -3085,9 +2751,7 @@ function TaskDetailContent() {
                * =================================================
                */}
 
-              {canManageAssignment &&
-                currentAssignment?.status ===
-                  'Accepted' && (
+              {false && (
                   <div
                     className="
                       mt-4
@@ -3731,8 +3395,7 @@ function TaskDetailContent() {
             </div>
 
 
-            {currentAssignment?.status ===
-              'PendingAcceptance' && (
+            {false && (
               <div
                 className="
                   mt-4
@@ -4479,37 +4142,6 @@ function TaskDetailContent() {
                 divide-slate-100
               "
             >
-              <InfoRow
-                label={
-                  uiText(isArabic, 'text0517')
-                }
-              >
-                {currentAssignment
-                  ?.assignee
-                  ?.fullName ||
-                  (
-                    uiText(isArabic, 'text0115')
-                  )}
-              </InfoRow>
-
-
-              <InfoRow
-                label={
-                  uiText(isArabic, 'text0146')
-                }
-              >
-                {currentAssignment ? (
-                  <StatusBadge
-                    value={
-                      currentAssignment.status
-                    }
-                  />
-                ) : (
-                  '—'
-                )}
-              </InfoRow>
-
-
               <InfoRow
                 label={
                   uiText(isArabic, 'text0483')

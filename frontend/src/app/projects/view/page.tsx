@@ -28,6 +28,13 @@ type TaskSortBy =
 
 type TaskSortDir = 'asc' | 'desc';
 
+function isOverdueTask(task: Task) {
+  return Boolean(
+    task.deadlineDate &&
+    task.deadlineDate < new Date().toISOString().slice(0, 10),
+  );
+}
+
 function ProjectDetailContent() {
   const id = useSearchParams().get('id') ?? '';
   const router = useRouter();
@@ -529,6 +536,11 @@ function ProjectDetailContent() {
                     <StatusBadge value={task.taskType} listType="task_type" />
                     <StatusBadge value={task.priority} listType="task_priority" />
                     <StatusBadge value={task.status} listType="task_status" />
+                    {isOverdueTask(task) && (
+                      <span className="badge bg-red-50 text-red-700 ring-1 ring-red-100">
+                        {uiText(isArabic, 'text0285')}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-500 sm:grid-cols-4">

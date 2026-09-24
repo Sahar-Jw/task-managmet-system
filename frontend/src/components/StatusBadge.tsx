@@ -1,6 +1,7 @@
 'use client';
 
-import { useListLabels } from '@/lib/list-labels-context';
+import { useLocale } from 'next-intl';
+import { FALLBACK_LIST_LABELS, useListLabels } from '@/lib/list-labels-context';
 import type { SettingType } from '@/lib/types';
 
 const COLORS: Record<string, string> = {
@@ -41,7 +42,14 @@ const COLORS: Record<string, string> = {
  * type this badge doesn't cover) to fall back to printing `value` as-is.
  */
 export default function StatusBadge({ value, listType }: { value: string; listType?: SettingType }) {
+  const locale = useLocale();
   const { getLabel } = useListLabels();
-  const label = listType ? getLabel(listType, value) : value;
+
+  const label = listType
+    ? getLabel(listType, value)
+    : locale === 'ar'
+      ? FALLBACK_LIST_LABELS.task_status[value] || FALLBACK_LIST_LABELS.task_priority[value] || value
+      : value;
+
   return <span className={`badge ${COLORS[value] || 'bg-slate-100 text-slate-700'}`}>{label}</span>;
 }

@@ -686,6 +686,20 @@ function TaskDetailContent() {
     } catch (
       err
     ) {
+      /*
+       * 403 = the User rejected this Task and no longer has
+       * access (direct link, notification, browser history...).
+       */
+      if (
+        err instanceof
+          ApiError &&
+        err.status ===
+          403
+      ) {
+        router.replace('/tasks/mine');
+        return;
+      }
+
       setError(
         err instanceof
           ApiError
@@ -720,6 +734,16 @@ function TaskDetailContent() {
     } catch (
       err
     ) {
+      if (
+        err instanceof
+          ApiError &&
+        err.status ===
+          403
+      ) {
+        router.replace('/tasks/mine');
+        return;
+      }
+
       setError(
         err instanceof
           ApiError
@@ -2038,20 +2062,44 @@ function TaskDetailContent() {
         minLength: 10,
         confirmLabel: uiText(isArabic, 'text0127'),
         danger: true,
-        onConfirm: (reason) => {
+        onConfirm: async (reason) => {
           setReasonModal(null);
           setAssignmentBusy(true);
 
-          withFeedback(
-            () =>
-              AssignmentsApi.reject(
-                myActiveAssignment.id,
-                reason,
-              ),
-            uiText(isArabic, 'text0493'),
-          ).finally(() =>
-            setAssignmentBusy(false),
-          );
+          /*
+           * Admin / creator keep access to the Task, so they stay
+           * on the page. Everyone else is sent out after rejecting.
+           */
+          if (isAdmin || isCreator) {
+            await withFeedback(
+              () =>
+                AssignmentsApi.reject(
+                  myActiveAssignment.id,
+                  reason,
+                ),
+              uiText(isArabic, 'text0493'),
+            );
+
+            setAssignmentBusy(false);
+            return;
+          }
+
+          try {
+            await AssignmentsApi.reject(
+              myActiveAssignment.id,
+              reason,
+            );
+
+            router.replace('/tasks/mine');
+          } catch (err) {
+            setError(
+              err instanceof ApiError
+                ? err.message
+                : uiText(isArabic, 'text0479'),
+            );
+
+            setAssignmentBusy(false);
+          }
         },
       })
     }

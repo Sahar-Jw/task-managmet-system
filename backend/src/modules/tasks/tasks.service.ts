@@ -2344,6 +2344,9 @@ export class TasksService {
   async findOne(
     id:
       string,
+
+    user?:
+      UserEntity,
   ):
     Promise<TaskEntity> {
     const task =
@@ -2363,6 +2366,66 @@ export class TasksService {
       throw new NotFoundException(
         appError('TASK_NOT_FOUND', 'Task not found'),
       );
+    }
+
+
+    /*
+     * A User who REJECTED their assignment loses access to the Task
+     * (details page, notification links, direct URL).
+     *
+     * Admin and the Task creator always keep access. If the User is
+     * later assigned again (a new, non-rejected assignment), access
+     * comes back automatically.
+     */
+    if (
+      user &&
+      user.role?.name !==
+        RoleName.ADMIN &&
+      task.createdById !==
+        user.id &&
+      task.assignedToId !==
+        user.id
+    ) {
+      const mine =
+        (
+          task.assignments ||
+          []
+        ).filter(
+          (
+            assignment,
+          ) =>
+            assignment.assigneeId ===
+            user.id,
+        );
+
+      const rejected =
+        mine.some(
+          (
+            assignment,
+          ) =>
+            assignment.status ===
+            AssignmentStatus.REJECTED,
+        );
+
+      const stillAssigned =
+        mine.some(
+          (
+            assignment,
+          ) =>
+            assignment.status !==
+              AssignmentStatus.REJECTED &&
+            assignment.status !==
+              AssignmentStatus.REASSIGNED,
+        );
+
+      if (
+        rejected &&
+        !stillAssigned
+      ) {
+        throw new ForbiddenException(
+          appError('TASK_ACCESS_REMOVED_AFTER_REJECTION', 'You rejected this Task and can no longer access it'),
+        );
+      }
     }
 
 

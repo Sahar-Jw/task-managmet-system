@@ -3750,18 +3750,12 @@ function NewTaskContent() {
                   />
 
 
-                  {form.assignmentUserId ? (
-                    <p
-                      className="
-                        mt-2
-                        text-xs
-                        leading-5
-                        text-slate-500
-                      "
-                    >
-                      {uiText(isArabic, 'text0566')}
-                    </p>
-                  ) : (
+                  {/*
+                   * Assignments are accepted by default, so no
+                   * "pending acceptance" hint is shown once a user
+                   * is selected.
+                   */}
+                  {!form.assignmentUserId && (
                     <p
                       className="
                         mt-2

@@ -72,8 +72,8 @@ export class TasksController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(id);
+  findOne(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.tasksService.findOne(id, user);
   }
 
   // BR-028 to BR-031: Admin or User may create

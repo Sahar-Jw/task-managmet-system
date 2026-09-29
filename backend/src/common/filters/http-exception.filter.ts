@@ -128,6 +128,7 @@ const EXACT_AR: Record<string, string> = {
   'Only Admin may create organization settings': 'يمكن للمسؤول فقط إنشاء إعدادات الفروع والأقسام والمؤسسة.',
   'An approver is required when the Task needs approval': 'المعتمد مطلوب عند تفعيل الموافقة للمهمة.',
   "Assignment due date cannot exceed the parent Task's due date": 'لا يمكن أن يتجاوز موعد التكليف النهائي موعد المهمة الرئيسية.',
+  'You rejected this Task and can no longer access it': 'لقد رفضت هذه المهمة ولم يعد بإمكانك الوصول إليها.',
   'This Assignment is not active and cannot be rejected': 'هذا التكليف غير نشط ولا يمكن رفضه.',
   'Avatar must be an image (png, jpg, jpeg, webp, gif)': 'يجب أن تكون الصورة الرمزية بصيغة png أو jpg أو jpeg أو webp أو gif.',
   'Cannot attach a Task to an archived Parent Task': 'لا يمكن ربط مهمة بمهمة رئيسية مؤرشفة.',

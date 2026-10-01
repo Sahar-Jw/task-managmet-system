@@ -1,7 +1,6 @@
 import { Column, Entity, Index, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { TaskEntity } from '../../tasks/entities/task.entity';
 import { UserEntity } from '../../users/entities/user.entity';
-import { AssignmentApprovalEntity } from '../../assignment-approvals/entities/assignment-approval.entity';
 import { TaskAttachmentEntity } from '../../task-attachments/entities/task-attachment.entity';
 import { VersionedEntity } from '../../../shared/entities/versioned-base.entity';
 import { AssignmentStatus } from '../../../shared/enums/assignment-status.enum';
@@ -51,9 +50,6 @@ export class TaskAssignmentEntity extends VersionedEntity {
 
   @Column({ name: 'rejected_at', type: 'timestamp', nullable: true })
   rejectedAt?: Date;
-
-  @OneToMany(() => AssignmentApprovalEntity, (a) => a.assignment)
-  approvals!: AssignmentApprovalEntity[];
 
   @OneToMany(() => TaskAttachmentEntity, (a) => a.assignment)
   attachments!: TaskAttachmentEntity[];

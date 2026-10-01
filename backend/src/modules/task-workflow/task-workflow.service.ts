@@ -123,26 +123,6 @@ export const TASK_WORKFLOW_ACTIONS:
 
   {
     key:
-      TaskWorkflowActionKey.SUBMIT_APPROVAL,
-
-    targetStatus:
-      TaskStatus.PENDING_APPROVAL,
-
-    labelEn:
-      'Submit for approval',
-
-    labelAr:
-      'إرسال للموافقة',
-
-    descriptionEn:
-      'Send work to the configured approver.',
-
-    descriptionAr:
-      'إرسال العمل إلى المستخدم المسؤول عن الموافقة.',
-  },
-
-  {
-    key:
       TaskWorkflowActionKey.COMPLETE,
 
     targetStatus:
@@ -648,35 +628,6 @@ export class TaskWorkflowService {
     action:
       TaskWorkflowActionDefinition,
   ) {
-    /*
-     * Approval is only relevant on Tasks that need approval.
-     */
-    if (
-      action.key ===
-        TaskWorkflowActionKey.SUBMIT_APPROVAL
-    ) {
-      return Boolean(
-        task.needsApproval &&
-        task.approverId,
-      );
-    }
-
-
-    /*
-     * A Task requiring approval cannot directly Complete until
-     * its approval is already Approved.
-     */
-    if (
-      action.key ===
-        TaskWorkflowActionKey.COMPLETE &&
-      task.needsApproval &&
-      task.approvalStatus !==
-        ApprovalStatus.APPROVED
-    ) {
-      return false;
-    }
-
-
     return true;
   }
 

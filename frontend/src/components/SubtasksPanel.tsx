@@ -976,10 +976,7 @@ export default function SubtasksPanel({
 
 
                     const childInProgress =
-                      [
-                        'InProgress',
-                        'PendingApproval',
-                      ].includes(
+                      ['InProgress'].includes(
                         child.status,
                       );
 

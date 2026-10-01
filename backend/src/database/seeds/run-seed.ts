@@ -2144,7 +2144,7 @@ async function run() {
 
 
     /*
-     * Pending approval
+     * Approval-required task
      */
     await createTask({
       id:
@@ -2163,7 +2163,7 @@ async function run() {
         'High',
 
       status:
-        'PendingApproval',
+        'InProgress',
 
       projectId:
         ids.hrProject,
@@ -3781,7 +3781,7 @@ async function run() {
     );
 
     console.log(
-      '  ✓ Pending Approval Task',
+      '  ✓ Approval-required Task',
     );
 
     console.log(

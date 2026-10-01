@@ -268,7 +268,6 @@ const AUDIT_VALUE_LABELS: Record<string, Parameters<typeof uiText>[1]> = {
   Pending: 'text0810',
   Unassigned: 'text0811',
   InProgress: 'text0812',
-  PendingApproval: 'text0813',
   Completed: 'text0814',
   Reopened: 'text0815',
   Finished: 'text0816',

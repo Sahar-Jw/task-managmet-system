@@ -5,7 +5,6 @@ export enum TaskWorkflowMode {
 
 export enum TaskWorkflowActionKey {
   START = 'start',
-  SUBMIT_APPROVAL = 'submit_approval',
   COMPLETE = 'complete',
   FINISH = 'finish',
   ARCHIVE = 'archive',

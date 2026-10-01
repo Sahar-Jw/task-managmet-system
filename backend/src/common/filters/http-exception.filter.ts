@@ -303,7 +303,6 @@ function translateBusinessError(message: string): string | null {
       Pending: 'قيد الانتظار',
       Unassigned: 'غير مسندة',
       InProgress: 'قيد التنفيذ',
-      PendingApproval: 'بانتظار الموافقة',
       Completed: 'مكتملة',
       Reopened: 'أعيد فتحها',
       Finished: 'منتهية',

@@ -17,7 +17,6 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { TaskAssignmentsModule } from './modules/task-assignments/task-assignments.module';
-import { AssignmentApprovalsModule } from './modules/assignment-approvals/assignment-approvals.module';
 import { TaskRatingsModule } from './modules/task-ratings/task-ratings.module';
 import { TaskCommentsModule } from './modules/task-comments/task-comments.module';
 import { TaskAttachmentsModule } from './modules/task-attachments/task-attachments.module';
@@ -120,7 +119,6 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     ProjectsModule,
     TasksModule,
     TaskAssignmentsModule,
-    AssignmentApprovalsModule,
     TaskRatingsModule,
     TaskCommentsModule,
     TaskAttachmentsModule,

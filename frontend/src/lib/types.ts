@@ -242,7 +242,6 @@ export type TaskStatus =
   | 'Pending'
   | 'Unassigned'
   | 'InProgress'
-  | 'PendingApproval'
   | 'Completed'
   | 'Reopened'
   | 'Finished'

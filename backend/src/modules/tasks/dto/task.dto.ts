@@ -291,30 +291,6 @@ export class UpdateTaskStatusDto {
 
 /*
  * ============================================================
- * APPROVAL
- * ============================================================
- */
-
-export class DecideTaskApprovalDto {
-  @IsBoolean()
-  approve!: boolean;
-
-
-  @ValidateIf(
-    (
-      object,
-    ) =>
-      object.approve ===
-      false,
-  )
-  @IsString()
-  @MinLength(5)
-  rejectionReason?: string;
-}
-
-
-/*
- * ============================================================
  * GENERAL TASK QUERY
  * ============================================================
  */

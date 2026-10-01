@@ -895,23 +895,6 @@ export const TasksApi = {
       },
     ),
 
-  decideApproval: (
-    id: string,
-    approve: boolean,
-    rejectionReason?: string,
-  ) =>
-    api<Task>(
-      `/tasks/${id}/approval`,
-      {
-        method: 'PATCH',
-
-        body: {
-          approve,
-          rejectionReason,
-        },
-      },
-    ),
-
   reopen: (
     id: string,
     reason: string,

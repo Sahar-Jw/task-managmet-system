@@ -103,13 +103,8 @@ const NEXT_STATUS_OPTIONS:
   ],
 
   InProgress: [
-    'PendingApproval',
     'Completed',
     'Finished',
-  ],
-
-  PendingApproval: [
-    'InProgress',
   ],
 
   Completed: [
@@ -385,9 +380,6 @@ function getWorkflowLabel(
     case 'InProgress':
       return uiText(isArabic, 'text0475');
 
-    case 'PendingApproval':
-      return uiText(isArabic, 'text0476');
-
     case 'Completed':
       return uiText(isArabic, 'text0102');
 
@@ -511,6 +503,19 @@ function TaskDetailContent() {
     setNotice,
   ] =
     useState('');
+
+
+  /*
+   * True when the backend answers 403 because this User rejected
+   * the Task and no longer has access to it.
+   */
+  const [
+    accessRemoved,
+    setAccessRemoved,
+  ] =
+    useState(
+      false,
+    );
 
 
   const [
@@ -650,6 +655,8 @@ function TaskDetailContent() {
 
     setError('');
 
+    setAccessRemoved(false);
+
 
     try {
       const [
@@ -688,7 +695,8 @@ function TaskDetailContent() {
     ) {
       /*
        * 403 = the User rejected this Task and no longer has
-       * access (direct link, notification, browser history...).
+       * access (notification, direct link, browser history...).
+       * Show an explanation instead of the Task.
        */
       if (
         err instanceof
@@ -696,7 +704,7 @@ function TaskDetailContent() {
         err.status ===
           403
       ) {
-        router.replace('/tasks/mine');
+        setAccessRemoved(true);
         return;
       }
 
@@ -740,7 +748,7 @@ function TaskDetailContent() {
         err.status ===
           403
       ) {
-        router.replace('/tasks/mine');
+        setAccessRemoved(true);
         return;
       }
 
@@ -885,6 +893,83 @@ function TaskDetailContent() {
     loading
   ) {
     return <InlineLoader className="min-h-[40vh]" />;
+  }
+
+
+  /*
+   * ==========================================================
+   * ACCESS REMOVED (User rejected this Task)
+   * ==========================================================
+   */
+
+  if (
+    accessRemoved
+  ) {
+    return (
+      <div
+        className="
+          mx-auto
+          max-w-7xl
+          pb-16
+        "
+      >
+        <div
+          className="
+            rounded-2xl
+            border
+            border-amber-200
+            bg-white
+            p-10
+            text-center
+          "
+        >
+          <div
+            className="
+              mx-auto
+              flex
+              h-12
+              w-12
+              items-center
+              justify-center
+              rounded-2xl
+              bg-amber-50
+              text-xl
+              text-amber-600
+            "
+          >
+            !
+          </div>
+
+          <h1
+            className="
+              mt-4
+              text-lg
+              font-semibold
+              text-slate-900
+            "
+          >
+            {uiText(isArabic, 'text1260')}
+          </h1>
+
+          <p
+            className="
+              mt-2
+              text-sm
+              text-slate-600
+            "
+          >
+            {uiText(isArabic, 'text1261')}
+          </p>
+
+          <Link
+            href="/tasks/mine"
+            className="btn-secondary mt-5 inline-flex"
+          >
+            {uiText(isArabic, 'text1262')}
+          </Link>
+        </div>
+      </div>
+    );
   }
 
 
@@ -1247,24 +1332,6 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
-   * APPROVAL
-   * ==========================================================
-   */
-
-  const canDecideApproval =
-    task.needsApproval &&
-    task.status ===
-      'PendingApproval' &&
-    task.approvalStatus ===
-      'Pending' &&
-    (
-      isAdmin ||
-      isApprover
-    );
-
-
-  /*
-   * ==========================================================
    * BASE STATUS OPTIONS
    * ==========================================================
    */
@@ -1278,54 +1345,6 @@ function TaskDetailContent() {
         []
       ),
     ];
-
-
-  /*
-   * ==========================================================
-   * APPROVAL RULE
-   * ==========================================================
-   */
-
-  if (
-    task.needsApproval &&
-    task.status ===
-      'InProgress' &&
-    task.approvalStatus !==
-      'Approved'
-  ) {
-    /*
-     * Cannot directly complete.
-     *
-     * Must go through PendingApproval.
-     */
-    nextStatuses =
-      nextStatuses.filter(
-        (
-          status,
-        ) =>
-          status !==
-          'Completed',
-      );
-  }
-
-
-  /*
-   * No approval?
-   *
-   * Don't offer PendingApproval.
-   */
-  if (
-    !task.needsApproval
-  ) {
-    nextStatuses =
-      nextStatuses.filter(
-        (
-          status,
-        ) =>
-          status !==
-          'PendingApproval',
-      );
-  }
 
 
   /*
@@ -1344,7 +1363,6 @@ function TaskDetailContent() {
           status,
         ) =>
           ![
-            'PendingApproval',
             'Completed',
             'Finished',
           ].includes(
@@ -3752,85 +3770,6 @@ function TaskDetailContent() {
                         task.rejectionReason
                       }
                     </p>
-                  </div>
-                )}
-
-
-              {canDecideApproval &&
-                openSubtaskCount ===
-                  0 && (
-                  <div
-                    className="
-                      mt-5
-                      flex
-                      flex-wrap
-                      gap-2
-                    "
-                  >
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() =>
-                        withFeedback(
-                          () =>
-                            TasksApi.decideApproval(
-                              task.id,
-                              true,
-                            ),
-
-                          uiText(isArabic, 'text0513'),
-                        )
-                      }
-                    >
-                      {uiText(isArabic, 'text0357')}
-                    </button>
-
-
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      onClick={() =>
-                        setReasonModal({
-                          title:
-                            uiText(isArabic, 'text0514'),
-
-                          description:
-                            uiText(isArabic, 'text0515'),
-
-                          minLength:
-                            5,
-
-                          confirmLabel:
-                            uiText(isArabic, 'text0127'),
-
-                          danger:
-                            true,
-
-                          onConfirm:
-                            (
-                              reason,
-                            ) => {
-                              setReasonModal(
-                                null,
-                              );
-
-
-                              withFeedback(
-                                () =>
-                                  TasksApi.decideApproval(
-                                    task.id,
-                                    false,
-                                    reason,
-                                  ),
-
-                                uiText(isArabic, 'text0516'),
-                              );
-                            },
-                        })
-                      }
-                    >
-                      {uiText(isArabic, 'text0127')}
-                    </button>
                   </div>
                 )}
             </section>

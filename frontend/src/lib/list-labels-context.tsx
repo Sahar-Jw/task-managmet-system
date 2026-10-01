@@ -13,7 +13,6 @@ export const FALLBACK_LIST_LABELS: Record<string, Record<string, string>> = {
     Pending: 'قيد الانتظار',
     Unassigned: 'غير مسند',
     InProgress: 'قيد التنفيذ',
-    PendingApproval: 'قيد الموافقة',
     Completed: 'مكتمل',
     Reopened: 'إعادة فتح',
     Finished: 'منتهي',

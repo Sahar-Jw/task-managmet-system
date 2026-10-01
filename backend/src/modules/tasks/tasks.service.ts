@@ -50,7 +50,6 @@ import {
 
 import {
   CreateTaskDto,
-  DecideTaskApprovalDto,
   QueryMyTasksDto,
   QueryTasksDto,
   UpdateAttachmentPermissionsDto,
@@ -138,14 +137,8 @@ const ALLOWED_TRANSITIONS:
   ],
 
   [TaskStatus.IN_PROGRESS]: [
-    TaskStatus.PENDING_APPROVAL,
     TaskStatus.COMPLETED,
     TaskStatus.FINISHED,
-  ],
-
-  [TaskStatus.PENDING_APPROVAL]: [
-    TaskStatus.IN_PROGRESS,
-    TaskStatus.COMPLETED,
   ],
 
   [TaskStatus.COMPLETED]: [
@@ -2857,17 +2850,6 @@ export class TasksService {
     }
 
 
-    if (
-      task.status ===
-        TaskStatus.PENDING_APPROVAL &&
-      !isAdmin
-    ) {
-      throw new ForbiddenException(
-        appError('TASK_PENDING_APPROVAL_CANNOT_EDITED_UNTIL_DECISION_MADE', 'Task is pending approval and cannot be edited until a decision is made'),
-      );
-    }
-
-
     const effectiveStartDate =
       dto.startDate !==
       undefined
@@ -3685,7 +3667,6 @@ export class TasksService {
 
     if (
       [
-        TaskStatus.PENDING_APPROVAL,
         TaskStatus.COMPLETED,
         TaskStatus.FINISHED,
       ].includes(
@@ -3695,57 +3676,6 @@ export class TasksService {
     ) {
       await this.assertNoOpenSubTasks(
         task.id,
-      );
-    }
-
-
-    if (
-      dto.status ===
-      TaskStatus.PENDING_APPROVAL
-    ) {
-      if (
-        !task.needsApproval
-      ) {
-        throw new ConflictException(
-          appError('TASK_DOES_NOT_REQUIRE_APPROVAL', 'This Task does not require approval'),
-        );
-      }
-
-
-      if (
-        !task.approverId
-      ) {
-        throw new BadRequestException(
-          appError('TASK_REQUIRES_APPROVAL_BUT_HAS_NO_APPROVER', 'This Task requires approval but has no approver'),
-        );
-      }
-
-
-      await this.assertValidApprover(
-        task.approverId,
-      );
-
-
-      task.approvalStatus =
-        ApprovalStatus.PENDING;
-
-
-      (
-        task as any
-      ).rejectionReason =
-        null;
-    }
-
-
-    if (
-      dto.status ===
-        TaskStatus.COMPLETED &&
-      task.needsApproval &&
-      task.approvalStatus !==
-        ApprovalStatus.APPROVED
-    ) {
-      throw new ConflictException(
-        appError('TASK_REQUIRES_APPROVAL_ROUTE_IT_THROUGH_PENDINGAPPROVAL_HAVE_APPROVER_DECIDE_FIRST', 'This Task requires approval; route it through PendingApproval and have the approver decide first'),
       );
     }
 
@@ -3853,226 +3783,6 @@ export class TasksService {
       dto.status ===
         TaskStatus.COMPLETED &&
       oldValue.status !==
-        TaskStatus.COMPLETED &&
-      saved.createdById !==
-        actor.id
-    ) {
-      await this.notificationsService.dispatch({
-        recipientId:
-          saved.createdById,
-
-        type:
-          NotificationType.TASK_COMPLETED,
-
-        title:
-          'Task completed',
-
-        message:
-          `${actor.fullName} marked "${saved.title}" as completed.${formatTaskDetails(saved)}`,
-
-        metadata: {
-          taskId:
-            saved.id,
-
-          actorId:
-            actor.id,
-
-          actorName:
-            actor.fullName,
-
-          taskTitle:
-            saved.title,
-
-          priority:
-            saved.priority,
-
-          dueDate:
-            saved.deadlineDate,
-        },
-      });
-    }
-
-
-    return this.findOne(
-      saved.id,
-    );
-  }
-
-
-  /*
-   * ==========================================================
-   * APPROVAL DECISION
-   * ==========================================================
-   */
-
-  async decideApproval(
-    id:
-      string,
-
-    dto:
-      DecideTaskApprovalDto,
-
-    actor:
-      UserEntity,
-  ):
-    Promise<TaskEntity> {
-    const task =
-      await this.findOne(
-        id,
-      );
-
-
-    if (
-      !task.needsApproval
-    ) {
-      throw new BadRequestException(
-        appError('TASK_DOES_NOT_REQUIRE_APPROVAL', 'This Task does not require approval'),
-      );
-    }
-
-
-    if (
-      actor.role.name !==
-        RoleName.ADMIN &&
-      task.approverId !==
-        actor.id
-    ) {
-      throw new ForbiddenException(
-        appError('ONLY_DESIGNATED_APPROVER_ADMIN_MAY_DECIDE_ON_TASK', 'Only the designated approver or Admin may decide on this Task'),
-      );
-    }
-
-
-    if (
-      task.status !==
-      TaskStatus.PENDING_APPROVAL
-    ) {
-      throw new ConflictException(
-        appError('TASK_NOT_AWAITING_APPROVAL', 'This Task is not currently awaiting approval'),
-      );
-    }
-
-
-    if (
-      task.approvalStatus !==
-      ApprovalStatus.PENDING
-    ) {
-      throw new ConflictException(
-        appError('APPROVAL_REQUEST_HAS_ALREADY_BEEN_DECIDED', 'This approval request has already been decided'),
-      );
-    }
-
-
-    if (
-      dto.approve
-    ) {
-      await this.assertNoOpenSubTasks(
-        task.id,
-      );
-    }
-
-
-    const oldValue = {
-      taskTitle:
-        task.title,
-
-      approvalStatus:
-        task.approvalStatus,
-
-      status:
-        task.status,
-    };
-
-
-    if (
-      dto.approve
-    ) {
-      task.approvalStatus =
-        ApprovalStatus.APPROVED;
-
-      (
-        task as any
-      ).rejectionReason =
-        null;
-
-      task.status =
-        TaskStatus.COMPLETED;
-
-      task.actualEndDate =
-        new Date();
-    } else {
-      task.approvalStatus =
-        ApprovalStatus.REJECTED;
-
-      task.rejectionReason =
-        dto.rejectionReason;
-
-      task.status =
-        TaskStatus.IN_PROGRESS;
-
-      (
-        task as any
-      ).actualEndDate =
-        null;
-    }
-
-
-    const saved =
-      await this.taskRepo.save(
-        task,
-      );
-
-
-    await this.auditLogsService.record({
-      actorId:
-        actor.id,
-
-      entityType:
-        'Task',
-
-      entityId:
-        saved.id,
-
-      action:
-        dto.approve
-          ? AuditAction.APPROVE
-          : AuditAction.REJECT,
-
-      oldValue,
-
-      newValue: {
-        taskTitle:
-          saved.title,
-
-        approvalStatus:
-          saved.approvalStatus,
-
-        status:
-          saved.status,
-      },
-
-      reason:
-        dto.rejectionReason,
-    });
-
-
-    if (
-      saved.projectId
-    ) {
-      await this.projectsService.recomputeStatus(
-        saved.projectId,
-      );
-    }
-
-
-    /*
-     * Same as changeStatus(): tell the Task's creator when the
-     * Task becomes Completed via an approval decision, since it
-     * never passes through changeStatus() on this path.
-     */
-    if (
-      dto.approve &&
-      saved.status ===
         TaskStatus.COMPLETED &&
       saved.createdById !==
         actor.id

@@ -608,7 +608,7 @@
     "text0563": "This is a subtask, so Department, Branch and Project are inherited from the parent task.",
     "text0564": "No project",
     "text0565": "Assign now or leave the task unassigned and assign it later from Task Details.",
-    "text0566": "This user will receive the task as Pending Acceptance and can accept or reject it.",
+    "text0566": "This user will receive the task and can reject it.",
     "text0567": "You can assign the task later from Task Details.",
     "text0568": "Needs approval",
     "text0569": "Require another user to approve final completion.",
@@ -1301,6 +1301,9 @@
     "text1256": "You're joining {leaderName}'s team ({teamName})",
     "text1257": "Saving…",
     "text1258": "Change status",
-    "text1259": "Open task details"
+    "text1259": "Open task details",
+    "text1260": "Access removed",
+    "text1261": "You rejected this task, so you can no longer access it.",
+    "text1262": "Go to My Tasks"
   }
 }

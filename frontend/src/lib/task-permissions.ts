@@ -8,7 +8,6 @@ export function canEditTask(task: Task, user: User | null | undefined) {
 
   if (!isAdmin && !isCreator) return false;
   if (task.status === 'Archived') return false;
-  if (task.status === 'PendingApproval' && !isAdmin) return false;
 
   return true;
 }

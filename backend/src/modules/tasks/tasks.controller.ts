@@ -13,7 +13,6 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { TasksService } from './tasks.service';
 import {
   CreateTaskDto,
-  DecideTaskApprovalDto,
   QueryMyTasksDto,
   QueryTasksDto,
   UpdateAttachmentPermissionsDto,
@@ -121,16 +120,6 @@ export class TasksController {
   @Roles(RoleName.ADMIN)
   unarchive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.tasksService.unarchive(id, user);
-  }
-
-  // The designated approver (or Admin) approves/rejects a Task that needs approval.
-  @Patch(':id/approval')
-  decideApproval(
-    @Param('id') id: string,
-    @Body() dto: DecideTaskApprovalDto,
-    @CurrentUser() user: UserEntity,
-  ) {
-    return this.tasksService.decideApproval(id, dto, user);
   }
 
   // BR-037: soft-delete by default; ?hard=true for Admin hard delete

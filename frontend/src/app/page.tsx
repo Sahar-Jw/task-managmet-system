@@ -1116,7 +1116,7 @@ export default function Home() {
 
                       {
                         label:
-                          uiText(isArabic, 'text0351'),
+                          uiText(isArabic, 'text0285'),
 
                         value:
                           '4',

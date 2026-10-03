@@ -151,6 +151,7 @@ const ALLOWED_TRANSITIONS:
   ],
 
   [TaskStatus.FINISHED]: [
+    TaskStatus.REOPENED,
     TaskStatus.ARCHIVED,
   ],
 

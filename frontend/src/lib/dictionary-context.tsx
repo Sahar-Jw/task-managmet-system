@@ -21,8 +21,8 @@ interface MessageTree {
 
 // Bumped to v2 so browsers drop cached overrides that still contain the
 // removed "waiting for acceptance" wording.
-const DICTIONARY_CACHE_KEY = 'bilingualDictionaryCache.v2';
-const LEGACY_DICTIONARY_CACHE_KEYS = ['bilingualDictionaryCache.v1'];
+const DICTIONARY_CACHE_KEY = 'bilingualDictionaryCache.v3';
+const LEGACY_DICTIONARY_CACHE_KEYS = ['bilingualDictionaryCache.v1', 'bilingualDictionaryCache.v2'];
 
 function flattenMessages(
   tree: MessageTree,

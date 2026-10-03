@@ -108,6 +108,7 @@ const NEXT_STATUS_OPTIONS:
   ],
 
   Completed: [
+    'Reopened',
     'Archived',
   ],
 
@@ -116,6 +117,7 @@ const NEXT_STATUS_OPTIONS:
   ],
 
   Finished: [
+    'Reopened',
     'Archived',
   ],
 
@@ -385,6 +387,9 @@ function getWorkflowLabel(
 
     case 'Finished':
       return uiText(isArabic, 'text0103');
+
+    case 'Reopened':
+      return uiText(isArabic, 'text1263');
 
     case 'Archived':
       return uiText(isArabic, 'text0477');
@@ -1736,6 +1741,48 @@ function TaskDetailContent() {
     nextStatus:
       string,
   ) {
+    /*
+     * Reopening a Completed / Finished task requires a reason.
+     */
+    if (
+      nextStatus ===
+      'Reopened'
+    ) {
+      setReasonModal({
+        title:
+          uiText(isArabic, 'text1263'),
+
+        description:
+          uiText(isArabic, 'text1264'),
+
+        minLength:
+          10,
+
+        confirmLabel:
+          uiText(isArabic, 'text1265'),
+
+        onConfirm:
+          (
+            reason,
+          ) => {
+            setReasonModal(
+              null,
+            );
+
+            withFeedback(
+              () =>
+                TasksApi.reopen(
+                  task.id,
+                  reason,
+                ),
+            );
+          },
+      });
+
+      return;
+    }
+
+
     /*
      * Finish always requires a reason.
      */
@@ -3584,6 +3631,8 @@ function TaskDetailContent() {
                         className={
                           nextStatus ===
                             'Finished' ||
+                          nextStatus ===
+                            'Reopened' ||
                           !primary
                             ? 'btn-secondary'
                             : 'btn-primary'

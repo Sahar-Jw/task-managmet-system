@@ -73,7 +73,8 @@ const RATINGS = [
 
 type Tab =
   | 'assignedToMe'
-  | 'assignedByMe';
+  | 'assignedByMe'
+  | 'archived';
 
 
 type ViewMode =
@@ -85,7 +86,94 @@ type SortBy =
   | 'deadline'
   | 'priority'
   | 'rating'
-  | 'createdAt';
+  | 'createdAt'
+  | 'archivedAt';
+
+
+/*
+ * Read ?tab= once so the initial tab, sort field and sort
+ * direction always agree with each other.
+ */
+function tabFromParam(
+  value:
+    string | null,
+):
+  Tab {
+  if (
+    value ===
+    'assignedByMe'
+  ) {
+    return 'assignedByMe';
+  }
+
+
+  if (
+    value ===
+    'archived'
+  ) {
+    return 'archived';
+  }
+
+
+  return 'assignedToMe';
+}
+
+
+function defaultSortFor(
+  tab:
+    Tab,
+): {
+  sortBy:
+    SortBy;
+
+  sortDir:
+    'asc' | 'desc';
+} {
+  if (
+    tab ===
+    'archived'
+  ) {
+    /*
+     * Most recently archived first.
+     */
+    return {
+      sortBy:
+        'archivedAt',
+
+      sortDir:
+        'desc',
+    };
+  }
+
+
+  if (
+    tab ===
+    'assignedByMe'
+  ) {
+    /*
+     * Newest created first.
+     */
+    return {
+      sortBy:
+        'createdAt',
+
+      sortDir:
+        'desc',
+    };
+  }
+
+
+  /*
+   * Assigned To Me keeps the useful deadline-first default.
+   */
+  return {
+    sortBy:
+      'deadline',
+
+    sortDir:
+      'asc',
+  };
+}
 
 
 type SortDir =
@@ -470,12 +558,18 @@ function EmptyState({
         {tab ===
         'assignedToMe'
           ? uiText(isArabic, 'text0154')
-          : uiText(isArabic, 'text0155')}
+          : tab ===
+              'archived'
+            ? uiText(isArabic, 'text1266')
+            : uiText(isArabic, 'text0155')}
       </h3>
 
 
       <p className="mt-1 max-w-sm text-sm leading-6 text-slate-400">
-        {uiText(isArabic, 'text0521')}
+        {tab ===
+        'archived'
+          ? uiText(isArabic, 'text1267')
+          : uiText(isArabic, 'text0521')}
       </p>
     </div>
   );
@@ -513,11 +607,11 @@ function MyTasksContent() {
     setTab,
   ] =
     useState<Tab>(
-      searchParams.get(
-        'tab',
-      ) === 'assignedByMe'
-        ? 'assignedByMe'
-        : 'assignedToMe',
+      tabFromParam(
+        searchParams.get(
+          'tab',
+        ),
+      ),
     );
 
 
@@ -667,11 +761,13 @@ function MyTasksContent() {
     setSortBy,
   ] =
     useState<SortBy>(
-      searchParams.get(
-        'tab',
-      ) === 'assignedByMe'
-        ? 'createdAt'
-        : 'deadline',
+      defaultSortFor(
+        tabFromParam(
+          searchParams.get(
+            'tab',
+          ),
+        ),
+      ).sortBy,
     );
 
 
@@ -680,11 +776,13 @@ function MyTasksContent() {
     setSortDir,
   ] =
     useState<SortDir>(
-      searchParams.get(
-        'tab',
-      ) === 'assignedByMe'
-        ? 'desc'
-        : 'asc',
+      defaultSortFor(
+        tabFromParam(
+          searchParams.get(
+            'tab',
+          ),
+        ),
+      ).sortDir,
     );
 
 
@@ -883,30 +981,39 @@ function MyTasksContent() {
     );
 
 
+    const nextSort =
+      defaultSortFor(
+        nextTab,
+      );
+
+    setSortBy(
+      nextSort.sortBy,
+    );
+
+    setSortDir(
+      nextSort.sortDir,
+    );
+
+
     if (
       nextTab ===
-      'assignedByMe'
+      'archived'
     ) {
       /*
-       * NEWEST TASKS FIRST.
+       * Every task here is Archived and "due soon / overdue" no
+       * longer applies, so those controls are hidden — clear them
+       * so they cannot silently keep filtering.
        */
-      setSortBy(
-        'createdAt',
+      setStatus(
+        '',
       );
 
-      setSortDir(
-        'desc',
-      );
-    } else {
-      /*
-       * Assigned To Me keeps the useful deadline-first default.
-       */
-      setSortBy(
-        'deadline',
+      setUpcomingOnly(
+        false,
       );
 
-      setSortDir(
-        'asc',
+      setOverdueOnly(
+        false,
       );
     }
   }
@@ -1115,6 +1222,58 @@ function MyTasksContent() {
   }
 
 
+  /*
+   * The "other person" on a task row. On Assigned To Me it is who
+   * created the task; on Assigned By Me it is who it was assigned to.
+   * The Archived tab mixes both, so it depends on whether I created
+   * the task.
+   */
+  function otherParty(
+    task:
+      Task,
+  ) {
+    const showCreator =
+      tab ===
+        'assignedToMe' ||
+      (
+        tab ===
+          'archived' &&
+        task.createdById !==
+          user?.id
+      );
+
+
+    return {
+      person:
+        showCreator
+          ? task.createdBy
+          : task.assignedTo,
+
+      label:
+        showCreator
+          ? uiText(isArabic, 'text0483')
+          : uiText(isArabic, 'text0051'),
+    };
+  }
+
+
+  /*
+   * Only the creator (or an Admin) may restore — the same people who
+   * may archive. Assignees can still see the task in the archive.
+   */
+  function canRestoreTask(
+    task:
+      Task,
+  ) {
+    return (
+      user?.role.name ===
+        'ADMIN' ||
+      task.createdById ===
+        user?.id
+    );
+  }
+
+
   useEffect(() => {
     const timer =
       window.setTimeout(
@@ -1177,7 +1336,9 @@ function MyTasksContent() {
 
 
           if (
-            status
+            status &&
+            tab !==
+              'archived'
           ) {
             params.status =
               status;
@@ -1217,14 +1378,18 @@ function MyTasksContent() {
 
 
           if (
-            upcomingOnly
+            upcomingOnly &&
+            tab !==
+              'archived'
           ) {
             params.upcomingOnly =
               'true';
           }
 
           if (
-            overdueOnly
+            overdueOnly &&
+            tab !==
+              'archived'
           ) {
             params.overdueOnly =
               'true';
@@ -1275,9 +1440,14 @@ function MyTasksContent() {
               ? await TasksApi.mine(
                   params,
                 )
-              : await TasksApi.assignedByMe(
-                  params,
-                );
+              : tab ===
+                  'archived'
+                ? await TasksApi.archived(
+                    params,
+                  )
+                : await TasksApi.assignedByMe(
+                    params,
+                  );
 
 
           setTasks(
@@ -1510,6 +1680,46 @@ function MyTasksContent() {
   }
 
 
+  async function restoreTask(
+    task:
+      Task,
+  ) {
+    setActingOnId(
+      task.id,
+    );
+
+    setRowError(
+      null,
+    );
+
+
+    try {
+      await TasksApi.unarchive(
+        task.id,
+      );
+
+      await reload();
+    } catch (
+      err
+    ) {
+      setRowError({
+        id:
+          task.id,
+
+        message:
+          err instanceof
+            ApiError
+            ? err.message
+            : uiText(isArabic, 'text0579'),
+      });
+    } finally {
+      setActingOnId(
+        null,
+      );
+    }
+  }
+
+
   async function finishTask(
     task:
       Task,
@@ -1578,6 +1788,55 @@ function MyTasksContent() {
     const busy =
       actingOnId ===
       task.id;
+
+
+    if (
+      tab ===
+      'archived'
+    ) {
+      return (
+        <div className="relative z-20 flex flex-wrap items-center gap-2">
+          <Link
+            href={`/tasks/view?id=${task.id}`}
+            onClick={(event) => event.stopPropagation()}
+            className="icon-btn h-8 w-8"
+            title={uiText(isArabic, 'text0158')}
+            aria-label={uiText(isArabic, 'text0158')}
+          >
+            <ViewIcon />
+          </Link>
+
+          {canRestoreTask(task) && (
+            <button
+              type="button"
+              disabled={
+                busy
+              }
+              onClick={(
+                event,
+              ) => {
+                event.preventDefault();
+
+                event.stopPropagation();
+
+                restoreTask(
+                  task,
+                );
+              }}
+              className="icon-btn h-8 w-8"
+              title={
+                busy
+                  ? uiText(isArabic, 'text0402')
+                  : uiText(isArabic, 'text0403')
+              }
+              aria-label={uiText(isArabic, 'text0403')}
+            >
+              <UnarchiveIcon />
+            </button>
+          )}
+        </div>
+      );
+    }
 
 
     if (
@@ -1743,9 +2002,14 @@ function MyTasksContent() {
                 ? (
                     uiText(isArabic, 'text0524')
                   )
-                : (
-                    uiText(isArabic, 'text0525')
-                  )}
+                : tab ===
+                    'archived'
+                  ? (
+                      uiText(isArabic, 'text0581')
+                    )
+                  : (
+                      uiText(isArabic, 'text0525')
+                    )}
             </p>
           </div>
 
@@ -1810,6 +2074,24 @@ function MyTasksContent() {
           }`}
         >
           {uiText(isArabic, 'text0161')}
+        </button>
+
+
+        <button
+          type="button"
+          onClick={() =>
+            changeTab(
+              'archived',
+            )
+          }
+          className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab ===
+            'archived'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {uiText(isArabic, 'text0412')}
         </button>
       </div>
 
@@ -1909,42 +2191,49 @@ function MyTasksContent() {
           )}
 
 
-          <select
-            className="input xl:w-[180px]"
-            value={
-              status
-            }
-            onChange={(
-              event,
-            ) =>
-              setStatus(
-                event.target.value,
-              )
-            }
-          >
-            <option value="">
-              {uiText(isArabic, 'text0069')}
-            </option>
+          {/*
+           * STATUS — NOT ON ARCHIVED (every task there is Archived)
+           */}
 
-            {visibleStatuses.map(
-              (
-                item,
-              ) => (
-                <option
-                  key={
-                    item.id
-                  }
-                  value={
-                    item.key
-                  }
-                >
-                  {isArabic
-                    ? item.codeAr
-                    : item.codeEn}
-                </option>
-              ),
-            )}
-          </select>
+          {tab !==
+            'archived' && (
+            <select
+              className="input xl:w-[180px]"
+              value={
+                status
+              }
+              onChange={(
+                event,
+              ) =>
+                setStatus(
+                  event.target.value,
+                )
+              }
+            >
+              <option value="">
+                {uiText(isArabic, 'text0069')}
+              </option>
+
+              {visibleStatuses.map(
+                (
+                  item,
+                ) => (
+                  <option
+                    key={
+                      item.id
+                    }
+                    value={
+                      item.key
+                    }
+                  >
+                    {isArabic
+                      ? item.codeAr
+                      : item.codeEn}
+                  </option>
+                ),
+              )}
+            </select>
+          )}
 
 
           <select
@@ -1999,6 +2288,13 @@ function MyTasksContent() {
               )
             }
           >
+            {tab ===
+              'archived' && (
+              <option value="archivedAt">
+                {uiText(isArabic, 'text1059')}
+              </option>
+            )}
+
             <option value="createdAt">
               {uiText(isArabic, 'text0529')}
             </option>
@@ -2260,27 +2556,30 @@ function MyTasksContent() {
               </div>
 
 
-              <div className="flex items-end">
-                <label className="flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4">
-                  <input
-                    type="checkbox"
-                    checked={
-                      upcomingOnly
-                    }
-                    onChange={(
-                      event,
-                    ) =>
-                      setUpcomingOnly(
-                        event.target.checked,
-                      )
-                    }
-                  />
+              {tab !==
+                'archived' && (
+                <div className="flex items-end">
+                  <label className="flex min-h-[42px] w-full cursor-pointer items-center gap-3 rounded-xl border border-slate-200 px-4">
+                    <input
+                      type="checkbox"
+                      checked={
+                        upcomingOnly
+                      }
+                      onChange={(
+                        event,
+                      ) =>
+                        setUpcomingOnly(
+                          event.target.checked,
+                        )
+                      }
+                    />
 
-                  <span className="text-sm font-medium text-slate-700">
-                    {uiText(isArabic, 'text0165')}
-                  </span>
-                </label>
-              </div>
+                    <span className="text-sm font-medium text-slate-700">
+                      {uiText(isArabic, 'text0165')}
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
 
 
@@ -2484,26 +2783,19 @@ function MyTasksContent() {
                     <div className="mt-5 grid grid-cols-2 gap-3">
                       <div className="rounded-xl bg-slate-50 p-3">
                         <div className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
-                          {tab ===
-                          'assignedToMe'
-                            ? (
-                                uiText(isArabic, 'text0483')
-                              )
-                            : (
-                                uiText(isArabic, 'text0051')
-                              )}
+                          {otherParty(task).label}
                         </div>
 
-                        {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo) ? (
+                        {otherParty(task).person ? (
                           <div className="mt-1 flex min-w-0 items-center gap-2">
                             <Avatar
-                              name={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName || '—'}
-                              avatarUrl={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.avatarUrl}
+                              name={otherParty(task).person?.fullName || '—'}
+                              avatarUrl={otherParty(task).person?.avatarUrl}
                               size="sm"
                               className="shrink-0"
                             />
                             <span className="truncate text-xs font-medium text-slate-700">
-                              {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName}
+                              {otherParty(task).person?.fullName}
                             </span>
                           </div>
                         ) : (
@@ -2605,14 +2897,7 @@ function MyTasksContent() {
             </div>
 
             <div>
-              {tab ===
-              'assignedToMe'
-                ? (
-                    uiText(isArabic, 'text0483')
-                  )
-                : (
-                    uiText(isArabic, 'text0051')
-                  )}
+              {tab === 'assignedToMe' ? uiText(isArabic, 'text0483') : tab === 'archived' ? uiText(isArabic, 'text0145') : uiText(isArabic, 'text0051')}
             </div>
 
             <div>
@@ -2736,16 +3021,16 @@ function MyTasksContent() {
                       </div>
 
 
-                      {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo) ? (
+                      {otherParty(task).person ? (
                         <div className="flex min-w-0 items-center gap-2">
                           <Avatar
-                            name={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName || '—'}
-                            avatarUrl={(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.avatarUrl}
+                            name={otherParty(task).person?.fullName || '—'}
+                            avatarUrl={otherParty(task).person?.avatarUrl}
                             size="sm"
                             className="shrink-0"
                           />
                           <span className="truncate text-xs font-medium text-slate-700">
-                            {(tab === 'assignedToMe' ? task.createdBy : task.assignedTo)?.fullName}
+                            {otherParty(task).person?.fullName}
                           </span>
                         </div>
                       ) : (

@@ -839,6 +839,19 @@ export const TasksApi = {
       )}`,
     ),
 
+  archived: (
+    params:
+      Record<
+        string,
+        string
+      > = {},
+  ) =>
+    api<Paginated<Task>>(
+      `/tasks/archived?${new URLSearchParams(
+        params,
+      )}`,
+    ),
+
   forProject: (
     projectId: string,
   ) =>

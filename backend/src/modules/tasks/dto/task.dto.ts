@@ -493,6 +493,7 @@ export class QueryMyTasksDto
     'priority',
     'rating',
     'createdAt',
+    'archivedAt',
   ])
   sortBy?: string;
 

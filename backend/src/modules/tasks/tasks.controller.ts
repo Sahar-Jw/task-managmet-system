@@ -57,6 +57,14 @@ export class TasksController {
     return this.tasksService.findAssignedByMe(user.id, query);
   }
 
+  // "Archived": archived Tasks the current user created or was assigned to,
+  // so they can review and (if they created it) restore them.
+  // NOTE: must stay declared before ':id' or Nest will treat "archived" as an id.
+  @Get('archived')
+  findArchived(@Query() query: QueryMyTasksDto, @CurrentUser() user: UserEntity) {
+    return this.tasksService.findArchivedTasks(user.id, query);
+  }
+
   // All Tasks (parent + sub-tasks) within a single Project, for the
   // Project details "read-only" view. Admin sees the whole org; a
   // regular User is only let through if they'd already pass
@@ -115,9 +123,9 @@ export class TasksController {
     return this.tasksService.changeStatus(id, { ...dto, status: dto.status }, user);
   }
 
-  // Restores an Archived Task to its pre-archive status. Admin-only.
+  // Restores an Archived Task to its pre-archive status. Allowed for the
+  // Task creator or an Admin (enforced in the service).
   @Post(':id/unarchive')
-  @Roles(RoleName.ADMIN)
   unarchive(@Param('id') id: string, @CurrentUser() user: UserEntity) {
     return this.tasksService.unarchive(id, user);
   }

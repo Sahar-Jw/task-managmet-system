@@ -1121,13 +1121,24 @@ function TaskDetailContent() {
    * ==========================================================
    */
 
+  /*
+   * A Task cannot be assigned to yourself — except a Sub-task, where
+   * the assignee of the parent breaks their own work down.
+   */
   const assignableUsers =
     users
       .filter(
         (
           item,
         ) =>
-          item.isActive,
+          item.isActive &&
+          (
+            Boolean(
+              task.parentTaskId,
+            ) ||
+            item.id !==
+              user?.id
+          ),
       )
       .sort(
         (
@@ -2113,7 +2124,9 @@ function TaskDetailContent() {
                   </button>
                 )}
 
-             {myActiveAssignment && task.status !== 'Completed' && (
+             {myActiveAssignment &&
+              (task.status === 'InProgress' ||
+                task.status === 'Reopened') && (
   <button
     type="button"
     disabled={assignmentBusy}

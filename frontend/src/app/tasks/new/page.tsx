@@ -1294,8 +1294,28 @@ function NewTaskContent() {
     );
 
 
+  /*
+   * A Task cannot be assigned to yourself. (Sub-tasks, which the
+   * assignee may give to themselves, are handled from the parent
+   * Task's Sub-tasks panel — this picker is disabled when a parent
+   * is selected.)
+   */
   const assignableUsers =
-    activeUsers;
+    useMemo(
+      () =>
+        activeUsers.filter(
+          (
+            item,
+          ) =>
+            item.id !==
+            user?.id,
+        ),
+
+      [
+        activeUsers,
+        user?.id,
+      ],
+    );
 
 
   /*

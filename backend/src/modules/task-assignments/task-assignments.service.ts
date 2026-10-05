@@ -102,10 +102,22 @@ export class TaskAssignmentsService {
     return assignment;
   }
 
+  /*
+   * `allowSelf` is true only for Sub-tasks, where the accepted assignee
+   * of the parent breaks their own work down. Any other Task cannot be
+   * assigned to the person doing the assigning (Admin included).
+   */
   private async getValidAssignee(
     userId: string,
     actor: UserEntity,
+    allowSelf = false,
   ): Promise<UserEntity> {
+    if (!allowSelf && userId === actor.id) {
+      throw new BadRequestException(
+        appError('CANNOT_ASSIGN_TASK_TO_YOURSELF', 'You cannot assign a Task to yourself'),
+      );
+    }
+
     const user =
       await this.userRepo.findOne({
         where: {
@@ -204,6 +216,7 @@ export class TaskAssignmentsService {
       await this.getValidAssignee(
         dto.assigneeId,
         actor,
+        Boolean(task.parentTaskId),
       );
 
     if (
@@ -577,6 +590,33 @@ export class TaskAssignmentsService {
       );
     }
 
+    /*
+     * Rejecting is only possible while the Task is being worked on:
+     * In Progress or Reopened. Completed / Finished / Archived Tasks
+     * (and anything else) can no longer have their Assignment rejected.
+     */
+    const taskForReject =
+      await this.taskRepo.findOne({
+        where: {
+          id:
+            assignment.taskId,
+        },
+      });
+
+    if (
+      !taskForReject ||
+      (
+        taskForReject.status !==
+          TaskStatus.IN_PROGRESS &&
+        taskForReject.status !==
+          TaskStatus.REOPENED
+      )
+    ) {
+      throw new ConflictException(
+        appError('ASSIGNMENT_CAN_ONLY_BE_REJECTED_WHILE_IN_PROGRESS', 'An Assignment can only be rejected while the Task is In Progress or Reopened'),
+      );
+    }
+
     assignment.status =
       AssignmentStatus.REJECTED;
 
@@ -801,6 +841,7 @@ export class TaskAssignmentsService {
     await this.getValidAssignee(
       dto.newAssigneeId,
       actor,
+      Boolean(task.parentTaskId),
     );
 
   if (

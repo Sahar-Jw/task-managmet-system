@@ -13,6 +13,7 @@ import type { Project, Task, TaskStatus, User } from '@/lib/types';
 
 const STATUS_ORDER: TaskStatus[] = [
   'InProgress',
+  'Reopened',
   'Completed',
   'Finished',
   'Archived',
@@ -22,7 +23,7 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   InProgress: ['Completed', 'Finished'],
   Completed: ['Reopened', 'Archived'],
   Reopened: ['InProgress'],
-  Finished: ['Archived'],
+  Finished: ['Reopened', 'Archived'],
   Archived: [],
 };
 
@@ -117,7 +118,8 @@ export default function ProjectTaskBoard({
       return;
     }
 
-    if (nextStatus === 'Finished') {
+    // Finishing and reopening both need a written reason.
+    if (nextStatus === 'Finished' || nextStatus === 'Reopened') {
       setReasonRequest({ task, nextStatus });
       return;
     }
@@ -129,7 +131,10 @@ export default function ProjectTaskBoard({
     setBoardError('');
     setSavingTaskId(task.id);
     try {
-      const updated = await TasksApi.changeStatus(task.id, nextStatus, reason);
+      const updated =
+        nextStatus === 'Reopened'
+          ? await TasksApi.reopen(task.id, reason ?? '')
+          : await TasksApi.changeStatus(task.id, nextStatus, reason);
       onTaskChanged(updated);
     } catch (error) {
       setBoardError(error instanceof ApiError ? error.message : (uiText(isArabic, 'text1140')));
@@ -270,9 +275,9 @@ export default function ProjectTaskBoard({
           </div>
         </div>
       ) : (
-        <div className="mt-5 grid gap-3 overflow-x-auto md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-3 overflow-x-auto md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {statuses.map((status) => (
-            <div key={status} className="min-h-[250px] min-w-[220px] rounded-lg bg-slate-50 p-3" onDragOver={(event) => event.preventDefault()} onDrop={() => dropOnStatus(status)}>
+            <div key={status} className="min-h-[250px] min-w-0 rounded-lg bg-slate-50 p-3 sm:min-w-[200px]" onDragOver={(event) => event.preventDefault()} onDrop={() => dropOnStatus(status)}>
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h3 className="text-sm font-semibold text-slate-700">{getLabel('task_status', status)}</h3>
                 <span className="rounded-full bg-white px-2 py-0.5 text-xs text-slate-500">{tasks.filter((task) => task.status === status).length}</span>
@@ -346,10 +351,10 @@ export default function ProjectTaskBoard({
 
       <ReasonModal
         open={reasonRequest !== null}
-        title={uiText(isArabic, 'text0103')}
-        description={uiText(isArabic, 'text0109')}
+        title={uiText(isArabic, reasonRequest?.nextStatus === 'Reopened' ? 'text1263' : 'text0103')}
+        description={uiText(isArabic, reasonRequest?.nextStatus === 'Reopened' ? 'text1264' : 'text0109')}
         minLength={10}
-        confirmLabel={uiText(isArabic, 'text0110')}
+        confirmLabel={uiText(isArabic, reasonRequest?.nextStatus === 'Reopened' ? 'text1265' : 'text0110')}
         onCancel={() => setReasonRequest(null)}
         onConfirm={(reason) => {
           if (reasonRequest) {

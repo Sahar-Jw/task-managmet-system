@@ -380,14 +380,33 @@ export class TasksService {
   }
 
 
+  /*
+   * `allowSelf` is true only for Sub-tasks (an assignee breaking down
+   * their own work) and for an unchanged, already-self-assigned legacy
+   * Task. For every other Task, nobody — Admin included — may assign a
+   * Task to themselves.
+   */
   private async assertValidAssignee(
     userId:
       string,
 
     actor:
       UserEntity,
+
+    allowSelf = false,
   ):
     Promise<UserEntity> {
+    if (
+      !allowSelf &&
+      userId ===
+        actor.id
+    ) {
+      throw new BadRequestException(
+        appError('CANNOT_ASSIGN_TASK_TO_YOURSELF', 'You cannot assign a Task to yourself'),
+      );
+    }
+
+
     const assignee =
       await this.userRepo.findOne({
         where: {
@@ -2331,6 +2350,415 @@ export class TasksService {
 
   /*
    * ==========================================================
+   * ARCHIVED (My Tasks → Archived tab)
+   * ==========================================================
+   *
+   * Archived Tasks the current user created OR is/was assigned to
+   * (a rejected assignment does not count, same as "Assigned to me").
+   *
+   * Only the creator (or an Admin) may restore a Task — the client uses
+   * task.createdById to decide whether to show the restore action.
+   * ==========================================================
+   */
+
+  async findArchivedTasks(
+    userId:
+      string,
+
+    query:
+      QueryMyTasksDto,
+  ) {
+    const page =
+      query.page ??
+      1;
+
+    const limit =
+      query.limit ??
+      20;
+
+
+    const idQb =
+      this.taskRepo
+        .createQueryBuilder(
+          'task',
+        )
+        .leftJoin(
+          'task.assignments',
+          'assignment',
+        )
+        .leftJoin(
+          'task.ratings',
+          'rating',
+        )
+        .select(
+          'task.id',
+          'id',
+        )
+        .addSelect(
+          'task.deadlineDate',
+          'deadlineDate',
+        )
+        .addSelect(
+          'task.priority',
+          'priority',
+        )
+        .addSelect(
+          'task.createdAt',
+          'createdAt',
+        )
+        .addSelect(
+          'task.archivedAt',
+          'archivedAt',
+        )
+        .addSelect(
+          'AVG(rating.score)',
+          'avgRating',
+        )
+        .where(
+          'task.archivedAt IS NOT NULL',
+        )
+        .andWhere(
+          `(
+            task.createdById = :userId
+            OR task.assignedToId = :userId
+            OR (
+              assignment.assigneeId = :userId
+              AND assignment.status != :rejectedStatus
+            )
+          )`,
+          {
+            userId,
+
+            rejectedStatus:
+              AssignmentStatus.REJECTED,
+          },
+        )
+        .groupBy(
+          'task.id',
+        )
+        .addGroupBy(
+          'task.deadlineDate',
+        )
+        .addGroupBy(
+          'task.priority',
+        )
+        .addGroupBy(
+          'task.createdAt',
+        )
+        .addGroupBy(
+          'task.archivedAt',
+        );
+
+
+    if (
+      query.taskType
+    ) {
+      idQb.andWhere(
+        'task.taskType = :taskType',
+        {
+          taskType:
+            query.taskType,
+        },
+      );
+    }
+
+
+    if (
+      query.priority
+    ) {
+      idQb.andWhere(
+        'task.priority = :priority',
+        {
+          priority:
+            query.priority,
+        },
+      );
+    }
+
+
+    if (
+      query.projectId
+    ) {
+      idQb.andWhere(
+        'task.projectId = :projectId',
+        {
+          projectId:
+            query.projectId,
+        },
+      );
+    }
+
+
+    if (
+      query.search?.trim()
+    ) {
+      idQb.andWhere(
+        `(
+          task.title LIKE :search
+          OR task.description LIKE :search
+        )`,
+        {
+          search:
+            `%${query.search.trim()}%`,
+        },
+      );
+    }
+
+
+    if (
+      query.deadlineFrom
+    ) {
+      idQb.andWhere(
+        'task.deadlineDate >= :deadlineFrom',
+        {
+          deadlineFrom:
+            query.deadlineFrom,
+        },
+      );
+    }
+
+
+    if (
+      query.deadlineTo
+    ) {
+      idQb.andWhere(
+        'task.deadlineDate <= :deadlineTo',
+        {
+          deadlineTo:
+            query.deadlineTo,
+        },
+      );
+    }
+
+
+    if (
+      query.minRating
+    ) {
+      idQb.having(
+        'AVG(rating.score) >= :minRating',
+        {
+          minRating:
+            Number(
+              query.minRating,
+            ),
+        },
+      );
+    }
+
+
+    /*
+     * Most recently archived first by default.
+     */
+    const archivedSortBy =
+      query.sortBy ??
+      'archivedAt';
+
+    const archivedSortDir =
+      query.sortDir ===
+        'asc'
+        ? 'ASC'
+        : 'DESC';
+
+
+    switch (
+      archivedSortBy
+    ) {
+      case 'priority':
+        idQb.orderBy(
+          `
+            CASE task.priority
+              WHEN 'Low' THEN 1
+              WHEN 'Medium' THEN 2
+              WHEN 'High' THEN 3
+              WHEN 'Critical' THEN 4
+              ELSE 0
+            END
+          `,
+          archivedSortDir,
+        );
+
+        break;
+
+
+      case 'rating':
+        idQb.orderBy(
+          `
+            CASE
+              WHEN AVG(rating.score) IS NULL
+              THEN 1
+              ELSE 0
+            END
+          `,
+          'ASC',
+        );
+
+        idQb.addOrderBy(
+          'AVG(rating.score)',
+          archivedSortDir,
+        );
+
+        break;
+
+
+      case 'deadline':
+        idQb.orderBy(
+          `
+            CASE
+              WHEN task.deadlineDate IS NULL
+              THEN 1
+              ELSE 0
+            END
+          `,
+          'ASC',
+        );
+
+        idQb.addOrderBy(
+          'task.deadlineDate',
+          archivedSortDir,
+        );
+
+        break;
+
+
+      case 'createdAt':
+        idQb.orderBy(
+          'task.createdAt',
+          archivedSortDir,
+        );
+
+        break;
+
+
+      case 'archivedAt':
+      default:
+        idQb.orderBy(
+          'task.archivedAt',
+          archivedSortDir,
+        );
+
+        break;
+    }
+
+
+    idQb.addOrderBy(
+      'task.id',
+      'DESC',
+    );
+
+
+    const rawRows =
+      await idQb.getRawMany<{
+        id:
+          string;
+      }>();
+
+
+    const total =
+      rawRows.length;
+
+
+    const pageIds =
+      rawRows
+        .slice(
+          (
+            page -
+            1
+          ) *
+            limit,
+
+          (
+            page -
+            1
+          ) *
+            limit +
+            limit,
+        )
+        .map(
+          (
+            row,
+          ) =>
+            row.id,
+        );
+
+
+    if (
+      pageIds.length ===
+      0
+    ) {
+      return {
+        items: [],
+        total,
+        page,
+        limit,
+      };
+    }
+
+
+    const hydrated =
+      await this.taskRepo.find({
+        where: {
+          id:
+            In(
+              pageIds,
+            ),
+        },
+
+        relations: [
+          'branch',
+          'department',
+          'project',
+          'assignedTo',
+          'createdBy',
+          'ratings',
+        ],
+      });
+
+
+    const byId =
+      new Map(
+        hydrated.map(
+          (
+            task,
+          ) => [
+            task.id,
+            task,
+          ],
+        ),
+      );
+
+
+    const items =
+      pageIds
+        .map(
+          (
+            taskId,
+          ) =>
+            byId.get(
+              taskId,
+            ),
+        )
+        .filter(
+          (
+            task,
+          ):
+            task is TaskEntity =>
+            Boolean(
+              task,
+            ),
+        );
+
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
+  }
+
+
+  /*
+   * ==========================================================
    * GET ONE
    * ==========================================================
    */
@@ -2603,6 +3031,9 @@ export class TasksService {
         await this.assertValidAssignee(
           dto.assignedToId,
           actor,
+          Boolean(
+            dto.parentTaskId,
+          ),
         );
     }
 
@@ -3053,10 +3484,24 @@ export class TasksService {
     if (
       effectiveAssigneeId
     ) {
+      /*
+       * This runs on every update with the CURRENT assignee, so only
+       * reject self-assignment when the assignee is actually being
+       * changed to the actor — otherwise a legacy self-assigned Task
+       * could no longer be edited at all.
+       */
       updateAssignee =
         await this.assertValidAssignee(
           effectiveAssigneeId,
           actor,
+          Boolean(
+            effectiveParentId,
+          ) ||
+            effectiveAssigneeId ===
+              (
+                task.assignedToId ??
+                null
+              ),
         );
     }
 
@@ -4216,20 +4661,26 @@ export class TasksService {
       UserEntity,
   ):
     Promise<TaskEntity> {
-    if (
-      actor.role.name !==
-      RoleName.ADMIN
-    ) {
-      throw new ForbiddenException(
-        appError('ONLY_ADMIN_MAY_UNARCHIVE_TASK', 'Only Admin may unarchive a Task'),
-      );
-    }
-
-
     const task =
       await this.findOne(
         id,
       );
+
+
+    /*
+     * Same people who may archive a Task may restore it: its creator
+     * or an Admin.
+     */
+    if (
+      actor.role.name !==
+        RoleName.ADMIN &&
+      task.createdById !==
+        actor.id
+    ) {
+      throw new ForbiddenException(
+        appError('ONLY_TASK_CREATOR_ADMIN_MAY_UNARCHIVE_TASK', 'Only the Task creator or Admin may unarchive this Task'),
+      );
+    }
 
 
     if (

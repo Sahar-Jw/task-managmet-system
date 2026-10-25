@@ -300,3 +300,67 @@ input:-webkit-autofill:active {
     transform: translateX(320%);
   }
 }
+
+/*
+  Error / 404 screens.
+  Everything is derived from the configurable theme variables so the pages
+  follow the admin's brand colors and the light/dark mode automatically.
+*/
+.error-screen-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--theme-body-text) 9%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--theme-body-text) 9%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+}
+
+.error-screen-blob-a {
+  background-color: color-mix(in srgb, var(--theme-primary) 22%, transparent);
+}
+
+.error-screen-blob-b {
+  background-color: color-mix(in srgb, var(--theme-secondary) 18%, transparent);
+}
+
+.error-screen-digit {
+  color: var(--theme-primary);
+}
+
+.error-screen-digit[data-tone='warning'] {
+  color: var(--theme-secondary);
+}
+
+.error-screen-box {
+  border: 3px dashed currentColor;
+  background-color: color-mix(in srgb, currentColor 8%, var(--theme-surface));
+}
+
+@keyframes error-screen-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+
+  50% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+}
+
+.error-screen-float {
+  animation: error-screen-float 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-screen-float {
+    animation: none;
+  }
+}

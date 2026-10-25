@@ -1322,5 +1322,34 @@
     "text1277": "Nothing is waiting for your approval",
     "text1278": "Tasks that need your approval appear here until you approve or reject them.",
     "text1279": "Tasks created by other people that are waiting for your approval. Open one to approve or reject it."
+  },
+  "errorPages": {
+    "notFound": {
+      "badge": "Error 404",
+      "title": "We couldn't find that page",
+      "description": "The page you're looking for may have been moved, deleted, or never existed. Check the address, or head back to your work."
+    },
+    "error": {
+      "badge": "Something went wrong",
+      "title": "This page ran into a problem",
+      "description": "An unexpected error occurred. Your data is safe. Try again, and if the problem keeps happening, contact your administrator.",
+      "reference": "Error reference",
+      "details": "Technical details"
+    },
+    "update": {
+      "badge": "Update available",
+      "title": "A new version of the app is ready",
+      "description": "The app was updated while this page was open. Reload to continue with the latest version.",
+      "reload": "Reload page"
+    },
+    "actions": {
+      "goDashboard": "Go to dashboard",
+      "goHome": "Back to home",
+      "goBack": "Go back",
+      "signIn": "Sign in",
+      "tryAgain": "Try again",
+      "switchLanguage": "العربية",
+      "quickLinks": "Or jump to"
+    }
   }
 }

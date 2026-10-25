@@ -12,6 +12,7 @@ import { TaskRatingEntity } from '../task-ratings/entities/task-rating.entity';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { ProjectsService } from '../projects/projects.service';
 import { TaskWorkflowService } from '../task-workflow/task-workflow.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('TasksService', () => {
   it('filters out soft-deleted attachments and comments', async () => {
@@ -43,6 +44,7 @@ describe('TasksService', () => {
         { provide: AuditLogsService, useValue: { record: jest.fn() } },
         { provide: ProjectsService, useValue: {} },
         { provide: TaskWorkflowService, useValue: {} },
+        { provide: NotificationsService, useValue: { dispatch: jest.fn() } },
       ],
     }).compile();
 
@@ -81,6 +83,7 @@ describe('TasksService', () => {
         { provide: AuditLogsService, useValue: { record: jest.fn() } },
         { provide: ProjectsService, useValue: {} },
         { provide: TaskWorkflowService, useValue: {} },
+        { provide: NotificationsService, useValue: { dispatch: jest.fn() } },
       ],
     }).compile();
 

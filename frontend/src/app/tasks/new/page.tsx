@@ -1319,7 +1319,8 @@ function NewTaskContent() {
 
 
   /*
-   * Admins ARE allowed to approve.
+   * Admins may approve, but NOBODY can approve a task they created
+   * themselves — so the current user never appears in this list.
    */
   const approvers =
     activeUsers.filter(
@@ -1327,7 +1328,9 @@ function NewTaskContent() {
         item,
       ) =>
         item.id !==
-        form.assignmentUserId,
+          user?.id &&
+        item.id !==
+          form.assignmentUserId,
     );
 
 
@@ -1382,6 +1385,26 @@ function NewTaskContent() {
     }
   }, [
     form.assignmentUserId,
+  ]);
+
+
+  /*
+   * A task that needs approval cannot be assigned yet: the assignee
+   * would be notified and could start before the approver decides.
+   * The creator assigns it after it has been approved.
+   */
+  useEffect(() => {
+    if (
+      form.needsApproval &&
+      form.assignmentUserId
+    ) {
+      set(
+        'assignmentUserId',
+        '',
+      );
+    }
+  }, [
+    form.needsApproval,
   ]);
 
 
@@ -2175,7 +2198,8 @@ function NewTaskContent() {
        */
 
       if (
-        form.assignmentUserId
+        form.assignmentUserId &&
+        !form.needsApproval
       ) {
         try {
           await AssignmentsApi.assign(
@@ -3766,8 +3790,14 @@ function NewTaskContent() {
                       set('assignmentUserId', value)
                     }
                     placeholder={uiText(isArabic, 'text0189')}
-                    disabled={Boolean(selectedParent)}
+                    disabled={Boolean(selectedParent) || form.needsApproval}
                   />
+
+                  {form.needsApproval && (
+                    <p className="mt-2 text-xs text-amber-600">
+                      {uiText(isArabic, 'text1270')}
+                    </p>
+                  )}
 
 
                   {/*
@@ -3775,7 +3805,7 @@ function NewTaskContent() {
                    * "pending acceptance" hint is shown once a user
                    * is selected.
                    */}
-                  {!form.assignmentUserId && (
+                  {!form.assignmentUserId && !form.needsApproval && (
                     <p
                       className="
                         mt-2

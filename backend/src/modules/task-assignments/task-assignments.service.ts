@@ -31,6 +31,7 @@ import { TaskStatus } from '../../shared/enums/task-status.enum';
 import { RoleName } from '../../shared/enums/role.enum';
 
 import { formatTaskDetails } from '../../shared/utils/task-notification.util';
+import { assertTaskApprovalAllowsWork } from '../../shared/utils/task-approval.util';
 
 @Injectable()
 export class TaskAssignmentsService {
@@ -211,6 +212,15 @@ export class TaskAssignmentsService {
         appError('ONLY_ADMIN_TASK_CREATOR_MAY_ASSIGN_TASK', 'Only an Admin or the Task creator may assign this Task'),
       );
     }
+
+    /*
+     * A Task that needs approval cannot be assigned until its approver
+     * has approved it. This is what keeps the assignee from being
+     * notified (and from starting work) too early.
+     */
+    assertTaskApprovalAllowsWork(
+      task,
+    );
 
     const assignee =
       await this.getValidAssignee(
@@ -426,6 +436,24 @@ export class TaskAssignmentsService {
     ) {
       throw new ConflictException(
         appError('ASSIGNMENT_NOT_IN_PENDINGACCEPTANCE_STATUS', 'Assignment is not in PendingAcceptance status'),
+      );
+    }
+
+    /*
+     * Accepting starts the work, so it is locked behind approval too
+     * (only reachable for assignments created before approval was enforced).
+     */
+    const taskAwaitingApproval =
+      await this.taskRepo.findOne({
+        where: {
+          id:
+            assignment.taskId,
+        },
+      });
+
+    if (taskAwaitingApproval) {
+      assertTaskApprovalAllowsWork(
+        taskAwaitingApproval,
       );
     }
 
@@ -792,6 +820,14 @@ export class TaskAssignmentsService {
       appError('ONLY_ADMIN_TASK_CREATOR_MAY_REASSIGN_ASSIGNMENT', 'Only an Admin or the Task creator may reassign this Assignment'),
     );
   }
+
+  /*
+   * Same approval lock as a fresh assignment: no (re)assignment while
+   * the Task is waiting for approval or after it was rejected.
+   */
+  assertTaskApprovalAllowsWork(
+    task,
+  );
 
   /*
    * =========================================================

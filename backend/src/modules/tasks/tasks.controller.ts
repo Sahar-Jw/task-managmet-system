@@ -15,6 +15,7 @@ import {
   CreateTaskDto,
   QueryMyTasksDto,
   QueryTasksDto,
+  RejectTaskApprovalDto,
   UpdateAttachmentPermissionsDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
@@ -65,6 +66,14 @@ export class TasksController {
     return this.tasksService.findArchivedTasks(user.id, query);
   }
 
+  // "Awaiting my approval": Tasks whose approver is the current user and
+  // that have not been decided yet.
+  // NOTE: must stay declared before ':id' or Nest will treat "pending-approval" as an id.
+  @Get('pending-approval')
+  findPendingApprovals(@CurrentUser() user: UserEntity) {
+    return this.tasksService.findPendingApprovals(user);
+  }
+
   // All Tasks (parent + sub-tasks) within a single Project, for the
   // Project details "read-only" view. Admin sees the whole org; a
   // regular User is only let through if they'd already pass
@@ -93,6 +102,23 @@ export class TasksController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateTaskDto, @CurrentUser() user: UserEntity) {
     return this.tasksService.update(id, dto, user);
+  }
+
+  // Approval decision. Only the Task's approver (or an Admin acting for them)
+  // may decide, and never the person who created the Task (enforced in the service).
+  @Post(':id/approve')
+  approve(@Param('id') id: string, @CurrentUser() user: UserEntity) {
+    return this.tasksService.approveTask(id, user);
+  }
+
+  // Rejecting closes the Task (status Finished) and needs a reason.
+  @Post(':id/reject-approval')
+  rejectApproval(
+    @Param('id') id: string,
+    @Body() dto: RejectTaskApprovalDto,
+    @CurrentUser() user: UserEntity,
+  ) {
+    return this.tasksService.rejectTaskApproval(id, dto, user);
   }
 
   // BR-070: Task creator (or Admin) toggles whether the assigned User(s)

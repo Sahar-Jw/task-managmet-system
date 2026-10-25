@@ -1003,8 +1003,20 @@ export class TaskAttachmentsService {
       );
 
 
+    /*
+     * The Task's approver has to be able to look at the supporting
+     * files to make a decision, so they get the same access as an
+     * assignee: preview always, download only if the creator allows it.
+     */
+    const isApprover =
+      task.needsApproval &&
+      task.approverId ===
+        actor.id;
+
+
     if (
-      !isAssignee
+      !isAssignee &&
+      !isApprover
     ) {
       throw new ForbiddenException(
         appError('YOU_DO_NOT_HAVE_ACCESS_ATTACHMENT', 'You do not have access to this Attachment'),
@@ -1044,11 +1056,12 @@ export class TaskAttachmentsService {
    * DELETE
    * ==========================================================
    *
-   * IMPORTANT:
+   * The Task owner / creator may delete, and so may any Admin
+   * (an Admin can manage everything, including attachments on
+   * Tasks created by other people).
    *
-   * ONLY THE TASK OWNER / CREATOR MAY DELETE.
-   *
-   * Being an Admin by itself is NOT enough.
+   * Who deleted it is recorded in the audit reason so the log
+   * can tell an owner deletion from an Admin deletion.
    * ==========================================================
    */
 
@@ -1085,14 +1098,20 @@ export class TaskAttachmentsService {
       actor.id;
 
 
+    const isAdmin =
+      actor.role?.name ===
+      RoleName.ADMIN;
+
+
     /*
-     * OWNER ONLY.
+     * OWNER OR ADMIN.
      */
     if (
-      !isCreator
+      !isCreator &&
+      !isAdmin
     ) {
       throw new ForbiddenException(
-        appError('ONLY_TASK_OWNER_MAY_DELETE_ATTACHMENT', 'Only the Task owner may delete this Attachment'),
+        appError('ONLY_TASK_OWNER_MAY_DELETE_ATTACHMENT', 'Only the Task owner or an Admin may delete this Attachment'),
       );
     }
 
@@ -1214,7 +1233,9 @@ export class TaskAttachmentsService {
       },
 
       reason:
-        AuditReasonCode.ATTACHMENT_DELETED_BY_OWNER,
+        isCreator
+          ? AuditReasonCode.ATTACHMENT_DELETED_BY_OWNER
+          : AuditReasonCode.ATTACHMENT_DELETED_BY_ADMIN,
     });
   }
 }

@@ -47,6 +47,8 @@ export class TaskCommentsService {
 
     if (actor.role.name === RoleName.ADMIN) return task;
     if (task.createdById === actor.id) return task;
+    // The approver must be able to read and ask questions on a Task they are asked to decide on.
+    if (task.needsApproval && task.approverId === actor.id) return task;
     if (task.departmentId === actor.departmentId) return task;
 
     const isAssignee = await this.assignmentRepo.exist({ where: { taskId, assigneeId: actor.id } });

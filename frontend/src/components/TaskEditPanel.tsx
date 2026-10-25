@@ -148,7 +148,12 @@ export default function TaskEditPanel({
   }, [isAdmin, isArabic, task.branchId, task.departmentId]);
 
   const currentAssigneeId = task.assignments?.find((item) => ['PendingAcceptance', 'Accepted'].includes(item.status))?.assigneeId;
-  const approvers = users.filter((item) => item.id !== currentAssigneeId);
+  // The creator can never approve their own task, and the assignee can't either.
+  const approvers = users.filter((item) => item.id !== currentAssigneeId && item.id !== task.createdById);
+  // Once the approver has decided, the approval setup is locked.
+  const approvalDecided = task.approvalStatus === 'Approved' || task.approvalStatus === 'Rejected';
+  // Approval can only be switched ON before the task is assigned or started.
+  const canEnableApproval = !task.needsApproval && !currentAssigneeId && !task.assignedToId && ['Pending', 'Unassigned'].includes(task.status);
   const parentTasks = useMemo(
     () => tasks.filter((item) => item.id !== task.id && !item.parentTaskId && !['Completed', 'Finished', 'Archived'].includes(item.status)),
     [task.id, tasks],
@@ -280,9 +285,13 @@ export default function TaskEditPanel({
         <section className={`${section} overflow-hidden`}>
           <div className="flex items-start justify-between gap-4">
             <div><h3 className="text-sm font-semibold text-slate-900">{uiText(isArabic, 'text1171')}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{uiText(isArabic, 'text1172')}</p></div>
-            <Switch checked={form.needsApproval} label={uiText(isArabic, 'text1173')} onChange={(value) => setForm((current) => ({ ...current, needsApproval: value, approverId: value ? current.approverId : '' }))} />
+            {(task.needsApproval ? !approvalDecided : canEnableApproval) ? (
+              <Switch checked={form.needsApproval} label={uiText(isArabic, 'text1173')} onChange={(value) => setForm((current) => ({ ...current, needsApproval: value, approverId: value ? current.approverId : '' }))} />
+            ) : (
+              <span className="text-xs text-slate-400">{uiText(isArabic, task.needsApproval ? 'text1268' : 'text1269')}</span>
+            )}
           </div>
-          {form.needsApproval && <div className="mt-4 border-t border-slate-100 pt-4"><label className="label">{uiText(isArabic, 'text1174')}</label><select required className="input" value={form.approverId} onChange={(e) => set('approverId', e.target.value)}><option value="">{uiText(isArabic, 'text1175')}</option>{approvers.map((item) => <option key={item.id} value={item.id}>{item.fullName}{item.role.name === 'ADMIN' ? ` — ${uiText(isArabic, 'text1226')}` : ''}</option>)}</select></div>}
+          {form.needsApproval && <div className="mt-4 border-t border-slate-100 pt-4"><label className="label">{uiText(isArabic, 'text1174')}</label><select required disabled={approvalDecided} className="input" value={form.approverId} onChange={(e) => set('approverId', e.target.value)}><option value="">{uiText(isArabic, 'text1175')}</option>{approvers.map((item) => <option key={item.id} value={item.id}>{item.fullName}{item.role.name === 'ADMIN' ? ` — ${uiText(isArabic, 'text1226')}` : ''}</option>)}</select></div>}
         </section>
 
         <section className={`${section} overflow-hidden`}>

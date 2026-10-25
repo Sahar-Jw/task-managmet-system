@@ -1209,6 +1209,42 @@ function TaskDetailContent() {
 
   /*
    * ==========================================================
+   * APPROVAL LOCK
+   * ==========================================================
+   *
+   * While approval is Pending the task cannot be assigned, started
+   * or completed. After a rejection it is closed for good.
+   */
+
+  const approvalPending =
+    task.needsApproval &&
+    task.approvalStatus ===
+      'Pending';
+
+  const approvalRejected =
+    task.needsApproval &&
+    task.approvalStatus ===
+      'Rejected';
+
+  const approvalLocked =
+    approvalPending ||
+    approvalRejected;
+
+  // The approver (or an Admin) decides — never the task's creator.
+  const canDecideApproval =
+    approvalPending &&
+    !isCreator &&
+    (
+      isApprover ||
+      isAdmin
+    ) &&
+    !task.archivedAt &&
+    task.status !==
+      'Archived';
+
+
+  /*
+   * ==========================================================
    * ASSIGNMENT MANAGEMENT
    * ==========================================================
    */
@@ -1218,6 +1254,7 @@ function TaskDetailContent() {
       isAdmin ||
       isCreator
     ) &&
+    !approvalLocked &&
     task.status !==
       'Archived';
 
@@ -1556,6 +1593,80 @@ function TaskDetailContent() {
         ),
       ];
     }
+  }
+
+
+  /*
+   * Nothing but archiving while approval is pending / rejected.
+   */
+  if (
+    approvalLocked
+  ) {
+    nextStatuses =
+      nextStatuses.filter(
+        (
+          status,
+        ) =>
+          status ===
+          'Archived',
+      );
+  }
+
+
+  /*
+   * ==========================================================
+   * APPROVAL DECISION
+   * ==========================================================
+   */
+
+  function approveTaskApproval() {
+    withFeedback(
+      () =>
+        TasksApi.approve(
+          task.id,
+        ),
+
+      uiText(isArabic, 'text0513'),
+    );
+  }
+
+
+  function rejectTaskApproval() {
+    setReasonModal({
+      title:
+        uiText(isArabic, 'text0514'),
+
+      description:
+        uiText(isArabic, 'text1271'),
+
+      minLength:
+        10,
+
+      confirmLabel:
+        uiText(isArabic, 'text0127'),
+
+      danger:
+        true,
+
+      onConfirm:
+        (
+          reason,
+        ) => {
+          setReasonModal(
+            null,
+          );
+
+          withFeedback(
+            () =>
+              TasksApi.rejectApproval(
+                task.id,
+                reason,
+              ),
+
+            uiText(isArabic, 'text1272'),
+          );
+        },
+    });
   }
 
 
@@ -3540,11 +3651,7 @@ function TaskDetailContent() {
             )}
 
 
-            {task.needsApproval &&
-              task.status ===
-                'InProgress' &&
-              task.approvalStatus !==
-                'Approved' && (
+            {approvalLocked && (
                 <div
                   className="
                     mt-4
@@ -3558,7 +3665,9 @@ function TaskDetailContent() {
                     text-blue-700
                   "
                 >
-                  {uiText(isArabic, 'text0505')}
+                  {approvalRejected
+                    ? uiText(isArabic, 'text1273')
+                    : uiText(isArabic, 'text0505')}
                 </div>
               )}
 
@@ -3793,6 +3902,54 @@ function TaskDetailContent() {
                   </div>
                 </div>
               </div>
+
+
+              {canDecideApproval && (
+                <div
+                  className="
+                    mt-4
+                    flex
+                    flex-wrap
+                    gap-2
+                  "
+                >
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={
+                      approveTaskApproval
+                    }
+                  >
+                    {uiText(isArabic, 'text0357')}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    onClick={
+                      rejectTaskApproval
+                    }
+                  >
+                    {uiText(isArabic, 'text0127')}
+                  </button>
+                </div>
+              )}
+
+
+              {approvalPending &&
+                !canDecideApproval &&
+                isCreator && (
+                  <p
+                    className="
+                      mt-4
+                      text-xs
+                      leading-5
+                      text-slate-500
+                    "
+                  >
+                    {uiText(isArabic, 'text1274')}
+                  </p>
+                )}
 
 
               {task.approvalStatus ===

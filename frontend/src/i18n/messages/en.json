@@ -547,7 +547,7 @@
     "text0502": "Task Workflow",
     "text0503": "Move the task through its workflow as work progresses.",
     "text0504": "The task is waiting for the assigned user to accept it before work starts.",
-    "text0505": "This task requires approval before it can be completed.",
+    "text0505": "This task is awaiting approval. It cannot be assigned, started or completed until it is approved.",
     "text0506": "Subtasks are still open",
     "text0507": "Complete the open subtasks to unlock the next workflow action.",
     "text0508": "No workflow actions are currently available.",
@@ -558,7 +558,7 @@
     "text0513": "Task approved.",
     "text0514": "Reject approval",
     "text0515": "Explain why the task is being rejected.",
-    "text0516": "Task rejected and returned to In Progress.",
+    "text0516": "Task rejected and closed.",
     "text0517": "Current assignee",
     "text0518": "Organization",
     "text0519": "Parent task",
@@ -1309,6 +1309,18 @@
     "text1264": "Explain why this task is being reopened.",
     "text1265": "Reopen",
     "text1266": "No archived tasks",
-    "text1267": "Archived tasks you created will appear here."
+    "text1267": "Archived tasks you created will appear here.",
+    "text1268": "Approval can no longer be changed.",
+    "text1269": "Approval can only be enabled before the task is assigned or started.",
+    "text1270": "This task needs approval, so it can only be assigned after it has been approved.",
+    "text1271": "Explain why you are rejecting this task. The task will be closed.",
+    "text1272": "Task rejected and closed.",
+    "text1273": "This task was rejected and closed. It can no longer be assigned or worked on.",
+    "text1274": "Waiting for the approver's decision. You will be notified, and then you can assign the task.",
+    "text1275": "Attachment deleted by an Admin",
+    "text1276": "Awaiting my approval",
+    "text1277": "Nothing is waiting for your approval",
+    "text1278": "Tasks that need your approval appear here until you approve or reject them.",
+    "text1279": "Tasks created by other people that are waiting for your approval. Open one to approve or reject it."
   }
 }

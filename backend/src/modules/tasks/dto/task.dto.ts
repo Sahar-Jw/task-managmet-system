@@ -291,6 +291,21 @@ export class UpdateTaskStatusDto {
 
 /*
  * ============================================================
+ * APPROVAL DECISION
+ * ============================================================
+ */
+
+export class RejectTaskApprovalDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(10)
+  @MaxLength(2000)
+  reason!: string;
+}
+
+
+/*
+ * ============================================================
  * GENERAL TASK QUERY
  * ============================================================
  */

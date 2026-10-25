@@ -52,6 +52,7 @@ import {
   CreateTaskDto,
   QueryMyTasksDto,
   QueryTasksDto,
+  RejectTaskApprovalDto,
   UpdateAttachmentPermissionsDto,
   UpdateTaskDto,
   UpdateTaskStatusDto,
@@ -112,6 +113,10 @@ import {
 import {
   formatTaskDetails,
 } from '../../shared/utils/task-notification.util';
+
+import {
+  assertTaskApprovalAllowsWork,
+} from '../../shared/utils/task-approval.util';
 
 
 /*
@@ -504,6 +509,32 @@ export class TasksService {
   }
 
 
+  /*
+   * The person who creates a Task can never be the one who approves
+   * it — otherwise the approval would be meaningless. This applies to
+   * Admins too.
+   */
+  private assertApproverIsNotCreator(
+    approverId?:
+      string | null,
+
+    creatorId?:
+      string | null,
+  ):
+    void {
+    if (
+      approverId &&
+      creatorId &&
+      approverId ===
+        creatorId
+    ) {
+      throw new BadRequestException(
+        appError('APPROVER_CANNOT_BE_TASK_CREATOR', 'The Task creator cannot be the approver of their own Task'),
+      );
+    }
+  }
+
+
   private assertAssigneeAndApproverDifferent(
     assignedToId?:
       string | null,
@@ -660,6 +691,15 @@ export class TasksService {
         appError('CANNOT_ADD_SUB_TASKS_COMPLETED_FINISHED_ARCHIVED_PARENT_TASK', 'Cannot add Sub-tasks to a completed, finished, or archived Parent Task'),
       );
     }
+
+
+    /*
+     * No work may be planned under a Task that is still waiting for
+     * its approval decision (or was rejected).
+     */
+    assertTaskApprovalAllowsWork(
+      parentTask,
+    );
 
 
     if (
@@ -3020,6 +3060,21 @@ export class TasksService {
     }
 
 
+    /*
+     * A Task that needs approval cannot be assigned yet. Assigning
+     * would notify the assignee and let them start working before the
+     * approver has decided. The creator assigns it AFTER it is approved.
+     */
+    if (
+      dto.needsApproval &&
+      dto.assignedToId
+    ) {
+      throw new BadRequestException(
+        appError('CANNOT_ASSIGN_TASK_BEFORE_APPROVAL', 'A Task that needs approval cannot be assigned until it has been approved'),
+      );
+    }
+
+
     let createAssignee:
       UserEntity |
       undefined;
@@ -3062,6 +3117,15 @@ export class TasksService {
       needsApproval &&
       dto.approverId
     ) {
+      /*
+       * You can never approve your own Task (Admin included).
+       */
+      this.assertApproverIsNotCreator(
+        dto.approverId,
+        actor.id,
+      );
+
+
       createApprover =
         await this.assertValidApprover(
           dto.approverId,
@@ -3226,9 +3290,84 @@ export class TasksService {
     }
 
 
+    /*
+     * Ask the approver for their decision right away. Nobody else is
+     * notified: the Task has no assignee and cannot start until the
+     * approver approves it.
+     */
+    if (
+      needsApproval &&
+      task.approverId
+    ) {
+      await this.notifyApprovalRequested(
+        task,
+        actor,
+      );
+    }
+
+
     return this.findOne(
       task.id,
     );
+  }
+
+
+  /*
+   * ==========================================================
+   * APPROVAL NOTIFICATIONS
+   * ==========================================================
+   */
+
+  private async notifyApprovalRequested(
+    task:
+      TaskEntity,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<void> {
+    if (
+      !task.approverId ||
+      task.approverId ===
+        actor.id
+    ) {
+      return;
+    }
+
+
+    await this.notificationsService.dispatch({
+      recipientId:
+        task.approverId,
+
+      type:
+        NotificationType.APPROVAL_REQUESTED,
+
+      title:
+        'New approval request',
+
+      message:
+        `${actor.fullName} asked for your approval on "${task.title}".${formatTaskDetails(task)}`,
+
+      metadata: {
+        taskId:
+          task.id,
+
+        actorId:
+          actor.id,
+
+        actorName:
+          actor.fullName,
+
+        taskTitle:
+          task.title,
+
+        priority:
+          task.priority,
+
+        dueDate:
+          task.deadlineDate,
+      },
+    });
   }
 
 
@@ -3527,12 +3666,89 @@ export class TasksService {
     }
 
 
+    /*
+     * Approval has to be asked for BEFORE any work starts. Turning it
+     * on for a Task that is already assigned or in progress would
+     * freeze work that is already happening.
+     */
+    if (
+      enablingApproval &&
+      (
+        task.assignedToId ||
+        ![
+          TaskStatus.PENDING,
+          TaskStatus.UNASSIGNED,
+        ].includes(
+          task.status as
+            TaskStatus,
+        )
+      )
+    ) {
+      throw new BadRequestException(
+        appError('CANNOT_ENABLE_APPROVAL_ON_STARTED_TASK', 'Approval can only be enabled before the Task has been assigned or started'),
+      );
+    }
+
+
     if (
       effectiveNeedsApproval &&
       !effectiveApproverId
     ) {
       throw new BadRequestException(
         appError('APPROVER_REQUIRED_WHEN_TASK_NEEDS_APPROVAL', 'An approver is required when the Task needs approval'),
+      );
+    }
+
+
+    const approverChanging =
+      Boolean(
+        effectiveNeedsApproval &&
+        dto.approverId !==
+          undefined &&
+        (
+          effectiveApproverId ??
+          null
+        ) !==
+          (
+            task.approverId ??
+            null
+          ),
+      );
+
+
+    /*
+     * Once the approver has decided (approved or rejected), the
+     * approver can no longer be swapped — that would let someone shop
+     * around for a different answer.
+     */
+    if (
+      approverChanging &&
+      (
+        task.approvalStatus ===
+          ApprovalStatus.APPROVED ||
+        task.approvalStatus ===
+          ApprovalStatus.REJECTED
+      )
+    ) {
+      throw new ConflictException(
+        appError('APPROVAL_ALREADY_DECIDED', 'The approval decision has already been made, so the approver can no longer be changed'),
+      );
+    }
+
+
+    /*
+     * A rejected Task is closed for good. Only an Admin may lift the
+     * approval requirement from it.
+     */
+    if (
+      task.approvalStatus ===
+        ApprovalStatus.REJECTED &&
+      dto.needsApproval ===
+        false &&
+      !isAdmin
+    ) {
+      throw new ForbiddenException(
+        appError('ONLY_ADMIN_MAY_REMOVE_APPROVAL_FROM_REJECTED_TASK', 'Only an Admin may remove the approval requirement from a rejected Task'),
       );
     }
 
@@ -3545,6 +3761,22 @@ export class TasksService {
       effectiveNeedsApproval &&
       effectiveApproverId
     ) {
+      /*
+       * Only re-check the creator rule when the approver is actually
+       * being set or changed, so editing an older Task that predates
+       * this rule is never blocked.
+       */
+      if (
+        enablingApproval ||
+        approverChanging
+      ) {
+        this.assertApproverIsNotCreator(
+          effectiveApproverId,
+          task.createdById,
+        );
+      }
+
+
       updateApprover =
         await this.assertValidApprover(
           effectiveApproverId,
@@ -3559,6 +3791,50 @@ export class TasksService {
         ? effectiveApproverId
         : null,
     );
+
+
+    /*
+     * What the approval status will be once this update is applied.
+     */
+    let nextApprovalStatus =
+      task.approvalStatus;
+
+    if (
+      dto.needsApproval ===
+      false
+    ) {
+      nextApprovalStatus =
+        ApprovalStatus.NOT_REQUIRED;
+    } else if (
+      enablingApproval
+    ) {
+      nextApprovalStatus =
+        ApprovalStatus.PENDING;
+    }
+
+
+    /*
+     * Nobody may be put on a Task while its approval is unresolved.
+     * (Clearing the assignee is still fine.)
+     */
+    if (
+      dto.assignedToId &&
+      dto.assignedToId !==
+        (
+          task.assignedToId ??
+          null
+        ) &&
+      (
+        nextApprovalStatus ===
+          ApprovalStatus.PENDING ||
+        nextApprovalStatus ===
+          ApprovalStatus.REJECTED
+      )
+    ) {
+      throw new BadRequestException(
+        appError('CANNOT_ASSIGN_TASK_BEFORE_APPROVAL', 'A Task that needs approval cannot be assigned until it has been approved'),
+      );
+    }
 
 
     this.assertBudgetComplete(
@@ -3635,24 +3911,13 @@ export class TasksService {
         true;
 
 
+      /*
+       * Newly enabled -> the approver has to decide. A later approver
+       * change is only possible while still Pending (checked above),
+       * so it simply keeps the Task Pending for the new approver.
+       */
       if (
         !oldValue.needsApproval
-      ) {
-        task.approvalStatus =
-          ApprovalStatus.PENDING;
-
-        (
-          task as any
-        ).rejectionReason =
-          null;
-      }
-
-
-      if (
-        dto.approverId !==
-          undefined &&
-        effectiveApproverId !==
-          oldApproverId
       ) {
         task.approvalStatus =
           ApprovalStatus.PENDING;
@@ -3790,9 +4055,462 @@ export class TasksService {
     }
 
 
+    /*
+     * Approval was just requested (enabled) or handed to a different
+     * approver while still Pending -> tell that approver.
+     */
+    if (
+      (
+        enablingApproval ||
+        approverChanging
+      ) &&
+      saved.approvalStatus ===
+        ApprovalStatus.PENDING &&
+      saved.approverId
+    ) {
+      await this.notifyApprovalRequested(
+        saved,
+        actor,
+      );
+    }
+
+
     return this.findOne(
       saved.id,
     );
+  }
+
+
+  /*
+   * ==========================================================
+   * APPROVAL DECISION
+   * ==========================================================
+   *
+   * Only the Task's approver (or an Admin acting for them) may
+   * decide, and NEVER the person who created the Task.
+   *
+   *  - Approve: the Task stays Pending/unassigned, but is now
+   *    unlocked. The creator is notified and can assign it and
+   *    proceed.
+   *  - Reject:  the Task is closed (status becomes Finished) with
+   *    the approver's reason, and the creator is notified.
+   * ==========================================================
+   */
+
+  private async loadTaskForApprovalDecision(
+    id:
+      string,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
+    const task =
+      await this.findOne(
+        id,
+      );
+
+
+    if (
+      task.archivedAt ||
+      task.status ===
+        TaskStatus.ARCHIVED
+    ) {
+      throw new BadRequestException(
+        appError('CANNOT_DECIDE_APPROVAL_ON_ARCHIVED_TASK', 'Cannot approve or reject an archived Task'),
+      );
+    }
+
+
+    if (
+      task.createdById ===
+      actor.id
+    ) {
+      throw new ForbiddenException(
+        appError('CREATOR_CANNOT_DECIDE_OWN_TASK_APPROVAL', 'You cannot approve or reject a Task that you created'),
+      );
+    }
+
+
+    const isAdmin =
+      actor.role?.name ===
+      RoleName.ADMIN;
+
+
+    if (
+      !isAdmin &&
+      task.approverId !==
+        actor.id
+    ) {
+      throw new ForbiddenException(
+        appError('ONLY_APPROVER_MAY_DECIDE_TASK_APPROVAL', 'Only the Task approver or an Admin may approve or reject this Task'),
+      );
+    }
+
+
+    if (
+      !task.needsApproval ||
+      task.approvalStatus !==
+        ApprovalStatus.PENDING
+    ) {
+      throw new ConflictException(
+        appError('TASK_IS_NOT_WAITING_FOR_APPROVAL', 'This Task is not waiting for approval'),
+      );
+    }
+
+
+    return task;
+  }
+
+
+  async approveTask(
+    id:
+      string,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
+    const task =
+      await this.loadTaskForApprovalDecision(
+        id,
+        actor,
+      );
+
+
+    /*
+     * Conditional update: only succeeds while the Task is still
+     * Pending, so two simultaneous decisions can never both win.
+     */
+    const result =
+      await this.taskRepo.update(
+        {
+          id:
+            task.id,
+
+          approvalStatus:
+            ApprovalStatus.PENDING,
+        },
+
+        {
+          approvalStatus:
+            ApprovalStatus.APPROVED,
+
+          rejectionReason:
+            null as any,
+        },
+      );
+
+
+    if (
+      !result.affected
+    ) {
+      throw new ConflictException(
+        appError('TASK_IS_NOT_WAITING_FOR_APPROVAL', 'This Task is not waiting for approval'),
+      );
+    }
+
+
+    await this.auditLogsService.record({
+      actorId:
+        actor.id,
+
+      entityType:
+        'Task',
+
+      entityId:
+        task.id,
+
+      action:
+        AuditAction.APPROVE,
+
+      oldValue: {
+        taskTitle:
+          task.title,
+
+        approvalStatus:
+          ApprovalStatus.PENDING,
+      },
+
+      newValue: {
+        taskTitle:
+          task.title,
+
+        approvalStatus:
+          ApprovalStatus.APPROVED,
+
+        approverName:
+          actor.fullName,
+      },
+    });
+
+
+    if (
+      task.createdById !==
+      actor.id
+    ) {
+      await this.notificationsService.dispatch({
+        recipientId:
+          task.createdById,
+
+        type:
+          NotificationType.APPROVAL_DECISION,
+
+        title:
+          'Task approved',
+
+        message:
+          `${actor.fullName} approved "${task.title}". You can now assign it and proceed.${formatTaskDetails(task)}`,
+
+        metadata: {
+          taskId:
+            task.id,
+
+          actorId:
+            actor.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitle:
+            task.title,
+
+          decision:
+            'approved',
+
+          priority:
+            task.priority,
+
+          dueDate:
+            task.deadlineDate,
+        },
+      });
+    }
+
+
+    return this.findOne(
+      task.id,
+    );
+  }
+
+
+  async rejectTaskApproval(
+    id:
+      string,
+
+    dto:
+      RejectTaskApprovalDto,
+
+    actor:
+      UserEntity,
+  ):
+    Promise<TaskEntity> {
+    const task =
+      await this.loadTaskForApprovalDecision(
+        id,
+        actor,
+      );
+
+
+    const oldStatus =
+      task.status;
+
+
+    /*
+     * Rejection closes the Task: status becomes Finished and the
+     * approver's reason is stored. Conditional on Pending, as above.
+     */
+    const result =
+      await this.taskRepo.update(
+        {
+          id:
+            task.id,
+
+          approvalStatus:
+            ApprovalStatus.PENDING,
+        },
+
+        {
+          approvalStatus:
+            ApprovalStatus.REJECTED,
+
+          rejectionReason:
+            dto.reason,
+
+          status:
+            TaskStatus.FINISHED,
+        },
+      );
+
+
+    if (
+      !result.affected
+    ) {
+      throw new ConflictException(
+        appError('TASK_IS_NOT_WAITING_FOR_APPROVAL', 'This Task is not waiting for approval'),
+      );
+    }
+
+
+    await this.auditLogsService.record({
+      actorId:
+        actor.id,
+
+      entityType:
+        'Task',
+
+      entityId:
+        task.id,
+
+      action:
+        AuditAction.REJECT,
+
+      reason:
+        dto.reason,
+
+      oldValue: {
+        taskTitle:
+          task.title,
+
+        status:
+          oldStatus,
+
+        approvalStatus:
+          ApprovalStatus.PENDING,
+      },
+
+      newValue: {
+        taskTitle:
+          task.title,
+
+        status:
+          TaskStatus.FINISHED,
+
+        approvalStatus:
+          ApprovalStatus.REJECTED,
+
+        approverName:
+          actor.fullName,
+      },
+    });
+
+
+    if (
+      task.projectId
+    ) {
+      await this.projectsService.recomputeStatus(
+        task.projectId,
+      );
+    }
+
+
+    if (
+      task.createdById !==
+      actor.id
+    ) {
+      await this.notificationsService.dispatch({
+        recipientId:
+          task.createdById,
+
+        type:
+          NotificationType.APPROVAL_DECISION,
+
+        title:
+          'Task rejected',
+
+        message:
+          `${actor.fullName} rejected "${task.title}". The Task has been closed.${formatTaskDetails(task)} Reason: ${dto.reason}`,
+
+        metadata: {
+          taskId:
+            task.id,
+
+          actorId:
+            actor.id,
+
+          actorName:
+            actor.fullName,
+
+          taskTitle:
+            task.title,
+
+          decision:
+            'rejected',
+
+          reason:
+            dto.reason,
+
+          priority:
+            task.priority,
+
+          dueDate:
+            task.deadlineDate,
+        },
+      });
+    }
+
+
+    return this.findOne(
+      task.id,
+    );
+  }
+
+
+  /*
+   * Tasks waiting for the current user's approval decision.
+   */
+  async findPendingApprovals(
+    actor:
+      UserEntity,
+  ) {
+    const tasks =
+      await this.taskRepo.find({
+        where: {
+          approverId:
+            actor.id,
+
+          approvalStatus:
+            ApprovalStatus.PENDING,
+        },
+
+        relations: [
+          'branch',
+          'department',
+          'project',
+          'createdBy',
+        ],
+
+        order: {
+          createdAt:
+            'DESC',
+        },
+      });
+
+
+    const open =
+      tasks.filter(
+        (
+          task,
+        ) =>
+          !task.archivedAt &&
+          task.status !==
+            TaskStatus.ARCHIVED,
+      );
+
+
+    return {
+      items:
+        open,
+
+      total:
+        open.length,
+
+      page:
+        1,
+
+      limit:
+        open.length || 1,
+    };
   }
 
 
@@ -3995,6 +4713,21 @@ export class TasksService {
     ) {
       throw new BadRequestException(
         appError('CANNOT_CHANGE_STATUS_ARCHIVED_TASK', 'Cannot change the status of an archived Task'),
+      );
+    }
+
+
+    /*
+     * A Task that is waiting for approval (or was rejected) cannot be
+     * started, completed, finished or reopened — nothing but archiving
+     * it. Once the approver approves it, the normal workflow resumes.
+     */
+    if (
+      dto.status !==
+      TaskStatus.ARCHIVED
+    ) {
+      assertTaskApprovalAllowsWork(
+        task,
       );
     }
 

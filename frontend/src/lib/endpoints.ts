@@ -891,6 +891,33 @@ export const TasksApi = {
       },
     ),
 
+  pendingApproval: () =>
+    api<Paginated<Task>>(
+      '/tasks/pending-approval',
+    ),
+
+  approve: (
+    id: string,
+  ) =>
+    api<Task>(
+      `/tasks/${id}/approve`,
+      {
+        method: 'POST',
+      },
+    ),
+
+  rejectApproval: (
+    id: string,
+    reason: string,
+  ) =>
+    api<Task>(
+      `/tasks/${id}/reject-approval`,
+      {
+        method: 'POST',
+        body: { reason },
+      },
+    ),
+
   changeStatus: (
     id: string,
     status: string,

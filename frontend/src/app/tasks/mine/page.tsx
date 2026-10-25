@@ -74,6 +74,7 @@ const RATINGS = [
 type Tab =
   | 'assignedToMe'
   | 'assignedByMe'
+  | 'awaitingMyApproval'
   | 'archived';
 
 
@@ -104,6 +105,14 @@ function tabFromParam(
     'assignedByMe'
   ) {
     return 'assignedByMe';
+  }
+
+
+  if (
+    value ===
+    'awaitingMyApproval'
+  ) {
+    return 'awaitingMyApproval';
   }
 
 
@@ -561,7 +570,10 @@ function EmptyState({
           : tab ===
               'archived'
             ? uiText(isArabic, 'text1266')
-            : uiText(isArabic, 'text0155')}
+            : tab ===
+                'awaitingMyApproval'
+              ? uiText(isArabic, 'text1277')
+              : uiText(isArabic, 'text0155')}
       </h3>
 
 
@@ -569,7 +581,10 @@ function EmptyState({
         {tab ===
         'archived'
           ? uiText(isArabic, 'text1267')
-          : uiText(isArabic, 'text0521')}
+          : tab ===
+              'awaitingMyApproval'
+            ? uiText(isArabic, 'text1278')
+            : uiText(isArabic, 'text0521')}
       </p>
     </div>
   );
@@ -920,6 +935,53 @@ function MyTasksContent() {
     );
 
 
+  /*
+   * Number of tasks waiting for MY approval, shown as a badge on the
+   * "Awaiting my approval" tab. Refreshed whenever the tab changes, so
+   * an approved / rejected task disappears from the count right away.
+   */
+  const [
+    approvalCount,
+    setApprovalCount,
+  ] =
+    useState(
+      0,
+    );
+
+
+  useEffect(() => {
+    let cancelled =
+      false;
+
+    TasksApi.pendingApproval()
+      .then(
+        (
+          result,
+        ) => {
+          if (
+            !cancelled
+          ) {
+            setApprovalCount(
+              result.total,
+            );
+          }
+        },
+      )
+      .catch(
+        () => {
+          /* The badge is a convenience; the tab itself shows errors. */
+        },
+      );
+
+    return () => {
+      cancelled =
+        true;
+    };
+  }, [
+    tab,
+  ]);
+
+
   useEffect(() => {
     const stored =
       window.localStorage.getItem(
@@ -1235,6 +1297,8 @@ function MyTasksContent() {
     const showCreator =
       tab ===
         'assignedToMe' ||
+      tab ===
+        'awaitingMyApproval' ||
       (
         tab ===
           'archived' &&
@@ -1440,6 +1504,9 @@ function MyTasksContent() {
               ? await TasksApi.mine(
                   params,
                 )
+              : tab ===
+                  'awaitingMyApproval'
+                ? await TasksApi.pendingApproval()
               : tab ===
                   'archived'
                 ? await TasksApi.archived(
@@ -1839,6 +1906,30 @@ function MyTasksContent() {
     }
 
 
+    /*
+     * Awaiting my approval: just open the task. Approve / Reject
+     * live on the task page, next to the details being decided on.
+     */
+    if (
+      tab ===
+      'awaitingMyApproval'
+    ) {
+      return (
+        <div className="relative z-20 flex flex-wrap items-center gap-2">
+          <Link
+            href={`/tasks/view?id=${task.id}`}
+            onClick={(event) => event.stopPropagation()}
+            className="icon-btn h-8 w-8"
+            title={uiText(isArabic, 'text0158')}
+            aria-label={uiText(isArabic, 'text0158')}
+          >
+            <ViewIcon />
+          </Link>
+        </div>
+      );
+    }
+
+
     if (
       tab ===
       'assignedToMe'
@@ -2007,9 +2098,14 @@ function MyTasksContent() {
                   ? (
                       uiText(isArabic, 'text0581')
                     )
-                  : (
-                      uiText(isArabic, 'text0525')
-                    )}
+                  : tab ===
+                      'awaitingMyApproval'
+                    ? (
+                        uiText(isArabic, 'text1279')
+                      )
+                    : (
+                        uiText(isArabic, 'text0525')
+                      )}
             </p>
           </div>
 
@@ -2081,6 +2177,31 @@ function MyTasksContent() {
           type="button"
           onClick={() =>
             changeTab(
+              'awaitingMyApproval',
+            )
+          }
+          className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+            tab ===
+            'awaitingMyApproval'
+              ? 'bg-brand-50 text-brand-700'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+          }`}
+        >
+          {uiText(isArabic, 'text1276')}
+
+          {approvalCount >
+            0 && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+              {approvalCount}
+            </span>
+          )}
+        </button>
+
+
+        <button
+          type="button"
+          onClick={() =>
+            changeTab(
               'archived',
             )
           }
@@ -2096,6 +2217,8 @@ function MyTasksContent() {
       </div>
 
 
+      {tab !==
+        'awaitingMyApproval' && (
       <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <div className="relative min-w-0 flex-1">
@@ -2599,6 +2722,7 @@ function MyTasksContent() {
           </div>
         )}
       </section>
+      )}
 
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -2628,7 +2752,9 @@ function MyTasksContent() {
         )}
 
 
-        {hasFilters && (
+        {hasFilters &&
+          tab !==
+            'awaitingMyApproval' && (
           <button
             type="button"
             className="text-xs font-medium text-brand-600 hover:text-brand-800"
@@ -3098,7 +3224,9 @@ function MyTasksContent() {
 
 
       {!loading &&
-        !error && (
+        !error &&
+        tab !==
+          'awaitingMyApproval' && (
         <Pagination
           page={
             page

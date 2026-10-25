@@ -697,13 +697,14 @@ export default function TaskAttachmentsPanel({
 
 
   /*
-   * User requirement:
-   *
-   * only Task owner may delete.
+   * Task owner OR Admin may delete (matches the backend).
    */
   const canDelete =
     Boolean(
-      isOwner &&
+      (
+        isOwner ||
+        isAdmin
+      ) &&
       task.status !==
         'Archived',
     );

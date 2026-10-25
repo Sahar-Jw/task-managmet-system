@@ -21,6 +21,7 @@ import {
 
 import {
   getToken,
+  refreshAccessToken,
   setToken,
 } from './api';
 
@@ -119,6 +120,17 @@ export function AuthProvider({
    */
 
   async function refreshUser() {
+    /*
+     * The access token is memory-only, so after a reload / new tab it is
+     * empty. Restore it from the HttpOnly refresh cookie before deciding
+     * whether the visitor is logged in.
+     */
+    if (
+      !getToken()
+    ) {
+      await refreshAccessToken();
+    }
+
     if (
       !getToken()
     ) {

@@ -8,7 +8,10 @@ import type { TaskAttachment } from '@/lib/types';
 import { useLocale } from 'next-intl';
 import { uiText } from '@/lib/ui-text';
 import InlineLoader from '@/components/InlineLoader';
-import PdfCanvasPreview from '@/components/PdfCanvasPreview';
+import dynamic from 'next/dynamic';
+
+// pdf.js is only needed once a PDF preview is actually shown.
+const PdfCanvasPreview = dynamic(() => import('@/components/PdfCanvasPreview'), { ssr: false });
 
 // 'empty' = the file itself has no usable content (0 bytes, no sheet data,
 // no visible text/images). 'unsupported' = we simply don't render a preview

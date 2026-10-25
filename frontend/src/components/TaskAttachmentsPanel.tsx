@@ -19,11 +19,8 @@ import {
   useLocale,
 } from 'next-intl';
 
-import * as XLSX
-  from 'xlsx';
-
-import * as mammoth
-  from 'mammoth';
+import dynamic
+  from 'next/dynamic';
 
 import DOMPurify
   from 'dompurify';
@@ -47,8 +44,18 @@ import {
   getFileTypeLabel,
 } from '@/lib/file-kind';
 
-import PdfCanvasPreview
-  from '@/components/PdfCanvasPreview';
+/* pdf.js is only needed once a PDF preview is opened. */
+const PdfCanvasPreview =
+  dynamic(
+    () =>
+      import(
+        '@/components/PdfCanvasPreview'
+      ),
+    {
+      ssr:
+        false,
+    },
+  );
 
 import type {
   Task,
@@ -1272,6 +1279,13 @@ export default function TaskAttachmentsPanel({
       );
 
 
+    /* Loaded on demand - xlsx is large and only needed for previews. */
+    const XLSX =
+      await import(
+        'xlsx'
+      );
+
+
     const workbook =
       XLSX.read(
         bytes,
@@ -1454,6 +1468,17 @@ export default function TaskAttachmentsPanel({
 
     const arrayBuffer =
       await blob.arrayBuffer();
+
+
+    /* Loaded on demand - mammoth is large and only needed for previews. */
+    const mammothModule =
+      await import(
+        'mammoth'
+      );
+
+    const mammoth =
+      ((mammothModule as any).default ??
+        mammothModule) as typeof import('mammoth');
 
 
     const result =

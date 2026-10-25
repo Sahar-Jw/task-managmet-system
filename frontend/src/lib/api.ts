@@ -9,9 +9,23 @@ import {
  * ============================================================
  */
 
-export const API_URL =
+/*
+ * The API address comes from NEXT_PUBLIC_API_URL (set at build time).
+ *
+ * There is intentionally NO hardcoded production host here:
+ *   - development  -> local backend
+ *   - production   -> same-origin '/api/v1' (reverse proxy), unless
+ *                     NEXT_PUBLIC_API_URL is set.
+ */
+const DEFAULT_API_URL =
+  process.env.NODE_ENV === 'development'
+    ? 'http://localhost:3000/api/v1'
+    : '/api/v1';
+
+export const API_URL = (
   process.env.NEXT_PUBLIC_API_URL ||
-  'https://sanabilalsham.org/api/v1';
+  DEFAULT_API_URL
+).replace(/\/+$/, '');
 
 
 /*
@@ -239,19 +253,28 @@ function localeHeaders(): Record<string, string> {
  * ============================================================
  */
 
+/*
+ * The access token lives in module memory only. It is never written to
+ * localStorage/sessionStorage, so an XSS bug cannot read it from storage.
+ *
+ * Session continuity across reloads/new tabs comes from the HttpOnly
+ * refresh-token cookie: on startup the app calls /auth/refresh to get a
+ * fresh access token (see auth-context.tsx).
+ */
+let accessToken: string | null = null;
+
+/* Remove tokens left in storage by earlier versions of the app. */
+if (typeof window !== 'undefined') {
+  try {
+    window.localStorage.removeItem('accessToken');
+  } catch {
+    /* storage unavailable - nothing to clean up */
+  }
+}
+
 export function getToken():
   string | null {
-  if (
-    typeof window ===
-    'undefined'
-  ) {
-    return null;
-  }
-
-
-  return localStorage.getItem(
-    'accessToken',
-  );
+  return accessToken;
 }
 
 
@@ -259,26 +282,8 @@ export function setToken(
   token:
     string | null,
 ) {
-  if (
-    typeof window ===
-    'undefined'
-  ) {
-    return;
-  }
-
-
-  if (
-    token
-  ) {
-    localStorage.setItem(
-      'accessToken',
-      token,
-    );
-  } else {
-    localStorage.removeItem(
-      'accessToken',
-    );
-  }
+  accessToken =
+    token || null;
 }
 
 
@@ -290,6 +295,28 @@ export function setToken(
  * Only one refresh runs at a time.
  * ============================================================
  */
+
+/*
+ * Refresh tokens rotate, so two tabs refreshing at the same instant could
+ * invalidate each other. Web Locks serialise refreshes across tabs; each
+ * request reads the latest cookie when its turn comes.
+ */
+function withRefreshLock<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  if (
+    typeof navigator !== 'undefined' &&
+    navigator.locks
+  ) {
+    return navigator.locks.request(
+      'task-pm-auth-refresh',
+      fn,
+    ) as unknown as Promise<T>;
+  }
+
+  return fn();
+}
+
 
 let refreshInFlight:
   Promise<
@@ -310,18 +337,21 @@ export async function refreshAccessToken():
         async () => {
           try {
             const res =
-              await fetch(
-                `${API_URL}/auth/refresh`,
-                {
-                  method:
-                    'POST',
+              await withRefreshLock(
+                () =>
+                  fetch(
+                    `${API_URL}/auth/refresh`,
+                    {
+                      method:
+                        'POST',
 
-                  headers:
-                    localeHeaders(),
+                      headers:
+                        localeHeaders(),
 
-                  credentials:
-                    'include',
-                },
+                      credentials:
+                        'include',
+                    },
+                  ),
               );
 
 

@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { appError } from '../../common/errors/app-error';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { ForgotPasswordDto, LoginDto, ResetPasswordDto } from './dto/auth.dto';
@@ -17,6 +18,10 @@ import { UserEntity } from '../users/entities/user.entity';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+
+// Brute-force protection for the public auth endpoints (per client IP).
+const AUTH_LIMIT = { default: { limit: 10, ttl: 60_000 } };
+const RESET_LIMIT = { default: { limit: 5, ttl: 60_000 } };
 
 const REFRESH_COOKIE_NAME = 'refreshToken';
 // Without maxAge this becomes a session cookie that the browser deletes as
@@ -51,6 +56,7 @@ export class AuthController {
 
   // POST /auth/login — NFR-SEC-03: refresh token as HttpOnly Secure cookie
   @Public()
+  @Throttle(AUTH_LIMIT)
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -65,6 +71,7 @@ export class AuthController {
 
   // POST /auth/register — public sign-up, auto-logs-in the new User
   @Public()
+  @Throttle(AUTH_LIMIT)
   @Post('register')
   async register(
     @Body() dto: RegisterUserDto,
@@ -105,12 +112,14 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle(RESET_LIMIT)
   @Post('forgot-password')
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
   }
 
   @Public()
+  @Throttle(RESET_LIMIT)
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);

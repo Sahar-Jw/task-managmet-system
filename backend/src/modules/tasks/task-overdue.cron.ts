@@ -92,6 +92,10 @@ export class TaskOverdueCron {
     CronExpression.EVERY_HOUR,
   )
   async notifyOverdueTasks(): Promise<void> {
+    // When running several app instances, set DISABLE_CRON=true on all
+    // but one so scheduled jobs do not run (and notify) more than once.
+    if (process.env.DISABLE_CRON === 'true') return;
+
     const todayIso =
       new Date()
         .toISOString()

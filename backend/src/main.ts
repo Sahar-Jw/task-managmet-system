@@ -22,6 +22,9 @@ import {
 import helmet
   from 'helmet';
 
+import compression
+  from 'compression';
+
 import cookieParser
   from 'cookie-parser';
 
@@ -89,6 +92,35 @@ async function bootstrap() {
     app.get(
       ConfigService,
     );
+
+
+  const isProduction =
+    configService.get<string>(
+      'nodeEnv',
+    ) === 'production';
+
+
+  /*
+   * Behind nginx / a load balancer, req.ip is the proxy unless Express is
+   * told to trust it. This matters for rate limiting and audit-log IPs.
+   * TRUST_PROXY accepts a hop count (1), "true", or a subnet like "loopback".
+   */
+  if (process.env.TRUST_PROXY) {
+    const raw = process.env.TRUST_PROXY;
+    app.set(
+      'trust proxy',
+      raw === 'true' ? true : /^\d+$/.test(raw) ? parseInt(raw, 10) : raw,
+    );
+  }
+
+
+  /*
+   * gzip JSON responses. If nginx already compresses, set
+   * DISABLE_APP_COMPRESSION=true to avoid doing it twice.
+   */
+  if (process.env.DISABLE_APP_COMPRESSION !== 'true') {
+    app.use(compression());
+  }
 
 
   /*
@@ -252,6 +284,14 @@ async function bootstrap() {
           .filter(Boolean);
 
 
+  if (isProduction && configuredCorsOrigin.trim() === '*') {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[security] CORS_ORIGIN is "*" in production: any website can call this API with credentials. Set CORS_ORIGIN to your frontend origin(s).',
+    );
+  }
+
+
   app.enableCors({
     origin:
       corsOrigin,
@@ -325,18 +365,27 @@ async function bootstrap() {
       .build();
 
 
-  const document =
-    SwaggerModule.createDocument(
+  /*
+   * API docs are a map of the whole attack surface, so they are off in
+   * production unless explicitly enabled with ENABLE_SWAGGER=true.
+   */
+  const swaggerEnabled =
+    !isProduction ||
+    process.env.ENABLE_SWAGGER === 'true';
+
+  if (swaggerEnabled) {
+    const document =
+      SwaggerModule.createDocument(
+        app,
+        swaggerConfig,
+      );
+
+    SwaggerModule.setup(
+      `${apiPrefix}/docs`,
       app,
-      swaggerConfig,
+      document,
     );
-
-
-  SwaggerModule.setup(
-    `${apiPrefix}/docs`,
-    app,
-    document,
-  );
+  }
 
 
   /*
@@ -363,10 +412,12 @@ async function bootstrap() {
   );
 
 
-  // eslint-disable-next-line no-console
-  console.log(
-    `Swagger docs: http://localhost:${port}/${apiPrefix}/docs`,
-  );
+  if (swaggerEnabled) {
+    // eslint-disable-next-line no-console
+    console.log(
+      `Swagger docs: http://localhost:${port}/${apiPrefix}/docs`,
+    );
+  }
 }
 
 

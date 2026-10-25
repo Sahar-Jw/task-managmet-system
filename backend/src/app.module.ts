@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import configuration from './config/configuration';
 import { validate } from './config/validation.schema';
@@ -40,6 +41,20 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     }),
 
     ScheduleModule.forRoot(),
+
+    /*
+     * Global rate limit per client IP. The default is deliberately generous
+     * because many staff can share one office IP; the sensitive public auth
+     * endpoints get a much stricter @Throttle() of their own.
+     * Make sure TRUST_PROXY is set behind nginx, otherwise every user looks
+     * like the proxy's IP and they would all share one bucket.
+     */
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60_000,
+        limit: parseInt(process.env.RATE_LIMIT_PER_MINUTE || '600', 10),
+      },
+    ]),
 
     TypeOrmModule.forRootAsync({
   imports: [
@@ -94,6 +109,17 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
       true,
 
     /*
+     * Connection pool. mysql2's default is 10, which becomes the
+     * bottleneck under load. Keep this below MySQL's max_connections
+     * divided by the number of app instances.
+     */
+    extra: {
+      connectionLimit: parseInt(process.env.DB_POOL_SIZE || '20', 10),
+      waitForConnections: true,
+      queueLimit: 0,
+    },
+
+    /*
      * IMPORTANT:
      *
      * We use migrations.
@@ -129,6 +155,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     DictionaryModule,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_INTERCEPTOR, useClass: LoggingInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },

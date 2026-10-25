@@ -87,6 +87,21 @@ Swagger UI: `http://localhost:3000/api/v1/docs`
 See `.env.example` for the full list (DB connection, JWT secrets/expiry,
 bcryptjs cost, account-lock threshold, max upload size, CORS origin).
 
+### Production hardening / scaling variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `TRUST_PROXY` | _unset_ | Set to `1` (one proxy hop, e.g. nginx) so `req.ip` is the real client. **Required behind a proxy**, otherwise rate limiting treats all users as one. |
+| `RATE_LIMIT_PER_MINUTE` | `600` | Global per-IP request limit. Login/register are fixed at 10/min and forgot/reset-password at 5/min per IP. |
+| `DB_POOL_SIZE` | `20` | MySQL connection pool size per app instance. Keep `instances x DB_POOL_SIZE` below MySQL `max_connections`. |
+| `ENABLE_SWAGGER` | `false` in production | Swagger UI is disabled when `NODE_ENV=production` unless this is `true`. |
+| `DISABLE_APP_COMPRESSION` | `false` | Set `true` if nginx already gzips API responses. |
+| `DISABLE_CRON` | `false` | When running several instances, set `true` on all but one so the hourly overdue job runs once. |
+| `CORS_ORIGIN` | `*` | **Set to your frontend origin in production**; a warning is logged if it is still `*`. |
+
+Performance indexes: `npm run migration:run` applies `AddPerformanceIndexes`
+(or run `sql/performance-indexes.sql` by hand).
+
 ### Useful scripts
 
 | Script | Purpose |

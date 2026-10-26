@@ -1,0 +1,10 @@
+node_modules
+dist
+storage
+uploads
+logs
+*.log
+.git
+.env
+.env.*
+!.env.production.example

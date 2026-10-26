@@ -1031,11 +1031,11 @@ export class TasksService {
 
       qb.andWhere(
         `(
-          task.title LIKE :search
-          OR task.description LIKE :search
-          OR createdBy.fullName LIKE :search
-          OR assignedTo.fullName LIKE :search
-          OR project.name LIKE :search
+          task.title ILIKE :search
+          OR task.description ILIKE :search
+          OR createdBy.fullName ILIKE :search
+          OR assignedTo.fullName ILIKE :search
+          OR project.name ILIKE :search
         )`,
         {
           search,
@@ -1160,10 +1160,7 @@ export class TasksService {
   qb.andWhere(
     `
       task.createdAt <
-      DATE_ADD(
-        CAST(:createdDateTo AS DATE),
-        INTERVAL 1 DAY
-      )
+      (CAST(:createdDateTo AS DATE) + INTERVAL '1 day')
     `,
     {
       createdDateTo:
@@ -1623,8 +1620,8 @@ export class TasksService {
   ) {
     idQb.andWhere(
       `(
-        task.title LIKE :search
-        OR task.description LIKE :search
+        task.title ILIKE :search
+        OR task.description ILIKE :search
       )`,
       {
         search:
@@ -1643,7 +1640,7 @@ export class TasksService {
         'task.deadlineDate IS NOT NULL',
       )
       .andWhere(
-        'task.deadlineDate >= CURRENT_DATE()',
+        'task.deadlineDate >= CURRENT_DATE',
       )
       .andWhere(
         'task.status NOT IN (:...doneStatuses)',
@@ -2100,8 +2097,8 @@ export class TasksService {
   ) {
     idQb.andWhere(
       `(
-        task.title LIKE :search
-        OR task.description LIKE :search
+        task.title ILIKE :search
+        OR task.description ILIKE :search
       )`,
       {
         search:
@@ -2120,7 +2117,7 @@ export class TasksService {
         'task.deadlineDate IS NOT NULL',
       )
       .andWhere(
-        'task.deadlineDate >= CURRENT_DATE()',
+        'task.deadlineDate >= CURRENT_DATE',
       )
       .andWhere(
         'task.status NOT IN (:...doneStatuses)',
@@ -2534,8 +2531,8 @@ export class TasksService {
     ) {
       idQb.andWhere(
         `(
-          task.title LIKE :search
-          OR task.description LIKE :search
+          task.title ILIKE :search
+          OR task.description ILIKE :search
         )`,
         {
           search:

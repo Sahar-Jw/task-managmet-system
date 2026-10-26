@@ -557,30 +557,21 @@ export class AuditLogsService {
 
       qb.andWhere(
         `(
-          log.entityType LIKE :search
+          log.entityType ILIKE :search
 
-          OR CAST(
-            log.entityId
-            AS CHAR
-          ) LIKE :search
+          OR CAST(log.entityId AS TEXT) ILIKE :search
 
-          OR log.reason LIKE :search
+          OR log.reason ILIKE :search
 
-          OR actor.fullName LIKE :search
+          OR actor.fullName ILIKE :search
 
-          OR actor.email LIKE :search
+          OR actor.email ILIKE :search
 
-          OR log.ipAddress LIKE :search
+          OR log.ipAddress ILIKE :search
 
-          OR CAST(
-            log.oldValue
-            AS CHAR
-          ) LIKE :search
+          OR CAST(log.oldValue AS TEXT) ILIKE :search
 
-          OR CAST(
-            log.newValue
-            AS CHAR
-          ) LIKE :search
+          OR CAST(log.newValue AS TEXT) ILIKE :search
         )`,
         {
           search,
@@ -639,13 +630,7 @@ export class AuditLogsService {
   qb.andWhere(
     `
       log.createdAt <
-      DATE_ADD(
-        CAST(
-          :dateTo
-          AS DATE
-        ),
-        INTERVAL 1 DAY
-      )
+      (CAST(:dateTo AS DATE) + INTERVAL '1 day')
     `,
     {
       dateTo:

@@ -38,6 +38,9 @@ export const AppDataSource =
       process.env.DB_NAME ||
       'task_pm_system',
 
+    uuidExtension:
+      'pgcrypto',
+
     synchronize:
       false,
 

@@ -233,9 +233,9 @@ export class UsersService {
 
       qb.andWhere(
         `(
-          user.fullName LIKE :search
-          OR user.email LIKE :search
-          OR user.phone LIKE :search
+          user.fullName ILIKE :search
+          OR user.email ILIKE :search
+          OR user.phone ILIKE :search
         )`,
         {
           search,
@@ -263,13 +263,7 @@ export class UsersService {
       qb.andWhere(
         `
           user.createdAt <
-          DATE_ADD(
-            CAST(
-              :joinDateTo
-              AS DATE
-            ),
-            INTERVAL 1 DAY
-          )
+          (CAST(:joinDateTo AS DATE) + INTERVAL '1 day')
         `,
         {
           joinDateTo:

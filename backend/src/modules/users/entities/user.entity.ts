@@ -73,7 +73,7 @@ export class UserEntity extends VersionedEntity {
   @Column({ name: 'failed_login_attempts', type: 'int', default: 0 })
   failedLoginAttempts!: number;
 
-  @Column({ name: 'locked_until', type: 'timestamp', nullable: true })
+  @Column({ name: 'locked_until', type: 'timestamptz', nullable: true })
   lockedUntil?: Date;
 
   @Column({ type: 'varchar', length: 10, default: 'ar' })
@@ -85,6 +85,6 @@ export class UserEntity extends VersionedEntity {
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
   createdById?: string;
 
-  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
   archivedAt?: Date;
 }

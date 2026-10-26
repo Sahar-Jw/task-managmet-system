@@ -42,9 +42,9 @@ export class NotificationEntity {
   @Column({ name: 'is_read', type: 'boolean', default: false })
   isRead!: boolean;
 
-  @Column({ name: 'read_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'read_at', type: 'timestamptz', nullable: true })
   readAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

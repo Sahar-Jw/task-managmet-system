@@ -107,6 +107,28 @@ function dateTime(
 
 /*
  * ============================================================
+ * POSTGRESQL PLACEHOLDER ADAPTER
+ * ============================================================
+ *
+ * The seed was written with "?" placeholders and MySQL-style
+ * backtick identifiers. PostgreSQL needs $1, $2, ... and
+ * "double quoted" identifiers, so every query is converted here.
+ * ============================================================
+ */
+
+function toPostgres(
+  sql: string,
+): string {
+  let index = 0;
+
+  return sql
+    .replace(/`([^`]+)`/g, '"$1"')
+    .replace(/\?/g, () => `$${++index}`);
+}
+
+
+/*
+ * ============================================================
  * MAIN
  * ============================================================
  */
@@ -133,6 +155,21 @@ async function run() {
 
 
   await queryRunner.connect();
+
+
+  const originalQuery =
+    queryRunner.query.bind(
+      queryRunner,
+    );
+
+  queryRunner.query = ((
+    sql: string,
+    parameters?: any[],
+  ) =>
+    originalQuery(
+      toPostgres(sql),
+      parameters,
+    )) as typeof queryRunner.query;
 
 
   await queryRunner.startTransaction();
@@ -597,9 +634,9 @@ async function run() {
             ?,
             ?,
             ?,
-            0,
-            0,
-            1
+            false,
+            false,
+            true
           )
         `,
         [
@@ -753,9 +790,9 @@ async function run() {
             'string',
             ?,
             ?,
-            0,
-            0,
-            1
+            false,
+            false,
+            true
           )
         `,
         [
@@ -1019,7 +1056,7 @@ async function run() {
             ?,
             ?,
             ?,
-            1,
+            true,
             0,
             'en',
             'UTC',
@@ -1433,10 +1470,8 @@ async function run() {
         `
           INSERT INTO tasks (
             id,
-            title_ar,
-            title_en,
-            description_ar,
-            description_en,
+            title,
+            description,
             task_type,
             priority,
             status,
@@ -1489,8 +1524,6 @@ async function run() {
             ?,
             ?,
             ?,
-            ?,
-            ?,
             1,
             ?,
             ?
@@ -1498,11 +1531,10 @@ async function run() {
         `,
         [
           options.id,
-          options.titleAr,
-          options.titleEn,
+          options.titleAr ||
+            options.titleEn,
           options.descriptionAr ??
-            null,
-          options.descriptionEn ??
+            options.descriptionEn ??
             null,
           options.taskType ??
             'General',
@@ -1521,18 +1553,14 @@ async function run() {
           options.assignedToId ??
             null,
           options.createdById,
-          options.needsApproval
-            ? 1
-            : 0,
+          Boolean(options.needsApproval),
           options.approverId ??
             null,
           options.approvalStatus ??
             'NotRequired',
           options.rejectionReason ??
             null,
-          options.needsBudget
-            ? 1
-            : 0,
+          Boolean(options.needsBudget),
           options.budgetMin ??
             null,
           options.budgetMax ??
@@ -1549,10 +1577,8 @@ async function run() {
             null,
           options.archivedAt ??
             null,
-          options.assigneeCanDownloadAttachments ===
-          false
-            ? 0
-            : 1,
+          options.assigneeCanDownloadAttachments !==
+          false,
           options.statusBeforeArchive ??
             null,
         ],
@@ -2935,7 +2961,7 @@ async function run() {
             ?,
             ?,
             ?,
-            0
+            false
           )
         `,
         [

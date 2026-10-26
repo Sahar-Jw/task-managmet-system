@@ -41,6 +41,6 @@ export class ProjectEntity extends VersionedEntity {
   @Column({ name: 'team_id', type: 'uuid', nullable: true })
   teamId?: string | null;
 
-  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
   archivedAt?: Date | null;
 }

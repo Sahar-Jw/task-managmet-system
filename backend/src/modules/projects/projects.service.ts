@@ -385,9 +385,9 @@ export class ProjectsService {
     ) {
       qb.andWhere(
         `(
-          project.name LIKE :search
-          OR project.description LIKE :search
-          OR owner.fullName LIKE :search
+          project.name ILIKE :search
+          OR project.description ILIKE :search
+          OR owner.fullName ILIKE :search
         )`,
         {
           search:
@@ -405,7 +405,7 @@ export class ProjectsService {
       query.name
     ) {
       qb.andWhere(
-        'project.name LIKE :name',
+        'project.name ILIKE :name',
         {
           name:
             `%${query.name}%`,
@@ -418,7 +418,7 @@ export class ProjectsService {
       query.description
     ) {
       qb.andWhere(
-        'project.description LIKE :description',
+        'project.description ILIKE :description',
         {
           description:
             `%${query.description}%`,
@@ -497,13 +497,7 @@ export class ProjectsService {
   qb.andWhere(
     `
       project.createdAt <
-      DATE_ADD(
-        CAST(
-          :createdDateTo
-          AS DATE
-        ),
-        INTERVAL 1 DAY
-      )
+      (CAST(:createdDateTo AS DATE) + INTERVAL '1 day')
     `,
     {
       createdDateTo:

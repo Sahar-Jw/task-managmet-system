@@ -30,6 +30,6 @@ export class TeamEntity extends VersionedEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
-  @Column({ name: 'archived_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'archived_at', type: 'timestamptz', nullable: true })
   archivedAt?: Date | null;
 }

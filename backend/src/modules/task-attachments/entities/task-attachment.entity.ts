@@ -54,11 +54,7 @@ export class TaskAttachmentEntity {
     name:
       'task_id',
 
-    type:
-      'varchar',
-
-    length:
-      36,
+    type: 'uuid',
 
     nullable:
       true,
@@ -93,11 +89,7 @@ export class TaskAttachmentEntity {
     name:
       'assignment_id',
 
-    type:
-      'varchar',
-
-    length:
-      36,
+    type: 'uuid',
 
     nullable:
       true,
@@ -132,11 +124,7 @@ export class TaskAttachmentEntity {
     name:
       'uploaded_by',
 
-    type:
-      'varchar',
-
-    length:
-      36,
+    type: 'uuid',
   })
   uploadedById!:
     string;
@@ -250,7 +238,7 @@ export class TaskAttachmentEntity {
       'file_data',
 
     type:
-      'longblob',
+      'bytea',
 
     nullable:
       true,

@@ -202,10 +202,7 @@ export class ReportsService {
       await base
         .clone()
         .select(
-          `DATE_FORMAT(
-            task.createdAt,
-            '%Y-%m'
-          )`,
+          `TO_CHAR(task.createdAt, 'YYYY-MM')`,
           'month',
         )
         .addSelect(
@@ -240,16 +237,10 @@ export class ReportsService {
           ],
         )
         .groupBy(
-          `DATE_FORMAT(
-            task.createdAt,
-            '%Y-%m'
-          )`,
+          `TO_CHAR(task.createdAt, 'YYYY-MM')`,
         )
         .orderBy(
-          `DATE_FORMAT(
-            task.createdAt,
-            '%Y-%m'
-          )`,
+          `TO_CHAR(task.createdAt, 'YYYY-MM')`,
           'ASC',
         )
         .getRawMany<{
@@ -427,7 +418,7 @@ export class ReportsService {
             SUM(
               CASE
                 WHEN
-                  task.deadlineDate < CURRENT_DATE()
+                  task.deadlineDate < CURRENT_DATE
                   AND task.status NOT IN (:...doneStatuses)
                 THEN 1
                 ELSE 0
@@ -801,7 +792,7 @@ export class ReportsService {
             SUM(
               CASE
                 WHEN
-                  task.deadlineDate < CURRENT_DATE()
+                  task.deadlineDate < CURRENT_DATE
                   AND task.status NOT IN (:...doneStatuses)
                 THEN 1
                 ELSE 0
@@ -944,15 +935,12 @@ export class ReportsService {
       /*
        * Include the full final calendar day.
        *
-       * MySQL/MariaDB syntax.
+       * PostgreSQL syntax.
        */
       qb.andWhere(
         `
           task.createdAt <
-          DATE_ADD(
-            CAST(:dateTo AS DATE),
-            INTERVAL 1 DAY
-          )
+          (CAST(:dateTo AS DATE) + INTERVAL '1 day')
         `,
         {
           dateTo:
@@ -973,7 +961,7 @@ export class ReportsService {
     }
 
     if (filters?.dateTo) {
-      qb.andWhere('task.createdAt < DATE_ADD(:overviewDateTo, INTERVAL 1 DAY)', {
+      qb.andWhere("task.createdAt < (CAST(:overviewDateTo AS DATE) + INTERVAL '1 day')", {
         overviewDateTo: filters.dateTo,
       });
     }

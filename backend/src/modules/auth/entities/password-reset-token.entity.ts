@@ -23,12 +23,12 @@ export class PasswordResetTokenEntity {
   @Column({ name: 'token_hash', type: 'varchar', length: 255, unique: true })
   tokenHash!: string;
 
-  @Column({ name: 'expires_at', type: 'timestamp' })
+  @Column({ name: 'expires_at', type: 'timestamptz' })
   expiresAt!: Date;
 
-  @Column({ name: 'used_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'used_at', type: 'timestamptz', nullable: true })
   usedAt?: Date;
 
-  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
 }

@@ -70,7 +70,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
       ConfigService,
   ) => ({
     type:
-      'mysql' as const,
+      'postgres' as const,
 
     host:
       config.get<string>(
@@ -81,19 +81,19 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     port:
       config.get<number>(
         'database.port',
-        3306,
+        5432,
       ),
 
     username:
       config.get<string>(
         'database.username',
-        'root',
+        'postgres',
       ),
 
     password:
       config.get<string>(
         'database.password',
-        '',
+        'postgres',
       ),
 
     database:
@@ -102,21 +102,19 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
         'task_pm_system',
       ),
 
-    charset:
-      'utf8mb4',
+    uuidExtension:
+      'pgcrypto',
 
     autoLoadEntities:
       true,
 
     /*
-     * Connection pool. mysql2's default is 10, which becomes the
-     * bottleneck under load. Keep this below MySQL's max_connections
-     * divided by the number of app instances.
+     * Connection pool (node-postgres).
+     * Keep this below PostgreSQL's max_connections divided by
+     * the number of app instances.
      */
     extra: {
-      connectionLimit: parseInt(process.env.DB_POOL_SIZE || '20', 10),
-      waitForConnections: true,
-      queueLimit: 0,
+      max: parseInt(process.env.DB_POOL_SIZE || '20', 10),
     },
 
     /*

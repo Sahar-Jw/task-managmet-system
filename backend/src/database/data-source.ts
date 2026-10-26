@@ -13,7 +13,7 @@ dotenv.config();
 export const AppDataSource =
   new DataSource({
     type:
-      'mysql',
+      'postgres',
 
     host:
       process.env.DB_HOST ||
@@ -22,13 +22,13 @@ export const AppDataSource =
     port:
       parseInt(
         process.env.DB_PORT ||
-          '3306',
+          '5432',
         10,
       ),
 
     username:
       process.env.DB_USERNAME ||
-      'root',
+      'postgres',
 
     password:
       process.env.DB_PASSWORD ||
@@ -37,9 +37,6 @@ export const AppDataSource =
     database:
       process.env.DB_NAME ||
       'task_pm_system',
-
-    charset:
-      'utf8mb4',
 
     synchronize:
       false,

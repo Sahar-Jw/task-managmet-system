@@ -12,9 +12,6 @@ import {
   Repository,
 } from 'typeorm';
 
-import {
-  unlink,
-} from 'fs/promises';
 
 import {
   BrandingSettingsEntity,
@@ -40,10 +37,7 @@ import {
   AuditReasonCode,
 } from '../../shared/enums/audit-reason-code.enum';
 
-import {
-  storedFileUrl,
-  storagePathFromUrl,
-} from '../../common/storage/storage.util';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 
 
 @Injectable()
@@ -57,6 +51,9 @@ export class BrandingService {
 
     private readonly auditLogsService:
       AuditLogsService,
+
+    private readonly objectStorage:
+      ObjectStorageService,
   ) {}
 
 
@@ -285,8 +282,9 @@ export class BrandingService {
     settings[
       field
     ] =
-      storedFileUrl(
-        file.path,
+      await this.objectStorage.save(
+        'branding',
+        file,
       );
 
 
@@ -300,26 +298,7 @@ export class BrandingService {
       );
 
 
-    if (
-      previousUrl
-    ) {
-      const previousPath =
-        storagePathFromUrl(
-          previousUrl,
-        );
-
-
-      if (
-        previousPath
-      ) {
-        await unlink(
-          previousPath,
-        ).catch(
-          () =>
-            undefined,
-        );
-      }
-    }
+    await this.objectStorage.remove(previousUrl);
 
 
     await this.auditLogsService.record({
@@ -400,26 +379,7 @@ export class BrandingService {
       );
 
 
-    if (
-      previousUrl
-    ) {
-      const previousPath =
-        storagePathFromUrl(
-          previousUrl,
-        );
-
-
-      if (
-        previousPath
-      ) {
-        await unlink(
-          previousPath,
-        ).catch(
-          () =>
-            undefined,
-        );
-      }
-    }
+    await this.objectStorage.remove(previousUrl);
 
 
     await this.auditLogsService.record({

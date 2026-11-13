@@ -14,14 +14,6 @@ import {
   Repository,
 } from 'typeorm';
 
-import {
-  unlink,
-  writeFile,
-} from 'fs/promises';
-
-import {
-  join,
-} from 'path';
 
 import {
   TaskAttachmentEntity,
@@ -59,12 +51,7 @@ import {
   AttachmentStorageType,
 } from '../../shared/enums/attachment-storage-type.enum';
 
-import {
-  generateStoredFileName,
-  getStorageDirectory,
-  storedFileUrl,
-  storagePathFromUrl,
-} from '../../common/storage/storage.util';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 
 import {
   SettingsService,
@@ -101,6 +88,9 @@ export class TaskAttachmentsService {
 
     private readonly settingsService:
       SettingsService,
+
+    private readonly objectStorage:
+      ObjectStorageService,
   ) {}
 
 
@@ -530,7 +520,7 @@ export class TaskAttachmentsService {
         );
 
 
-    let writtenImagePath:
+    let writtenUrl:
       string | null =
       null;
 
@@ -542,37 +532,20 @@ export class TaskAttachmentsService {
        * ======================================================
        */
 
+      /*
+       * Local mode: only images go to disk, documents go to the DB.
+       * S3 mode: every file goes to the bucket (storage_type stays IMAGE,
+       * which here simply means "stored as a file, see file_url").
+       */
       if (
-        isImage
+        isImage ||
+        this.objectStorage.isEnabled()
       ) {
-        const directory =
-          getStorageDirectory(
+        writtenUrl =
+          await this.objectStorage.save(
             'attachments',
+            file,
           );
-
-
-        const storedName =
-          generateStoredFileName(
-            file.originalname,
-          );
-
-
-        writtenImagePath =
-          join(
-            directory,
-            storedName,
-          );
-
-
-        /*
-         * Write image buffer to:
-         *
-         * storage/attachments/YYYY/MM/
-         */
-        await writeFile(
-          writtenImagePath,
-          file.buffer,
-        );
 
 
         const entity =
@@ -599,9 +572,7 @@ export class TaskAttachmentsService {
               AttachmentStorageType.IMAGE,
 
             fileUrl:
-              storedFileUrl(
-                writtenImagePath,
-              ),
+              writtenUrl,
 
             fileData:
               null,
@@ -695,13 +666,10 @@ export class TaskAttachmentsService {
        * failed, remove the orphan image.
        */
       if (
-        writtenImagePath
+        writtenUrl
       ) {
-        await unlink(
-          writtenImagePath,
-        ).catch(
-          () =>
-            undefined,
+        await this.objectStorage.remove(
+          writtenUrl,
         );
       }
 
@@ -1163,22 +1131,9 @@ export class TaskAttachmentsService {
         AttachmentStorageType.IMAGE &&
       attachment.fileUrl
     ) {
-      const physicalPath =
-        storagePathFromUrl(
-          attachment.fileUrl,
-        );
-
-
-      if (
-        physicalPath
-      ) {
-        await unlink(
-          physicalPath,
-        ).catch(
-          () =>
-            undefined,
-        );
-      }
+      await this.objectStorage.remove(
+        attachment.fileUrl,
+      );
     }
 
 

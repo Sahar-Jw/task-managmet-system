@@ -30,10 +30,6 @@ import {
 } from 'express';
 
 import {
-  existsSync,
-} from 'fs';
-
-import {
   JwtAuthGuard,
 } from '../../common/guards/jwt-auth.guard';
 
@@ -53,9 +49,7 @@ import {
   AttachmentStorageType,
 } from '../../shared/enums/attachment-storage-type.enum';
 
-import {
-  storagePathFromUrl,
-} from '../../common/storage/storage.util';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 
 
 const MAX_FILES_PER_UPLOAD =
@@ -74,6 +68,9 @@ export class TaskAttachmentsController {
   constructor(
     private readonly attachmentsService:
       TaskAttachmentsService,
+
+    private readonly objectStorage:
+      ObjectStorageService,
   ) {}
 
 
@@ -313,17 +310,14 @@ export class TaskAttachmentsController {
       }
 
 
-      const physicalPath =
-        storagePathFromUrl(
+      const stored =
+        await this.objectStorage.read(
           attachment.fileUrl,
         );
 
 
       if (
-        !physicalPath ||
-        !existsSync(
-          physicalPath,
-        )
+        !stored
       ) {
         throw new NotFoundException(
           appError('ATTACHMENT_IMAGE_NOT_FOUND', 'Attachment image not found'),
@@ -331,36 +325,58 @@ export class TaskAttachmentsController {
       }
 
 
-      res.type(
-        attachment.mimeType,
+      res.setHeader(
+        'Content-Type',
+        attachment.mimeType ||
+          stored.contentType ||
+          'application/octet-stream',
       );
 
 
       if (
-        isDownload
+        stored.contentLength !=
+        null
       ) {
-        return res.download(
-          physicalPath,
-          attachment.fileName,
+        res.setHeader(
+          'Content-Length',
+          String(
+            stored.contentLength,
+          ),
         );
       }
 
 
-      /*
-       * Browser preview.
-       */
       res.setHeader(
         'Content-Disposition',
         this.contentDisposition(
-          'inline',
+          isDownload
+            ? 'attachment'
+            : 'inline',
+
           attachment.fileName,
         ),
       );
 
 
-      return res.sendFile(
-        physicalPath,
+      res.setHeader(
+        'Cache-Control',
+        'private, no-store',
       );
+
+
+      stored.body.on(
+        'error',
+        () =>
+          res.destroy(),
+      );
+
+
+      stored.body.pipe(
+        res,
+      );
+
+
+      return;
     }
 
 

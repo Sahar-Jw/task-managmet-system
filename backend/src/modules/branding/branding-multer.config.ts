@@ -3,18 +3,12 @@ import {
 } from '@nestjs/common';
 import { appError } from '../../common/errors/app-error';
 
-import {
-  diskStorage,
-} from 'multer';
+import { memoryStorage } from 'multer';
 
 import {
   extname,
 } from 'path';
 
-import {
-  generateStoredFileName,
-  getStorageDirectory,
-} from '../../common/storage/storage.util';
 
 
 const ALLOWED_EXTENSIONS =
@@ -42,46 +36,7 @@ export const brandingMulterConfig =
       number,
   ) => ({
     storage:
-      diskStorage({
-        /*
-         * backend/storage/branding/YYYY/MM
-         */
-        destination: (
-          _req,
-          _file,
-          callback,
-        ) => {
-          try {
-            callback(
-              null,
-              getStorageDirectory(
-                'branding',
-              ),
-            );
-          } catch (
-            error
-          ) {
-            callback(
-              error as Error,
-              '',
-            );
-          }
-        },
-
-
-        filename: (
-          _req,
-          file,
-          callback,
-        ) => {
-          callback(
-            null,
-            generateStoredFileName(
-              file.originalname,
-            ),
-          );
-        },
-      }),
+      memoryStorage(),
 
 
     limits: {

@@ -22,9 +22,6 @@ import {
   ConfigService,
 } from '@nestjs/config';
 
-import {
-  unlink,
-} from 'fs/promises';
 
 import {
   randomBytes,
@@ -70,10 +67,7 @@ import {
   RoleName,
 } from '../../shared/enums/role.enum';
 
-import {
-  storedFileUrl,
-  storagePathFromUrl,
-} from '../../common/storage/storage.util';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 
 
 @Injectable()
@@ -99,6 +93,9 @@ export class UsersService {
 
     private readonly configService:
       ConfigService,
+
+    private readonly objectStorage:
+      ObjectStorageService,
   ) {}
 
 
@@ -1717,8 +1714,9 @@ export class UsersService {
 
 
     user.avatarUrl =
-      storedFileUrl(
-        file.path,
+      await this.objectStorage.save(
+        'avatars',
+        file,
       );
 
 
@@ -1731,26 +1729,7 @@ export class UsersService {
     /*
      * Only delete old application-owned storage files.
      */
-    if (
-      previousUrl
-    ) {
-      const previousPath =
-        storagePathFromUrl(
-          previousUrl,
-        );
-
-
-      if (
-        previousPath
-      ) {
-        await unlink(
-          previousPath,
-        ).catch(
-          () =>
-            undefined,
-        );
-      }
-    }
+    await this.objectStorage.remove(previousUrl);
 
 
     await this.auditLogsService.record({
@@ -1815,26 +1794,7 @@ export class UsersService {
       );
 
 
-    if (
-      previousUrl
-    ) {
-      const previousPath =
-        storagePathFromUrl(
-          previousUrl,
-        );
-
-
-      if (
-        previousPath
-      ) {
-        await unlink(
-          previousPath,
-        ).catch(
-          () =>
-            undefined,
-        );
-      }
-    }
+    await this.objectStorage.remove(previousUrl);
 
 
     await this.auditLogsService.record({

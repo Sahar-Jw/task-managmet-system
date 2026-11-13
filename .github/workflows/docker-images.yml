@@ -38,13 +38,17 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/tm-backend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/tm-backend:${{ github.run_number }}
 
-      # The API URLs default to https://api.dcc.sy in frontend/Dockerfile.
+      # NEXT_PUBLIC_* are baked in at build time. Override with repository
+      # variables (Settings > Secrets and variables > Actions > Variables).
       - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
           platforms: linux/amd64
           push: true
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://task-backend-web-7e58bc3e.hosted.cumin.dev/api/v1' }}
+            NEXT_PUBLIC_API_ORIGIN=${{ vars.NEXT_PUBLIC_API_ORIGIN || 'https://task-backend-web-7e58bc3e.hosted.cumin.dev' }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/tm-frontend:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/tm-frontend:${{ github.run_number }}

@@ -48,6 +48,9 @@ import {
 import {
   STORAGE_ROOT,
 } from './common/storage/storage.util';
+import {
+  ObjectStorageService,
+} from './common/storage/object-storage.service';
 
 
 async function bootstrap() {
@@ -213,32 +216,63 @@ async function bootstrap() {
         '/',
       )}`;
 
-  app.useStaticAssets(
-    join(
-      STORAGE_ROOT,
-      'avatars',
-    ),
-    {
-      prefix:
-        publicStoragePrefix(
-          'avatars',
-        ),
-    },
-  );
+  const objectStorage =
+    app.get(
+      ObjectStorageService,
+    );
 
 
-  app.useStaticAssets(
-    join(
-      STORAGE_ROOT,
-      'branding',
-    ),
-    {
-      prefix:
-        publicStoragePrefix(
-          'branding',
-        ),
-    },
-  );
+  if (
+    objectStorage.isEnabled()
+  ) {
+    /*
+     * S3 mode: serve the public categories straight from the bucket
+     * (falls back to local disk for files uploaded before the switch).
+     */
+    app.use(
+      publicStoragePrefix(
+        'avatars',
+      ),
+      objectStorage.publicHandler(
+        'avatars',
+      ),
+    );
+
+    app.use(
+      publicStoragePrefix(
+        'branding',
+      ),
+      objectStorage.publicHandler(
+        'branding',
+      ),
+    );
+  } else {
+    app.useStaticAssets(
+      join(
+        STORAGE_ROOT,
+        'avatars',
+      ),
+      {
+        prefix:
+          publicStoragePrefix(
+            'avatars',
+          ),
+      },
+    );
+
+    app.useStaticAssets(
+      join(
+        STORAGE_ROOT,
+        'branding',
+      ),
+      {
+        prefix:
+          publicStoragePrefix(
+            'branding',
+          ),
+      },
+    );
+  }
 
 
   /*

@@ -16,6 +16,7 @@ import { ProjectsService } from '../projects/projects.service';
 import { TaskWorkflowService } from '../task-workflow/task-workflow.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SettingsService } from '../settings/settings.service';
+import { ObjectStorageService } from '../../common/storage/object-storage.service';
 import { assertTaskApprovalAllowsWork } from '../../shared/utils/task-approval.util';
 
 const admin = { id: 'admin-1', fullName: 'Admin', role: { name: 'ADMIN' } } as any;
@@ -321,6 +322,7 @@ describe('TaskAttachmentsService.remove — admin', () => {
         { provide: getRepositoryToken(TaskAssignmentEntity), useValue: {} },
         { provide: AuditLogsService, useValue: audit },
         { provide: SettingsService, useValue: {} },
+        { provide: ObjectStorageService, useValue: { isEnabled: () => false, remove: jest.fn() } },
       ],
     }).compile();
     return { service: moduleRef.get(TaskAttachmentsService), attachmentRepo, audit };

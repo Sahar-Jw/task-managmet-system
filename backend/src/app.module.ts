@@ -1,3 +1,4 @@
+import { StorageModule } from './common/storage/storage.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -41,6 +42,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     }),
 
     ScheduleModule.forRoot(),
+    StorageModule,
 
     /*
      * Global rate limit per client IP. The default is deliberately generous

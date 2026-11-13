@@ -2,7 +2,6 @@ export interface AppErrorPayload {
   code: string;
   message: string;
 }
-
 /**
  * Creates the structured payload consumed by the global exception filters.
  * Every user-facing HTTP exception must use this helper so clients receive a

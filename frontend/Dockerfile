@@ -18,8 +18,8 @@ COPY . .
 
 # NEXT_PUBLIC_* values are baked into the JavaScript at build time.
 # Pass them with --build-arg; changing them requires rebuilding the image.
-ARG NEXT_PUBLIC_API_URL=https://task-backend-web-7e58bc3e.hosted.cumin.dev/api/v1
-ARG NEXT_PUBLIC_API_ORIGIN=https://task-backend-web-7e58bc3e.hosted.cumin.dev
+ARG NEXT_PUBLIC_API_URL=https://tmapi.dcc.sy/api/v1
+ARG NEXT_PUBLIC_API_ORIGIN=https://tmapi.dcc.sy
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_ORIGIN=$NEXT_PUBLIC_API_ORIGIN
 ENV NEXT_TELEMETRY_DISABLED=1

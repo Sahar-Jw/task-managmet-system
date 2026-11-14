@@ -22,7 +22,7 @@ module.exports = {
           700: '#166b49',
         },
 
-        ink: '#0f1b2d',
+        ink: '#0b2f22',
       },
 
       fontFamily: {

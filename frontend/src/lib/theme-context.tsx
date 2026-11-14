@@ -18,19 +18,19 @@ export type ThemeColors = {
 };
 
 export const DEFAULT_THEME: ThemeColors = {
-  primary: '#3364b8',
+  primary: '#0a4933',
   primaryText: '#ffffff',
-  pageBackground: '#f8fafc',
+  pageBackground: '#f3f1ea',
   surface: '#ffffff',
-  bodyText: '#0f172a',
+  bodyText: '#0b2f22',
 };
 
 export const DEFAULT_DARK_THEME: ThemeColors = {
-  primary: '#4f83db',
+  primary: '#2a8460',
   primaryText: '#ffffff',
-  pageBackground: '#0f172a',
-  surface: '#1e293b',
-  bodyText: '#e2e8f0',
+  pageBackground: '#0a1a14',
+  surface: '#112a21',
+  bodyText: '#ece8df',
 };
 
 const STORAGE_KEY = 'task-manager-theme';

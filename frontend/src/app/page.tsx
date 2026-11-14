@@ -819,7 +819,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen overflow-x-hidden bg-[var(--page-bg,#f8fafc)] text-slate-900"
+      className="min-h-screen overflow-x-hidden bg-[var(--page-bg,var(--theme-page-background))] text-slate-900"
       dir={
         isArabic
           ? 'rtl'
